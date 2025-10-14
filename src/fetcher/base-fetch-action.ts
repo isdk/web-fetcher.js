@@ -1,10 +1,10 @@
 import type { BaseFetchMode, BrowserEngine, FetchContext, FetchResponse } from "./types"
 
-export enum FetchActionStatus {
+export enum FetchActionResultStatus {
   /**
    * 动作执行失败但未抛出（通常因 failOnError=false）；错误信息在 error 字段
    */
-  Failed = 0,
+  Failed,
   /**
    * 动作按预期完成（即便产生 warnings）
    */
@@ -27,14 +27,14 @@ interface FetchActionMeta {
   capability?: FetchActionCapabilityMode;
   response?: FetchResponse;
   timings?: { start: number; total: number };
-  retries?: number;         // 实际重试次数
+  retries?: number; // 实际重试次数
 }
 
 export interface FetchActionResult<TResult = any> {
-  status: FetchActionStatus;     // 默认 'success'（未抛错且未标记跳过）
+  status: FetchActionResultStatus; // 默认 'success'（未抛错且未标记跳过）
   result?: TResult;
   error?: Error;
-  meta?: FetchActionMeta;        // 便于审计与调试的元信息
+  meta?: FetchActionMeta; // 便于审计与调试的元信息
 }
 
 export interface BaseFetchActionOptions {
@@ -78,7 +78,7 @@ export abstract class BaseFetchAction {
     } catch (error: any) {
       if (!params?.failOnError) {
         return {
-          status: FetchActionStatus.Failed,
+          status: FetchActionResultStatus.Failed,
           error,
         };
       } else throw error;
