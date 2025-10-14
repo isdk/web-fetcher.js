@@ -15,38 +15,55 @@ export interface Cookie {
 }
 
 export type BaseFetchMode = 'http' | 'browser';
-export type FetchMode = BaseFetchMode | 'auto' | 'smart';
+export type FetchMode = BaseFetchMode | 'auto' | 'smart' | 'site';
 export type BrowserEngine = 'playwright' | 'puppeteer';
 
 export interface BaseFetcherOptions {
+  /**
+   * 抓取模式
+   *
+   * - `http`: 使用 HTTP 进行抓取
+   * - `browser`: 使用浏览器进行抓取
+   * - `auto`: auto 会走“智能探测”选择 http 或 browser, 但是如果没有启用 smart，并且在站点注册表中没有，那么则等价为 http.
+   * - `smart`: 进行智能探测，自动选择模式
+   * - `site`: 使用站点注册表进行抓取，如果没有站点注册表，则等价为 http.
+   */
   mode?: FetchMode;
-  engine?: BrowserEngine;
   antibot?: boolean;
   headers?: Record<string, string>;
   proxy?: string | string[];
+  // 阻止加载特定类型的资源
+  blockResources?: Array<'images'|'stylesheets'|'fonts'|'scripts'|'media'|string>;
 
   auth?: {
     reuseCookies?: boolean; // 默认 true
     preloadCookies?: Cookie[];
   };
 
+  // browser 模式下，没有对应的配置，需要根据浏览器类型去设置浏览器内部配置，也可能无法配置。
   ignoreSslErrors?: boolean;
 
-  timeoutMs?: number;
-  maxConcurrency?: number;
-  maxRequestsPerMinute?: number;
-  delayBetweenRequestsMs?: number;
-
   browser?: {
+    /**
+     * 浏览器引擎，默认为 playwright
+     *
+     * - `playwright`: 使用 Playwright 引擎
+     * - `puppeteer`: 使用 Puppeteer 引擎
+     */
+    engine?: BrowserEngine;
     headless?: boolean;
     waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
-    blockResources?: Array<'images'|'stylesheets'|'fonts'|'scripts'|'media'>;
   };
 
   http?: {
     method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
     body?: any;
   };
+
+  timeoutMs?: number;
+  maxConcurrency?: number;
+  maxRequestsPerMinute?: number;
+  delayBetweenRequestsMs?: number;
 }
 
 export interface FetchSite extends BaseFetcherOptions {
