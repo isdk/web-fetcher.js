@@ -20,10 +20,12 @@ export type BrowserEngine = 'playwright' | 'puppeteer';
 export type FetchReturnKind = 'response' | 'context' | 'result' | 'outputs' | 'none';
 
 export interface FetchMetadata {
-  engine: BaseFetchMode;
+  mode: BaseFetchMode;
+  engine?: BrowserEngine;
   timings?: {
+    start: number;
     total: number;
-    ttfb: number;
+    ttfb?: number;
     dns?: number;
     tcp?: number;
     firstByte?: number;
@@ -58,7 +60,7 @@ export type FetchReturnTypeFor<R extends FetchReturnKind> =
 
 export interface FetchContext {
   id: string;
-  mode: 'http' | 'browser';
+  mode: BaseFetchMode;
   engine?: BrowserEngine;
   url?: string;
   finalUrl?: string;

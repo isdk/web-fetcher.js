@@ -1,5 +1,4 @@
-import type { BaseFetchMode, BrowserEngine } from "../types"
-import { FetchContext, FetchResponse } from "./types"
+import type { BaseFetchMode, BrowserEngine, FetchContext, FetchResponse } from "./types"
 
 export enum FetchActionStatus {
   /**
@@ -17,19 +16,17 @@ export enum FetchActionStatus {
   Skipped,
 }
 
-type CapabilityMode = 'native' | 'simulate' | 'noop';
+type FetchActionCapabilityMode = 'native' | 'simulate' | 'noop';
 
 // 承载与诊断相关的信息（引擎、降级路径、时延、重试、HTTP 信息等）
-interface ActionMeta {
+interface FetchActionMeta {
   name: string
   index?: number
   mode: BaseFetchMode;
   engine?: BrowserEngine;
-  capability?: CapabilityMode;
-  url?: string;             // 该动作完成后的有效 URL（若相关）
-  statusCode?: number;      // 若此动作触发/依赖了请求
-  contentType?: string;     // 若有可判定的内容类型
-  timings?: { start: number; end: number; duration: number };
+  capability?: FetchActionCapabilityMode;
+  response?: FetchResponse;
+  timings?: { start: number; total: number };
   retries?: number;         // 实际重试次数
 }
 
@@ -37,7 +34,7 @@ export interface FetchActionResult<TResult = any> {
   status: FetchActionStatus;     // 默认 'success'（未抛错且未标记跳过）
   result?: TResult;
   error?: Error;
-  meta?: ActionMeta;        // 便于审计与调试的元信息
+  meta?: FetchActionMeta;        // 便于审计与调试的元信息
 }
 
 export interface BaseFetchActionOptions {
