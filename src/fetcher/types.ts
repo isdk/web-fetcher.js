@@ -1,4 +1,4 @@
-import type { FetchActionResult } from './base-fetch-action'
+import type { FetchActionOptions, FetchActionResult } from './base-fetch-action'
 
 export type Headers = Record<string, string>;
 
@@ -31,14 +31,13 @@ export interface BaseFetcherOptions {
   mode?: FetchMode;
   antibot?: boolean;
   headers?: Record<string, string>;
+  cookies?: Cookie[];
+  reuseCookies?: boolean; // 默认 true
+
   proxy?: string | string[];
   // 阻止加载特定类型的资源
   blockResources?: Array<'images'|'stylesheets'|'fonts'|'scripts'|'media'|string>;
 
-  auth?: {
-    reuseCookies?: boolean; // 默认 true
-    preloadCookies?: Cookie[];
-  };
 
   // browser 模式下，没有对应的配置，需要根据浏览器类型去设置浏览器内部配置，也可能无法配置。
   ignoreSslErrors?: boolean;
@@ -122,28 +121,23 @@ export type FetchReturnTypeFor<R extends FetchReturnKind> =
   R extends 'outputs' ? Record<string, any> :
   void;
 
-export interface FetchContext {
+
+interface FetchActionInContext extends FetchActionOptions {
+  index?: number;
+  startedAt: number;
+  finishedAt?: number;
+  error?: Error;
+}
+
+export interface FetchContext extends BaseFetcherOptions {
   id: string;
-  mode: BaseFetchMode;
-  engine?: BrowserEngine;
   url?: string;
   finalUrl?: string;
-
-  headers: Record<string, string>;
-  cookies: Cookie[];
-  proxy?: string;
 
   lastResponse?: FetchResponse;
   lastResult?: FetchActionResult;
 
-  currentAction?: {
-    name: string;
-    params?: any;
-    index?: number;
-    startedAt: number;
-    finishedAt?: number;
-    error?: { message: string; code?: string };
-  };
+  currentAction?: FetchActionInContext;
 
   outputs: Map<string, any>;
 }
