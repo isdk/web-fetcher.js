@@ -17,7 +17,52 @@ export interface Cookie {
 export type BaseFetchMode = 'http' | 'browser';
 export type FetchMode = BaseFetchMode | 'auto' | 'smart';
 export type BrowserEngine = 'playwright' | 'puppeteer';
-export type FetchReturnKind = 'response' | 'context' | 'result' | 'outputs' | 'none';
+
+export interface BaseFetcherOptions {
+  mode?: FetchMode;
+  engine?: BrowserEngine;
+  antibot?: boolean;
+  headers?: Record<string, string>;
+  proxy?: string | string[];
+
+  auth?: {
+    reuseCookies?: boolean; // 默认 true
+    preloadCookies?: Cookie[];
+  };
+
+  ignoreSslErrors?: boolean;
+
+  timeoutMs?: number;
+  maxConcurrency?: number;
+  maxRequestsPerMinute?: number;
+  delayBetweenRequestsMs?: number;
+
+  browser?: {
+    headless?: boolean;
+    waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+    blockResources?: Array<'images'|'stylesheets'|'fonts'|'scripts'|'media'>;
+  };
+
+  http?: {
+    method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+    body?: any;
+  };
+}
+
+export interface FetchSite extends BaseFetcherOptions {
+  domain: string;
+  pathScope?: string[];
+
+  meta?: {
+    updatedAt?: number;
+    ttlMs?: number;
+    source?: 'manual' | 'smart';
+  };
+}
+
+export interface FetcherOptions extends BaseFetcherOptions {
+  sites?: FetchSite[];
+}
 
 export interface FetchMetadata {
   mode: BaseFetchMode;
@@ -49,6 +94,8 @@ export interface FetchResponse {
   cookies?: Cookie[];
   metadata?: FetchMetadata;
 }
+
+export type FetchReturnKind = 'response' | 'context' | 'result' | 'outputs' | 'none';
 
 // 返回类型映射
 export type FetchReturnTypeFor<R extends FetchReturnKind> =
