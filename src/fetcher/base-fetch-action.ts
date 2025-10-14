@@ -49,9 +49,12 @@ export interface BaseFetchActionOptions {
 }
 
 export interface BaseFetchCollectorOptions extends BaseFetchActionOptions {
-  startOn?: string|RegExp
-  stopOn?: string|RegExp
+  // 启动事件，支持正则表达式，任意事件发生就启动`onStart`
+  startOn?: string|RegExp|Array<string|RegExp>
+  // 结束事件，任意事件发生就结束`onEnd`
+  stopOn?: string|RegExp|Array<string|RegExp>
   block?: boolean // 是否等待结果完成
+  // 当指定事件发生时，执行收集`onExecute`
   bindTo?: string // self, session, action, action:name
 }
 
