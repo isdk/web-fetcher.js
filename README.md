@@ -11,8 +11,9 @@ web-fetcher是一个智能化的、自适应的 标准化 Web 抓取客户端库
 * 职责单一 (Single Responsibility): web-fetcher 只做一件事并把它做到极致：获取 Web 内容。它不关心如何解析内容，也不关心抓取流程的编排。
 * 统一的API (Unified API): 无论底层是使用基于请求的 Cheerio 还是基于浏览器的 Playwright，web-fetcher 都力求提供一致的函数签名和返回结果。这使得上层应用可以无缝切换抓取引擎以应对不同类型的网站，而无需修改业务代码。
 * 动作集合和统一语义: web-fetcher 使用动作来描述抓取流程
-  * 动作分为http和浏览器都支持的(包括可以通过模拟支持的，如click, fill, submit);仅浏览器支持的(浏览器支持的是http的超集，http的所有能力浏览器都应该支持);用户自定义的动作(需要标明支持的能力)，
-* 抽象而非泄露 (Abstraction, not Leaking): 本库将常见的浏览器交互（如点击、填充、滚动）抽象为标准的浏览器动作，而不是将 Playwright 的 page 对象等底层细节泄露给调用者。
+  * 动作分为http和浏览器都支持的(包括可以通过模拟支持的，如click(检查到是元素a,或者是表单input元素), fill, submit);仅浏览器支持的(浏览器支持的是http的超集，http的所有能力浏览器都应该支持);用户自定义的动作(需要标明支持的能力)，
+* 抽象而非泄露 (Abstraction, not Leaking):
+  * 本库将常见的http行为和浏览器交互（如点击、填充、滚动）抽象为标准的动作，而不是将例如 Playwright 的 page 对象等底层细节泄露给调用者。
 * 事件驱动 (Event-Driven): 抓取过程中的关键节点（如请求开始/结束、内容获取、error等）都会以事件的形式通知出去。
   * 许多事件存在于crawlee 的事件管理者中: `const config = Configuration.getGlobalConfig(); const eventemitter = config.getEventManager();`
   * 还有 hook 中
@@ -25,10 +26,10 @@ web-fetcher是一个智能化的、自适应的 标准化 Web 抓取客户端库
 主要API如下:
 
 * WebFetcher 类: 管理上下文，获取内容，执行浏览器行为
-  * fetch 方法: 内部是通过执行浏览器动作`goto`然后得到页面内容, 可选的执行动作列表。
-  * 创建抓取会话，允许分步执行。
+  * fetch 方法: 内部是通过执行动作`goto`然后得到页面内容, 可选的执行动作列表。
+  * 创建抓取会话，允许分步执行，通过会话的上下文有效的在各个步骤之间传递信息。
 * 智能探测: 策略如下
-  * 初始尝试: 总是先用最快、最轻量的 http(cheerio) 引擎进行一次试探性抓取
+  * 初始尝试: 总是先用最快、最轻量的 http(CheerioCrawler) 引擎进行一次试探性抓取
   * 内容分析:
     * 检查返回的HTML内容。如果`<body>`标签为空，或者包含明显的“请启用JavaScript”提示，或者只有一个`<div id="app"></div>`这样的挂载点，那么可以初步判断为`browser`类型
     * 对比直接请求的HTML和经过 `browser` 简单渲染后的HTML的DOM结构差异度。如果差异巨大，说明网站严重依赖JS渲染
@@ -43,7 +44,7 @@ WebFetcher的配置项:
 
 * sites?: 可选的站点注册表，包含站点的 domain、抓取模式等，详见后述站点注册表配置项
 * mode?: 抓取模式，可选值有 http、browser、auto、smart, 默认为 auto
-  * auto 会走“智能探测”选择 http 或 browser, 但是如果没有启用 smart，则等价为 http.
+  * auto 会走“智能探测”选择 http 或 browser, 但是如果没有启用 smart，并且在站点注册表中没有，那么则等价为 http.
 * browser: 浏览器配置项，当抓取模式最终确认为browser时使用
   * engine?: 浏览器引擎，可选值有 playwright、puppeteer, 默认为 playwright
   * headless?: bool, 浏览器是否无头模式
@@ -82,9 +83,14 @@ WebFetcher的配置项:
 * maxRequestsPerMinute?: number, 每分钟允许发出的最大请求数
 * delayBetweenRequestsMs?: number, 请求之间的延迟时间
 
-让我们首先想清楚如何实现，如何具体定义类，整理好具体思路，不要急于写代码，我们第一步先把所有事情先讨论清楚。
+抓取的返回结果大致有4类，返回响应，上下文，最后一个动作的结果，结构化的输出对象(outputs)
+
+
+
+让我们首先想清楚如何实现，如何具体定义类，整理好具体思路，不要急于写代码，我们第一步先把所有事情先讨论清楚，整理出一个最小可行框架。
 
 首先思考:
+
 1. 会话中需要上下文，方便记录上一次的动作、响应、结果，调用API等。
 2. 应该允许动作自定义返回结果。不过多数情况下返回的抓取结果。
 3. 有时候我们需要动作附加得到一些东西，比如，截屏，或者捕获从中出现的json数据，这些副作用应该是可自由扩展的，这些附加信息可以通过结构化的名称输出。
