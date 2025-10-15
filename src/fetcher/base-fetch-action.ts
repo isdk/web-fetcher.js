@@ -1,4 +1,7 @@
-import type { BaseFetchMode, BrowserEngine, FetchContext, FetchResponse } from "./types"
+import type { RequireAtLeastOne } from 'type-fest';
+import { FetchContext } from "./context";
+import { FetchReturnType, FetchReturnTypeFor } from "./fetch-return";
+import type { BaseFetchMode, BrowserEngine, FetchResponse } from "./types"
 
 export enum FetchActionResultStatus {
   /**
@@ -16,13 +19,13 @@ export enum FetchActionResultStatus {
   Skipped,
 }
 
-type FetchActionCapabilityMode = 'native' | 'simulate' | 'noop';
+export type FetchActionCapabilityMode = 'native' | 'simulate' | 'noop';
 
 // 承载与诊断相关的信息（引擎、降级路径、时延、重试、HTTP 信息等）
 interface FetchActionMeta {
-  name: string
+  id: string
   index?: number
-  mode: BaseFetchMode;
+  mode?: BaseFetchMode;
   engine?: BrowserEngine;
   capability?: FetchActionCapabilityMode;
   response?: FetchResponse;
@@ -30,25 +33,32 @@ interface FetchActionMeta {
   retries?: number; // 实际重试次数
 }
 
-export interface FetchActionResult<TResult = any> {
+export interface FetchActionResult<R extends FetchReturnType = FetchReturnType> {
   status: FetchActionResultStatus; // 默认 'success'（未抛错且未标记跳过）
-  result?: TResult;
+  returnType?: R;
+  result?: FetchReturnTypeFor<R>;
   error?: Error;
   meta?: FetchActionMeta; // 便于审计与调试的元信息
 }
 
-export interface BaseFetchActionOptions {
-  name: string
+export interface BaseFetchActionProperties {
+  id?: string
+  name?: string // action id 的别名
   params?: any
+  // 如果设置则将结果存储到上下文的outputs[storeAs]
   storeAs?: string
+  // defaults to true if in main action
+  // defaults to false if in collector action
   failOnError?: boolean
+  // defaults to false
   failOnTimeout?: boolean
   timeoutMs?: number
   maxRetries?: number
   [key: string]: any
 }
+export type BaseFetchActionOptions = RequireAtLeastOne<BaseFetchActionProperties, 'id' | 'name'>
 
-export interface BaseFetchCollectorOptions extends BaseFetchActionOptions {
+export interface BaseFetchCollectorActionProperties extends BaseFetchActionProperties {
   // 启动事件，支持正则表达式，任意事件发生就启动`onStart`
   startOn?: string|RegExp|Array<string|RegExp>
   // 结束事件，任意事件发生就结束`onEnd`
@@ -58,31 +68,98 @@ export interface BaseFetchCollectorOptions extends BaseFetchActionOptions {
   bindTo?: string // self, session, action, action:name
 }
 
-export interface FetchActionOptions extends BaseFetchActionOptions {
+export type BaseFetchCollectorOptions = RequireAtLeastOne<BaseFetchCollectorActionProperties, 'id' | 'name'>
+
+export interface FetchActionProperties extends BaseFetchActionProperties {
   collectors?: BaseFetchCollectorOptions[]
 }
 
+export type FetchActionOptions = RequireAtLeastOne<FetchActionProperties, 'id' | 'name'>
+
+export type FetchActionCapabilities = {
+  [mode in BaseFetchMode]?: FetchActionCapabilityMode
+}
+
 export abstract class BaseFetchAction {
-  abstract name: string
-  abstract supports: BaseFetchMode[]
+  // ===== 静态成员：注册管理 =====
+  private static registry = new Map<string, typeof BaseFetchAction>()
+
+  static register(actionClass: typeof BaseFetchAction): void {
+    const id = (actionClass as any).id;
+    if (!id) throw new Error('Action must define static id');
+    if (this.registry.has(id)) throw new Error(`Action id duplicated: ${id}`);
+    this.registry.set(id, actionClass)
+  }
+
+  static get(id: string): typeof BaseFetchAction | undefined {
+    return this.registry.get(id)
+  }
+
+  static create(id: string): BaseFetchAction | undefined {
+    const ActionClass = this.registry.get(id) as any
+    return ActionClass ? new ActionClass() : undefined
+  }
+
+  static has(name: string): boolean {
+    return this.registry.has(name)
+  }
+
+  static list(): string[] {
+    return Array.from(this.registry.keys())
+  }
+  // ===== 注册管理 END =====
+
+  static returnType: FetchReturnType;
+  static id: string
+  static capabilities: FetchActionCapabilities
+
+  static getCapability(mode?: BaseFetchMode): FetchActionCapabilityMode {
+    return this.capabilities[mode!] ?? 'noop'
+  }
+
+  getCapability(mode?: BaseFetchMode): FetchActionCapabilityMode {
+    const ctor = this.constructor as typeof BaseFetchAction
+    return ctor.getCapability(mode)
+  }
+
+  get id(): string {
+    return (this.constructor as any).id
+  }
+
+  get returnType(): FetchReturnType {
+    return (this.constructor as any).returnType ?? 'any'
+  }
 
   // 生命周期钩子（可选）
-  onStart?(context: FetchContext): Promise<void>|void
-  onEnd?(context: FetchContext): Promise<void>|void
+  onStart?(context: FetchContext, options?: FetchActionOptions): Promise<void>|void
+  onEnd?(context: FetchContext, options?: FetchActionOptions): Promise<void>|void
 
   // 核心执行逻辑（必需）
-  abstract onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promise<FetchActionResult|void>|FetchActionResult|void
+  abstract onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promise<any>|any
 
-  async execute(context: FetchContext, params?: FetchActionOptions): Promise<FetchActionResult|void> {
-    await this.onStart?.(context);
+  // the main action entry point
+  async execute(context: FetchContext, options?: FetchActionOptions): Promise<FetchActionResult> {
+    await this.onStart?.(context, options);
     try {
-      const result = await this.onExecute(context, params);
+      let result = await this.onExecute(context, options);
+      if (!result?.returnType) {
+        result = {
+          status: FetchActionResultStatus.Success,
+          returnType: this.returnType,
+          result,
+        };
+      }
       return result;
     } catch (error: any) {
-      if (!params?.failOnError) {
+      if (!options?.failOnError) {
         return {
           status: FetchActionResultStatus.Failed,
           error,
+          meta: {
+            id: this.id,
+            mode: context.mode as any,
+            capability: this.getCapability(context.mode as any),
+          },
         };
       } else throw error;
     } finally {

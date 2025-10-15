@@ -1,5 +1,3 @@
-import type { FetchActionOptions, FetchActionResult } from './base-fetch-action'
-
 export type Headers = Record<string, string>;
 
 // Cookie 定义
@@ -15,20 +13,20 @@ export interface Cookie {
 }
 
 export type BaseFetchMode = 'http' | 'browser';
-export type FetchMode = BaseFetchMode | 'auto' | 'smart' | 'site';
+export type FetchMode = BaseFetchMode | 'auto';
 export type BrowserEngine = 'playwright' | 'puppeteer';
 
-export interface BaseFetcherOptions {
+export interface BaseFetcherProperties {
   /**
    * 抓取模式
    *
    * - `http`: 使用 HTTP 进行抓取
    * - `browser`: 使用浏览器进行抓取
    * - `auto`: auto 会走“智能探测”选择 http 或 browser, 但是如果没有启用 smart，并且在站点注册表中没有，那么则等价为 http.
-   * - `smart`: 进行智能探测，自动选择模式
-   * - `site`: 使用站点注册表进行抓取，如果没有站点注册表，则等价为 http.
    */
   mode?: FetchMode;
+  enableSmart?: boolean  // 启用自动选择和探测
+  useSiteRegistry?: boolean  // 使用站点配置
   antibot?: boolean;
   headers?: Record<string, string>;
   cookies?: Cookie[];
@@ -65,7 +63,7 @@ export interface BaseFetcherOptions {
   delayBetweenRequestsMs?: number;
 }
 
-export interface FetchSite extends BaseFetcherOptions {
+export interface FetchSite extends BaseFetcherProperties {
   domain: string;
   pathScope?: string[];
 
@@ -76,7 +74,7 @@ export interface FetchSite extends BaseFetcherOptions {
   };
 }
 
-export interface FetcherOptions extends BaseFetcherOptions {
+export interface FetcherOptions extends BaseFetcherProperties {
   sites?: FetchSite[];
 }
 
@@ -109,35 +107,4 @@ export interface FetchResponse {
   json?: any;
   cookies?: Cookie[];
   metadata?: FetchMetadata;
-}
-
-export type FetchReturnKind = 'response' | 'context' | 'result' | 'outputs' | 'none';
-
-// 返回类型映射
-export type FetchReturnTypeFor<R extends FetchReturnKind> =
-  R extends 'response' ? FetchResponse :
-  R extends 'context' ? FetchContext :
-  R extends 'result' ? FetchActionResult | undefined :
-  R extends 'outputs' ? Record<string, any> :
-  void;
-
-
-interface FetchActionInContext extends FetchActionOptions {
-  index?: number;
-  startedAt: number;
-  finishedAt?: number;
-  error?: Error;
-}
-
-export interface FetchContext extends BaseFetcherOptions {
-  id: string;
-  url?: string;
-  finalUrl?: string;
-
-  lastResponse?: FetchResponse;
-  lastResult?: FetchActionResult;
-
-  currentAction?: FetchActionInContext;
-
-  outputs: Map<string, any>;
 }
