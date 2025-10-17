@@ -1,7 +1,7 @@
 import type { RequireAtLeastOne } from 'type-fest';
 import { FetchContext } from "./context";
 import { FetchReturnType, FetchReturnTypeFor } from "./fetch-return";
-import type { BaseFetchMode, BrowserEngine, FetchResponse } from "./types"
+import type { FetchEngineType, FetchResponse } from "./types"
 
 export enum FetchActionResultStatus {
   /**
@@ -25,8 +25,7 @@ export type FetchActionCapabilityMode = 'native' | 'simulate' | 'noop';
 interface FetchActionMeta {
   id: string
   index?: number
-  mode?: BaseFetchMode;
-  engine?: BrowserEngine;
+  engineType?: FetchEngineType;
   capability?: FetchActionCapabilityMode;
   response?: FetchResponse;
   timings?: { start: number; total: number };
@@ -77,25 +76,29 @@ export interface FetchActionProperties extends BaseFetchActionProperties {
 export type FetchActionOptions = RequireAtLeastOne<FetchActionProperties, 'id' | 'name'>
 
 export type FetchActionCapabilities = {
-  [mode in BaseFetchMode]?: FetchActionCapabilityMode
+  [mode in FetchEngineType]?: FetchActionCapabilityMode
 }
 
-export abstract class BaseFetchAction {
+export abstract class FetchAction {
   // ===== 静态成员：注册管理 =====
-  private static registry = new Map<string, typeof BaseFetchAction>()
+  private static registry = new Map<string, typeof FetchAction>()
 
-  static register(actionClass: typeof BaseFetchAction): void {
+  static register(actionClass: typeof FetchAction): void {
     const id = (actionClass as any).id;
     if (!id) throw new Error('Action must define static id');
     if (this.registry.has(id)) throw new Error(`Action id duplicated: ${id}`);
     this.registry.set(id, actionClass)
   }
 
-  static get(id: string): typeof BaseFetchAction | undefined {
+  static get(id: string): typeof FetchAction | undefined {
     return this.registry.get(id)
   }
 
-  static create(id: string): BaseFetchAction | undefined {
+  static create(id: FetchActionOptions): FetchAction | undefined
+  static create(id: string): FetchAction | undefined
+  static create(idOrOptions: string|FetchActionOptions): FetchAction | undefined {
+    const id = typeof idOrOptions === 'string' ? idOrOptions : idOrOptions.id || idOrOptions.name;
+    if (!id) throw new Error('Action must have id or name');
     const ActionClass = this.registry.get(id) as any
     return ActionClass ? new ActionClass() : undefined
   }
@@ -113,12 +116,12 @@ export abstract class BaseFetchAction {
   static id: string
   static capabilities: FetchActionCapabilities
 
-  static getCapability(mode?: BaseFetchMode): FetchActionCapabilityMode {
+  static getCapability(mode?: FetchEngineType): FetchActionCapabilityMode {
     return this.capabilities[mode!] ?? 'noop'
   }
 
-  getCapability(mode?: BaseFetchMode): FetchActionCapabilityMode {
-    const ctor = this.constructor as typeof BaseFetchAction
+  getCapability(mode?: FetchEngineType): FetchActionCapabilityMode {
+    const ctor = this.constructor as typeof FetchAction
     return ctor.getCapability(mode)
   }
 
@@ -157,8 +160,8 @@ export abstract class BaseFetchAction {
           error,
           meta: {
             id: this.id,
-            mode: context.mode as any,
-            capability: this.getCapability(context.mode as any),
+            engineType: context.engine as any,
+            capability: this.getCapability(context.engine as any),
           },
         };
       } else throw error;
