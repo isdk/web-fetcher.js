@@ -1,4 +1,4 @@
-import { FetchActionResult } from "./fetch-action";
+import { FetchActionResult } from "../action/fetch-action";
 import { FetchContext } from "./context";
 import { FetchResponse } from "./types";
 

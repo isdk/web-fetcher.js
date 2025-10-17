@@ -1,5 +1,5 @@
 import type { Cookie } from 'crawlee';
-import { FetchActionOptions } from "./fetch-action";
+import { FetchActionOptions } from "../action/fetch-action";
 
 export type { Cookie } from 'crawlee';
 
