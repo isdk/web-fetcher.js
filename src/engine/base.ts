@@ -1,4 +1,3 @@
-import { FetchActionCapabilityMode } from "../fetcher/base-fetch-action";
 import { FetchContext } from "../fetcher/context";
 import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse } from "../fetcher/types";
 
