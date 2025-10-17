@@ -1,6 +1,10 @@
-export type Headers = Record<string, string>;
+import type { Cookie } from 'crawlee';
+import { FetchActionOptions } from "./base-fetch-action";
+
+export type { Cookie } from 'crawlee';
 
 // Cookie 定义
+/*
 export interface Cookie {
   name: string;
   value: string;
@@ -11,10 +15,13 @@ export interface Cookie {
   secure?: boolean;
   sameSite?: 'Strict' | 'Lax' | 'None';
 }
+*/
 
-export type BaseFetchMode = 'http' | 'browser';
-export type FetchMode = BaseFetchMode | 'auto';
+export type FetchEngineType = 'http' | 'browser';
 export type BrowserEngine = 'playwright' | 'puppeteer';
+
+type FetchEngineMode = FetchEngineType | 'auto';
+type ResourceType = 'image' | 'stylesheet' | 'font' | 'script' | 'media' | string;
 
 export interface BaseFetcherProperties {
   /**
@@ -24,17 +31,18 @@ export interface BaseFetcherProperties {
    * - `browser`: 使用浏览器进行抓取
    * - `auto`: auto 会走“智能探测”选择 http 或 browser, 但是如果没有启用 smart，并且在站点注册表中没有，那么则等价为 http.
    */
-  mode?: FetchMode;
-  enableSmart?: boolean  // 启用自动选择和探测
+  engine?: FetchEngineMode;
+  enableSmart?: boolean  // 启用智能探测
   useSiteRegistry?: boolean  // 使用站点配置
   antibot?: boolean;
+
   headers?: Record<string, string>;
   cookies?: Cookie[];
   reuseCookies?: boolean; // 默认 true
 
   proxy?: string | string[];
   // 阻止加载特定类型的资源
-  blockResources?: Array<'images'|'stylesheets'|'fonts'|'scripts'|'media'|string>;
+  blockResources?: ResourceType[];
 
 
   // browser 模式下，没有对应的配置，需要根据浏览器类型去设置浏览器内部配置，也可能无法配置。
@@ -76,10 +84,11 @@ export interface FetchSite extends BaseFetcherProperties {
 
 export interface FetcherOptions extends BaseFetcherProperties {
   sites?: FetchSite[];
+  actions?: FetchActionOptions[];
 }
 
 export interface FetchMetadata {
-  mode: BaseFetchMode;
+  mode: FetchEngineType;
   engine?: BrowserEngine;
   timings?: {
     start: number;
