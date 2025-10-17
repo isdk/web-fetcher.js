@@ -1,7 +1,7 @@
 import type { RequireAtLeastOne } from 'type-fest';
-import { FetchContext } from "./context";
-import { FetchReturnType, FetchReturnTypeFor } from "./fetch-return";
-import type { FetchEngineType, FetchResponse } from "./types"
+import { FetchContext } from "../fetcher/context";
+import { FetchReturnType, FetchReturnTypeFor } from "../fetcher/fetch-return";
+import type { FetchEngineType, FetchResponse } from "../fetcher/types"
 
 export enum FetchActionResultStatus {
   /**
