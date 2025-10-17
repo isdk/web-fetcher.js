@@ -1,5 +1,5 @@
 import { FetchContext } from "../fetcher/context";
-import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse } from "../fetcher/types";
+import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType } from "../fetcher/types";
 
 /**
  * Engine 的唯一职责：对 Crawler 做统一抽象
@@ -67,6 +67,8 @@ export abstract class FetchEngine {
   abstract click(selectorOrHref: string): Promise<void>; // http: 仅当能解析为 a[href] 才模拟
   abstract fill(selector: string, value: string): Promise<void>; // http: fill form 模拟
   abstract submit(selector?: string): Promise<void>; // http: post form 模拟
+  // 资源拦截（统一实现，不依赖引擎差异）
+  abstract blockResources(types: ResourceType[]): Promise<boolean>;
 
   // headers 重载
   async headers(): Promise<Record<string, string>>;
@@ -104,9 +106,7 @@ export abstract class FetchEngine {
     }
     return [...this.jar];
   }
-
-  // 资源拦截（统一实现，不依赖引擎差异）
-  abstract blockResources(types: Array<'image'|'stylesheet'|'font'|'script'|'media'|string>): Promise<boolean>;
+  async dispose(): Promise<void> {} // for cleanup
 
   // 能力协商（动作层可打标：native/simulate/noop）
   // abstract capabilityOf(actionName: string): FetchActionCapabilityMode;

@@ -21,7 +21,7 @@ export type FetchEngineType = 'http' | 'browser';
 export type BrowserEngine = 'playwright' | 'puppeteer';
 
 type FetchEngineMode = FetchEngineType | 'auto';
-type ResourceType = 'image' | 'stylesheet' | 'font' | 'script' | 'media' | string;
+export type ResourceType = 'image' | 'stylesheet' | 'font' | 'script' | 'media' | string;
 
 export interface BaseFetcherProperties {
   /**
