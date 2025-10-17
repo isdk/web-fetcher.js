@@ -1,6 +1,6 @@
 import { EventEmitter } from 'events-ex'
 import { FetchEngine } from "../engine/base";
-import { FetchActionOptions, FetchActionProperties, FetchActionResult } from "./base-fetch-action";
+import { FetchActionOptions, FetchActionProperties, FetchActionResult } from "./fetch-action";
 import { FetchReturnType } from "./fetch-return";
 import { BaseFetcherProperties, FetchResponse } from "./types";
 
