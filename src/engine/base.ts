@@ -1,8 +1,19 @@
 import { FetchContext } from "../fetcher/context";
 import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType } from "../fetcher/types";
 
+export interface GotoOptions {
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
+  timeoutMs?: number;
+}
+
+export interface WaitForOptions {
+  ms?: number;
+  selector?: string;
+  networkIdle?: boolean;
+}
+
 /**
- * Engine 的唯一职责：对 Crawler 做统一抽象
+ * Engine 职责：对 Crawler 做统一抽象
  */
 export abstract class FetchEngine {
   // ===== 静态成员：注册管理 =====
@@ -28,11 +39,11 @@ export abstract class FetchEngine {
   static readonly id: string;
   static readonly mode: FetchEngineType
 
-  declare ctx?: FetchContext
-  declare opts?: BaseFetcherProperties
+  declare protected ctx?: FetchContext
+  declare protected opts?: BaseFetcherProperties
 
-  hdrs: Record<string, string> = {};
-  jar: Cookie[] = [];
+  protected hdrs: Record<string, string> = {};
+  protected jar: Cookie[] = [];
 
   _initialize?(ctx?: FetchContext, options?: BaseFetcherProperties): Promise<void>
   _cleanup?(): Promise<void>
@@ -59,10 +70,10 @@ export abstract class FetchEngine {
   }
 
   // 通用方法
-  abstract goto(url: string, opts?: { waitUntil?: 'load'|'domcontentloaded'|'networkidle'|'commit'; timeoutMs?: number}): Promise<void|FetchResponse>;
+  abstract goto(url: string, opts?: GotoOptions): Promise<void|FetchResponse>;
   abstract getContent(): Promise<FetchResponse>;
   // 条件等待（browser 原生；http 可 simulate(ms) 或直接 skipped）
-  abstract waitFor(options?: { ms?: number; selector?: string; networkIdle?: boolean }): Promise<void>;
+  abstract waitFor(options?: WaitForOptions): Promise<void>;
   // 交互（browser 原生；http 最小模拟 or skipped）
   abstract click(selectorOrHref: string): Promise<void>; // http: 仅当能解析为 a[href] 才模拟
   abstract fill(selector: string, value: string): Promise<void>; // http: fill form 模拟
@@ -73,24 +84,37 @@ export abstract class FetchEngine {
   // headers 重载
   async headers(): Promise<Record<string, string>>;
   async headers(name: string): Promise<string>;
-  async headers(headers: Record<string, string>): Promise<boolean>;
-  async headers(name: string, value: string): Promise<boolean>;
-  async headers(a?: any, b?: any): Promise<any> {
-    if (a == null && b == null) {
+  async headers(headers: Record<string, string>, replaced?: boolean): Promise<boolean>;
+  async headers(name: string, value: string|null): Promise<boolean>;
+  async headers(
+    nameOrHeaders?: string | Record<string, string>,
+    value?: string|boolean|null
+  ): Promise<Record<string, string> | string | boolean> {
+    if (nameOrHeaders === undefined) {
       return { ...this.hdrs };
     }
-    if (typeof a === 'string' && b == null) {
-      const key = a.toLowerCase();
-      return this.hdrs[key] ?? '';
+
+    if (typeof nameOrHeaders === 'string' && value === undefined) {
+      return this.hdrs[nameOrHeaders.toLowerCase()] || '';
     }
-    if (a && typeof a === 'object' && b == null) {
+
+    if (nameOrHeaders !== null && typeof nameOrHeaders === 'object') {
       const normalized: Record<string,string> = {};
-      for (const [k, v] of Object.entries(a)) normalized[k.toLowerCase()] = String(v);
-      this.hdrs = normalized;
+      for (const [k, v] of Object.entries(nameOrHeaders)) {normalized[k.toLowerCase()] = String(v);}
+      if (value === true) {
+        this.hdrs = normalized;
+      } else {
+        this.hdrs = { ...this.hdrs, ...normalized };
+      }
       return true;
     }
-    if (typeof a === 'string' && typeof b === 'string') {
-      this.hdrs[a.toLowerCase()] = b;
+
+    if (typeof nameOrHeaders === 'string') {
+      if (typeof value === 'string') {
+        this.hdrs[nameOrHeaders.toLowerCase()] = value;
+      } else if (value === null) {
+        delete this.hdrs[nameOrHeaders.toLowerCase()];
+      }
       return true;
     }
     return false;
@@ -102,6 +126,9 @@ export abstract class FetchEngine {
   async cookies(a?: any): Promise<any> {
     if (Array.isArray(a)) {
       this.jar = [...a];
+      return true;
+    } else if (a === null) {
+      this.jar = [];
       return true;
     }
     return [...this.jar];
