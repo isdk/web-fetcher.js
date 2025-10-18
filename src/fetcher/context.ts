@@ -4,11 +4,11 @@ import { FetchActionOptions, FetchActionProperties, FetchActionResult } from "..
 import { FetchReturnType } from "./fetch-return";
 import { BaseFetcherProperties, FetchResponse } from "./types";
 
-interface FetchActionInContext extends FetchActionProperties {
+export interface FetchActionInContext extends FetchActionProperties {
   index?: number;
-  startedAt: number;
-  finishedAt?: number;
   error?: Error;
+  depth?: number; // 嵌套深度，顶层为 0
+  // parent?: string;  // 父action路径，如 "customAction/goto" no used just for debug
 }
 
 export interface FetchContext extends BaseFetcherProperties {
@@ -32,6 +32,7 @@ export interface FetchContext extends BaseFetcherProperties {
   internal: {
     // 引擎实例
     engine?: FetchEngine
+    actionStack?: FetchActionInContext[]; // 动作调用栈
     [key: string]: any
   }
 
