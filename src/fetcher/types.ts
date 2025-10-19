@@ -69,6 +69,7 @@ export interface BaseFetcherProperties {
   maxConcurrency?: number;
   maxRequestsPerMinute?: number;
   delayBetweenRequestsMs?: number;
+  retries?: number;
 }
 
 export interface FetchSite extends BaseFetcherProperties {
@@ -109,8 +110,9 @@ export interface FetchResponse {
   finalUrl: string;
   statusCode?: number;
   statusText?: string;
-  headers: Headers;
+  headers: Record<string, string>;
   contentType?: string;
+  body?: string | Buffer<ArrayBufferLike>;
   html?: string;
   text?: string;
   json?: any;
