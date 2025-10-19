@@ -1,3 +1,4 @@
+import { defaultsDeep } from "lodash-es";
 import { FetchContext } from "../fetcher/context";
 import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType } from "../fetcher/types";
 import { normalizeHeaders } from "../utils/headers";
@@ -15,6 +16,33 @@ export interface WaitForOptions {
   networkIdle?: boolean;
 }
 
+const DefaultFetcherProperties: BaseFetcherProperties = {
+  engine: 'http',
+  enableSmart: true,
+  useSiteRegistry: true,
+  antibot: true,
+  headers: {},
+  cookies: [],
+  reuseCookies: true,
+  proxy: [],
+  blockResources: [],
+  ignoreSslErrors: true,
+  browser: {
+    engine: 'playwright',
+    headless: false,
+    waitUntil: 'domcontentloaded',
+  },
+  http: {
+    method: 'GET',
+  },
+  timeoutMs: 60000,
+  maxConcurrency: 1,
+  maxRequestsPerMinute: 1000,
+  delayBetweenRequestsMs: 0,
+  retries: 0,
+  sites: [],
+}
+
 /**
  * Engine 职责：对 Crawler 做统一抽象
  */
@@ -22,7 +50,7 @@ export abstract class FetchEngine {
   // ===== 静态成员：注册管理 =====
   private static registry = new Map<string, typeof FetchEngine>()
 
-  static register(engineClass: typeof FetchEngine): void {
+  static register<T extends typeof FetchEngine>(engineClass: T): void {
     const id = engineClass.id;
     if (!id) throw new Error('Engine must define static id');
     if (this.registry.has(id)) throw new Error(`Engine id duplicated: ${id}`);
@@ -39,6 +67,16 @@ export abstract class FetchEngine {
     }
   }
 
+  static async create(ctx: FetchContext, options?: BaseFetcherProperties) {
+    options = defaultsDeep(options, DefaultFetcherProperties) as BaseFetcherProperties;
+    const Engine = this.get(options.engine!) ?? this.getByMode(options.engine as FetchEngineType);
+    if (Engine) {
+      const result = new (Engine as any)() as FetchEngine;
+      await result.initialize(ctx, options);
+      return result;
+    }
+  }
+
   static readonly id: string;
   static readonly mode: FetchEngineType
 
@@ -50,6 +88,10 @@ export abstract class FetchEngine {
 
   protected _initialize?(ctx: FetchContext, options?: BaseFetcherProperties): Promise<void>
   protected _cleanup?(): Promise<void>
+
+  get context() {
+    return this.ctx;
+  }
 
   async initialize(context: FetchContext, options?: BaseFetcherProperties): Promise<void> {
     if (!this.ctx) {
@@ -81,7 +123,7 @@ export abstract class FetchEngine {
   // 条件等待（browser 原生；http 可 simulate(ms) 或直接 skipped）
   abstract waitFor(options?: WaitForOptions): Promise<void>;
   // 交互（browser 原生；http 最小模拟 or skipped）
-  abstract click(selectorOrHref: string): Promise<void>; // http: 仅当能解析为 a[href] 才模拟
+  abstract click(selector: string): Promise<void>; // http: 仅当能解析为 a[href] 才模拟
   abstract fill(selector: string, value: string): Promise<void>; // http: fill form 模拟
   abstract submit(selector?: string): Promise<void>; // http: post form 模拟
   // 资源拦截（统一实现，不依赖引擎差异）
@@ -139,7 +181,7 @@ export abstract class FetchEngine {
     }
     return [...this.jar];
   }
-  async dispose(): Promise<void> {} // for cleanup
+  async dispose(): Promise<void> {return this._cleanup?.()} // for cleanup
 
   // 能力协商（动作层可打标：native/simulate/noop）
   // abstract capabilityOf(actionName: string): FetchActionCapabilityMode;
