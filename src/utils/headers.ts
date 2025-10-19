@@ -2,6 +2,14 @@ import type { Cookie } from '../fetcher/types';
 
 export type HeaderValue = string | string[] | undefined;
 
+export function normalizeHeaders(h?: Record<string, string>) {
+  const ret: Record<string, string> = {};
+  if (h && typeof h === 'object') for (const [k, v] of Object.entries(h)) {
+    ret[k.toLowerCase()] = v;
+  }
+  return ret;
+}
+
 export function flattenHeaders(h: Record<string, HeaderValue> | undefined) {
   const out: Record<string, string> = {};
   if (!h) return out;
