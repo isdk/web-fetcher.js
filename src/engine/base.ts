@@ -1,7 +1,10 @@
 import { FetchContext } from "../fetcher/context";
 import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType } from "../fetcher/types";
+import { normalizeHeaders } from "../utils/headers";
 
 export interface GotoOptions {
+  method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'OPTIONS' | 'CONNECT' | 'PATCH';
+  payload?: any; // POST
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
   timeoutMs?: number;
 }
@@ -45,17 +48,20 @@ export abstract class FetchEngine {
   protected hdrs: Record<string, string> = {};
   protected jar: Cookie[] = [];
 
-  _initialize?(ctx?: FetchContext, options?: BaseFetcherProperties): Promise<void>
-  _cleanup?(): Promise<void>
+  protected _initialize?(ctx: FetchContext, options?: BaseFetcherProperties): Promise<void>
+  protected _cleanup?(): Promise<void>
 
   async initialize(context: FetchContext, options?: BaseFetcherProperties): Promise<void> {
-    this.ctx = context;
-    this.opts = options;
-    this.hdrs = { ...(options?.headers ?? {}) };
-    this.jar = [...(options?.cookies ?? [])];
-    if (!context.internal) {context.internal = {}}
-    context.internal.engine = this
-    await this._initialize?.(context, options);
+    if (!this.ctx) {
+      this.ctx = context;
+      this.opts = options;
+      this.hdrs = normalizeHeaders(options?.headers);
+
+      this.jar = [...(options?.cookies ?? [])];
+      if (!context.internal) {context.internal = {}}
+      context.internal.engine = this
+      await this._initialize?.(context, options);
+    }
   }
 
   async cleanup(): Promise<void> {
