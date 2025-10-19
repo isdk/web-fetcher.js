@@ -225,7 +225,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
     return true;
   }
 
-  async cleanup(): Promise<void> {
+  async _cleanup() {
     // 等待待处理的请求
     const pendingPromises = Array.from(this.pendingRequests.values()).map(
       (pending) => new Promise((resolve) => {

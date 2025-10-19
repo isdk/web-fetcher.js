@@ -21,7 +21,6 @@ export class CheerioFetchEngine extends FetchEngine {
   private lastResponse?: FetchResponse;
   private $?: CheerioAPI;
   private formData: Map<string, string> = new Map();
-  private html = '';
   private blockedTypes = new Set<string>();
   // 请求处理队列
   private pendingRequests = new Map<string, PendingRequest>();
@@ -255,7 +254,7 @@ export class CheerioFetchEngine extends FetchEngine {
     return true;
   }
 
-  async cleanup(): Promise<void> {
+  async _cleanup() {
     // 等待所有待处理请求完成
     const pendingPromises = Array.from(this.pendingRequests.values()).map(
       (pending) => new Promise((resolve) => {
@@ -290,8 +289,11 @@ export class CheerioFetchEngine extends FetchEngine {
     this.requestQueue = undefined;
     this.lastResponse = undefined;
     this.$ = undefined;
+    this.ctx = undefined;
+    this.opts = undefined;
+    this.url = undefined;
     this.formData.clear();
-    this.isInitialized = false;
+    this.blockedTypes.clear();
   }
 }
 
