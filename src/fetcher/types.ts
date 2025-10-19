@@ -70,6 +70,9 @@ export interface BaseFetcherProperties {
   maxRequestsPerMinute?: number;
   delayBetweenRequestsMs?: number;
   retries?: number;
+
+  sites?: FetchSite[];
+  url?: string;
 }
 
 export interface FetchSite extends BaseFetcherProperties {
@@ -84,7 +87,6 @@ export interface FetchSite extends BaseFetcherProperties {
 }
 
 export interface FetcherOptions extends BaseFetcherProperties {
-  sites?: FetchSite[];
   actions?: FetchActionOptions[];
 }
 
