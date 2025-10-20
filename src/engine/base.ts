@@ -42,7 +42,8 @@ export abstract class FetchEngine {
 
   static async create(ctx: FetchContext, options?: BaseFetcherProperties) {
     options = defaultsDeep(options, DefaultFetcherProperties) as BaseFetcherProperties;
-    const Engine = this.get(options.engine!) ?? this.getByMode(options.engine as FetchEngineType);
+    const engineName = (options.engine ?? ctx.engine) as FetchEngineType;
+    const Engine = this.get(engineName!) ?? this.getByMode(engineName);
     if (Engine) {
       const result = new (Engine as any)() as FetchEngine;
       await result.initialize(ctx, options);
@@ -62,6 +63,14 @@ export abstract class FetchEngine {
   protected _initialize?(ctx: FetchContext, options?: BaseFetcherProperties): Promise<void>
   protected _cleanup?(): Promise<void>
 
+  get id() {
+    return (this.constructor as typeof FetchEngine).id;
+  }
+
+  get mode() {
+    return (this.constructor as typeof FetchEngine).mode;
+  }
+
   get context() {
     return this.ctx;
   }
@@ -75,6 +84,7 @@ export abstract class FetchEngine {
       this.jar = [...(options?.cookies ?? [])];
       if (!context.internal) {context.internal = {}}
       context.internal.engine = this
+      context.engine = this.mode
       await this._initialize?.(context, options);
     }
   }
@@ -154,7 +164,15 @@ export abstract class FetchEngine {
     }
     return [...this.jar];
   }
-  async dispose(): Promise<void> {return this._cleanup?.()} // for cleanup
+  async dispose(): Promise<void> {
+    const context = this.ctx;
+    await this._cleanup?.()
+    if (context) {
+      context.internal.engine = undefined;
+    }
+    this.ctx = undefined;
+    this.opts = undefined;
+  }
 
   // 能力协商（动作层可打标：native/simulate/noop）
   // abstract capabilityOf(actionName: string): FetchActionCapabilityMode;
