@@ -2,7 +2,7 @@ import { FetchActionResult } from "../action/fetch-action";
 import { FetchContext } from "./context";
 import { FetchResponse } from "./types";
 
-export type FetchReturnType = 'response' | 'context' | 'outputs' | 'any';
+export type FetchReturnType = 'response' | 'context' | 'outputs' | 'any' | 'none';
 
 export interface FetchReturnTypeRegistry {
   response: FetchResponse;
@@ -10,6 +10,7 @@ export interface FetchReturnTypeRegistry {
   result: FetchActionResult<any> | undefined;
   outputs: Record<string, any>;
   any: any;
+  none: void;
 }
 
 // 方便未来扩展，可以通过合并模块来添加新的映射
