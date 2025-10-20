@@ -15,6 +15,9 @@ interface PendingRequest {
 }
 
 export class CheerioFetchEngine extends FetchEngine {
+  static readonly id = 'cheerio';
+  static readonly mode = 'http';
+
   private crawler?: CheerioCrawler;
   private requestQueue?: RequestQueue;
   private url?: string;
@@ -289,8 +292,6 @@ export class CheerioFetchEngine extends FetchEngine {
     this.requestQueue = undefined;
     this.lastResponse = undefined;
     this.$ = undefined;
-    this.ctx = undefined;
-    this.opts = undefined;
     this.url = undefined;
     this.formData.clear();
     this.blockedTypes.clear();

@@ -14,6 +14,9 @@ interface PendingRequest {
 const DefaultTimeoutMs = 30_000;
 
 export class PlaywrightFetchEngine extends FetchEngine {
+  static readonly id = 'playwright';
+  static readonly mode = 'browser';
+
   private crawler?: PlaywrightCrawler;
   private requestQueue?: RequestQueue;
   private lastResponse?: FetchResponse;
