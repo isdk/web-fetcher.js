@@ -116,8 +116,8 @@ export class FetchSession {
     }
     if (!this.context.internal.engine) {
       const url = actionOptions?.params?.url ?? this.context.url;
-      await maybeCreateEngine(this.context, { url })
-      // this.context.internal.engine = await this.getEngine()
+      const engine = await maybeCreateEngine(this.context, { url })
+      if (!engine) {throw new Error('No engine found')}
     }
 
   }
@@ -147,11 +147,5 @@ export class FetchSession {
       },
     }, DefaultFetcherProperties)
     return result
-  }
-
-  private async getEngine(context = this.context, options = this.options) {
-    if (!context) {
-      throw new Error('No context provided')
-    }
   }
 }
