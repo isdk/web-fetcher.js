@@ -33,6 +33,7 @@ export interface FetchContext extends BaseFetcherProperties {
     // 引擎实例
     engine?: FetchEngine
     actionStack?: FetchActionInContext[]; // 动作调用栈
+    actionIndex?: number;
     [key: string]: any
   }
 
