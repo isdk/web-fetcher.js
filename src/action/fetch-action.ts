@@ -342,17 +342,17 @@ export abstract class FetchAction {
   }
 
   // the main action entry point
-  async execute(context: FetchContext, options?: FetchActionOptions): Promise<FetchActionResult> {
+  async execute<R extends FetchReturnType = 'any'>(context: FetchContext, options?: FetchActionOptions): Promise<FetchActionResult<R>> {
     const scope = await this.beforeExec(context, options);
-    let result: FetchActionResult|undefined;
+    let result: FetchActionResult<R>|undefined;
     try {
       result = await this.onExecute(context, options);
-      if (!result?.returnType) {
+      if (!result || !result.returnType) {
         result = {
           status: FetchActionResultStatus.Success,
           returnType: this.returnType ?? 'any',
           result,
-        };
+        } as FetchActionResult<R>;
       }
       return result;
     } catch (error: any) {
