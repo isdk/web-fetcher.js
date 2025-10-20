@@ -1,0 +1,6 @@
+export * from './click'
+export * from './fill'
+export * from './get-content'
+export * from './goto'
+export * from './submit'
+export * from './wait-for'
