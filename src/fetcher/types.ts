@@ -121,3 +121,30 @@ export interface FetchResponse {
   cookies?: Cookie[];
   metadata?: FetchMetadata;
 }
+
+export const DefaultFetcherProperties: BaseFetcherProperties = {
+  engine: 'http',
+  enableSmart: true,
+  useSiteRegistry: true,
+  antibot: true,
+  headers: {},
+  cookies: [],
+  reuseCookies: true,
+  proxy: [],
+  blockResources: [],
+  ignoreSslErrors: true,
+  browser: {
+    engine: 'playwright',
+    headless: false,
+    waitUntil: 'domcontentloaded',
+  },
+  http: {
+    method: 'GET',
+  },
+  timeoutMs: 60000,
+  maxConcurrency: 1,
+  maxRequestsPerMinute: 1000,
+  delayBetweenRequestsMs: 0,
+  retries: 0,
+  sites: [],
+}
