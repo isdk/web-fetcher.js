@@ -1,6 +1,6 @@
 import { PlaywrightCrawler, RequestQueue } from 'crawlee';
 import type { PlaywrightCrawlingContext } from 'crawlee';
-import { FetchEngine, type GotoOptions, type WaitForOptions } from './base';
+import { FetchEngine, type GotoActionOptions, type WaitForActionOptions } from './base';
 import { BaseFetcherProperties, FetchResponse } from '../fetcher/types';
 import { FetchContext } from '../fetcher/context';
 
@@ -134,7 +134,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
     });
   }
 
-  async goto(url: string, opts?: GotoOptions): Promise<FetchResponse> {
+  async goto(url: string, opts?: GotoActionOptions): Promise<FetchResponse> {
 
     if (!this.requestQueue) {
       throw new Error('RequestQueue not initialized');
@@ -169,7 +169,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
     return { url, finalUrl: url, body: html, html, text: html, headers: this.lastResponse?.headers || {} };
   }
 
-  async waitFor(options?: WaitForOptions): Promise<void> {
+  async waitFor(options?: WaitForActionOptions): Promise<void> {
     const page = this.currentPage;
     if (!page) throw new Error('No page available');
 
