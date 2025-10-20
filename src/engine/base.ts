@@ -3,14 +3,14 @@ import { FetchContext } from "../fetcher/context";
 import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType, DefaultFetcherProperties } from "../fetcher/types";
 import { normalizeHeaders } from "../utils/headers";
 
-export interface GotoOptions {
+export interface GotoActionOptions {
   method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'OPTIONS' | 'CONNECT' | 'PATCH';
   payload?: any; // POST
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
   timeoutMs?: number;
 }
 
-export interface WaitForOptions {
+export interface WaitForActionOptions {
   ms?: number;
   selector?: string;
   networkIdle?: boolean;
@@ -101,10 +101,10 @@ export abstract class FetchEngine {
   }
 
   // 通用方法
-  abstract goto(url: string, opts?: GotoOptions): Promise<void|FetchResponse>;
+  abstract goto(url: string, opts?: GotoActionOptions): Promise<void|FetchResponse>;
   abstract getContent(): Promise<FetchResponse>;
   // 条件等待（browser 原生；http 可 simulate(ms) 或直接 skipped）
-  abstract waitFor(options?: WaitForOptions): Promise<void>;
+  abstract waitFor(options?: WaitForActionOptions): Promise<void>;
   // 交互（browser 原生；http 最小模拟 or skipped）
   abstract click(selector: string): Promise<void>; // http: 仅当能解析为 a[href] 才模拟
   abstract fill(selector: string, value: string): Promise<void>; // http: fill form 模拟

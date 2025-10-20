@@ -1,6 +1,6 @@
 import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
 import type { CheerioCrawlingContext } from 'crawlee';
-import { FetchEngine, type GotoOptions, type WaitForOptions } from './base';
+import { FetchEngine, type GotoActionOptions, type WaitForActionOptions } from './base';
 import { BaseFetcherProperties, FetchResponse, ResourceType } from '../fetcher/types';
 import { FetchContext } from '../fetcher/context';
 import { isHref } from '../utils/helpers';
@@ -126,7 +126,7 @@ export class CheerioFetchEngine extends FetchEngine {
     });
   }
 
-  async goto(url: string, opts?: GotoOptions): Promise<void|FetchResponse> {
+  async goto(url: string, opts?: GotoActionOptions): Promise<void|FetchResponse> {
     if (!this.requestQueue) {
       throw new Error('RequestQueue not initialized');
     }
@@ -163,7 +163,7 @@ export class CheerioFetchEngine extends FetchEngine {
     return this.lastResponse;
   }
 
-  async waitFor(options?: WaitForOptions): Promise<void> {
+  async waitFor(options?: WaitForActionOptions): Promise<void> {
     if (options?.ms) {
       await new Promise((resolve) => setTimeout(resolve, options.ms));
     }
