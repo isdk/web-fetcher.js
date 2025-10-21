@@ -123,7 +123,7 @@ export interface FetchResponse {
 }
 
 export const DefaultFetcherProperties: BaseFetcherProperties = {
-  engine: 'http',
+  // engine: 'http',
   enableSmart: true,
   useSiteRegistry: true,
   antibot: true,
