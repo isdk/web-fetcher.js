@@ -42,6 +42,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
   }
   // ============ 初始化 Crawler（仅一次）============
   protected async _initialize(ctx: FetchContext, options?: BaseFetcherProperties): Promise<void> {
+    const headless = ctx.browser?.headless ?? true;
     this.requestQueue = await RequestQueue.open(`playwright-queue-${ctx.id}`);
 
     this.crawler = new PlaywrightCrawler({
@@ -49,7 +50,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
       maxRequestRetries: ctx.retries || 3,
       maxConcurrency: 1,
-      headless: ctx.browser?.headless ?? true,
+      headless,
 
       // 启用 Session Pool
       useSessionPool: true,
@@ -123,7 +124,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
       launchContext: {
         launchOptions: {
-          headless: true,
+          headless,
         },
       },
     });
@@ -268,3 +269,4 @@ export class PlaywrightFetchEngine extends FetchEngine {
     this.lastResponse = undefined;
   }
 }
+FetchEngine.register(PlaywrightFetchEngine);
