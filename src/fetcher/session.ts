@@ -103,11 +103,11 @@ export class FetchSession {
     if (this.closed) return
     const eventBus = this.context.eventBus
 
-    eventBus.emit('sessionClosing', { sessionId: this.id })
+    eventBus.emit('session:closing', { sessionId: this.id })
 
     this.closed = true
 
-    eventBus.emit('sessionClosed', { sessionId: this.id })
+    eventBus.emit('session:closed', { sessionId: this.id })
   }
 
   private async ensureEngine(actionOptions?: FetchActionOptions) {

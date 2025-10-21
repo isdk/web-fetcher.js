@@ -1,5 +1,5 @@
 import { defaultsDeep } from "lodash-es";
-import { FetchContext } from "../fetcher/context";
+import { FetchEngineContext } from "../fetcher/context";
 import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType, DefaultFetcherProperties } from "../fetcher/types";
 import { normalizeHeaders } from "../utils/headers";
 
@@ -40,10 +40,10 @@ export abstract class FetchEngine {
     }
   }
 
-  static async create(ctx: FetchContext, options?: BaseFetcherProperties) {
+  static async create(ctx: FetchEngineContext, options?: BaseFetcherProperties) {
     options = defaultsDeep(options, DefaultFetcherProperties) as BaseFetcherProperties;
     const engineName = (options.engine ?? ctx.engine) as FetchEngineType;
-    const Engine = this.get(engineName!) ?? this.getByMode(engineName);
+    const Engine = engineName ? (this.get(engineName!) ?? this.getByMode(engineName)) : this !== FetchEngine ? this : null;
     if (Engine) {
       const result = new (Engine as any)() as FetchEngine;
       await result.initialize(ctx, options);
@@ -54,13 +54,13 @@ export abstract class FetchEngine {
   static readonly id: string;
   static readonly mode: FetchEngineType
 
-  declare protected ctx?: FetchContext
+  declare protected ctx?: FetchEngineContext
   declare protected opts?: BaseFetcherProperties
 
   protected hdrs: Record<string, string> = {};
   protected jar: Cookie[] = [];
 
-  protected _initialize?(ctx: FetchContext, options?: BaseFetcherProperties): Promise<void>
+  protected _initialize?(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void>
   protected _cleanup?(): Promise<void>
 
   get id() {
@@ -75,7 +75,7 @@ export abstract class FetchEngine {
     return this.ctx;
   }
 
-  async initialize(context: FetchContext, options?: BaseFetcherProperties): Promise<void> {
+  async initialize(context: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
     if (!this.ctx) {
       this.ctx = context;
       this.opts = options;

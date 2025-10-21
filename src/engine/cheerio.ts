@@ -2,7 +2,7 @@ import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
 import type { CheerioCrawlingContext } from 'crawlee';
 import { FetchEngine, type GotoActionOptions, type WaitForActionOptions } from './base';
 import { BaseFetcherProperties, FetchResponse, ResourceType } from '../fetcher/types';
-import { FetchContext } from '../fetcher/context';
+import { FetchEngineContext } from '../fetcher/context';
 import { isHref } from '../utils/helpers';
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
@@ -20,16 +20,17 @@ export class CheerioFetchEngine extends FetchEngine {
 
   private crawler?: CheerioCrawler;
   private requestQueue?: RequestQueue;
+  // 请求处理队列
+  private pendingRequests = new Map<string, PendingRequest>();
+  private requestCounter = 0;
+
   private url?: string;
   private lastResponse?: FetchResponse;
   private $?: CheerioAPI;
   private formData: Map<string, string> = new Map();
   private blockedTypes = new Set<string>();
-  // 请求处理队列
-  private pendingRequests = new Map<string, PendingRequest>();
-  private requestCounter = 0;
 
-  protected async _initialize(ctx: FetchContext, options?: BaseFetcherProperties): Promise<void> {
+  protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
     const proxyUrls = this.opts?.proxy ? typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy : undefined;
     const proxy = proxyUrls ? new ProxyConfiguration({ proxyUrls }) : undefined;
 

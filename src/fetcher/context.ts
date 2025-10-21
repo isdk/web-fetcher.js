@@ -11,7 +11,17 @@ export interface FetchActionInContext extends FetchActionProperties {
   // parent?: string;  // 父action路径，如 "customAction/goto" no used just for debug
 }
 
-export interface FetchContext extends BaseFetcherProperties {
+interface BaseFetchContextInteralState {
+    engine?: FetchEngine
+    [key: string]: any
+}
+
+interface FetchContextInteralState extends BaseFetchContextInteralState {
+    actionStack?: FetchActionInContext[]; // 动作调用栈
+    actionIndex?: number;
+}
+
+export interface FetchEngineContext extends BaseFetcherProperties {
   id: string;
   url?: string;
   finalUrl?: string;
@@ -19,6 +29,10 @@ export interface FetchContext extends BaseFetcherProperties {
   lastResponse?: FetchResponse;
   lastResult?: FetchActionResult;
 
+  internal: BaseFetchContextInteralState;
+}
+
+export interface FetchContext extends FetchEngineContext {
   currentAction?: FetchActionInContext;
 
   outputs: Record<string, any>;
@@ -29,13 +43,7 @@ export interface FetchContext extends BaseFetcherProperties {
   action<R extends FetchReturnType = 'any'>(name: string, params?: any, options?: Partial<FetchActionOptions>): Promise<FetchActionResult<R>>
 
   // ===== 内部状态（引擎专用）=====
-  internal: {
-    // 引擎实例
-    engine?: FetchEngine
-    actionStack?: FetchActionInContext[]; // 动作调用栈
-    actionIndex?: number;
-    [key: string]: any
-  }
+  internal: FetchContextInteralState;
 
   eventBus: EventEmitter;
 }

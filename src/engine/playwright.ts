@@ -2,7 +2,7 @@ import { PlaywrightCrawler, RequestQueue } from 'crawlee';
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import { FetchEngine, type GotoActionOptions, type WaitForActionOptions } from './base';
 import { BaseFetcherProperties, FetchResponse } from '../fetcher/types';
-import { FetchContext } from '../fetcher/context';
+import { FetchEngineContext } from '../fetcher/context';
 
 type Page = NonNullable<PlaywrightCrawlingContext['page']>;
 
@@ -41,7 +41,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
     }
   }
   // ============ 初始化 Crawler（仅一次）============
-  protected async _initialize(ctx: FetchContext, options?: BaseFetcherProperties): Promise<void> {
+  protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
     const headless = ctx.browser?.headless ?? true;
     this.requestQueue = await RequestQueue.open(`playwright-queue-${ctx.id}`);
 
