@@ -121,12 +121,13 @@ export class PlaywrightFetchEngine extends FetchEngine {
           }
         },
       ],
-
+      /*
       launchContext: {
         launchOptions: {
           headless,
         },
       },
+      */
     });
 
     // 启动 Crawler
