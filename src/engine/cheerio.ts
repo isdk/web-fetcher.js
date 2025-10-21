@@ -297,6 +297,7 @@ export class CheerioFetchEngine extends FetchEngine {
     this.blockedTypes.clear();
   }
 }
+FetchEngine.register(CheerioFetchEngine);
 
 function buildFormData($form: CheerioNode) {
   const formData: Record<string, string> = {};
