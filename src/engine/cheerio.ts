@@ -48,6 +48,9 @@ export class CheerioFetchEngine extends FetchEngine {
       persistCookiesPerSession: true, // 关键：让 Crawlee 管理 cookie
       sessionPoolOptions: {
         maxPoolSize: 1, // 单个 session，确保连续性
+        persistenceOptions: {
+          enable: false,
+        },
         sessionOptions: {
           maxUsageCount: 1000,
           maxErrorScore: 3,
