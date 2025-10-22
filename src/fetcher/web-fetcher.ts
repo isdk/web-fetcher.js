@@ -1,4 +1,3 @@
-import { FetchActionResultStatus } from "../action";
 import { FetchSession } from "./session";
 import { FetcherOptions, FetchResponse } from "./types";
 
