@@ -1,6 +1,5 @@
 export * from './types'
 export * from './context'
 export * from './fetch-return'
-export * from './select-engine'
 export * from './session'
 export * from './web-fetcher'
