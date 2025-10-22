@@ -1,0 +1,21 @@
+extends:
+  - '@antfu'
+  - prettier
+plugins:
+  - eslint-plugin-tsdoc
+ignorePatterns:
+  - web/**
+  - docs/**
+rules:
+  tsdoc/syntax: off
+  no-cond-assign: off
+  yml/plain-scalar: off
+  yml/quotes: off
+  unicorn/prefer-number-properties: off
+  '@typescript-eslint/no-explicit-any': off
+  # curly: [error, multi, consistent]
+  # curly: [error, multi-line]
+  # max-statements-per-line: off
+  # brace-style: [error, 1tbs, {allowSingleLine: true}]
+  # '@typescript-eslint/brace-style': off
+  # '@typescript-eslint/comma-dangle': off

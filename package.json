@@ -1,0 +1,85 @@
+{
+  "name": "@isdk/web-fetcher",
+  "version": "0.1.0",
+  "author": "Riceball LEE <snowyu.lee@gmail.com>",
+  "homepage": "https://github.com/isdk/web-fetcher.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/isdk/web-fetcher.js.git"
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs"
+    }
+  },
+  "scripts": {
+    "build-fast": "tsup",
+    "build": "pnpm run build-fast --dts-resolve --dts && pnpm run doc:md",
+    "clean": "rm -fr web docs dist",
+    "doc": "typedoc --plugin none --out web",
+    "doc:md": "typedoc --plugin typedoc-plugin-markdown --out docs",
+    "style": "pnpm run format -c && pnpm run lint",
+    "style:fix": "pnpm run format:fix && npm run lint:fix",
+    "format": "prettier \"**/*.{ts,tsx,js,jsx,css,scss,sass,less,md}\"",
+    "format:fix": "pnpm run format --write",
+    "lint": "eslint .",
+    "lint:fix": "pnpm run lint --fix",
+    "test": "vitest run",
+    "release": "pnpm run clean && pnpm run build && git add -f docs && git ci -m 'docs: update API docs' && pnpm dlx commit-and-tag-version -s",
+    "release.alpha": "pnpm run release -- --prerelease alpha"
+  },
+  "dependencies": {
+    "camoufox-js": "^0.7.0",
+    "cheerio": "^1.1.2",
+    "crawlee": "^3.15.1",
+    "events-ex": "^2.1.0",
+    "jsdom": "^27.0.0",
+    "lodash-es": "^4.17.21",
+    "playwright": "^1.56.0",
+    "util-ex": "^2.4.0"
+  },
+  "devDependencies": {
+    "@antfu/eslint-config": "^4.10.1",
+    "@types/jest": "^29.5.14",
+    "@types/jsdom": "^27.0.0",
+    "@types/lodash-es": "^4.17.12",
+    "@typescript-eslint/eslint-plugin": "~8.41.0",
+    "eslint": "^9.34.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-tsdoc": "^0.4.0",
+    "prettier": "^3.6.2",
+    "terser": "^5.44.0",
+    "tsup": "^8.5.0",
+    "tsx": "^4.20.5",
+    "type-fest": "^4.41.0",
+    "typedoc": "^0.28.13",
+    "typedoc-plugin-markdown": "^4.8.1",
+    "typescript": "~5.7.3",
+    "vite": "^7.1.4",
+    "vitest": "^3.2.4",
+    "vitest-fetch-mock": "^0.4.5"
+  },
+  "files": [
+    "docs",
+    "dist"
+  ],
+  "keywords": [
+    "web",
+    "fetch",
+    "crawler",
+    "spiler",
+    "structure",
+    "data"
+  ],
+  "maintainers": [
+    "Riceball LEE <snowyu.lee@gmail.com>"
+  ],
+  "engines": {
+    "node": ">=20.11.1"
+  },
+  "types": "./dist/index.d.ts"
+}

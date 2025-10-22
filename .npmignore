@@ -1,0 +1,5 @@
+.npmrc
+.github/
+example/
+src/
+test/
