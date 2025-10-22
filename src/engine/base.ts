@@ -1,6 +1,6 @@
 import { defaultsDeep } from "lodash-es";
-import { FetchEngineContext } from "../fetcher/context";
-import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType, DefaultFetcherProperties } from "../fetcher/types";
+import { FetchEngineContext } from "../core/context";
+import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType, DefaultFetcherProperties } from "../core/types";
 import { normalizeHeaders } from "../utils/headers";
 
 export interface GotoActionOptions {
