@@ -1,6 +1,6 @@
 import type { FetchContext } from './context'
-import { FetchAction, FetchActionOptions, FetchActionResult, FetchActionResultStatus } from '../action/fetch-action'
-import { DefaultFetcherProperties, FetcherOptions, FetchResponse } from './types'
+import { FetchAction, FetchActionOptions, FetchActionResult } from '../action/fetch-action'
+import { DefaultFetcherProperties, FetcherOptions } from './types'
 import { FetchReturnType } from './fetch-return'
 import { createEvent } from '../event/create-event'
 import { defaultsDeep } from 'lodash-es'
