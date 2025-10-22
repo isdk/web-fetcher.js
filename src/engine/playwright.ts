@@ -54,8 +54,12 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
       // 启用 Session Pool
       useSessionPool: true,
+      persistCookiesPerSession: true,
       sessionPoolOptions: {
         maxPoolSize: 1,
+        persistenceOptions: {
+          enable: false,
+        },
         sessionOptions: {
           maxUsageCount: 1000,
           maxErrorScore: 3,
