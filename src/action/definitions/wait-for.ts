@@ -1,4 +1,4 @@
-import { FetchContext } from "../../fetcher/context";
+import { FetchContext } from "../../core/context";
 import { BaseFetchActionOptions, FetchAction } from "../fetch-action";
 
 export class WaitForAction extends FetchAction {

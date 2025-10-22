@@ -1,8 +1,8 @@
 import { PlaywrightCrawler, RequestQueue } from 'crawlee';
 import type { PlaywrightCrawlingContext } from 'crawlee';
 import { FetchEngine, type GotoActionOptions, type WaitForActionOptions } from './base';
-import { BaseFetcherProperties, FetchResponse } from '../fetcher/types';
-import { FetchEngineContext } from '../fetcher/context';
+import { BaseFetcherProperties, FetchResponse } from '../core/types';
+import { FetchEngineContext } from '../core/context';
 
 type Page = NonNullable<PlaywrightCrawlingContext['page']>;
 

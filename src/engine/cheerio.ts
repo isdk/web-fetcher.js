@@ -1,8 +1,8 @@
 import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
 import type { CheerioCrawlingContext } from 'crawlee';
 import { FetchEngine, type GotoActionOptions, type WaitForActionOptions } from './base';
-import { BaseFetcherProperties, FetchResponse, ResourceType } from '../fetcher/types';
-import { FetchEngineContext } from '../fetcher/context';
+import { BaseFetcherProperties, FetchResponse, ResourceType } from '../core/types';
+import { FetchEngineContext } from '../core/context';
 import { isHref } from '../utils/helpers';
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;

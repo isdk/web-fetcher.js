@@ -1,4 +1,4 @@
-import type { Cookie } from '../fetcher/types';
+import type { Cookie } from '../core/types';
 
 export type HeaderValue = string | string[] | undefined;
 
