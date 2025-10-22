@@ -303,7 +303,7 @@ export abstract class FetchAction {
       await collectors?.awaitExecPendings();
 
       context.lastResult = result;
-      if (result?.returnType === 'response') {
+      if (result?.returnType === 'response' && !result.error) {
         context.lastResponse = result.result;
       }
 
