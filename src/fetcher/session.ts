@@ -1,5 +1,5 @@
 import type { FetchContext } from './context'
-import { FetchAction, FetchActionOptions, FetchActionResult } from '../action/fetch-action'
+import { FetchAction, FetchActionOptions, FetchActionResult, FetchActionResultStatus } from '../action/fetch-action'
 import { DefaultFetcherProperties, FetcherOptions, FetchResponse } from './types'
 import { FetchReturnType } from './fetch-return'
 import { createEvent } from '../event/create-event'
@@ -70,42 +70,33 @@ export class FetchSession {
     }
   }
 
-  /**
-   * 执行动作序列
-   */
-  async executeAll(actions: FetchActionOptions[]): Promise<FetchResponse|undefined> {
+  async executeAll(actions: FetchActionOptions[]) {
     try {
       for (let i = 0; i < actions.length; i++) {
         const actionOptions = actions[i]
-
         await this.execute(actionOptions)
       }
-
       const response = this.context.lastResponse
-
       return response
     } catch (error) {
       throw error
     }
   }
 
-  /**
-   * 获取输出结果
-   */
   getOutputs(): Record<string, any> {
     return this.context.outputs
   }
 
-  /**
-   * 关闭会话
-   */
-  async close(): Promise<void> {
+  async dispose(): Promise<void> {
     if (this.closed) return
     const eventBus = this.context.eventBus
 
     eventBus.emit('session:closing', { sessionId: this.id })
-
-    this.closed = true
+    try {
+      await this.context.internal.engine?.dispose()
+    } finally {
+      this.closed = true
+    }
 
     eventBus.emit('session:closed', { sessionId: this.id })
   }
