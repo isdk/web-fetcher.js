@@ -1,5 +1,5 @@
 export * from './types'
 export * from './context'
-export * from './fetch-return'
+export * from './fetch-return-type'
 export * from './session'
 export * from './web-fetcher'
