@@ -8,12 +8,17 @@ export interface GotoActionOptions {
   payload?: any; // POST
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
   timeoutMs?: number;
+  headers?: Record<string, string>;
 }
 
 export interface WaitForActionOptions {
   ms?: number;
   selector?: string;
   networkIdle?: boolean;
+}
+
+export interface SubmitOptions {
+  enctype?: 'application/x-www-form-urlencoded' | 'application/json';
 }
 
 /**
@@ -108,7 +113,7 @@ export abstract class FetchEngine {
   // 交互（browser 原生；http 最小模拟 or skipped）
   abstract click(selector: string): Promise<void>; // http: 仅当能解析为 a[href] 才模拟
   abstract fill(selector: string, value: string): Promise<void>; // http: fill form 模拟
-  abstract submit(selector?: string): Promise<void>; // http: post form 模拟
+  abstract submit(selector?: string, options?: SubmitOptions): Promise<void>; // http: post form 模拟
   // 资源拦截（统一实现，不依赖引擎差异）
   abstract blockResources(types: ResourceType[]): Promise<boolean>;
 
