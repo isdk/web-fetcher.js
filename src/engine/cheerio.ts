@@ -1,17 +1,29 @@
 import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
-import type { CheerioCrawlingContext } from 'crawlee';
-import { FetchEngine, type GotoActionOptions, type WaitForActionOptions } from './base';
+import type { CheerioCrawlingContext, CheerioCrawlerOptions, CheerioFailedCrawlingContext } from 'crawlee';
+import { FetchEngine, type GotoActionOptions, type SubmitOptions, type WaitForActionOptions } from './base';
 import { BaseFetcherProperties, FetchResponse, ResourceType } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { isHref } from '../utils/helpers';
-
-type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
-type CheerioSelection = ReturnType<CheerioAPI>;
-type CheerioNode = ReturnType<CheerioSelection['first']>;
+import { EventEmitter } from 'events';
+import type { CheerioAPI, Cheerio } from 'cheerio';
 
 interface PendingRequest {
-  resolve: (value: FetchResponse) => void;
-  reject: (error: Error) => void;
+  resolve: (value: any) => void;
+  reject: (reason?: any) => void;
+}
+
+type Action =
+  | { type: 'click'; selector: string }
+  | { type: 'fill'; selector: string; value: string }
+  | { type: 'waitFor'; options?: WaitForActionOptions }
+  | { type: 'submit'; selector?: Cheerio<any> | string; options?: SubmitOptions }
+  | { type: 'getContent' }
+  | { type: 'dispose' };
+
+interface DispatchedAction {
+  action: Action;
+  resolve: (value?: any) => void;
+  reject: (reason?: any) => void;
 }
 
 export class CheerioFetchEngine extends FetchEngine {
@@ -20,299 +32,297 @@ export class CheerioFetchEngine extends FetchEngine {
 
   private crawler?: CheerioCrawler;
   private requestQueue?: RequestQueue;
-  // 请求处理队列
   private pendingRequests = new Map<string, PendingRequest>();
   private requestCounter = 0;
-
-  private url?: string;
-  private lastResponse?: FetchResponse;
-  private $?: CheerioAPI;
-  private formData: Map<string, string> = new Map();
+  private actionEmitter = new EventEmitter();
+  private isPageActive = false;
   private blockedTypes = new Set<string>();
 
-  protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
-    const proxyUrls = this.opts?.proxy ? typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy : undefined;
-    const proxy = proxyUrls ? new ProxyConfiguration({ proxyUrls }) : undefined;
+  private async buildResponse(context: CheerioCrawlingContext): Promise<FetchResponse> {
+    const { request, response, body } = context;
+    const text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
+    return {
+      url: request.url,
+      finalUrl: request.loadedUrl || request.url,
+      statusCode: response?.statusCode ?? 200,
+      statusText: response?.statusMessage,
+      headers: response?.headers as Record<string, string>,
+      body,
+      html: text,
+      text,
+    };
+  }
 
-    // 创建持久化的 RequestQueue
+  private async requestHandler(context: CheerioCrawlingContext): Promise<void> {
+    const { request } = context;
+    this.isPageActive = true;
+
+    const gotoPromise = this.pendingRequests.get(request.userData.requestId);
+    if (gotoPromise) {
+      const fetchResponse = await this.buildResponse(context);
+      gotoPromise.resolve(fetchResponse);
+      this.pendingRequests.delete(request.userData.requestId);
+    }
+
+    await new Promise<void>((resolveLoop) => {
+      const listener = async ({ action, resolve, reject }: DispatchedAction) => {
+        try {
+          if (action.type === 'dispose') {
+            this.actionEmitter.emit('dispose');
+            resolve();
+            return;
+          }
+          const result = await this.executeAction(context, action);
+          resolve(result);
+        } catch (error) {
+          reject(error);
+        }
+      };
+      this.actionEmitter.on('dispatch', listener);
+      this.actionEmitter.once('dispose', () => {
+        this.actionEmitter.removeListener('dispatch', listener);
+        resolveLoop();
+      });
+    });
+
+    this.isPageActive = false;
+  }
+
+  private async executeAction(context: CheerioCrawlingContext, action: Action): Promise<any> {
+    const { $ } = context;
+    switch (action.type) {
+      case 'click': {
+        const selector = action.selector;
+        const $link = $(selector).first();
+
+        if ($link.length === 0) {
+          // Selector not found. Let's assume it's a URL.
+          try {
+            const absoluteUrl = new URL(selector, context.request.loadedUrl || context.request.url).href;
+            return this.goto(absoluteUrl);
+          } catch {
+            throw new Error(`click: selector not found or invalid URL: ${selector}`);
+          }
+        }
+
+        if ($link.is('a') && $link.attr('href')) {
+          const href = $link.attr('href')!;
+          const absoluteUrl = new URL(href, context.request.loadedUrl || context.request.url).href;
+          return this.goto(absoluteUrl);
+        }
+
+        if ($link.is('input[type="submit"], button[type="submit"], button, input')) {
+          const $form = $link.closest('form');
+          if ($form.length) return this.executeAction(context, { type: 'submit', selector: $form });
+          throw new Error('click: submit-like element without form');
+        }
+
+        throw new Error(`click: unsupported element for http simulate. Selector: ${selector}`);
+      }
+      case 'fill': {
+        const $input = $(action.selector).first();
+        if ($input.length === 0) throw new Error(`fill: selector not found: ${action.selector}`);
+        if ($input.is('input, textarea, select')) {
+          $input.val(action.value);
+        } else {
+          throw new Error(`fill: not a form field: ${action.selector}`);
+        }
+        return;
+      }
+      case 'waitFor':
+        if (action.options?.ms) {
+          await new Promise((resolve) => setTimeout(resolve, action.options!.ms));
+        }
+        return;
+      case 'submit': {
+        const $form = typeof action.selector === 'string' ? $(action.selector).first() : action.selector != null ? action.selector : $('form').first();
+        if ($form.length === 0) throw new Error('submit: Form not found');
+        const actionAttr = $form.attr('action') || context.request.loadedUrl || context.request.url;
+        const method = ($form.attr('method') || 'GET').toUpperCase();
+        const url = new URL(actionAttr, context.request.loadedUrl || context.request.url).href;
+        const formData: Record<string, string> = {};
+        $form.find('input, select, textarea').each((_, el) => {
+          const $el = $(el);
+          const name = $el.attr('name');
+          if (!name) return;
+          const value = $el.val();
+          if (value != null) {
+            formData[name] = String(value);
+          }
+        });
+        if (method === 'GET') {
+          const urlObj = new URL(url);
+          Object.entries(formData).forEach(([key, value]) => urlObj.searchParams.set(key, value));
+          return this.goto(urlObj.href);
+        } else {
+          const enctype = action.options?.enctype || 'application/x-www-form-urlencoded';
+          let payload: any;
+          const headers: Record<string, string> = {};
+
+          if (enctype === 'application/json') {
+            payload = JSON.stringify(formData);
+            headers['Content-Type'] = 'application/json';
+          } else {
+            payload = new URLSearchParams(formData).toString();
+            headers['Content-Type'] = 'application/x-www-form-urlencoded';
+          }
+          return this.goto(url, { method: 'POST', payload, headers });
+        }
+      }
+      case 'getContent':
+        return this.buildResponse(context);
+      default:
+        throw new Error(`Unknown action type: ${(action as any).type}`);
+    }
+  }
+
+  private async dispatchAction<T>(action: Action): Promise<T> {
+    if (!this.isPageActive) {
+      throw new Error('No active page. Call goto() before performing actions.');
+    }
+    return new Promise<T>((resolve, reject) => {
+      this.actionEmitter.emit('dispatch', { action, resolve, reject });
+    });
+  }
+
+  protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
+    const proxyUrls = this.opts?.proxy ? (typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy) : undefined;
+    const proxy = proxyUrls?.length ? new ProxyConfiguration({ proxyUrls }) : undefined;
     this.requestQueue = await RequestQueue.open(`cheerio-queue-${ctx.id}`);
 
-    this.crawler = new CheerioCrawler({
+    const crawlerOptions: CheerioCrawlerOptions = {
+      additionalMimeTypes: ['text/plain'],
       requestQueue: this.requestQueue,
-
       maxConcurrency: 1,
       minConcurrency: 1,
       maxRequestRetries: ctx.retries || 3,
       requestHandlerTimeoutSecs: Math.max(5, Math.floor((this.opts?.timeoutMs || 30000) / 1000)),
       useSessionPool: true,
-      persistCookiesPerSession: true, // 关键：让 Crawlee 管理 cookie
+      persistCookiesPerSession: true,
       sessionPoolOptions: {
-        maxPoolSize: 1, // 单个 session，确保连续性
-        persistenceOptions: {
-          enable: false,
-        },
-        sessionOptions: {
-          maxUsageCount: 1000,
-          maxErrorScore: 3,
-        },
+        maxPoolSize: 1,
+        persistenceOptions: { enable: false },
+        sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
       },
       proxyConfiguration: proxy,
-      // 预处理钩子：设置 headers
       preNavigationHooks: [
-        async ({ request, session }, gotOptions) => {
-          // if (Object.keys(this.hdrs).length > 0) {
-          //   request.headers = { ...request.headers, ...this.hdrs };
-          // }
-          // 每次请求前刷新 headers/UA
-          const ua = this.hdrs['user-agent'] || 'web-fetcher/0.1';
-          gotOptions.headers = { ...(gotOptions.headers || {}), ...this.hdrs, 'user-agent': ua };
-          // Cookie 自动通过 session.cookieJar 管理，无需手动注入
-          // 你也可以在这里根据需要设置 gotOptions.responseType、timeout 等
+        (crawlingContext, gotOptions) => {
+          // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
+          gotOptions.throwHttpErrors = false;
           if (this.opts?.timeoutMs) gotOptions.timeout = { request: this.opts.timeoutMs };
         },
       ],
+      requestHandler: this.requestHandler.bind(this),
+      failedRequestHandler: async (context: CheerioFailedCrawlingContext) => {
+        this.isPageActive = true;
 
-      // 请求处理器
-      requestHandler: async (context: CheerioCrawlingContext) => {
-        const { request, response, body, $ } = context;
-        this.$ = $;
-        this.url = request.loadedUrl || request.url;
-
-        const headers: Record<string, string> = {};
-        for (const [k, v] of Object.entries(response?.headers || {})) {
-          headers[k.toLowerCase()] = Array.isArray(v) ? v.join(', ') : String(v ?? '');
+        const gotoPromise = this.pendingRequests.get(context.request.userData.requestId);
+        if (gotoPromise) {
+          const fetchResponse = await this.buildResponse(context);
+          gotoPromise.resolve(fetchResponse);
+          this.pendingRequests.delete(context.request.userData.requestId);
         }
 
-        const text = typeof body === 'string'
-          ? body
-          : Buffer.isBuffer(body)
-          ? body.toString('utf-8')
-          : String(body ?? '');
+        await new Promise<void>((resolveLoop) => {
+          const listener = async ({ action, resolve, reject }: DispatchedAction) => {
+            try {
+              if (action.type === 'dispose') {
+                this.actionEmitter.emit('dispose');
+                resolve();
+                return;
+              }
+              const result = await this.executeAction(context, action);
+              resolve(result);
+            } catch (error) {
+              reject(error);
+            }
+          };
+          this.actionEmitter.on('dispatch', listener);
+          this.actionEmitter.once('dispose', () => {
+            this.actionEmitter.removeListener('dispatch', listener);
+            resolveLoop();
+          });
+        });
 
-        const fetchResponse: FetchResponse = {
-          url: request.url,
-          finalUrl: this.url,
-          statusCode: response?.statusCode ?? 200,
-          statusText: response?.statusMessage,
-          headers: response?.headers as Record<string, string>,
-          body,
-          html: text,
-          text,
-        };
-
-        this.lastResponse = fetchResponse;
-
-        // 解析请求 ID 并触发对应的 Promise
-        const requestId = request.userData.requestId as string;
-        const pending = this.pendingRequests.get(requestId);
-
-        if (pending) {
-          pending.resolve(fetchResponse);
-          this.pendingRequests.delete(requestId);
-        }
+        this.isPageActive = false;
       },
+    };
 
-      // 失败处理器
-      failedRequestHandler: async ({ request }, error) => {
-        const requestId = request.userData.requestId as string;
-        const pending = this.pendingRequests.get(requestId);
-
-        if (pending) {
-          pending.reject(error);
-          this.pendingRequests.delete(requestId);
-        }
-      },
-    });
-
-    // 启动 Crawler（空运行，等待请求）
+    this.crawler = new CheerioCrawler(crawlerOptions);
     this.crawler.run().catch((error) => {
       console.error('Crawler background error:', error);
     });
   }
 
-  async goto(url: string, opts?: GotoActionOptions): Promise<void|FetchResponse> {
-    if (!this.requestQueue) {
-      throw new Error('RequestQueue not initialized');
+  async goto(url: string, opts?: GotoActionOptions): Promise<void | FetchResponse> {
+    if (this.isPageActive) {
+      await this.dispatchAction({ type: 'dispose' });
     }
+    if (!this.requestQueue) throw new Error('RequestQueue not initialized');
 
-    this.url = url;
-
-    // 生成唯一请求 ID
     const requestId = `req-${++this.requestCounter}`;
-
-    // 创建 Promise 用于等待结果
     const promise = new Promise<FetchResponse>((resolve, reject) => {
       this.pendingRequests.set(requestId, { resolve, reject });
     });
 
-    // 添加请求到队列
-    if (opts?.payload && typeof opts.payload === 'object') {
-      opts.payload = JSON.stringify(opts.payload);
-    }
+    const headers = { ...this.hdrs, ...opts?.headers };
+
     await this.requestQueue.addRequest({
       ...opts,
       url,
+      headers,
       userData: { requestId },
-      uniqueKey: `${url}-${requestId}`, // 确保唯一性
+      uniqueKey: `${url}-${requestId}`,
     });
 
-    // 等待请求完成
     return promise;
   }
 
   async getContent(): Promise<FetchResponse> {
-    if (!this.lastResponse) {
-      throw new Error('No content available. Call goto() first.');
-    }
-    return this.lastResponse;
+    return this.dispatchAction({ type: 'getContent' });
   }
 
   async waitFor(options?: WaitForActionOptions): Promise<void> {
-    if (options?.ms) {
-      await new Promise((resolve) => setTimeout(resolve, options.ms));
-    }
-    // HTTP 模式下 selector 和 networkIdle 是 noop
+    return this.dispatchAction({ type: 'waitFor', options });
   }
 
-  async click(selectorOrHref: string): Promise<void> {
-    const $ = this.$;
-    if (!$) throw new Error('No document loaded. Call goto() first.');
-    let href = selectorOrHref;
-
-    if (!isHref(selectorOrHref)) {
-      // 模拟点击：寻找链接并导航
-      const $link = $(selectorOrHref).first();
-      if ($link.length === 0) throw new Error(`click: selector not found: ${selectorOrHref}`);
-      if ($link.is('a') && $link.attr('href')) {
-        href = $link.attr('href')!;
-      } else if ($link.is('input[type="submit"], button[type="submit"], button, input')) {
-        const $form = $link.closest('form');
-        if ($form.length) return this.submit($form);
-        throw new Error('click: submit-like element without form');
-      } else throw new Error('click: unsupported element for http simulate');
-    }
-
-    try {
-      const absoluteUrl = new URL(href, this.url).href;
-      await this.goto(absoluteUrl);
-    } catch {
-      throw new Error(`Cannot click: no valid link found for "${selectorOrHref}"`);
-    }
+  async click(selector: string): Promise<void> {
+    return this.dispatchAction({ type: 'click', selector });
   }
 
   async fill(selector: string, value: string): Promise<void> {
-    const $ = this.$;
-    if (!$) throw new Error('No document loaded. Call goto() first.');
-
-    const $input = $(selector).first();
-    if ($input.length === 0) {
-      throw new Error(`fill: selector not found: ${selector}`);
-    }
-
-    if ($input.is('input, textarea, select')) {
-      const name = $input.attr('name') || selector;
-      this.formData.set(name, value);
-      $input.val(value);
-    } else {
-      throw new Error(`fill: not a form field: ${selector}`);
-    }
+    return this.dispatchAction({ type: 'fill', selector, value });
   }
 
-  async submit(selector?: string | CheerioNode): Promise<void> {
-    const $ = this.$;
-    if (!$) throw new Error('No document loaded. Call goto() first.');
-
-    const $form = typeof selector === 'string' ? $(selector).first() : selector != null ? selector : $('form').first();
-    if ($form.length === 0) { throw new Error('submit: Form not found'); }
-
-    const action = $form.attr('action') || this.url;
-    const method = ($form.attr('method') || 'GET').toUpperCase();
-
-    if (!action) throw new Error('submit: Form action not found');
-
-    const url = new URL(action, this.url).href;
-
-    // 收集表单数据
-    const formData = buildFormData($form);
-
-    // 覆盖手动 fill 的值, 应该不需要，fill的时候已经改了Html表单的值
-    /*
-    this.formData.forEach((value, name) => {
-      formData[name] = value;
-    });
-    */
-
-    if (method === 'GET') {
-      const urlObj = new URL(url);
-      Object.entries(formData).forEach(([key, value]) => {
-        urlObj.searchParams.set(key, value);
-      });
-      await this.goto(urlObj.href);
-    } else {
-      await this.goto(url, { method: 'POST', payload: formData });
-    }
-
-    // 清空表单数据
-    this.formData.clear();
+  async submit(selector?: string | Cheerio<any>, options?: SubmitOptions): Promise<void> {
+    return this.dispatchAction({ type: 'submit', selector, options });
   }
 
   async blockResources(types: ResourceType[]): Promise<boolean> {
-    types.forEach(t => this.blockedTypes.add(t));
+    types.forEach((t) => this.blockedTypes.add(t));
     return true;
   }
 
   async _cleanup() {
-    // 等待所有待处理请求完成
-    const pendingPromises = Array.from(this.pendingRequests.values()).map(
-      (pending) => new Promise((resolve) => {
-        const timeout = setTimeout(() => {
-          pending.reject(new Error('Cleanup timeout'));
-          resolve(undefined);
-        }, 5000);
+    if (this.isPageActive) {
+      await this.dispatchAction({ type: 'dispose' });
+    }
 
-        Promise.race([
-          pending.resolve,
-          pending.reject,
-        ]).finally(() => {
-          clearTimeout(timeout);
-          resolve(undefined);
-        });
-      })
-    );
+    this.actionEmitter.removeAllListeners();
 
-    await Promise.allSettled(pendingPromises);
-    this.pendingRequests.clear();
-
-    // 清理 Crawler 和 Queue
     if (this.crawler) {
       await this.crawler.teardown?.();
+      this.crawler = undefined;
     }
 
     if (this.requestQueue) {
       await this.requestQueue.drop();
+      this.requestQueue = undefined;
     }
 
-    this.crawler = undefined;
-    this.requestQueue = undefined;
-    this.lastResponse = undefined;
-    this.$ = undefined;
-    this.url = undefined;
-    this.formData.clear();
-    this.blockedTypes.clear();
+    this.pendingRequests.clear();
   }
 }
+
 FetchEngine.register(CheerioFetchEngine);
 
-function buildFormData($form: CheerioNode) {
-  const formData: Record<string, string> = {};
-  $form.find('input, select, textarea').each((_, el) => {
-    const $el = $form.find(el);
-    const name = $el.attr('name');
-    if (!name) return;
-    const value = $el.val();
-    if (value) {
-      formData[name] = String(value);
-    }
-  });
-  return formData;
-}
