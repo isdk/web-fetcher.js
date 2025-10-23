@@ -1,7 +1,7 @@
 import { EventEmitter } from 'events-ex'
 import { FetchEngine } from "../engine/base";
 import { FetchActionOptions, FetchActionProperties, FetchActionResult } from "../action/fetch-action";
-import { FetchReturnType } from "./fetch-return";
+import { FetchReturnType } from "./fetch-return-type";
 import { BaseFetcherProperties, FetchResponse } from "./types";
 
 export interface FetchActionInContext extends FetchActionProperties {

@@ -1,7 +1,7 @@
 import type { FetchContext } from './context'
 import { FetchAction, FetchActionOptions, FetchActionResult } from '../action/fetch-action'
 import { DefaultFetcherProperties, FetcherOptions } from './types'
-import { FetchReturnType } from './fetch-return'
+import { FetchReturnType } from './fetch-return-type'
 import { createEvent } from '../event/create-event'
 import { defaultsDeep } from 'lodash-es'
 import { generateId } from './utils'
