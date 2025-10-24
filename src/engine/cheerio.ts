@@ -1,44 +1,18 @@
 import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
-import type { CheerioCrawlingContext, CheerioCrawlerOptions, CheerioFailedCrawlingContext } from 'crawlee';
-import { FetchEngine, type GotoActionOptions, type SubmitOptions, type WaitForActionOptions } from './base';
+import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee';
+import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
 import { BaseFetcherProperties, FetchResponse, ResourceType } from '../core/types';
 import { FetchEngineContext } from '../core/context';
-import { isHref } from '../utils/helpers';
-import { EventEmitter } from 'events';
-import type { CheerioAPI, Cheerio } from 'cheerio';
 
-interface PendingRequest {
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
-}
-
-type Action =
-  | { type: 'click'; selector: string }
-  | { type: 'fill'; selector: string; value: string }
-  | { type: 'waitFor'; options?: WaitForActionOptions }
-  | { type: 'submit'; selector?: Cheerio<any> | string; options?: SubmitOptions }
-  | { type: 'getContent' }
-  | { type: 'dispose' };
-
-interface DispatchedAction {
-  action: Action;
-  resolve: (value?: any) => void;
-  reject: (reason?: any) => void;
-}
+type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
+type CheerioSelection = ReturnType<CheerioAPI>;
+type CheerioNode = ReturnType<CheerioSelection['first']>;
 
 export class CheerioFetchEngine extends FetchEngine {
   static readonly id = 'cheerio';
   static readonly mode = 'http';
 
-  private crawler?: CheerioCrawler;
-  private requestQueue?: RequestQueue;
-  private pendingRequests = new Map<string, PendingRequest>();
-  private requestCounter = 0;
-  private actionEmitter = new EventEmitter();
-  private isPageActive = false;
-  private blockedTypes = new Set<string>();
-
-  private async buildResponse(context: CheerioCrawlingContext): Promise<FetchResponse> {
+  protected async buildResponse(context: CheerioCrawlingContext): Promise<FetchResponse> {
     const { request, response, body } = context;
     const text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
     return {
@@ -53,45 +27,11 @@ export class CheerioFetchEngine extends FetchEngine {
     };
   }
 
-  private async requestHandler(context: CheerioCrawlingContext): Promise<void> {
-    const { request } = context;
-    this.isPageActive = true;
-
-    const gotoPromise = this.pendingRequests.get(request.userData.requestId);
-    if (gotoPromise) {
-      const fetchResponse = await this.buildResponse(context);
-      gotoPromise.resolve(fetchResponse);
-      this.pendingRequests.delete(request.userData.requestId);
-    }
-
-    await new Promise<void>((resolveLoop) => {
-      const listener = async ({ action, resolve, reject }: DispatchedAction) => {
-        try {
-          if (action.type === 'dispose') {
-            this.actionEmitter.emit('dispose');
-            resolve();
-            return;
-          }
-          const result = await this.executeAction(context, action);
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      this.actionEmitter.on('dispatch', listener);
-      this.actionEmitter.once('dispose', () => {
-        this.actionEmitter.removeListener('dispatch', listener);
-        resolveLoop();
-      });
-    });
-
-    this.isPageActive = false;
-  }
-
-  private async executeAction(context: CheerioCrawlingContext, action: Action): Promise<any> {
+  protected async executeAction(context: CheerioCrawlingContext, action: FetchEngineAction): Promise<any> {
     const { $ } = context;
     switch (action.type) {
       case 'click': {
+        if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
         const selector = action.selector;
         const $link = $(selector).first();
 
@@ -120,6 +60,7 @@ export class CheerioFetchEngine extends FetchEngine {
         throw new Error(`click: unsupported element for http simulate. Selector: ${selector}`);
       }
       case 'fill': {
+        if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
         const $input = $(action.selector).first();
         if ($input.length === 0) throw new Error(`fill: selector not found: ${action.selector}`);
         if ($input.is('input, textarea, select')) {
@@ -135,7 +76,8 @@ export class CheerioFetchEngine extends FetchEngine {
         }
         return;
       case 'submit': {
-        const $form = typeof action.selector === 'string' ? $(action.selector).first() : action.selector != null ? action.selector : $('form').first();
+        if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
+        const $form: CheerioNode = typeof action.selector === 'string' ? $(action.selector).first() : action.selector != null ? action.selector : $('form').first();
         if ($form.length === 0) throw new Error('submit: Form not found');
         const actionAttr = $form.attr('action') || context.request.loadedUrl || context.request.url;
         const method = ($form.attr('method') || 'GET').toUpperCase();
@@ -176,13 +118,12 @@ export class CheerioFetchEngine extends FetchEngine {
     }
   }
 
-  private async dispatchAction<T>(action: Action): Promise<T> {
-    if (!this.isPageActive) {
-      throw new Error('No active page. Call goto() before performing actions.');
-    }
-    return new Promise<T>((resolve, reject) => {
-      this.actionEmitter.emit('dispatch', { action, resolve, reject });
-    });
+  private async requestHandler(context: CheerioCrawlingContext): Promise<void> {
+    await this._sharedRequestHandler(context);
+  }
+
+  private async failedRequestHandler(context: CheerioCrawlingContext): Promise<void> {
+    await this._sharedFailedRequestHandler(context);
   }
 
   protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
@@ -213,39 +154,7 @@ export class CheerioFetchEngine extends FetchEngine {
         },
       ],
       requestHandler: this.requestHandler.bind(this),
-      failedRequestHandler: async (context: CheerioFailedCrawlingContext) => {
-        this.isPageActive = true;
-
-        const gotoPromise = this.pendingRequests.get(context.request.userData.requestId);
-        if (gotoPromise) {
-          const fetchResponse = await this.buildResponse(context);
-          gotoPromise.resolve(fetchResponse);
-          this.pendingRequests.delete(context.request.userData.requestId);
-        }
-
-        await new Promise<void>((resolveLoop) => {
-          const listener = async ({ action, resolve, reject }: DispatchedAction) => {
-            try {
-              if (action.type === 'dispose') {
-                this.actionEmitter.emit('dispose');
-                resolve();
-                return;
-              }
-              const result = await this.executeAction(context, action);
-              resolve(result);
-            } catch (error) {
-              reject(error);
-            }
-          };
-          this.actionEmitter.on('dispatch', listener);
-          this.actionEmitter.once('dispose', () => {
-            this.actionEmitter.removeListener('dispatch', listener);
-            resolveLoop();
-          });
-        });
-
-        this.isPageActive = false;
-      },
+      failedRequestHandler: this.failedRequestHandler.bind(this),
     };
 
     this.crawler = new CheerioCrawler(crawlerOptions);
@@ -278,10 +187,6 @@ export class CheerioFetchEngine extends FetchEngine {
     return promise;
   }
 
-  async getContent(): Promise<FetchResponse> {
-    return this.dispatchAction({ type: 'getContent' });
-  }
-
   async waitFor(options?: WaitForActionOptions): Promise<void> {
     return this.dispatchAction({ type: 'waitFor', options });
   }
@@ -294,35 +199,9 @@ export class CheerioFetchEngine extends FetchEngine {
     return this.dispatchAction({ type: 'fill', selector, value });
   }
 
-  async submit(selector?: string | Cheerio<any>, options?: SubmitOptions): Promise<void> {
+  async submit(selector?: string | CheerioNode, options?: SubmitActionOptions): Promise<void> {
     return this.dispatchAction({ type: 'submit', selector, options });
-  }
-
-  async blockResources(types: ResourceType[]): Promise<boolean> {
-    types.forEach((t) => this.blockedTypes.add(t));
-    return true;
-  }
-
-  async _cleanup() {
-    if (this.isPageActive) {
-      await this.dispatchAction({ type: 'dispose' });
-    }
-
-    this.actionEmitter.removeAllListeners();
-
-    if (this.crawler) {
-      await this.crawler.teardown?.();
-      this.crawler = undefined;
-    }
-
-    if (this.requestQueue) {
-      await this.requestQueue.drop();
-      this.requestQueue = undefined;
-    }
-
-    this.pendingRequests.clear();
   }
 }
 
 FetchEngine.register(CheerioFetchEngine);
-

@@ -1,30 +1,8 @@
 import { PlaywrightCrawler, RequestQueue } from 'crawlee';
-import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions, PlaywrightFailedCrawlingContext } from 'crawlee';
-import { FetchEngine, type GotoActionOptions, type SubmitOptions, type WaitForActionOptions } from './base';
+import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
+import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
 import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
-import { EventEmitter } from 'events';
-import type { Page, Response } from 'playwright';
-
-interface PendingRequest {
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
-}
-
-type Action =
-  | { type: 'click'; selector: string }
-  | { type: 'fill'; selector: string; value: string }
-  | { type: 'waitFor'; options?: WaitForActionOptions }
-  | { type: 'submit'; selector?: string; options?: SubmitOptions }
-  | { type: 'getContent' }
-  | { type: 'navigate', url: string, opts?: GotoActionOptions }
-  | { type: 'dispose' };
-
-interface DispatchedAction {
-  action: Action;
-  resolve: (value?: any) => void;
-  reject: (reason?: any) => void;
-}
 
 const DefaultTimeoutMs = 30_000;
 
@@ -32,16 +10,21 @@ export class PlaywrightFetchEngine extends FetchEngine {
   static readonly id = 'playwright';
   static readonly mode = 'browser';
 
-  private crawler?: PlaywrightCrawler;
-  private requestQueue?: RequestQueue;
-  private lastPlaywrightResponse?: Response | null;
-  private blockedTypes: Set<string> = new Set();
-  private pendingRequests = new Map<string, PendingRequest>();
-  private requestCounter = 0;
-  private actionEmitter = new EventEmitter();
-  private isPageActive = false;
-
-  private async buildResponse(page: Page, response: Response | null): Promise<FetchResponse> {
+  protected async buildResponse(context: PlaywrightCrawlingContext): Promise<FetchResponse> {
+    const { page, response, request } = context;
+    // In case of failed request, page might be closed.
+    if (page.isClosed()) {
+      return {
+        url: request.url,
+        finalUrl: request.loadedUrl || request.url,
+        statusCode: response?.status(),
+        statusText: response?.statusText(),
+        headers: (await response?.allHeaders()) || {},
+        body: '',
+        html: '',
+        text: '',
+      };
+    }
     const body = await page.content();
     const text = await page.textContent('body');
     return {
@@ -56,80 +39,28 @@ export class PlaywrightFetchEngine extends FetchEngine {
     };
   }
 
-  private async _actionLoop(page: Page) {
-    await new Promise<void>((resolveLoop) => {
-      const listener = async ({ action, resolve, reject }: DispatchedAction) => {
-        try {
-          if (action.type === 'dispose') {
-            resolveLoop();
-            resolve(); // Resolve the promise for the dispose action itself
-            return;
-          }
-          const result = await this.executeAction(page, action);
-          resolve(result);
-        } catch (error) {
-          reject(error);
-        }
-      };
-      this.actionEmitter.on('dispatch', listener);
-      this.actionEmitter.once('dispose', () => {
-        this.actionEmitter.removeListener('dispatch', listener);
-        resolveLoop();
-      });
-    });
-  }
-
-  private async requestHandler(context: PlaywrightCrawlingContext): Promise<void> {
-    const { page, request, response } = context;
-    this.isPageActive = true;
-    this.lastPlaywrightResponse = response;
-
-    const gotoPromise = this.pendingRequests.get(request.userData.requestId);
-    if (gotoPromise) {
-      const fetchResponse = await this.buildResponse(page, response);
-      gotoPromise.resolve(fetchResponse);
-      this.pendingRequests.delete(request.userData.requestId);
-    }
-
-    await this._actionLoop(page);
-
-    this.isPageActive = false;
-  }
-
-  private async failedRequestHandler(context: PlaywrightFailedCrawlingContext): Promise<void> {
-    const { page, request, response } = context;
-    this.isPageActive = true;
-    this.lastPlaywrightResponse = response;
-
-    const gotoPromise = this.pendingRequests.get(request.userData.requestId);
-    if (gotoPromise) {
-      const fetchResponse = await this.buildResponse(page, response);
-      gotoPromise.resolve(fetchResponse);
-      this.pendingRequests.delete(request.userData.requestId);
-    }
-
-    await this._actionLoop(page);
-
-    this.isPageActive = false;
-  }
-
-  private async executeAction(page: Page, action: Action): Promise<any> {
+  protected async executeAction(context: PlaywrightCrawlingContext, action: FetchEngineAction): Promise<any> {
+    const { page } = context;
     const defaultTimeout = this.opts?.timeoutMs || DefaultTimeoutMs;
     switch (action.type) {
       case 'navigate': {
         const response = await page.goto(action.url, {
-            waitUntil: action.opts?.waitUntil || 'domcontentloaded',
-            timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
+          waitUntil: action.opts?.waitUntil || 'domcontentloaded',
+          timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
         });
-        this.lastPlaywrightResponse = response;
-        return this.buildResponse(page, response);
+        if (response) context = {...context, response}
+        const fetchResponse = await this.buildResponse(context);
+        this.lastResponse = fetchResponse;
+        return fetchResponse;
       }
       case 'click': {
-        const [navResponse] = await Promise.all([
-          page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: defaultTimeout }).catch(() => null),
-          page.click(action.selector, { timeout: defaultTimeout }),
-        ]);
-        if (navResponse) this.lastPlaywrightResponse = navResponse;
+        // const beforePageId = page.mainFrame().url();
+        await page.click(action.selector, { timeout: defaultTimeout })
+        await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
+        // if (beforePageId !== page.mainFrame().url()) {
+          const navResponse = await this.buildResponse(context);
+          this.lastResponse = navResponse;
+        // }
         return;
       }
       case 'fill':
@@ -164,63 +95,55 @@ export class PlaywrightFetchEngine extends FetchEngine {
           const result = await formHandle.evaluate(async (form: HTMLFormElement) => {
             const formData = new FormData(form);
             const data: Record<string, string> = {};
-            formData.forEach((value, key) => { data[key] = value.toString(); });
-        
-            const response = await fetch(form.action, {
-                method: form.method,
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data),
+            formData.forEach((value, key) => {
+              data[key] = value.toString();
             });
-        
+
+            const response = await fetch(form.action, {
+              method: form.method,
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify(data),
+            });
+
+            const html = await response.text();
             return {
-                status: response.status,
-                statusText: response.statusText,
-                headers: Object.fromEntries(response.headers.entries()),
-                html: await response.text(),
-                url: response.url,
+              status: response.status,
+              statusText: response.statusText,
+              headers: Object.fromEntries(response.headers.entries()),
+              body: html,
+              html,
+              text: html,
+              url: form.action,
+              finalUrl: response.url,
             };
           });
 
           await formHandle.dispose();
           await page.setContent(result.html);
 
-          this.lastPlaywrightResponse = {
-            status: () => result.status,
-            statusText: () => result.statusText,
-            headers: () => result.headers,
-            url: () => result.url,
-            ok: () => result.status >= 200 && result.status < 300,
-            body: async () => Buffer.from(result.html),
-            text: async () => result.html,
-            allHeaders: async () => result.headers,
-            finished: async () => 'succeeded',
-          } as Response;
-
+          this.lastResponse = result;
           return;
         } else {
-          const [submitNavResponse] = await Promise.all([
-            page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: defaultTimeout }).catch(() => null),
-            el.evaluate((form: HTMLFormElement) => form.submit()),
-          ]);
-          if (submitNavResponse) this.lastPlaywrightResponse = submitNavResponse;
+          await el.evaluate((form: HTMLFormElement) => form.submit());
+          await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
+          this.lastResponse = await this.buildResponse(context);
           return;
         }
       }
       case 'getContent': {
-        return this.buildResponse(page, this.lastPlaywrightResponse);
+        return this.buildResponse(context);
       }
       default:
         throw new Error(`Unknown action type: ${(action as any).type}`);
     }
   }
 
-  private async dispatchAction<T>(action: Action): Promise<T> {
-    if (!this.isPageActive) {
-      throw new Error('No active page. Call goto() before performing actions.');
-    }
-    return new Promise<T>((resolve, reject) => {
-      this.actionEmitter.emit('dispatch', { action, resolve, reject });
-    });
+  private async requestHandler(context: PlaywrightCrawlingContext): Promise<void> {
+    await this._sharedRequestHandler(context);
+  }
+
+  private async failedRequestHandler(context: PlaywrightCrawlingContext): Promise<void> {
+    await this._sharedFailedRequestHandler(context);
   }
 
   protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
@@ -243,13 +166,14 @@ export class PlaywrightFetchEngine extends FetchEngine {
       failedRequestHandler: this.failedRequestHandler.bind(this),
       preNavigationHooks: [
         async ({ page, request }) => {
+          // await page.setExtraHTTPHeaders(this.hdrs);
           if (this.jar.length > 0) {
             await page.context().addCookies(
               this.jar.map((c) => ({
                 ...c,
                 url: request.url,
                 domain: c.domain || new URL(request.url).hostname,
-              }))
+              })),
             );
           }
           const blockedTypes = this.blockedTypes;
@@ -283,21 +207,17 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
     const requestId = `req-${++this.requestCounter}`;
     const promise = new Promise<FetchResponse>((resolve, reject) => {
-      this.pendingRequests.set( requestId, { resolve, reject });
+      this.pendingRequests.set(requestId, { resolve, reject });
     });
 
     await this.requestQueue.addRequest({
       url,
-      headers: this.hdrs,
+      headers: this.hdrs, // update headers
       userData: { requestId, waitUntil: opts?.waitUntil || 'domcontentloaded' },
       uniqueKey: `${url}-${requestId}`,
     });
 
     return promise;
-  }
-
-  async getContent(): Promise<FetchResponse> {
-    return this.dispatchAction({ type: 'getContent' });
   }
 
   async waitFor(options?: WaitForActionOptions): Promise<void> {
@@ -312,33 +232,8 @@ export class PlaywrightFetchEngine extends FetchEngine {
     return this.dispatchAction({ type: 'fill', selector, value });
   }
 
-  async submit(selector?: string, options?: SubmitOptions): Promise<void> {
+  async submit(selector?: string, options?: SubmitActionOptions): Promise<void> {
     return this.dispatchAction({ type: 'submit', selector, options });
-  }
-
-  async blockResources(types: string[]): Promise<boolean> {
-    this.blockedTypes = new Set(types);
-    return true;
-  }
-
-  async _cleanup() {
-    if (this.isPageActive) {
-        await this.dispatchAction({ type: 'dispose' });
-    }
-    
-    this.actionEmitter.removeAllListeners();
-
-    if (this.crawler) {
-      await this.crawler.teardown?.();
-      this.crawler = undefined;
-    }
-
-    if (this.requestQueue) {
-      await this.requestQueue.drop();
-      this.requestQueue = undefined;
-    }
-    
-    this.pendingRequests.clear();
   }
 }
 

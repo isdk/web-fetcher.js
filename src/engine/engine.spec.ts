@@ -107,7 +107,7 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       context = {
         id: `test-${engineName}-${Date.now()}`,
         engine: engineName as any,
-      };
+      } as any;
     }, TEST_TIMEOUT);
 
     afterAll(async () => {
@@ -139,7 +139,6 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       await engine.goto(baseUrl);
       await engine.click('a[href="/page2"]');
       const content = await engine.getContent();
-      console.log('🚀 ~ file: engine.spec.ts:142 ~ content:', content)
       expect(content.finalUrl).toBe(`${baseUrl}/page2`);
       expect(content.html).toContain('<h2>Page 2</h2>');
     }, TEST_TIMEOUT);
@@ -200,7 +199,7 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       // Playwright 可以真正拦截，Cheerio 仅记录
       // 这里我们只测试调用是否成功
       const result = await engine.blockResources(['stylesheet', 'script']);
-      expect(result).toBe(true);
+      expect(result).toBeTruthy();
       // 验证拦截效果需要更复杂的测试，例如检查资源是否真的被加载
       // 对于单元测试，我们信任引擎的实现
     }, TEST_TIMEOUT);
