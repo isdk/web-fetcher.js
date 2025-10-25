@@ -1,5 +1,6 @@
 import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee';
+import * as cheerio from 'cheerio';
 import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
 import { BaseFetcherProperties, FetchResponse, ResourceType } from '../core/types';
 import { FetchEngineContext } from '../core/context';
@@ -35,29 +36,29 @@ export class CheerioFetchEngine extends FetchEngine {
         const selector = action.selector;
         const $link = $(selector).first();
 
+        let absoluteUrl: string;
+
         if ($link.length === 0) {
           // Selector not found. Let's assume it's a URL.
           try {
-            const absoluteUrl = new URL(selector, context.request.loadedUrl || context.request.url).href;
-            return this.goto(absoluteUrl);
+            absoluteUrl = new URL(selector, context.request.loadedUrl || context.request.url).href;
           } catch {
             throw new Error(`click: selector not found or invalid URL: ${selector}`);
           }
-        }
-
-        if ($link.is('a') && $link.attr('href')) {
+        } else if ($link.is('a') && $link.attr('href')) {
           const href = $link.attr('href')!;
-          const absoluteUrl = new URL(href, context.request.loadedUrl || context.request.url).href;
-          return this.goto(absoluteUrl);
-        }
-
-        if ($link.is('input[type="submit"], button[type="submit"], button, input')) {
+          absoluteUrl = new URL(href, context.request.loadedUrl || context.request.url).href;
+        } else if ($link.is('input[type="submit"], button[type="submit"], button, input')) {
           const $form = $link.closest('form');
           if ($form.length) return this.executeAction(context, { type: 'submit', selector: $form });
           throw new Error('click: submit-like element without form');
+        } else {
+          throw new Error(`click: unsupported element for http simulate. Selector: ${selector}`);
         }
 
-        throw new Error(`click: unsupported element for http simulate. Selector: ${selector}`);
+        const loadedRequest = await context.sendRequest({ url: absoluteUrl });
+        this._updateStateAfterNavigation(context, loadedRequest);
+        return;
       }
       case 'fill': {
         if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
@@ -92,30 +93,59 @@ export class CheerioFetchEngine extends FetchEngine {
             formData[name] = String(value);
           }
         });
+
+        let loadedRequest: any;
         if (method === 'GET') {
           const urlObj = new URL(url);
           Object.entries(formData).forEach(([key, value]) => urlObj.searchParams.set(key, value));
-          return this.goto(urlObj.href);
+          loadedRequest = await context.sendRequest({ url: urlObj.href, method: 'GET' });
         } else {
-          const enctype = action.options?.enctype || 'application/x-www-form-urlencoded';
-          let payload: any;
+          const enctype = action.options?.enctype || ($form.attr('enctype') as any) || 'application/x-www-form-urlencoded';
+          let body: any;
           const headers: Record<string, string> = {};
 
           if (enctype === 'application/json') {
-            payload = JSON.stringify(formData);
+            body = JSON.stringify(formData);
             headers['Content-Type'] = 'application/json';
           } else {
-            payload = new URLSearchParams(formData).toString();
+            body = new URLSearchParams(formData).toString();
             headers['Content-Type'] = 'application/x-www-form-urlencoded';
           }
-          return this.goto(url, { method: 'POST', payload, headers });
+          loadedRequest = await context.sendRequest({ url, method: 'POST', body, headers });
         }
+
+        this._updateStateAfterNavigation(context, loadedRequest);
+        return;
       }
       case 'getContent':
         return this.buildResponse(context);
       default:
         throw new Error(`Unknown action type: ${(action as any).type}`);
     }
+  }
+
+  private _updateStateAfterNavigation(context: CheerioCrawlingContext, loadedRequest: any) {
+    const response = loadedRequest.response || loadedRequest;
+
+    const { body, headers, statusCode, statusMessage } = response;
+    const { url, loadedUrl } = loadedRequest;
+
+    const text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
+
+    if (headers && headers['content-type']?.includes('html')) {
+      context.$ = cheerio.load(text) as any;
+    }
+
+    this.lastResponse = {
+      url,
+      finalUrl: loadedUrl || url,
+      statusCode,
+      statusText: statusMessage,
+      headers: (headers as Record<string, string>) || {},
+      body,
+      html: text,
+      text,
+    };
   }
 
   private async requestHandler(context: CheerioCrawlingContext): Promise<void> {
@@ -164,6 +194,13 @@ export class CheerioFetchEngine extends FetchEngine {
   }
 
   async goto(url: string, opts?: GotoActionOptions): Promise<void | FetchResponse> {
+    if (this.pendingRequests.size > 0) {
+      for (const [, pendingRequest] of this.pendingRequests) {
+        pendingRequest.reject(new Error('A new navigation has been initiated, cancelling this one.'));
+      }
+      this.pendingRequests.clear();
+    }
+
     if (this.isPageActive) {
       await this.dispatchAction({ type: 'dispose' });
     }
