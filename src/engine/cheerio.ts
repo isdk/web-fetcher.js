@@ -2,7 +2,7 @@ import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee';
 import * as cheerio from 'cheerio';
 import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
-import { BaseFetcherProperties, FetchResponse, ResourceType } from '../core/types';
+import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
