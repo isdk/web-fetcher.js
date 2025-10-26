@@ -11,6 +11,7 @@ import {
 import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { createPromiseLock } from './promise-lock';
+import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
 type CheerioSelection = ReturnType<CheerioAPI>;
@@ -42,7 +43,7 @@ export class CheerioFetchEngine extends FetchEngine {
         // This action is used by the base class cleanup logic.
         return;
       case 'click': {
-        if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
+        if (!$) throw new CommonError(`Cheerio context not available for action: ${action.type}`, 'click');
         const selector = action.selector;
         const $link = $(selector).first();
 
@@ -53,7 +54,7 @@ export class CheerioFetchEngine extends FetchEngine {
           try {
             absoluteUrl = new URL(selector, context.request.loadedUrl || context.request.url).href;
           } catch {
-            throw new Error(`click: selector not found or invalid URL: ${selector}`);
+            throw new CommonError(`click: selector not found or invalid URL: ${selector}`, 'click');
           }
         } else if ($link.is('a') && $link.attr('href')) {
           const href = $link.attr('href')!;
@@ -61,9 +62,9 @@ export class CheerioFetchEngine extends FetchEngine {
         } else if ($link.is('input[type="submit"], button[type="submit"], button, input')) {
           const $form = $link.closest('form');
           if ($form.length) return this.executeAction(context, { type: 'submit', selector: $form });
-          throw new Error('click: submit-like element without form');
+          throw new CommonError('click: submit-like element without form', 'click');
         } else {
-          throw new Error(`click: unsupported element for http simulate. Selector: ${selector}`);
+          throw new CommonError(`click: unsupported element for http simulate. Selector: ${selector}`, 'click');
         }
 
         const loadedRequest = await context.sendRequest({ url: absoluteUrl });
@@ -71,13 +72,13 @@ export class CheerioFetchEngine extends FetchEngine {
         return;
       }
       case 'fill': {
-        if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
+        if (!$) throw new CommonError(`Cheerio context not available for action: ${action.type}`), 'fill';
         const $input = $(action.selector).first();
-        if ($input.length === 0) throw new Error(`fill: selector not found: ${action.selector}`);
+        if ($input.length === 0) throw new CommonError(`fill: selector not found: ${action.selector}`);
         if ($input.is('input, textarea, select')) {
           $input.val(action.value);
         } else {
-          throw new Error(`fill: not a form field: ${action.selector}`);
+          throw new CommonError(`fill: not a form field: ${action.selector}`, 'fill');
         }
         return;
       }
@@ -87,9 +88,9 @@ export class CheerioFetchEngine extends FetchEngine {
         }
         return;
       case 'submit': {
-        if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
+        if (!$) throw new CommonError(`Cheerio context not available for action: ${action.type}`, 'submit');
         const $form: CheerioNode = typeof action.selector === 'string' ? $(action.selector).first() : action.selector != null ? action.selector : $('form').first();
-        if ($form.length === 0) throw new Error('submit: Form not found');
+        if ($form.length === 0) throw new NotFoundError(action.selector, 'submit');
         const actionAttr = $form.attr('action') || context.request.loadedUrl || context.request.url;
         const method = ($form.attr('method') || 'GET').toUpperCase();
         const url = new URL(actionAttr, context.request.loadedUrl || context.request.url).href;
@@ -130,7 +131,7 @@ export class CheerioFetchEngine extends FetchEngine {
       case 'getContent':
         return this.buildResponse(context);
       default:
-        throw new Error(`Unknown action type: ${(action as any).type}`);
+        throw new CommonError(`Unknown action type: ${(action as any).type}`, 'CheerioFetchEngine.executeAction', ErrorCode.NotSupported);
     }
   }
 
@@ -218,7 +219,7 @@ export class CheerioFetchEngine extends FetchEngine {
       const timeoutId = setTimeout(() => {
         this.pendingRequests.delete(requestId);
         this.navigationLock.release(); // Release lock on timeout
-        reject(new Error(`goto timed out after ${timeoutMs}ms.`));
+        reject(new CommonError(`goto timed out after ${timeoutMs}ms.`, 'gotoTimeout', ErrorCode.RequestTimeout));
       }, timeoutMs);
 
       const cleanupAndResolve = (response: FetchResponse) => {
