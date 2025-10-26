@@ -1,14 +1,26 @@
 import { defaultsDeep } from 'lodash-es';
 import { EventEmitter } from 'events-ex';
-import type {
+import { CommonError } from '@isdk/common-error';
+import {
+  Configuration,
   RequestQueue,
-  CheerioCrawler,
-  PlaywrightCrawler,
-  CrawlingContext,
+  type CheerioCrawler,
+  type CrawlingContext,
+  type PlaywrightCrawler,
 } from 'crawlee';
 import { FetchEngineContext } from '../core/context';
-import { BaseFetcherProperties, FetchEngineType, Cookie, FetchResponse, ResourceType, DefaultFetcherProperties } from '../core/types';
+import {
+  BaseFetcherProperties,
+  FetchEngineType,
+  Cookie,
+  FetchResponse,
+  ResourceType,
+  DefaultFetcherProperties,
+} from '../core/types';
 import { normalizeHeaders } from '../utils/headers';
+import { PromiseLock, createResolvedPromiseLock } from './promise-lock';
+
+Configuration.getGlobalConfig().set('persistStorage', false);
 
 export interface GotoActionOptions {
   method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'OPTIONS' | 'CONNECT' | 'PATCH';
@@ -97,8 +109,7 @@ export abstract class FetchEngine {
   protected requestCounter = 0;
   protected actionEmitter = new EventEmitter();
   protected isPageActive = false;
-  protected navigationLock: Promise<void> = Promise.resolve();
-  protected resolveNavigationLock: () => void = () => {};
+  protected navigationLock: PromiseLock = createResolvedPromiseLock();
   protected lastResponse?: FetchResponse;
   protected blockedTypes = new Set<string>();
 
@@ -131,6 +142,8 @@ export abstract class FetchEngine {
       }
       context.internal.engine = this;
       context.engine = this.mode;
+      // this.requestQueue = await RequestQueue.open(`cheerio-queue-${ctx.id}`); // 带id会创建持久化请求队列。
+      this.requestQueue = await RequestQueue.open();
       await this._initialize(context, options);
     }
   }
@@ -210,11 +223,23 @@ export abstract class FetchEngine {
       await this._executePendingActions(context);
     } finally {
       this.isPageActive = false;
-      this.resolveNavigationLock();
+      this.navigationLock.release();
     }
   }
 
-  protected async _sharedFailedRequestHandler(context: CrawlingContext): Promise<void> {
+  protected async _sharedFailedRequestHandler(context: CrawlingContext, error?: Error): Promise<void> {
+    const { request } = context;
+    const gotoPromise = this.pendingRequests.get(request.userData.requestId);
+    if (gotoPromise && error && this.ctx?.throwHttpErrors) {
+      const response = (error as any).response;
+      const statusCode = response?.statusCode || 500;
+      const url = response?.url ? response.url : request.url;
+      const finalError = new CommonError(`Request${url ? ' for '+url: ''} failed: ${error.message}`, 'request', statusCode);
+      gotoPromise.reject(finalError);
+      this.pendingRequests.delete(request.userData.requestId);
+    }
+    // By calling the original handler, we ensure cleanup (e.g. lock release) happens.
+    // The original handler will not find the promise and that's OK.
     return this._sharedRequestHandler(context);
   }
 
