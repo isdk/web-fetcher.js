@@ -31,6 +31,9 @@ export class CheerioFetchEngine extends FetchEngine {
   protected async executeAction(context: CheerioCrawlingContext, action: FetchEngineAction): Promise<any> {
     const { $ } = context;
     switch (action.type) {
+      case 'dispose':
+        // This action is used by the base class cleanup logic.
+        return;
       case 'click': {
         if (!$) throw new Error(`Cheerio context not available for action: ${action.type}`);
         const selector = action.selector;
@@ -166,7 +169,7 @@ export class CheerioFetchEngine extends FetchEngine {
       requestQueue: this.requestQueue,
       maxConcurrency: 1,
       minConcurrency: 1,
-      maxRequestRetries: ctx.retries || 3,
+      maxRequestRetries: ctx.retries ?? 1,
       requestHandlerTimeoutSecs: Math.max(5, Math.floor((this.opts?.timeoutMs || 30000) / 1000)),
       useSessionPool: true,
       persistCookiesPerSession: true,
@@ -179,7 +182,7 @@ export class CheerioFetchEngine extends FetchEngine {
       preNavigationHooks: [
         (crawlingContext, gotOptions) => {
           // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
-          gotOptions.throwHttpErrors = false;
+          gotOptions.throwHttpErrors = true;
           if (this.opts?.timeoutMs) gotOptions.timeout = { request: this.opts.timeoutMs };
         },
       ],
@@ -194,31 +197,60 @@ export class CheerioFetchEngine extends FetchEngine {
   }
 
   async goto(url: string, opts?: GotoActionOptions): Promise<void | FetchResponse> {
-    if (this.pendingRequests.size > 0) {
-      for (const [, pendingRequest] of this.pendingRequests) {
-        pendingRequest.reject(new Error('A new navigation has been initiated, cancelling this one.'));
-      }
-      this.pendingRequests.clear();
-    }
-
+    // If a page is already active, tell it to clean up.
     if (this.isPageActive) {
-      await this.dispatchAction({ type: 'dispose' });
+      // We don't await this, as that would re-introduce the deadlock.
+      this.dispatchAction({ type: 'dispose' }).catch(() => {
+        // Ignore errors, we just want to signal disposal.
+      });
     }
-    if (!this.requestQueue) throw new Error('RequestQueue not initialized');
 
     const requestId = `req-${++this.requestCounter}`;
     const promise = new Promise<FetchResponse>((resolve, reject) => {
-      this.pendingRequests.set(requestId, { resolve, reject });
+      const timeoutMs = opts?.timeoutMs || this.opts?.timeoutMs || 30000;
+      const timeoutId = setTimeout(() => {
+        this.pendingRequests.delete(requestId);
+        this.resolveNavigationLock(); // Release lock on timeout
+        reject(new Error(`goto timed out after ${timeoutMs}ms.`));
+      }, timeoutMs);
+
+      const cleanupAndResolve = (response: FetchResponse) => {
+        clearTimeout(timeoutId);
+        resolve(response);
+      };
+
+      const cleanupAndReject = (error: any) => {
+        clearTimeout(timeoutId);
+        reject(error);
+      };
+
+      this.pendingRequests.set(requestId, { resolve: cleanupAndResolve, reject: cleanupAndReject });
     });
 
-    const headers = { ...this.hdrs, ...opts?.headers };
-
-    await this.requestQueue.addRequest({
+    // Add the request to the queue BEFORE awaiting the lock.
+    // This prevents a race condition where the crawler might shut down
+    // thinking the queue is empty.
+    this.requestQueue!.addRequest({
       ...opts,
       url,
-      headers,
+      headers: { ...this.hdrs, ...opts?.headers },
       userData: { requestId },
       uniqueKey: `${url}-${requestId}`,
+    }).catch(error => {
+      const pending = this.pendingRequests.get(requestId);
+      if (pending) {
+        pending.reject(error);
+        this.pendingRequests.delete(requestId);
+        this.resolveNavigationLock();
+      }
+    });
+
+    // Now, wait for the previous handler to finish and release its lock.
+    await this.navigationLock;
+
+    // Set a new lock for this navigation session.
+    this.navigationLock = new Promise(resolve => {
+      this.resolveNavigationLock = resolve;
     });
 
     return promise;
