@@ -8,12 +8,16 @@ import fastify, { FastifyInstance } from 'fastify';
 import { AddressInfo } from 'net';
 import formbody from '@fastify/formbody';
 
-const TEST_TIMEOUT = 30000; // 30s
+const TEST_TIMEOUT = 3000; // 3s
 
 // 1. 本地测试服务器
 const createTestServer = async (): Promise<FastifyInstance> => {
   const server = fastify({ logger: false });
-  server.register(formbody);
+  server.register(formbody as any);
+
+  // State for rate limiting
+  const requests = new Map<string, number>();
+  server.decorate('clearRateLimit', () => requests.clear());
 
   // 首页
   server.get('/', (req, reply) => {
@@ -57,7 +61,6 @@ const createTestServer = async (): Promise<FastifyInstance> => {
   });
 
   // 限流页
-  const requests = new Map<string, number>();
   server.get('/ratelimit', (req, reply) => {
     const ip = req.ip;
     const count = requests.get(ip) || 0;
@@ -94,20 +97,16 @@ const createTestServer = async (): Promise<FastifyInstance> => {
 // 2. 可复用的测试套件
 const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEngine | typeof PlaywrightFetchEngine) => {
   describe.sequential(`FetchEngine Suite: ${engineName}`, () => {
-    let server: FastifyInstance;
+    let server: FastifyInstance & { clearRateLimit: () => void };
     let baseUrl: string;
     let engine: FetchEngine;
     let context: FetchEngineContext;
 
     beforeAll(async () => {
-      server = await createTestServer();
+      server = await createTestServer() as any;
       await server.listen({ port: 0 });
       const address = server.server.address() as AddressInfo;
       baseUrl = `http://localhost:${address.port}`;
-      context = {
-        id: `test-${engineName}-${Date.now()}`,
-        engine: engineName as any,
-      } as any;
     }, TEST_TIMEOUT);
 
     afterAll(async () => {
@@ -116,6 +115,12 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
 
     // 每个测试前创建新引擎实例
     beforeEach(async () => {
+      server.clearRateLimit(); // Clear rate limit state before each test
+      context = {
+        id: `test-${engineName}-${Date.now()}-${Math.random()}`,
+        engine: engineName as any,
+        retries: 1,
+      } as any;
       engine = await FetchEngine.create(context, {
         engine: engineName as any,
         headers: { 'User-Agent': 'web-fetcher/1.0' },
@@ -211,7 +216,7 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       expect(storedCookies).toEqual(expect.arrayContaining([
         expect.objectContaining({ name: 'test', value: '123' })
       ]));
-    }, TEST_TIMEOUT);
+    });
   });
 };
 

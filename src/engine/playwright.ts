@@ -148,7 +148,6 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
   protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
     const headless = ctx.browser?.headless ?? true;
-    this.requestQueue = await RequestQueue.open(`playwright-queue-${ctx.id}`);
 
     const crawlerOptions: PlaywrightCrawlerOptions = {
       requestQueue: this.requestQueue,
@@ -165,8 +164,9 @@ export class PlaywrightFetchEngine extends FetchEngine {
       requestHandler: this.requestHandler.bind(this),
       failedRequestHandler: this.failedRequestHandler.bind(this),
       preNavigationHooks: [
-        async ({ page, request }) => {
+        async ({ page, request }, gotOptions) => {
           // await page.setExtraHTTPHeaders(this.hdrs);
+          gotOptions.throwHttpErrors = ctx.throwHttpErrors;
           if (this.jar.length > 0) {
             await page.context().addCookies(
               this.jar.map((c) => ({
