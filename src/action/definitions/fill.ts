@@ -7,15 +7,10 @@ export class FillAction extends FetchAction {
   static override capabilities = { http: 'simulate' as const, browser: 'native' as const };
 
   async onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promise<void> {
-    const { selector, value } = options?.params || {};
-    if (!selector || value === undefined) {
-      throw new Error('Selector and value are required for fill action');
-    }
-
-    const engine = context.internal.engine;
-    if (!engine) throw new Error('No engine available');
-
-    await engine.fill(selector, value);
+    const { selector, value, ...restOptions } = options?.params || {};
+    if (!selector) throw new Error('Selector is required for fill action');
+    if (value === undefined) throw new Error('Value is required for fill action');
+    await this.delegateToEngine(context, 'fill', selector, value, restOptions);
   }
 }
 

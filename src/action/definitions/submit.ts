@@ -7,12 +7,8 @@ export class SubmitAction extends FetchAction {
   static override capabilities = { http: 'simulate' as const, browser: 'native' as const };
 
   async onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promise<void> {
-    const { selector } = options?.params || {};
-
-    const engine = context.internal.engine;
-    if (!engine) throw new Error('No engine available');
-
-    await engine.submit(selector);
+    const { selector, ...restOptions } = options?.params || {};
+    await this.delegateToEngine(context, 'submit', selector, restOptions);
   }
 }
 
