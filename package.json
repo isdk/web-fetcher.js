@@ -33,6 +33,7 @@
     "release.alpha": "pnpm run release -- --prerelease alpha"
   },
   "dependencies": {
+    "@isdk/common-error": "^0.2.0",
     "camoufox-js": "^0.7.0",
     "cheerio": "^1.1.2",
     "crawlee": "^3.15.1",
