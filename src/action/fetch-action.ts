@@ -2,6 +2,7 @@ import type { RequireAtLeastOne } from 'type-fest';
 import { FetchActionInContext, FetchContext } from "../core/context";
 import { FetchReturnType, FetchReturnTypeFor } from "../core/fetch-return-type";
 import type { FetchEngineType, FetchResponse } from "../core/types"
+import type { FetchEngine } from '../engine/'
 
 export enum FetchActionResultStatus {
   /**
@@ -143,6 +144,23 @@ export abstract class FetchAction {
 
   // 核心执行逻辑（必需）
   abstract onExecute(context: FetchContext, options?: BaseFetchActionOptions, eventPayload?: any): Promise<any>|any
+
+  protected async delegateToEngine(
+    context: FetchContext,
+    method: keyof FetchEngine,
+    ...args: any[]
+  ): Promise<any> {
+    const engine = context.internal.engine;
+    if (!engine) {
+      throw new Error('No engine available');
+    }
+
+    if (typeof engine[method] !== 'function') {
+      throw new Error(`Engine does not have a method named '${String(method)}'`);
+    }
+
+    return await (engine[method] as any)(...args);
+  }
 
   protected installCollectors(context: FetchContext, options?: FetchActionOptions) {
     const configs = (options as any)?.collectors as BaseFetchCollectorOptions[] | undefined;

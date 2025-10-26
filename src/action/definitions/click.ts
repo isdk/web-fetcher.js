@@ -7,13 +7,9 @@ export class ClickAction extends FetchAction {
   static override capabilities = { http: 'simulate' as const, browser: 'native' as const };
 
   async onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promise<void> {
-    const { selector } = options?.params || {};
+    const { selector, ...restOptions } = options?.params || {};
     if (!selector) throw new Error('Selector is required for click action');
-
-    const engine = context.internal.engine;
-    if (!engine) throw new Error('No engine available');
-
-    await engine.click(selector);
+    await this.delegateToEngine(context, 'click', selector, restOptions);
   }
 }
 
