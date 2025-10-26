@@ -1,4 +1,4 @@
-import { PlaywrightCrawler, RequestQueue } from 'crawlee';
+import { PlaywrightCrawler } from 'crawlee';
 import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
 import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
 import { BaseFetcherProperties, FetchResponse } from '../core/types';
