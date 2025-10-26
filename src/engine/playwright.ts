@@ -3,6 +3,7 @@ import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawle
 import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
 import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
+import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
 
 const DefaultTimeoutMs = 30_000;
 
@@ -81,7 +82,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
         const formSelector = action.selector || 'form';
         const el = page.locator(formSelector).first();
         if ((await el.count()) === 0) {
-          throw new Error(`submit: selector not found ${formSelector}`);
+          throw new NotFoundError(formSelector, 'submit');
         }
 
         const enctype = action.options?.enctype || 'application/x-www-form-urlencoded';
@@ -89,7 +90,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
         if (enctype === 'application/json') {
           const formHandle = await el.elementHandle();
           if (!formHandle) {
-            throw new Error(`submit: could not get form handle for ${formSelector}`);
+            throw new CommonError(`submit: could not get form handle for ${formSelector}`, 'submit');
           }
 
           const result = await formHandle.evaluate(async (form: HTMLFormElement) => {
@@ -134,7 +135,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
         return this.buildResponse(context);
       }
       default:
-        throw new Error(`Unknown action type: ${(action as any).type}`);
+        throw new CommonError(`Unknown action type: ${(action as any).type}`, 'PlaywrightFetchEngine.executeAction', ErrorCode.NotSupported);
     }
   }
 
@@ -202,7 +203,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
     }
 
     if (!this.requestQueue) {
-      throw new Error('RequestQueue not initialized');
+      throw new CommonError('RequestQueue not initialized', 'goto');
     }
 
     const requestId = `req-${++this.requestCounter}`;
