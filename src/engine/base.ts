@@ -97,6 +97,8 @@ export abstract class FetchEngine {
   protected requestCounter = 0;
   protected actionEmitter = new EventEmitter();
   protected isPageActive = false;
+  protected navigationLock: Promise<void> = Promise.resolve();
+  protected resolveNavigationLock: () => void = () => {};
   protected lastResponse?: FetchResponse;
   protected blockedTypes = new Set<string>();
 
@@ -193,20 +195,23 @@ export abstract class FetchEngine {
   }
 
   protected async _sharedRequestHandler(context: CrawlingContext): Promise<void> {
-    const { request } = context;
-    this.isPageActive = true;
+    try {
+      const { request } = context;
+      this.isPageActive = true;
 
-    const gotoPromise = this.pendingRequests.get(request.userData.requestId);
-    if (gotoPromise) {
-      const fetchResponse = await this.buildResponse(context);
-      this.lastResponse = fetchResponse; // set last response
-      gotoPromise.resolve(fetchResponse);
-      this.pendingRequests.delete(request.userData.requestId);
+      const gotoPromise = this.pendingRequests.get(request.userData.requestId);
+      if (gotoPromise) {
+        const fetchResponse = await this.buildResponse(context);
+        this.lastResponse = fetchResponse; // set last response
+        gotoPromise.resolve(fetchResponse);
+        this.pendingRequests.delete(request.userData.requestId);
+      }
+
+      await this._executePendingActions(context);
+    } finally {
+      this.isPageActive = false;
+      this.resolveNavigationLock();
     }
-
-    await this._executePendingActions(context);
-
-    this.isPageActive = false;
   }
 
   protected async _sharedFailedRequestHandler(context: CrawlingContext): Promise<void> {
