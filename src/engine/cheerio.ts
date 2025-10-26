@@ -1,9 +1,16 @@
-import { CheerioCrawler, ProxyConfiguration, RequestQueue } from 'crawlee';
+import { CheerioCrawler, ProxyConfiguration } from 'crawlee';
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee';
 import * as cheerio from 'cheerio';
-import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
+import {
+  FetchEngine,
+  type GotoActionOptions,
+  type SubmitActionOptions,
+  type WaitForActionOptions,
+  FetchEngineAction,
+} from './base';
 import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
+import { createPromiseLock } from './promise-lock';
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
 type CheerioSelection = ReturnType<CheerioAPI>;
@@ -155,21 +162,20 @@ export class CheerioFetchEngine extends FetchEngine {
     await this._sharedRequestHandler(context);
   }
 
-  private async failedRequestHandler(context: CheerioCrawlingContext): Promise<void> {
-    await this._sharedFailedRequestHandler(context);
+  private async failedRequestHandler(context: CheerioCrawlingContext, error: Error): Promise<void> {
+    await this._sharedFailedRequestHandler(context, error);
   }
 
   protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
     const proxyUrls = this.opts?.proxy ? (typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy) : undefined;
     const proxy = proxyUrls?.length ? new ProxyConfiguration({ proxyUrls }) : undefined;
-    this.requestQueue = await RequestQueue.open(`cheerio-queue-${ctx.id}`);
 
     const crawlerOptions: CheerioCrawlerOptions = {
       additionalMimeTypes: ['text/plain'],
       requestQueue: this.requestQueue,
       maxConcurrency: 1,
       minConcurrency: 1,
-      maxRequestRetries: ctx.retries ?? 1,
+      maxRequestRetries: 1,
       requestHandlerTimeoutSecs: Math.max(5, Math.floor((this.opts?.timeoutMs || 30000) / 1000)),
       useSessionPool: true,
       persistCookiesPerSession: true,
@@ -182,11 +188,12 @@ export class CheerioFetchEngine extends FetchEngine {
       preNavigationHooks: [
         (crawlingContext, gotOptions) => {
           // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
-          gotOptions.throwHttpErrors = true;
+          gotOptions.throwHttpErrors = ctx.throwHttpErrors;
           if (this.opts?.timeoutMs) gotOptions.timeout = { request: this.opts.timeoutMs };
         },
       ],
       requestHandler: this.requestHandler.bind(this),
+      errorHandler: this.failedRequestHandler.bind(this),
       failedRequestHandler: this.failedRequestHandler.bind(this),
     };
 
@@ -210,7 +217,7 @@ export class CheerioFetchEngine extends FetchEngine {
       const timeoutMs = opts?.timeoutMs || this.opts?.timeoutMs || 30000;
       const timeoutId = setTimeout(() => {
         this.pendingRequests.delete(requestId);
-        this.resolveNavigationLock(); // Release lock on timeout
+        this.navigationLock.release(); // Release lock on timeout
         reject(new Error(`goto timed out after ${timeoutMs}ms.`));
       }, timeoutMs);
 
@@ -239,9 +246,9 @@ export class CheerioFetchEngine extends FetchEngine {
     }).catch(error => {
       const pending = this.pendingRequests.get(requestId);
       if (pending) {
-        pending.reject(error);
         this.pendingRequests.delete(requestId);
-        this.resolveNavigationLock();
+        this.navigationLock.release();
+        pending.reject(error);
       }
     });
 
@@ -249,9 +256,7 @@ export class CheerioFetchEngine extends FetchEngine {
     await this.navigationLock;
 
     // Set a new lock for this navigation session.
-    this.navigationLock = new Promise(resolve => {
-      this.resolveNavigationLock = resolve;
-    });
+    this.navigationLock = createPromiseLock();
 
     return promise;
   }
