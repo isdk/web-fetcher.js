@@ -39,6 +39,7 @@ export interface BaseFetcherProperties {
   headers?: Record<string, string>;
   cookies?: Cookie[];
   reuseCookies?: boolean; // 默认 true
+  throwHttpErrors?: boolean;
 
   proxy?: string | string[];
   // 阻止加载特定类型的资源
