@@ -163,6 +163,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
         sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
       },
       requestHandler: this.requestHandler.bind(this),
+      errorHandler: this.failedRequestHandler.bind(this),
       failedRequestHandler: this.failedRequestHandler.bind(this),
       preNavigationHooks: [
         async ({ page, request }, gotOptions) => {
@@ -214,7 +215,10 @@ export class PlaywrightFetchEngine extends FetchEngine {
     await this.requestQueue.addRequest({
       url,
       headers: this.hdrs, // update headers
-      userData: { requestId, waitUntil: opts?.waitUntil || 'domcontentloaded' },
+      userData: {
+        requestId,
+        waitUntil: opts?.waitUntil || 'domcontentloaded',
+      },
       uniqueKey: `${url}-${requestId}`,
     });
 
