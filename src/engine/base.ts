@@ -22,6 +22,22 @@ import { PromiseLock, createResolvedPromiseLock } from './promise-lock';
 
 Configuration.getGlobalConfig().set('persistStorage', false);
 
+/**
+ * Options for the {@link FetchEngine.goto}, allowing configuration of HTTP method, payload, headers, and navigation behavior.
+ *
+ * @remarks
+ * Used when navigating to a URL to specify additional parameters beyond the basic URL.
+ *
+ * @example
+ * ```ts
+ * await engine.goto('https://example.com', {
+ *   method: 'POST',
+ *   payload: { username: 'user', password: 'pass' },
+ *   headers: { 'Content-Type': 'application/json' },
+ *   waitUntil: 'networkidle'
+ * });
+ * ```
+ */
 export interface GotoActionOptions {
   method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'OPTIONS' | 'CONNECT' | 'PATCH';
   payload?: any; // POST
@@ -30,16 +46,35 @@ export interface GotoActionOptions {
   timeoutMs?: number;
 }
 
+/**
+ * Options for the {@link FetchEngine.waitFor} action, specifying conditions to wait for before continuing.
+ *
+ * @remarks
+ * Controls timing behavior for interactions, allowing waiting for elements, time intervals, or network conditions.
+ */
 export interface WaitForActionOptions {
   ms?: number;
   selector?: string;
   networkIdle?: boolean;
 }
 
+/**
+ * Options for the {@link FetchEngine.submit} action, configuring form submission behavior.
+ *
+ * @remarks
+ * Specifies encoding type for form submissions, particularly relevant for JSON-based APIs.
+ */
 export interface SubmitActionOptions {
   enctype?: 'application/x-www-form-urlencoded' | 'application/json' | 'multipart/form-data';
 }
 
+/**
+ * Union type representing all possible engine actions that can be dispatched.
+ *
+ * @remarks
+ * Defines the command structure processed during page interactions. Each action type corresponds to
+ * a specific user interaction or navigation command within the action loop architecture.
+ */
 export type FetchEngineAction =
   | { type: 'click'; selector: string }
   | { type: 'fill'; selector: string; value: string }
@@ -49,24 +84,67 @@ export type FetchEngineAction =
   | { type: 'navigate'; url: string; opts?: GotoActionOptions }
   | { type: 'dispose' };
 
-export interface DispatchedAction {
+/**
+ * Represents an action that has been dispatched and is awaiting execution in the active page context.
+ *
+ * @remarks
+ * Connects the action request with its resolution mechanism. Used internally by the action dispatch system
+ * to handle promises while maintaining the page context validity window.
+ */
+export interface DispatchedEngineAction {
   action: FetchEngineAction;
   resolve: (value?: any) => void;
   reject: (reason?: any) => void;
 }
 
-export interface PendingRequest {
+/**
+ * Represents a pending navigation request awaiting resolution.
+ *
+ * @remarks
+ * Tracks navigation requests that have been queued but not yet processed by the request handler.
+ */
+export interface PendingEngineRequest {
   resolve: (value: any) => void;
   reject: (reason?: any) => void;
 }
 
 /**
- * Engine 职责：对 Crawler 做统一抽象
+ * Abstract base class for all fetch engines, providing a unified interface for web content fetching and interaction.
+ *
+ * @remarks
+ * The `FetchEngine` class serves as the foundation for concrete engine implementations (e.g., `CheerioFetchEngine`,
+ * `PlaywrightFetchEngine`). It abstracts underlying crawling technology and provides a consistent API for navigation,
+ * content retrieval, and user interaction.
+ *
+ * The engine architecture uses an event-driven action loop to bridge Crawlee's stateless request handling with
+ * the need for a stateful, sequential API for page interactions. This solves the critical challenge of maintaining
+ * page context validity across asynchronous operations.
+ *
+ * @example
+ * ```ts
+ * import "./playwright"; // 引入注册 Playwright browser 引擎
+ * const engine = await FetchEngine.create(context, { engine: 'browser' });
+ * await engine.goto('https://example.com');
+ * await engine.fill('#username', 'user');
+ * await engine.click('#submit');
+ * const response = await engine.getContent();
+ * ```
  */
 export abstract class FetchEngine {
   // ===== 静态成员：注册管理 =====
   private static registry = new Map<string, typeof FetchEngine>();
 
+  /**
+   * Registers a fetch engine implementation with the global registry.
+   *
+   * @param engineClass - The engine class to register
+   * @throws {Error} When engine class lacks static [id](file:///home/riceball/Documents/mywork/public/@isdk/ai-tools/packages/web-fetcher/src/engine/cheerio.ts#L20-L20) or ID is already registered
+   *
+   * @example
+   * ```ts
+   * FetchEngine.register(CheerioFetchEngine);
+   * ```
+   */
   static register<T extends typeof FetchEngine>(engineClass: T): void {
     const id = engineClass.id;
     if (!id) throw new Error('Engine must define static id');
@@ -74,16 +152,39 @@ export abstract class FetchEngine {
     this.registry.set(id, engineClass);
   }
 
+  /**
+   * Retrieves a fetch engine implementation by its unique ID.
+   *
+   * @param id - The ID of the engine to retrieve
+   * @returns Engine class if found, otherwise `undefined`
+   */
   static get(id: string): typeof FetchEngine | undefined {
     return this.registry.get(id);
   }
 
+  /**
+   * Retrieves a fetch engine implementation by execution mode.
+   *
+   * @param mode - Execution mode (`'http'` or `'browser'`)
+   * @returns Engine class if found, otherwise `undefined`
+   */
   static getByMode(mode: FetchEngineType): typeof FetchEngine | undefined {
     for (const [_id, engineClass] of this.registry.entries()) {
       if (engineClass.mode === mode) return engineClass;
     }
   }
 
+  /**
+   * Factory method to create and initialize a fetch engine instance.
+   *
+   * @param ctx - Fetch engine context
+   * @param options - Configuration options
+   * @returns Initialized fetch engine instance
+   * @throws {Error} When no suitable engine implementation is found
+   *
+   * @remarks
+   * Primary entry point for engine creation. Selects appropriate implementation based on `engine` name of the option or context.
+   */
   static async create(ctx: FetchEngineContext, options?: BaseFetcherProperties) {
     options = defaultsDeep(options, DefaultFetcherProperties) as BaseFetcherProperties;
     const engineName = (options.engine ?? ctx.engine) as FetchEngineType;
@@ -95,7 +196,20 @@ export abstract class FetchEngine {
     }
   }
 
+  /**
+   * Unique identifier for the engine implementation.
+   *
+   * @remarks
+   * Must be defined by concrete implementations. Used for registration and lookup in engine registry.
+   */
   static readonly id: string;
+
+  /**
+   * Execution mode of the engine (`'http'` or `'browser'`).
+   *
+   * @remarks
+   * Must be defined by concrete implementations. Indicates whether engine operates at HTTP level or uses full browser.
+   */
   static readonly mode: FetchEngineType;
 
   declare protected ctx?: FetchEngineContext;
@@ -105,7 +219,7 @@ export abstract class FetchEngine {
 
   protected hdrs: Record<string, string> = {};
   protected jar: Cookie[] = [];
-  protected pendingRequests = new Map<string, PendingRequest>();
+  protected pendingRequests = new Map<string, PendingEngineRequest>();
   protected requestCounter = 0;
   protected actionEmitter = new EventEmitter();
   protected isPageActive = false;
@@ -114,22 +228,131 @@ export abstract class FetchEngine {
   protected blockedTypes = new Set<string>();
 
   protected _cleanup?(): Promise<void>;
+  /**
+   * Abstract method for initializing engine's underlying crawler.
+   *
+   * @param ctx - Fetch engine context
+   * @param options - Configuration options
+   * @returns Promise resolving when initialization completes
+   *
+   * @remarks
+   * Concrete implementations must provide this to set up their specific crawler instance.
+   * @internal
+   */
   protected abstract _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void>;
+  /**
+   * Abstract method for building standard [FetchResponse] from Crawlee context.
+   *
+   * @param context - Crawlee crawling context
+   * @returns Promise resolving to [FetchResponse] object
+   *
+   * @remarks
+   * Converts implementation-specific context (Playwright `page` or Cheerio `$`) to standardized response.
+   * @internal
+   */
   protected abstract buildResponse(context: CrawlingContext): Promise<FetchResponse>;
+  /**
+   * Abstract method for executing action within current page context.
+   *
+   * @param context - Crawlee crawling context
+   * @param action - Action to execute
+   * @returns Promise resolving to action result
+   *
+   * @remarks
+   * Handles specific user interactions using underlying technology (Playwright/Cheerio).
+   * @internal
+   */
   protected abstract executeAction(context: CrawlingContext, action: FetchEngineAction): Promise<any>;
 
+  /**
+   * Navigates to the specified URL.
+   *
+   * @param url - Target URL
+   * @param opts - Navigation options
+   * @returns Promise resolving when navigation completes
+   *
+   * @example
+   * ```ts
+   * await engine.goto('https://example.com');
+   * ```
+   */
+  abstract goto(url: string, opts?: GotoActionOptions): Promise<void | FetchResponse>;
+
+  /**
+   * Waits for specified condition before continuing.
+   *
+   * @param options - Wait conditions
+   * @returns Promise resolving when wait condition is met
+   *
+   * @example
+   * ```ts
+   * await engine.waitFor({ ms: 1000 }); // Wait 1 second
+   * await engine.waitFor({ selector: '#content' }); // Wait for element
+   * ```
+   */
+  abstract waitFor(options?: WaitForActionOptions): Promise<void>;
+
+  /**
+   * Clicks on element matching selector.
+   *
+   * @param selector - CSS selector of element to click
+   * @returns Promise resolving when click is processed
+   * @throws {Error} When no active page context exists
+   */
+  abstract click(selector: string): Promise<void>;
+
+  /**
+   * Fills input element with specified value.
+   *
+   * @param selector - CSS selector of input element
+   * @param value - Value to fill
+   * @returns Promise resolving when fill operation completes
+   * @throws {Error} When no active page context exists
+   */
+  abstract fill(selector: string, value: string): Promise<void>;
+
+  /**
+   * Submits a form.
+   *
+   * @param selector - Optional form/submit button selector
+   * @param options - Submission options
+   * @returns Promise resolving when form is submitted
+   * @throws {Error} When no active page context exists
+   */
+  abstract submit(selector?: any, options?: SubmitActionOptions): Promise<void>; // http: post form 模拟
+
+  /**
+   * Gets the unique identifier of this engine implementation.
+   */
   get id() {
     return (this.constructor as typeof FetchEngine).id;
   }
 
+  /**
+   * Gets the execution mode of this engine (`'http'` or `'browser'`).
+   */
   get mode() {
     return (this.constructor as typeof FetchEngine).mode;
   }
 
+  /**
+   * Gets the fetch engine context associated with this instance.
+   */
   get context() {
     return this.ctx;
   }
 
+  /**
+   * Initializes the fetch engine with provided context and options.
+   *
+   * @param context - Fetch engine context
+   * @param options - Configuration options
+   * @returns Promise resolving when initialization completes
+   *
+   * @remarks
+   * Sets up internal state and calls implementation-specific [_initialize](file:///home/riceball/Documents/mywork/public/@isdk/ai-tools/packages/web-fetcher/src/engine/cheerio.ts#L169-L204) method.
+   * Automatically called when creating engine via `FetchEngine.create()`.
+   */
   async initialize(context: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
     if (!this.ctx) {
       this.ctx = context;
@@ -186,7 +409,7 @@ export abstract class FetchEngine {
    */
   protected async _executePendingActions(context: CrawlingContext) {
     await new Promise<void>((resolveLoop) => {
-      const listener = async ({ action, resolve, reject }: DispatchedAction) => {
+      const listener = async ({ action, resolve, reject }: DispatchedEngineAction) => {
         try {
           if (action.type === 'dispose') {
             this.actionEmitter.emit('dispose');
@@ -280,16 +503,19 @@ export abstract class FetchEngine {
     this.pendingRequests.clear();
   }
 
-  // 通用方法
-  abstract goto(url: string, opts?: GotoActionOptions): Promise<void | FetchResponse>;
-  // 条件等待（browser 原生；http 可 simulate(ms) 或直接 skipped）
-  abstract waitFor(options?: WaitForActionOptions): Promise<void>;
-  // 交互（browser 原生；http 最小模拟 or skipped）
-  abstract click(selector: string): Promise<void>; // http: 仅当能解析为 a[href] 才模拟
-  abstract fill(selector: string, value: string): Promise<void>; // http: fill form 模拟
-  abstract submit(selector?: any, options?: SubmitActionOptions): Promise<void>; // http: post form 模拟
-
-  // 资源拦截（统一实现，不依赖引擎差异）
+  /**
+   * Blocks specified resource types from loading.
+   *
+   * @param types - Resource types to block
+   * @param overwrite - Whether to replace existing blocked types
+   * @returns Number of blocked resource types
+   *
+   * @example
+   * ```ts
+   * await engine.blockResources(['image', 'stylesheet']);
+   * await engine.blockResources(['script'], true); // Replace existing
+   * ```
+   */
   async blockResources(types: ResourceType[], overwrite?: boolean) {
     if (overwrite) {
       this.blockedTypes.clear();
@@ -298,6 +524,12 @@ export abstract class FetchEngine {
     return types.length;
   }
 
+  /**
+   * Gets content of current page.
+   *
+   * @returns Promise resolving to fetch response
+   * @throws {Error} When no content has been fetched yet
+   */
   getContent(): Promise<FetchResponse> {
     if (!this.lastResponse) {
       return Promise.reject(new Error('No content fetched yet. Call goto() first.'));
@@ -305,7 +537,38 @@ export abstract class FetchEngine {
     return Promise.resolve(this.lastResponse);
   }
 
-  // headers 重载
+  /**
+   * Manages HTTP headers for requests with multiple overloads.
+   *
+   * @overload
+   * Gets all headers.
+   * @returns All headers as record
+   *
+   * @overload
+   * Gets specific header value.
+   * @param name - Header name
+   * @returns Header value
+   *
+   * @overload
+   * Sets multiple headers.
+   * @param headers - Headers to set
+   * @param replaced - Whether to replace all existing headers
+   * @returns `true` if successful
+   *
+   * @overload
+   * Sets single header.
+   * @param name - Header name
+   * @param value - Header value or `null` to remove
+   * @returns `true` if successful
+   *
+   * @example
+   * ```ts
+   * const allHeaders = await engine.headers();
+   * const userAgent = await engine.headers('user-agent');
+   * await engine.headers({ 'x-custom': 'value' });
+   * await engine.headers('auth', 'token');
+   * ```
+   */
   async headers(): Promise<Record<string, string>>;
   async headers(name: string): Promise<string>;
   async headers(headers: Record<string, string>, replaced?: boolean): Promise<boolean>;
@@ -346,7 +609,24 @@ export abstract class FetchEngine {
     return false;
   }
 
-  // cookies 重载
+  /**
+   * Manages cookies for current session with multiple overloads.
+   *
+   * @overload
+   * Gets all cookies.
+   * @returns Array of cookies
+   *
+   * @overload
+   * Sets cookies for session.
+   * @param cookies - Cookies to set
+   * @returns `true` if successful
+   *
+   * @example
+   * ```ts
+   * const cookies = await engine.cookies();
+   * await engine.cookies([{ name: 'session', value: '123' }]);
+   * ```
+   */
   async cookies(): Promise<Cookie[]>;
   async cookies(cookies: Cookie[]): Promise<boolean>;
   async cookies(a?: any): Promise<any> {
@@ -360,6 +640,11 @@ export abstract class FetchEngine {
     return [...this.jar];
   }
 
+  /**
+   * Disposes of engine, cleaning up all resources.
+   *
+   * @returns Promise resolving when disposal completes
+   */
   async dispose(): Promise<void> {
     await this.cleanup()
   }
