@@ -136,7 +136,7 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
   ignoreSslErrors: true,
   browser: {
     engine: 'playwright',
-    headless: false,
+    headless: true,
     waitUntil: 'domcontentloaded',
   },
   http: {
