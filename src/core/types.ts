@@ -20,7 +20,7 @@ export interface Cookie {
 export type FetchEngineType = 'http' | 'browser';
 export type BrowserEngine = 'playwright' | 'puppeteer';
 
-type FetchEngineMode = FetchEngineType | 'auto';
+type FetchEngineMode = FetchEngineType | 'auto' | string;
 export type ResourceType = 'image' | 'stylesheet' | 'font' | 'script' | 'media' | string;
 
 export interface BaseFetcherProperties {
