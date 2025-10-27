@@ -22,8 +22,12 @@ export class CheerioFetchEngine extends FetchEngine {
   static readonly mode = 'http';
 
   protected async buildResponse(context: CheerioCrawlingContext): Promise<FetchResponse> {
-    const { request, response, body } = context;
-    const text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
+    const { request, response, body, $ } = context;
+    const newHtml = $?.html();
+    let text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
+    if (newHtml && newHtml !== text) {
+      text = newHtml;
+    }
     return {
       url: request.url,
       finalUrl: request.loadedUrl || request.url,
@@ -77,6 +81,8 @@ export class CheerioFetchEngine extends FetchEngine {
         if ($input.length === 0) throw new CommonError(`fill: selector not found: ${action.selector}`);
         if ($input.is('input, textarea, select')) {
           $input.val(action.value);
+          const res = this.buildResponse(context) as any;
+          this.lastResponse = res;
         } else {
           throw new CommonError(`fill: not a form field: ${action.selector}`, 'fill');
         }
@@ -204,7 +210,7 @@ export class CheerioFetchEngine extends FetchEngine {
     });
   }
 
-  async goto(url: string, opts?: GotoActionOptions): Promise<void | FetchResponse> {
+  async goto(url: string, params?: GotoActionOptions): Promise<void | FetchResponse> {
     // If a page is already active, tell it to clean up.
     if (this.isPageActive) {
       // We don't await this, as that would re-introduce the deadlock.
@@ -215,7 +221,7 @@ export class CheerioFetchEngine extends FetchEngine {
 
     const requestId = `req-${++this.requestCounter}`;
     const promise = new Promise<FetchResponse>((resolve, reject) => {
-      const timeoutMs = opts?.timeoutMs || this.opts?.timeoutMs || 30000;
+      const timeoutMs = params?.timeoutMs || this.opts?.timeoutMs || 30000;
       const timeoutId = setTimeout(() => {
         this.pendingRequests.delete(requestId);
         this.navigationLock.release(); // Release lock on timeout
@@ -239,9 +245,9 @@ export class CheerioFetchEngine extends FetchEngine {
     // This prevents a race condition where the crawler might shut down
     // thinking the queue is empty.
     this.requestQueue!.addRequest({
-      ...opts,
+      ...params,
       url,
-      headers: { ...this.hdrs, ...opts?.headers },
+      headers: { ...this.hdrs, ...params?.headers },
       userData: { requestId },
       uniqueKey: `${url}-${requestId}`,
     }).catch(error => {
