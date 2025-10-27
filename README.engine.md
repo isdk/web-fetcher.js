@@ -24,7 +24,7 @@ This is the abstract base class that defines the contract for all fetch engines.
 
 ### `FetchEngine.create(context, options)`
 
-This static factory method is the designated entry point for creating an engine instance. It automatically selects the appropriate engine based on the provided `engine` option (e.g., 'http', 'browser', 'cheerio', 'playwright') and initializes it.
+This static factory method is the designated entry point for creating an engine instance. It automatically selects the appropriate engine based on the provided `engine` option (e.g., mode: 'http', 'browser', or id: 'cheerio', 'playwright') and initializes it.
 
 ## 3. Architecture and Workflow
 
