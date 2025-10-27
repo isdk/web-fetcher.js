@@ -364,6 +364,8 @@ export abstract class FetchAction {
     const scope = await this.beforeExec(context, options);
     let result: FetchActionResult<R>|undefined;
     try {
+      const failOnError = options?.failOnError ?? true;
+      context.throwHttpErrors = failOnError;
       result = await this.onExecute(context, options);
       if (!result || !result.returnType) {
         result = {
