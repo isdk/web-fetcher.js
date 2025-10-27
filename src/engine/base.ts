@@ -438,8 +438,16 @@ export abstract class FetchEngine {
       const gotoPromise = this.pendingRequests.get(request.userData.requestId);
       if (gotoPromise) {
         const fetchResponse = await this.buildResponse(context);
-        this.lastResponse = fetchResponse; // set last response
-        gotoPromise.resolve(fetchResponse);
+
+        // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
+        const isError = !fetchResponse.statusCode || fetchResponse.statusCode >= 400;
+        if (this.ctx?.throwHttpErrors && isError) {
+          const error = new CommonError(`Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`, 'request', fetchResponse.statusCode);
+          gotoPromise.reject(error);
+        } else {
+          this.lastResponse = fetchResponse;
+          gotoPromise.resolve(fetchResponse);
+        }
         this.pendingRequests.delete(request.userData.requestId);
       }
 
@@ -453,13 +461,14 @@ export abstract class FetchEngine {
   protected async _sharedFailedRequestHandler(context: CrawlingContext, error?: Error): Promise<void> {
     const { request } = context;
     const gotoPromise = this.pendingRequests.get(request.userData.requestId);
+    console.log('🚀 ~ file: base.ts:457 ~ this.ctx?.throwHttpErrors:', error, this.ctx?.throwHttpErrors)
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
+      this.pendingRequests.delete(request.userData.requestId);
       const response = (error as any).response;
       const statusCode = response?.statusCode || 500;
       const url = response?.url ? response.url : request.url;
       const finalError = new CommonError(`Request${url ? ' for '+url: ''} failed: ${error.message}`, 'request', statusCode);
       gotoPromise.reject(finalError);
-      this.pendingRequests.delete(request.userData.requestId);
     }
     // By calling the original handler, we ensure cleanup (e.g. lock release) happens.
     // The original handler will not find the promise and that's OK.
