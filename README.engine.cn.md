@@ -24,7 +24,7 @@
 
 ### `FetchEngine.create(context, options)`
 
-此静态工厂方法是创建引擎实例的指定入口点。它根据提供的 `engine` 选项（例如，'http'、'browser'、'cheerio'、'playwright'）自动选择合适的引擎并对其进行初始化。
+此静态工厂方法是创建引擎实例的指定入口点。它根据提供的 `engine` 选项（例如，mode: 'http'、'browser', id: 'cheerio'、'playwright'）自动选择合适的引擎并对其进行初始化。
 
 ## 3. 架构和工作流程
 
