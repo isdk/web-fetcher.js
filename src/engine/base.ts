@@ -268,7 +268,7 @@ export abstract class FetchEngine {
    * Navigates to the specified URL.
    *
    * @param url - Target URL
-   * @param opts - Navigation options
+   * @param params - Navigation options
    * @returns Promise resolving when navigation completes
    *
    * @example
@@ -276,12 +276,12 @@ export abstract class FetchEngine {
    * await engine.goto('https://example.com');
    * ```
    */
-  abstract goto(url: string, opts?: GotoActionOptions): Promise<void | FetchResponse>;
+  abstract goto(url: string, params?: GotoActionOptions): Promise<void | FetchResponse>;
 
   /**
    * Waits for specified condition before continuing.
    *
-   * @param options - Wait conditions
+   * @param params - Wait conditions
    * @returns Promise resolving when wait condition is met
    *
    * @example
@@ -290,7 +290,7 @@ export abstract class FetchEngine {
    * await engine.waitFor({ selector: '#content' }); // Wait for element
    * ```
    */
-  abstract waitFor(options?: WaitForActionOptions): Promise<void>;
+  abstract waitFor(params?: WaitForActionOptions): Promise<void>;
 
   /**
    * Clicks on element matching selector.
