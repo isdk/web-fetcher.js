@@ -31,8 +31,8 @@ export class FetchSession {
     if (!action) {
       throw new Error(`Unknown action: ${actionOptions.id || actionOptions.name}`)
     }
-    const actionId = actionOptions.id || actionOptions.name || 'unknown'
-    const eventBus = this.context.eventBus;
+    // const actionId = actionOptions.id || actionOptions.name || 'unknown'
+    // const eventBus = this.context.eventBus;
 
     this.context.internal.actionIndex = (this.context.internal.actionIndex || 0) + 1;
     // 更新当前动作状态
@@ -41,12 +41,6 @@ export class FetchSession {
       index: this.context.internal.actionIndex,
       startedAt: Date.now()
     }
-
-    eventBus.emit('action:start', {
-      sessionId: this.id,
-      actionId,
-      options: actionOptions
-    })
 
     let result: FetchActionResult<R>|undefined;
     let error: Error|undefined;
@@ -61,12 +55,6 @@ export class FetchSession {
     } finally {
       // 清除当前动作状态
       this.context.currentAction = undefined
-      eventBus.emit('action:end', {
-        sessionId: this.id,
-        actionId,
-        result,
-        error,
-      })
     }
   }
 
@@ -76,8 +64,10 @@ export class FetchSession {
         const actionOptions = actions[i]
         await this.execute(actionOptions)
       }
-      const response = this.context.lastResponse
-      return response
+      const response = await this.execute({
+        id: 'getContent'
+      })
+      return response?.result
     } catch (error) {
       throw error
     }
