@@ -237,6 +237,10 @@ export abstract class FetchEngine {
   protected async _extract(schema: ExtractSchema, context: any): Promise<any> {
     const schemaType = (schema as any).type;
 
+    if (!context) {
+      return schemaType === 'array' ? [] : null;
+    }
+
     if (schemaType === 'object') {
       const { selector, properties } = schema as ExtractObjectSchema;
       let newContext = context;
@@ -255,7 +259,7 @@ export abstract class FetchEngine {
 
     if (schemaType === 'array') {
       const { selector, items } = schema as ExtractArraySchema;
-      const elements = await this._querySelectorAll(context, selector);
+      const elements = selector ? await this._querySelectorAll(context, selector) : [context];
       const results: any[] = [];
       for (const element of elements) {
         results.push(await this._extract(items, element));
