@@ -20,9 +20,21 @@
 
 ## 📦 安装
 
-```bash
-npm install @isdk/web-fetcher
-```
+1.  **安装依赖包:**
+
+    ```bash
+    npm install @isdk/web-fetcher
+    ```
+
+2.  **安装浏览器 (用于 `browser` 模式):**
+
+    `browser` 引擎由 Playwright 驱动，它需要下载独立的浏览器二进制文件。如果您计划使用 `browser` 引擎与动态网站进行交互，请运行以下命令：
+
+    ```bash
+    npx playwright install
+    ```
+
+    > ℹ️ **提示:** 仅当您需要使用 `browser` 模式时，此步骤才是必需的。轻量级的 `http` 模式无需安装浏览器即可工作。
 
 ---
 
