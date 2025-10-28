@@ -20,9 +20,21 @@ English | [简体中文](./README.cn.md)
 
 ## 📦 Installation
 
-```bash
-npm install @isdk/web-fetcher
-```
+1.  **Install the Package:**
+
+    ```bash
+    npm install @isdk/web-fetcher
+    ```
+
+2.  **Install Browsers (For `browser` mode):**
+
+    The `browser` engine is powered by Playwright, which requires separate browser binaries to be downloaded. If you plan to use the `browser` engine for interacting with dynamic websites, run the following command:
+
+    ```bash
+    npx playwright install
+    ```
+
+    > ℹ️ **Note:** This step is only required for `browser` mode. The lightweight `http` mode works out of the box without this installation.
 
 ---
 
