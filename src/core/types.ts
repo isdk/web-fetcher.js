@@ -87,8 +87,13 @@ export interface FetchSite extends BaseFetcherProperties {
   };
 }
 
+export type OnFetchPauseCallback = (options: {
+  message?: string;
+}) => Promise<void>;
+
 export interface FetcherOptions extends BaseFetcherProperties {
   actions?: FetchActionOptions[];
+  onPause?: OnFetchPauseCallback;
 }
 
 export interface FetchMetadata {
