@@ -67,7 +67,10 @@ export class FetchSession {
       const response = await this.execute({
         id: 'getContent'
       })
-      return response?.result
+      return {
+        result: response?.result,
+        outputs: this.getOutputs(),
+      }
     } catch (error) {
       throw error
     }
