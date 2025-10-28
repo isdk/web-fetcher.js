@@ -316,6 +316,61 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
         ]
       });
     }, TEST_TIMEOUT);
+
+    it('should handle advanced extraction cases with missing selectors and contexts', async () => {
+      await engine.goto(`${baseUrl}/extract-test`);
+
+      // Test case 1: Array with no selector should use parent context
+      const schema1 = {
+        type: 'object',
+        selector: '.author',
+        properties: {
+          asArray: {
+            type: 'array', // No selector, should use .author as context
+            items: {
+              type: 'object',
+              properties: {
+                name: { selector: '.name' },
+                id: { attribute: 'data-id', type: 'number' },
+              },
+            },
+          },
+        },
+      } as any;
+      const data1 = await engine.extract(schema1);
+      expect(data1).toEqual({
+        asArray: [
+          {
+            name: 'John Doe',
+            id: 123,
+          },
+        ],
+      });
+
+      // Test case 2: Nested array with no selector
+      const schema2 = {
+        type: 'array',
+        selector: '.tags .tag',
+        items: {
+          type: 'array', // No selector, should wrap each item
+          items: { type: 'string' },
+        },
+      } as any;
+      const data2 = await engine.extract(schema2);
+      expect(data2).toEqual([['tech'], ['news'], ['web']]);
+
+      // Test case 3: Extraction from a non-existent context
+      const schema3 = {
+        type: 'object',
+        selector: '.non-existent',
+        properties: {
+          title: { selector: '.title' },
+          tags: { type: 'array', selector: '.tag', items: { type: 'string' } },
+        },
+      } as const;
+      const data3 = await engine.extract(schema3);
+      expect(data3).toBeNull();
+    }, TEST_TIMEOUT);
   });
 };
 
