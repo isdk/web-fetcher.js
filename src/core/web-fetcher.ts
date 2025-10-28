@@ -9,9 +9,9 @@ export class WebFetcher {
     return new FetchSession(merged);
   }
 
-  async fetch(url: string, options?: FetcherOptions): Promise<FetchResponse|undefined>
-  async fetch(options: FetcherOptions): Promise<FetchResponse|undefined>
-  async fetch(url: string|FetcherOptions, options?: FetcherOptions): Promise<FetchResponse|undefined> {
+  async fetch(url: string, options?: FetcherOptions): Promise<{ result: FetchResponse | undefined, outputs: Record<string, any> }>
+  async fetch(options: FetcherOptions): Promise<{ result: FetchResponse | undefined, outputs: Record<string, any> }>
+  async fetch(url: string|FetcherOptions, options?: FetcherOptions): Promise<{ result: FetchResponse | undefined, outputs: Record<string, any> }> {
     if (typeof url !== 'string') {
       options = url;
       url = options.url!;

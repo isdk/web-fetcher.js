@@ -118,14 +118,15 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
 
     it('should execute a sequence of actions with executeAll', async () => {
       createSession();
-      const response = await session.executeAll([
+      const { result, outputs } = await session.executeAll([
         { name: 'goto', params: { url: baseUrl } },
         { name: 'fill', params: { selector: 'input[name="test_input"]', value: 'session_test' } },
         { name: 'submit', params: { selector: 'form' } },
       ]);
 
-      expect(response).toBeDefined();
-      expect(response!.text).toContain('Submitted: session_test');
+      expect(result).toBeDefined();
+      expect(result!.text).toContain('Submitted: session_test');
+      expect(outputs).toEqual({});
 
       const content = await session.context.internal.engine!.getContent();
       expect(content.text).toContain('Submitted: session_test');
@@ -191,17 +192,20 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
 
     it('should store and retrieve outputs', async () => {
       createSession();
-      await session.executeAll([
+      const { outputs } = await session.executeAll([
         { name: 'goto', params: { url: baseUrl } },
         {
           name: 'getContent',
-          storeAs: 'content1' // Correct: Use 'storeAs' to save the result to outputs
+          storeAs: 'content1'
         }
       ]);
 
-      const outputs = session.getOutputs();
       expect(outputs).toHaveProperty('content1');
       expect(outputs.content1.html).toContain('<h1>Welcome</h1>');
+
+      // Also check that getOutputs() returns the same
+      const sessionOutputs = session.getOutputs();
+      expect(sessionOutputs).toEqual(outputs);
     }, TEST_TIMEOUT);
 
   });
