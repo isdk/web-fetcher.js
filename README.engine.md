@@ -17,7 +17,7 @@ This is the abstract base class that defines the contract for all fetch engines.
 - **Role**: To provide a consistent, high-level API for actions like navigation, content retrieval, and user interaction.
 - **Key Abstractions**:
   - **Lifecycle**: `initialize()` and `cleanup()` methods for managing the engine's state.
-  - **Core Engine Actions**: `goto()`, `getContent()`, `click()`, `fill()`, `submit()`, `waitFor()`.
+  - **Core Engine Actions**: `goto()`, `getContent()`, `click()`, `fill()`, `submit()`, `waitFor()`, `extract()`.
   - **Configuration**: `headers()`, `cookies()`, `blockResources()`.
 - **Static Registry**: It maintains a static registry of all available engine implementations (`FetchEngine.register`). This allows for easy extension and selection of engines by their `id` or `mode`.
 - **Action Dispatching**: It uses an event-driven model (`_executePendingActions` and `actionEmitter`) to process a sequence of actions on an active page after an initial `goto()` call.
@@ -93,6 +93,7 @@ There are two primary engine implementations:
     - `click`: Simulates a click. If the selector is a link (`<a>`), it navigates to the `href`. If it's a submit button, it triggers a form submission. If the selector is not found, it is treated as a raw URL to navigate to.
     - `fill`: Updates the value of form inputs in the parsed HTML. This state is held temporarily until a `submit` action is called.
     - `submit`: Serializes the current state of a form's inputs and sends a new `GET` or `POST` request.
+    - `extract`: Recursively extracts structured data from the static HTML content based on a given schema.
 - **Use Case**: Scraping static websites, server-rendered pages, or APIs where browser capabilities are unnecessary.
 
 ### `PlaywrightFetchEngine` (playwright.ts)
@@ -105,36 +106,96 @@ There are two primary engine implementations:
   - **Robust Interaction**: Actions are performed by Playwright, accurately mimicking real user behavior.
     - `click`: Executes a click and waits for network activity to settle, correctly handling navigations triggered by the click.
     - `submit`: Can trigger a standard form submission or, for `application/json` forms, it can intercept the submission and use the browser's `fetch` API to send the data, allowing it to capture the result of XHR-based submissions.
+    - `extract`: Recursively extracts structured data from the page using Playwright's locators based on a given schema.
   - **Resource Intensive**: Slower and requires more memory/CPU than the Cheerio engine.
 - **Use Case**: Interacting with modern, dynamic web applications (e.g., SPAs built with React, Vue, Angular) or any site that relies heavily on JavaScript.
 
-## 5. How to Extend the Engine
+## 5. Data Extraction with `extract()`
+
+The `extract()` method provides a powerful, declarative way to pull structured data from a web page. Instead of writing a chain of commands to find and read individual elements, you define a schema that mirrors your desired JSON output, and the engine handles the traversal and data extraction.
+
+**Example**:
+
+```typescript
+const schema = {
+  type: 'object',
+  properties: {
+    title: {
+      selector: '.title',
+    },
+    author: {
+      type: 'object',
+      selector: '.author',
+      properties: {
+        name: { selector: '.name' },
+        profile: { selector: 'a', attribute: 'href' },
+      },
+    },
+    tags: {
+      type: 'array',
+      selector: '.tag',
+      items: { type: 'string' },
+    },
+  },
+};
+
+const data = await engine.extract(schema);
+/*
+Expected output:
+{
+  title: 'Article Title',
+  author: {
+    name: 'John Doe',
+    profile: '/profiles/johndoe'
+  },
+  tags: ['tech', 'news', 'web']
+}
+*/
+```
+
+### Schema Details
+
+The schema is a recursive structure composed of three main types:
+
+1.  **Object Schema**: `{ type: 'object', selector?: string, properties: { ... } }`
+    - Defines a JSON object.
+    - `selector` (optional): A CSS selector that scopes the context for its `properties`. If not provided, it uses the current context.
+    - `properties`: An object where each key is a property in the output, and the value is another schema to be extracted within the object's context.
+
+2.  **Array Schema**: `{ type: 'array', selector: string, items: { ... } }`
+    - Defines a JSON array.
+    - `selector`: A CSS selector that finds all elements for the array.
+    - `items`: A schema that is applied to *each* element found by the selector.
+
+3.  **Value Schema**: `{ type?: string, selector?: string, attribute?: string }`
+    - Extracts a single value.
+    - `selector` (optional): A CSS selector to find the target element. If not provided, the current context element is used.
+    - `attribute` (optional): If provided, extracts the value of this attribute from the element (e.g., `href`, `src`, `data-id`).
+    - `type` (optional): The target data type. Defaults to `string`.
+
+### Value Type Parsing
+
+- **`string`** (default): Extracts the text content of the element, trimmed. (e.g., `textContent`).
+- **`html`**: Extracts the inner HTML of the element.
+- **`number`**: Extracts the text content and parses it as a float. It strips characters other than digits, `.`, and `-` before parsing. Returns `null` if parsing fails.
+- **`boolean`**: Extracts the text content. Returns `true` if the trimmed, lowercased text is exactly `'true'` or `'1'`. Otherwise, it returns `false`.
+
+## 6. How to Extend the Engine
 
 Adding a new fetch engine is straightforward:
 
 1. **Create the Class**: Create a new file (e.g., `my-engine.ts`) and define a class that extends `FetchEngine`.
 
-    ```typescript
-    import { FetchEngine, FetchEngineAction, ... } from './base';
-
-    export class MyEngine extends FetchEngine {
-      // ...
-    }
-    ```
-
 2. **Define Static Properties**: Set the unique `id` and `mode` for the engine.
-
-    ```typescript
-    static readonly id = 'my-engine';
-    static readonly mode = 'browser'; // or 'http'
-    ```
 
 3. **Implement Abstract Methods**: Provide concrete implementations for all abstract methods defined in `FetchEngine`:
     - `_initialize()`: Set up your underlying crawler instance.
     - `_cleanup()`: Tear down the crawler and free resources.
     - `buildResponse()`: Convert the crawler's context into a standard `FetchResponse`.
-    - `executeAction()`: Implement the logic for `click`, `fill`, `submit`, etc.
-    - `goto()`, `click()`, `fill()`, etc.: Implement the public-facing action methods, which typically dispatch to the internal action loop.
+    - `executeAction()`: Implement the logic for actions like `click`, `fill`, etc. The base class handles the recursive `extract` logic, but you must implement the primitives that power it.
+    - `_querySelectorAll()`: Find all elements matching a selector in a given context.
+    - `_extractValue()`: Extract a primitive value (string, number, etc.) from a single element context.
+    - Public action methods (`goto()`, `click()`, etc.): Implement the public-facing methods, which typically dispatch to the internal action loop.
 
 4. **Register the Engine**: At the end of your file, register the new class in the engine registry.
 
@@ -142,7 +203,7 @@ Adding a new fetch engine is straightforward:
     FetchEngine.register(MyEngine);
     ```
 
-## 6. Testing
+## 7. Testing
 
 The file `engine.spec.ts` contains a comprehensive test suite for the fetch engines.
 

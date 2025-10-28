@@ -17,7 +17,7 @@
 - **职责**：为导航、内容检索和用户交互等操作提供一致的高级 API。
 - **关键抽象**：
   - **生命周期**：`initialize()` 和 `cleanup()` 方法用于管理引擎的状态。
-  - **核心引擎操作**：`goto()`、`getContent()`、`click()`、`fill()`、`submit()`、`waitFor()`。
+  - **核心引擎操作**：`goto()`、`getContent()`、`click()`、`fill()`、`submit()`、`waitFor()`、`extract()`。
   - **配置**：`headers()`、`cookies()`、`blockResources()`。
 - **静态注册表**：它维护所有可用引擎实现（`FetchEngine.register`）的静态注册表。这允许通过其 `id` 或 `mode` 轻松扩展和选择引擎。
 - **动作分派**：它使用事件驱动模型（`_executePendingActions` 和 `actionEmitter`）在初始 `goto()` 调用后处理活动页面上的一系列动作。
@@ -93,6 +93,7 @@ The engine's architecture is designed to solve a key challenge: providing a simp
     - `click`：模拟点击。如果选择器是链接（`<a>`），它会导航到 `href`。如果是提交按钮，它会触发表单提交。如果未找到选择器，则将其视为原始 URL 进行导航。
     - `fill`：在解析的 HTML 中更新表单输入的值。此状态会暂时保持，直到调用 `submit` 动作。
     - `submit`：序列化表单输入的当前状态，并发送一个新的 `GET` 或 `POST` 请求。
+    - `extract`: 根据给定的 schema，从静态 HTML 内容中递归地提取结构化数据。
 - **用例**：抓取静态网站、服务器渲染页面或不需要浏览器功能的 API。
 
 ### `PlaywrightFetchEngine` (playwright.ts)
@@ -105,36 +106,96 @@ The engine's architecture is designed to solve a key challenge: providing a simp
   - **强大的交互**：动作由 Playwright 执行，准确模拟真实用户行为。
     - `click`：执行点击并等待网络活动稳定下来，正确处理由点击触发的导航。
     - `submit`：可以触发表单的标准提交，或者对于 `application/json` 类型的表单，它可以拦截提交并使用浏览器的 `fetch` API 发送数据，从而能够捕获基于 XHR 的提交结果。
+    - `extract`: 利用 Playwright 的定位器，根据给定的 schema 从页面中递归地提取结构化数据。
   - **资源密集型**：比 Cheerio 引擎慢，需要更多的内存/CPU。
 - **用例**：与现代动态 Web 应用程序（例如，使用 React、Vue、Angular 构建的 SPA）或任何严重依赖 JavaScript 的网站进行交互。
 
-## 5. 如何扩展引擎
+## 5. 使用 `extract()` 进行数据提取
+
+`extract()` 方法提供了一种强大的声明式方式来从网页中提取结构化数据。您无需编写一长串命令来查找和读取单个元素，而是定义一个与您期望的 JSON 输出相对应的 schema，引擎将自动处理遍历和数据提取。
+
+**示例**:
+
+```typescript
+const schema = {
+  type: 'object',
+  properties: {
+    title: {
+      selector: '.title',
+    },
+    author: {
+      type: 'object',
+      selector: '.author',
+      properties: {
+        name: { selector: '.name' },
+        profile: { selector: 'a', attribute: 'href' },
+      },
+    },
+    tags: {
+      type: 'array',
+      selector: '.tag',
+      items: { type: 'string' },
+    },
+  },
+};
+
+const data = await engine.extract(schema);
+/*
+期望输出:
+{
+  title: 'Article Title',
+  author: {
+    name: 'John Doe',
+    profile: '/profiles/johndoe'
+  },
+  tags: ['tech', 'news', 'web']
+}
+*/
+```
+
+### Schema 详细信息
+
+Schema 是一个由三种主要类型组成的递归结构：
+
+1.  **对象 Schema**: `{ type: 'object', selector?: string, properties: { ... } }`
+    - 定义一个 JSON 对象。
+    - `selector` (可选): 一个 CSS 选择器，用于限定其 `properties` 的上下文范围。如果未提供，则使用当前上下文。
+    - `properties`: 一个对象，其中每个键是输出中的一个属性，值是在该对象上下文中要提取的另一个 schema。
+
+2.  **数组 Schema**: `{ type: 'array', selector: string, items: { ... } }`
+    - 定义一个 JSON 数组。
+    - `selector`: 一个 CSS 选择器，用于查找数组的所有元素。
+    - `items`: 应用于选择器找到的*每个*元素的 schema。
+
+3.  **值 Schema**: `{ type?: string, selector?: string, attribute?: string }`
+    - 提取单个值。
+    - `selector` (可选): 用于查找目标元素的 CSS 选择器。如果未提供，则使用当前上下文元素。
+    - `attribute` (可选): 如果提供，则从元素中提取此属性的值 (例如, `href`, `src`, `data-id`)。
+    - `type` (可选): 目标数据类型。默认为 `string`。
+
+### 值类型解析
+
+- **`string`** (默认): 提取元素的文本内容并去除首尾空格 (例如, `textContent`)。
+- **`html`**: 提取元素的内部 HTML。
+- **`number`**: 提取文本内容并将其解析为浮点数。解析前会剥离除数字、`.` 和 `-` 之外的字符。如果解析失败，则返回 `null`。
+- **`boolean`**: 提取文本内容。如果去除首尾空格并转为小写后的文本是 `'true'` 或 `'1'`，则返回 `true`。否则返回 `false`。
+
+## 6. 如何扩展引擎
 
 添加新的抓取引擎非常简单：
 
 1. **创建类**：创建一个新文件（例如，`my-engine.ts`）并定义一个扩展 `FetchEngine` 的类。
 
-    ```typescript
-    import { FetchEngine, FetchEngineAction, ... } from './base';
-
-    export class MyEngine extends FetchEngine {
-      // ...
-    }
-    ```
-
 2. **定义静态属性**：为引擎设置唯一的 `id` 和 `mode`。
 
-    ```typescript
-    static readonly id = 'my-engine';
-    static readonly mode = 'browser'; // 或 'http'
-    ```
-
 3. **实现抽象方法**：为 `FetchEngine` 中定义的所有抽象方法提供具体实现：
-    - `_initialize()`：设置您的底层爬虫实例。
-    - `_cleanup()`：拆除爬虫并释放资源。
-    - `buildResponse()`：将爬虫的上下文转换为标准的 `FetchResponse`。
-    - `executeAction()`：实现 `click`、`fill`、`submit` 等的逻辑。
-    - `goto()`、`click()`、`fill()` 等：实现面向公众的动作方法，这些方法通常分派到内部动作循环。
+    - `_initialize()`: 设置您的底层爬虫实例。
+    - `_cleanup()`: 拆除爬虫并释放资源。
+    - `buildResponse()`: 将爬虫的上下文转换为标准的 `FetchResponse`。
+    - `executeAction()`: 实现 `click`、`fill` 等动作的逻辑。基类处理了 `extract` 的递归逻辑，但您必须实现为其提供支持的原语方法。
+    - `_querySelectorAll()`: 在给定上下文中查找所有匹配选择器的元素。
+    - `_extractValue()`: 从单个元素上下文中提取原始值（字符串、数字等）。
+    - 公共动作方法 (`goto()`、`click()` 等): 实现面向公众的方法，这些方法通常会分派到内部动作循环。
 
 4. **注册引擎**：在文件末尾，在引擎注册表中注册新类。
 
@@ -142,7 +203,7 @@ The engine's architecture is designed to solve a key challenge: providing a simp
     FetchEngine.register(MyEngine);
     ```
 
-## 6. 测试
+## 7. 测试
 
 `engine.spec.ts` 文件包含抓取引擎的全面测试套件。
 
