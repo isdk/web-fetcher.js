@@ -105,6 +105,8 @@ export class PlaywrightFetchEngine extends FetchEngine {
       }
       case 'fill':
         await page.fill(action.selector, action.value, { timeout: defaultTimeout });
+        const navResponse = await this.buildResponse(context);
+        this.lastResponse = navResponse;
         return;
       case 'waitFor':
         if (action.options?.selector) {
