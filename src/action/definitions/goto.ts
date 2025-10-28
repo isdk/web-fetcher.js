@@ -1,7 +1,7 @@
 import { GotoActionOptions } from "../../engine/base";
 import { FetchContext } from "../../core/context";
 import { FetchResponse } from "../../core/types";
-import { BaseFetchActionOptions, FetchAction } from "../fetch-action";
+import { BaseFetchActionProperties, FetchAction } from "../fetch-action";
 
 interface GotoParams extends GotoActionOptions {
   url?: string;
@@ -15,7 +15,7 @@ export class GotoAction extends FetchAction {
     browser: 'native' as const,
   };
 
-  async onExecute(context: FetchContext, options?: BaseFetchActionOptions, eventPayload?: any): Promise<FetchResponse|void> {
+  async onExecute(context: FetchContext, options?: BaseFetchActionProperties, eventPayload?: any): Promise<FetchResponse|void> {
     const params = options?.params as GotoParams | undefined;
     const url = params?.url || context.url;
 

@@ -139,11 +139,11 @@ export abstract class FetchAction {
   }
 
   // 生命周期钩子（可选）
-  protected onBeforeExec?(context: FetchContext, options?: FetchActionOptions): Promise<void>|void
-  protected onAfterExec?(context: FetchContext, options?: FetchActionOptions): Promise<void>|void
+  protected onBeforeExec?(context: FetchContext, options?: FetchActionProperties): Promise<void>|void
+  protected onAfterExec?(context: FetchContext, options?: FetchActionProperties): Promise<void>|void
 
   // 核心执行逻辑（必需）
-  abstract onExecute(context: FetchContext, options?: BaseFetchActionOptions, eventPayload?: any): Promise<any>|any
+  abstract onExecute(context: FetchContext, options?: FetchActionProperties, eventPayload?: any): Promise<any>|any
 
   protected async delegateToEngine(
     context: FetchContext,
@@ -162,7 +162,7 @@ export abstract class FetchAction {
     return await (engine[method] as any)(...args);
   }
 
-  protected installCollectors(context: FetchContext, options?: FetchActionOptions) {
+  protected installCollectors(context: FetchContext, options?: FetchActionProperties) {
     const configs = (options as any)?.collectors as BaseFetchCollectorOptions[] | undefined;
     if (!configs?.length) return;
 
@@ -264,7 +264,7 @@ export abstract class FetchAction {
    */
   async beforeExec(
     context: FetchContext,
-    options?: FetchActionOptions
+    options?: FetchActionProperties
   ) {
     // 1. 初始化调用栈
     if (!context.internal.actionStack) {
@@ -310,7 +310,7 @@ export abstract class FetchAction {
    */
   async afterExec(
     context: FetchContext,
-    options?: FetchActionOptions,
+    options?: BaseFetchCollectorActionProperties,
     result?: FetchActionResult,
     scope?: { entry: FetchActionInContext; collectors?: CollectorsRuntime },
   ): Promise<void> {
@@ -360,7 +360,7 @@ export abstract class FetchAction {
   }
 
   // the main action entry point
-  async execute<R extends FetchReturnType = 'any'>(context: FetchContext, options?: FetchActionOptions): Promise<FetchActionResult<R>> {
+  async execute<R extends FetchReturnType = 'any'>(context: FetchContext, options?: FetchActionProperties): Promise<FetchActionResult<R>> {
     const scope = await this.beforeExec(context, options);
     let result: FetchActionResult<R>|undefined;
     try {

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from
 import fastify, { FastifyInstance } from 'fastify';
 import formbody from '@fastify/formbody';
 import { AddressInfo } from 'net';
-import EventEmitter from 'events';
+import {EventEmitter} from 'events-ex';
 
 // The things to test
 import { FetchAction, FetchActionResultStatus } from './fetch-action';
@@ -13,6 +13,7 @@ import { SubmitAction } from './definitions/submit';
 import { GetContentAction } from './definitions/get-content';
 import { ClickAction } from './definitions/click';
 import { WaitForAction } from './definitions/wait-for';
+import { ExtractAction } from './definitions/extract';
 
 
 // Dependencies for testing
@@ -50,6 +51,30 @@ const createTestServer = async (): Promise<FastifyInstance> => {
           <input type="text" name="test_input" value="initial" />
           <input type="submit" value="Submit" />
         </form>
+      </body>
+      </html>
+    `);
+  });
+
+  // Extract test page
+  server.get('/extract-test', (req, reply) => {
+    reply.type('text/html').send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Extract Test Page</title>
+      </head>
+      <body>
+        <h1 class="title">Article Title</h1>
+        <div class="author" data-id="123">
+          <span class="name">John Doe</span>
+          <a class="profile-link" href="/profiles/johndoe">View Profile</a>
+        </div>
+        <ul class="tags">
+          <li class="tag">tech</li>
+          <li class="tag">news</li>
+          <li class="tag">web</li>
+        </ul>
       </body>
       </html>
     `);
@@ -98,20 +123,22 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
     // 每个测试前创建新引擎实例和上下文
     beforeEach(async () => {
       server.clearRateLimit();
-      const engineCtx: FetchEngineContext = { id: `test-action-${engineName}-${Date.now()}`, engine: engineName as any, retries: 1 };
+      const engineCtx: FetchEngineContext = { id: `test-action-${engineName}-${Date.now()}`, engine: engineName as any, retries: 1, internal: {} };
       engine = (await FetchEngine.create(engineCtx, {
           engine: engineName as any,
           headers: { 'User-Agent': 'web-fetcher/1.0' },
       })) as FetchEngine;
       expect(engine).toBeInstanceOf(EngineClass);
-      
+
       context = {
-          id: engineCtx.id,
-          engine: engineName as any,
-          url: baseUrl,
-          eventBus: new EventEmitter(),
-          outputs: {},
-          internal: { engine },
+        id: engineCtx.id,
+        engine: engineName as any,
+        url: baseUrl,
+        eventBus: new EventEmitter(),
+        outputs: {},
+        internal: { engine },
+        execute: undefined as unknown as any,
+        action: undefined as unknown as any,
       } as FetchContext;
     });
 
@@ -125,7 +152,7 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       expect(gotoAction).toBeInstanceOf(GotoAction);
 
       const result = await gotoAction!.execute(context, { params: { url: baseUrl } });
-      
+
       expect(result.status).toBe(FetchActionResultStatus.Success);
       expect(result.returnType).toBe('response');
 
@@ -135,7 +162,7 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       const content = await context.internal.engine!.getContent();
       expect(content.html).toContain('<h1>Welcome</h1>');
     }, TEST_TIMEOUT);
-    
+
     it('should execute getContent action', async () => {
       await engine.goto(baseUrl); // Initial navigation
 
@@ -149,24 +176,24 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       const response = result.result as FetchResponse;
       expect(response.html).toContain('<h1>Welcome</h1>');
     }, TEST_TIMEOUT);
-    
+
     it('should execute click action to navigate', async () => {
       await engine.goto(baseUrl);
-  
+
       const clickAction = FetchAction.create('click');
       expect(clickAction).toBeInstanceOf(ClickAction);
-      
+
       await clickAction!.execute(context, { params: { selector: 'a[href="/page2"]' } });
-  
+
       const content = await engine.getContent();
-  
+
       expect(content.finalUrl).toBe(`${baseUrl}/page2`);
       expect(content.html).toContain('<h2>Page 2</h2>');
     }, TEST_TIMEOUT);
 
     it('should execute fill and submit actions', async () => {
       await engine.goto(baseUrl);
-  
+
       const fillAction = FetchAction.create('fill');
       expect(fillAction).toBeInstanceOf(FillAction);
       await fillAction!.execute(context, {
@@ -175,7 +202,7 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
               value: 'action_test_value'
           }
       });
-  
+
       const submitAction = FetchAction.create('submit');
       expect(submitAction).toBeInstanceOf(SubmitAction);
       await submitAction!.execute(context, {
@@ -184,7 +211,7 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
               enctype: 'application/json'
           }
       });
-  
+
       const content = await engine.getContent();
       expect(content.text).toContain('Submitted: action_test_value');
     }, TEST_TIMEOUT);
@@ -192,14 +219,57 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
     it('should execute waitFor action', async () => {
       const waitForAction = FetchAction.create('waitFor');
       expect(waitForAction).toBeInstanceOf(WaitForAction);
-  
+
       const start = Date.now();
       await engine.goto(baseUrl);
       const result = await waitForAction!.execute(context, { params: { ms: 500 } });
       const duration = Date.now() - start;
-  
+
       expect(result.status).toBe(FetchActionResultStatus.Success);
       expect(duration).toBeGreaterThanOrEqual(480); // allow some tolerance
+    }, TEST_TIMEOUT);
+
+    it('should execute extract action', async () => {
+      await engine.goto(`${baseUrl}/extract-test`);
+
+      const extractAction = FetchAction.create('extract');
+      expect(extractAction).toBeInstanceOf(ExtractAction);
+
+      const testSchema = {
+        type: 'object',
+        properties: {
+          title: {
+            selector: '.title',
+            type: 'string',
+          },
+          author: {
+            type: 'object',
+            selector: '.author',
+            properties: {
+              name: { selector: '.name' },
+              profile: { selector: 'a', attribute: 'href' },
+            },
+          },
+          tags: {
+            type: 'array',
+            selector: '.tag',
+            items: { type: 'string' },
+          },
+        },
+      } as const;
+
+      const result = await extractAction!.execute(context, { params: testSchema });
+
+      expect(result.status).toBe(FetchActionResultStatus.Success);
+      expect(result.returnType).toBe('any');
+      expect(result.result).toEqual({
+        title: 'Article Title',
+        author: {
+          name: 'John Doe',
+          profile: '/profiles/johndoe',
+        },
+        tags: ['tech', 'news', 'web'],
+      });
     }, TEST_TIMEOUT);
 
   });

@@ -12,6 +12,7 @@ import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { createPromiseLock } from './promise-lock';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
+import { ExtractSchema, ExtractValueSchema } from '../core/extract';
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
 type CheerioSelection = ReturnType<CheerioAPI>;
@@ -40,12 +41,49 @@ export class CheerioFetchEngine extends FetchEngine {
     };
   }
 
+  protected async _querySelectorAll(context: {$: CheerioAPI, el: CheerioNode}, selector: string): Promise<any[]> {
+    const { $, el } = context;
+    return el.find(selector).toArray().map(e => ({ $, el: $(e) }));
+  }
+
+  protected async _extractValue(schema: ExtractValueSchema, context: { el: CheerioNode }): Promise<any> {
+    const { el } = context;
+    const { attribute, type = 'string' } = schema;
+
+    if (el.length === 0) return null;
+
+    let value: string | null = '';
+    if (attribute) {
+      value = el.attr(attribute) ?? null;
+    } else if (type === 'html') {
+      value = el.html();
+    } else {
+      value = el.text().trim();
+    }
+
+    if (value === null) return null;
+
+    switch (type) {
+      case 'number':
+        return parseFloat(value.replace(/[^0-9.-]+/g, '')) || null;
+      case 'boolean':
+        const lowerValue = value.toLowerCase();
+        return lowerValue === 'true' || lowerValue === '1';
+      default:
+        return value;
+    }
+  }
+
   protected async executeAction(context: CheerioCrawlingContext, action: FetchEngineAction): Promise<any> {
     const { $ } = context;
     switch (action.type) {
       case 'dispose':
         // This action is used by the base class cleanup logic.
         return;
+      case 'extract': {
+        if (!$) throw new CommonError(`Cheerio context not available for action: ${action.type}`, 'extract');
+        return this._extract(action.schema, { $, el: $.root() });
+      }
       case 'click': {
         if (!$) throw new CommonError(`Cheerio context not available for action: ${action.type}`, 'click');
         const selector = action.selector;
@@ -282,6 +320,10 @@ export class CheerioFetchEngine extends FetchEngine {
 
   async submit(selector?: string | CheerioNode, options?: SubmitActionOptions): Promise<void> {
     return this.dispatchAction({ type: 'submit', selector, options });
+  }
+
+  async extract<T>(schema: ExtractSchema): Promise<T> {
+    return this.dispatchAction({ type: 'extract', schema });
   }
 }
 
