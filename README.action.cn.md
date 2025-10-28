@@ -124,6 +124,65 @@ export class FillAction extends FetchAction {
 * **`params`**: 一个指定等待条件的对象 (例如 `ms`, `selector`, `networkIdle`)。
 * **`returns`**: `none`
 
+#### `pause`
+
+暂停 Action 脚本的执行，以允许用户手动介入（例如，解决验证码）。
+
+此 Action 仅在 `browser` 模式下有效，并且**必须**在 `fetchWeb` 的选项中提供一个 `onPause` 回调处理器。当此 Action 被触发时，它会调用 `onPause` 处理器并等待其执行完成。
+
+*   **`id`**: `pause`
+*   **`params`**:
+    *   `selector` (string, optional): 如果提供，仅当匹配此选择器的元素存在时，Action 才会暂停。
+    *   `attribute` (string, optional): 与 `selector` 配合使用。如果提供，仅当元素存在且拥有该指定属性时，Action 才会暂停。
+    *   `message` (string, optional): 一个将传递给 `onPause` 处理器的消息，可用于向用户显示提示信息。
+*   **`returns`**: `none`
+
+**示例：在 Google 搜索中处理 CAPTCHA**
+
+```json
+{
+  "actions": [
+    { "id": "goto", "params": { "url": "https://www.google.com/search?q=gemini" } },
+    {
+      "id": "pause",
+      "params": {
+        "selector": "#recaptcha",
+        "message": "检测到 Google CAPTCHA，请在浏览器中手动解决后按回车键继续。"
+      }
+    },
+    { "id": "waitFor", "params": { "selector": "#search" } }
+  ]
+}
+```
+
+**`onPause` 处理器示例:**
+
+```typescript
+// 在调用 fetchWeb 的代码中
+import { fetchWeb } from '@isdk/web-fetcher';
+import readline from 'readline';
+
+const handlePause = async ({ message }) => {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  await new Promise(resolve => {
+    rl.question(message || '执行已暂停，请按回车键继续...', () => {
+      rl.close();
+      resolve();
+    });
+  });
+};
+
+await fetchWeb({
+  // ...,
+  engine: 'browser',
+  engineOptions: { headless: false },
+  onPause: handlePause,
+  actions: [
+    // ... 你的 actions
+  ]
+});
+```
+
 #### `getContent`
 
 获取当前页面状态的完整内容。
