@@ -30,21 +30,40 @@ Every `FetchAction` subclass must implement the `onExecute` method. This is wher
 
 ### `delegateToEngine` (Delegation Helper)
 
-To simplify the creation of **atomic actions**, the `FetchAction` base class provides a protected helper method, `delegateToEngine`. Based on your latest simplification, its interface has become more intuitive.
-
-It passes the Action's parameters (`params`) as a whole object directly to the corresponding method on the engine.
+To simplify the creation of **atomic actions**, the `FetchAction` base class provides a protected helper method, `delegateToEngine`. It forwards the call to the corresponding method on the active engine, passing along any arguments. This allows actions to be a thin wrapper around engine capabilities.
 
 **Example: The `fill` Action using `delegateToEngine`**
 
+The action's `onExecute` method typically deconstructs the `params` object and passes them as arguments to `delegateToEngine`.
+
 ```typescript
-// The new, more concise implementation
-async onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promise<void> {
-  // Directly passes the options.params object to engine.fill(params)
-  await this.delegateToEngine(context, 'fill', options?.params);
+// src/action/definitions/fill.ts
+export class FillAction extends FetchAction {
+  // ...
+  async onExecute(context: FetchContext, options?: BaseFetchActionProperties): Promise<void> {
+    const { selector, value, ...restOptions } = options?.params || {};
+    if (!selector) throw new Error('Selector is required for fill action');
+    if (value === undefined) throw new Error('Value is required for fill action');
+    // selector, value, and restOptions are passed as arguments to engine.fill()
+    await this.delegateToEngine(context, 'fill', selector, value, restOptions);
+  }
 }
 ```
 
-This implementation clearly expresses the intent: "delegate the `fill` action to the engine, passing the entire `params` object defined in the script."
+Some actions might pass the entire `params` object if the underlying engine method expects it, like `extract`.
+
+```typescript
+// src/action/definitions/extract.ts
+export class ExtractAction extends FetchAction {
+  // ...
+  async onExecute(context: FetchContext, options?: ExtractActionProperties): Promise<any> {
+    const schema = options?.params;
+    if (!schema) throw new Error('Schema is required for extract action');
+    // The entire schema object is passed as an argument to engine.extract()
+    return this.delegateToEngine(context, 'extract', schema);
+  }
+}
+```
 
 ## 3. How to Use (For Users)
 
@@ -65,6 +84,103 @@ For simple, linear workflows, you can use a list of the library's built-in atomi
   ]
 }
 ```
+
+### Built-in Atomic Actions
+
+The library provides a set of essential atomic actions to perform common web interactions.
+
+#### `goto`
+Navigates the browser to a new URL.
+*   **`id`**: `goto`
+*   **`params`**:
+    *   `url` (string): The URL to navigate to. If omitted, the `url` from the current context is used.
+    *   ...other navigation options like `waitUntil`, `timeout` which are passed to the engine.
+*   **`returns`**: `response`
+*   **Example**:
+    ```json
+    { "id": "goto", "params": { "url": "https://www.google.com" } }
+    ```
+
+#### `click`
+Clicks on an element specified by a selector.
+*   **`id`**: `click`
+*   **`params`**:
+    *   `selector` (string): A CSS selector or XPath to identify the element to click.
+*   **`returns`**: `none`
+*   **Example**:
+    ```json
+    { "id": "click", "params": { "selector": "button#submit" } }
+    ```
+
+#### `fill`
+Fills an input field, like `<input>` or `<textarea>`, with a specified value.
+*   **`id`**: `fill`
+*   **`params`**:
+    *   `selector` (string): A selector for the input element.
+    *   `value` (string): The text to fill into the element.
+*   **`returns`**: `none`
+*   **Example**:
+    ```json
+    { "id": "fill", "params": { "selector": "input[name=q]", "value": "gemini" } }
+    ```
+
+#### `submit`
+Submits a form. This can be triggered on a form element or an element within a form.
+*   **`id`**: `submit`
+*   **`params`**:
+    *   `selector` (string, optional): A selector for the form element. If not provided, the engine may try to find an associated form.
+*   **`returns`**: `none`
+*   **Example**:
+    ```json
+    { "id": "submit", "params": { "selector": "form#login-form" } }
+    ```
+
+#### `waitFor`
+Pauses execution to wait for a specific condition to be met. This is crucial for handling dynamic content and asynchronous operations.
+*   **`id`**: `waitFor`
+*   **`params`**: An object specifying the wait condition. Common options include:
+    *   `ms` (number): Wait for a fixed duration in milliseconds.
+    *   `selector` (string): Wait for an element matching the selector to appear in the DOM.
+    *   `networkIdle` (boolean): Wait until there are no more network connections for a certain period.
+*   **`returns`**: `none`
+*   **Example**:
+    ```json
+    { "id": "waitFor", "params": { "selector": "#results", "timeout": 5000 } }
+    ```
+    ```json
+    { "id": "waitFor", "params": { "ms": 1000 } }
+    ```
+
+#### `getContent`
+Retrieves the full content of the current page state.
+*   **`id`**: `getContent`
+*   **`params`**: (none)
+*   **`returns`**: `response` - A `FetchResponse` object containing the page's `html`, `text`, `finalUrl`, etc.
+*   **Example**:
+    ```json
+    { "id": "getContent", "storeAs": "pageContent" }
+    ```
+
+#### `extract`
+Extracts structured data from the page using a declarative schema. This is a powerful action for data scraping.
+*   **`id`**: `extract`
+*   **`params`**: An `ExtractSchema` object that defines the selectors and structure of the data to be extracted.
+*   **`returns`**: `any` - The extracted data, matching the structure of the schema.
+*   **Example**:
+    ```json
+    {
+      "id": "extract",
+      "params": {
+        "type": "object",
+        "selector": ".product",
+        "properties": {
+          "name": { "selector": ".product-title" },
+          "price": { "selector": ".product-price" }
+        }
+      },
+      "storeAs": "productDetails"
+    }
+    ```
 
 ### Building High-Level Semantic Actions via "Composition"
 

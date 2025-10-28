@@ -30,21 +30,40 @@ Action 脚本系统的核心目标是提供一个**声明式、引擎无关**的
 
 ### `delegateToEngine` (委托辅助方法)
 
-为了简化**原子 Action**的创建，`FetchAction` 基类提供了一个受保护的辅助方法 `delegateToEngine`。根据您的最新简化，它的接口变得更加直观。
-
-它将 Action 的参数（`params`）作为一个整体，直接传递给引擎上对应的同名方法。
+为了简化**原子 Action**的创建，`FetchAction` 基类提供了一个受保护的辅助方法 `delegateToEngine`。它将调用转发到活动引擎上的相应方法，并传递任何参数。这使得 Action 可以作为引擎功能的轻量级包装。
 
 **示例：使用 `delegateToEngine` 后的 `fill` Action**
 
+Action 的 `onExecute` 方法通常会解构 `params` 对象，并将其作为参数传递给 `delegateToEngine`。
+
 ```typescript
-// 新的、更简洁的实现
-async onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promise<void> {
-  // 直接将 options.params 对象传递给 engine.fill(params)
-  await this.delegateToEngine(context, 'fill', options?.params);
+// src/action/definitions/fill.ts
+export class FillAction extends FetchAction {
+  // ...
+  async onExecute(context: FetchContext, options?: BaseFetchActionProperties): Promise<void> {
+    const { selector, value, ...restOptions } = options?.params || {};
+    if (!selector) throw new Error('Selector is required for fill action');
+    if (value === undefined) throw new Error('Value is required for fill action');
+    // selector, value, 和 restOptions 作为参数传递给 engine.fill()
+    await this.delegateToEngine(context, 'fill', selector, value, restOptions);
+  }
 }
 ```
 
-这个实现清晰地表达了“将 `fill` 动作委托给引擎，并将脚本中定义的 `params` 对象完整传递”的意图。
+如果底层的引擎方法需要，某些 Action 可能会传递整个 `params` 对象，例如 `extract`。
+
+```typescript
+// src/action/definitions/extract.ts
+export class ExtractAction extends FetchAction {
+  // ...
+  async onExecute(context: FetchContext, options?: ExtractActionProperties): Promise<any> {
+    const schema = options?.params;
+    if (!schema) throw new Error('Schema is required for extract action');
+    // 整个 schema 对象作为参数传递给 engine.extract()
+    return this.delegateToEngine(context, 'extract', schema);
+  }
+}
+```
 
 ## 3. 如何使用 (面向使用者)
 
@@ -65,6 +84,103 @@ async onExecute(context: FetchContext, options?: BaseFetchActionOptions): Promis
   ]
 }
 ```
+
+### 内置原子 Action
+
+本库提供了一组核心的原子 Action，用于执行常见的网页交互。
+
+#### `goto`
+导航到新的 URL。
+*   **`id`**: `goto`
+*   **`params`**:
+    *   `url` (string): 要导航到的 URL。如果省略，则使用当前上下文中的 `url`。
+    *   ...其他导航选项，如 `waitUntil`, `timeout`，这些选项会传递给引擎。
+*   **`returns`**: `response`
+*   **示例**:
+    ```json
+    { "id": "goto", "params": { "url": "https://www.google.com" } }
+    ```
+
+#### `click`
+点击一个由选择器指定的元素。
+*   **`id`**: `click`
+*   **`params`**:
+    *   `selector` (string): 用于标识要点击元素的 CSS 选择器或 XPath。
+*   **`returns`**: `none`
+*   **示例**:
+    ```json
+    { "id": "click", "params": { "selector": "button#submit" } }
+    ```
+
+#### `fill`
+向输入字段（如 `<input>` 或 `<textarea>`）填充指定的值。
+*   **`id`**: `fill`
+*   **`params`**:
+    *   `selector` (string): 输入元素的选择器。
+    *   `value` (string): 要填入元素中的文本。
+*   **`returns`**: `none`
+*   **示例**:
+    ```json
+    { "id": "fill", "params": { "selector": "input[name=q]", "value": "gemini" } }
+    ```
+
+#### `submit`
+提交一个表单。可以在表单元素或表单内的元素上触发。
+*   **`id`**: `submit`
+*   **`params`**:
+    *   `selector` (string, optional): 表单元素的选择器。如果未提供，引擎可能会尝试查找关联的表单。
+*   **`returns`**: `none`
+*   **示例**:
+    ```json
+    { "id": "submit", "params": { "selector": "form#login-form" } }
+    ```
+
+#### `waitFor`
+暂停执行以等待特定条件满足。这对于处理动态内容和异步操作至关重要。
+*   **`id`**: `waitFor`
+*   **`params`**: 一个指定等待条件的对象。常用选项包括：
+    *   `ms` (number): 等待固定的毫秒数。
+    *   `selector` (string): 等待匹配选择器的元素出现在 DOM 中。
+    *   `networkIdle` (boolean): 等待直到网络连接在一段时间内不再活跃。
+*   **`returns`**: `none`
+*   **示例**:
+    ```json
+    { "id": "waitFor", "params": { "selector": "#results", "timeout": 5000 } }
+    ```
+    ```json
+    { "id": "waitFor", "params": { "ms": 1000 } }
+    ```
+
+#### `getContent`
+获取当前页面状态的完整内容。
+*   **`id`**: `getContent`
+*   **`params`**: (无)
+*   **`returns`**: `response` - 一个 `FetchResponse` 对象，包含页面的 `html`, `text`, `finalUrl` 等。
+*   **示例**:
+    ```json
+    { "id": "getContent", "storeAs": "pageContent" }
+    ```
+
+#### `extract`
+使用声明式 Schema 从页面中提取结构化数据。这是用于数据抓取的强大 Action。
+*   **`id`**: `extract`
+*   **`params`**: 一个 `ExtractSchema` 对象，定义了要提取数据的选择器和结构。
+*   **`returns`**: `any` - 提取出的数据，其结构与 Schema 匹配。
+*   **示例**:
+    ```json
+    {
+      "id": "extract",
+      "params": {
+        "type": "object",
+        "selector": ".product",
+        "properties": {
+          "name": { "selector": ".product-title" },
+          "price": { "selector": ".product-price" }
+        }
+      },
+      "storeAs": "productDetails"
+    }
+    ```
 
 ### 通过“组合”构建高级语义 Action
 
