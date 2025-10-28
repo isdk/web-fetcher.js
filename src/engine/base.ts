@@ -554,7 +554,9 @@ export abstract class FetchEngine {
     this.actionEmitter.removeAllListeners();
 
     if (this.crawler) {
-      await this.crawler.teardown?.();
+      try {await this.crawler.teardown?.();} catch (error) {
+        console.error('ccrawler teardown error:', error)
+      }
       this.crawler = undefined;
     }
 
