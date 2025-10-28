@@ -124,6 +124,65 @@ Pauses execution to wait for a specific condition to be met.
 * **`params`**: An object specifying the wait condition (e.g., `ms`, `selector`, `networkIdle`).
 * **`returns`**: `none`
 
+#### `pause`
+
+Pauses the execution of the Action Script to allow for manual user intervention (e.g., solving a CAPTCHA).
+
+This action is only effective in `browser` mode and **requires** an `onPause` callback handler to be provided in the `fetchWeb` options. When triggered, this action calls the `onPause` handler and waits for it to complete.
+
+*   **`id`**: `pause`
+*   **`params`**:
+    *   `selector` (string, optional): If provided, the action will only pause if an element matching this selector exists.
+    *   `attribute` (string, optional): Used in conjunction with `selector`. If provided, the action will only pause if the element exists AND has the specified attribute.
+    *   `message` (string, optional): A message that will be passed to the `onPause` handler, which can be used to display prompts to the user.
+*   **`returns`**: `none`
+
+**Example: Handling a CAPTCHA in Google Search**
+
+```json
+{
+  "actions": [
+    { "id": "goto", "params": { "url": "https://www.google.com/search?q=gemini" } },
+    {
+      "id": "pause",
+      "params": {
+        "selector": "#recaptcha",
+        "message": "Google CAPTCHA detected. Please solve it in the browser and press Enter to continue."
+      }
+    },
+    { "id": "waitFor", "params": { "selector": "#search" } }
+  ]
+}
+```
+
+**`onPause` Handler Example:**
+
+```typescript
+// In your code that calls fetchWeb
+import { fetchWeb } from '@isdk/web-fetcher';
+import readline from 'readline';
+
+const handlePause = async ({ message }) => {
+  const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
+  await new Promise(resolve => {
+    rl.question(message || 'Execution paused. Press Enter to continue...', () => {
+      rl.close();
+      resolve();
+    });
+  });
+};
+
+await fetchWeb({
+  // ...,
+  engine: 'browser',
+  engineOptions: { headless: false },
+  onPause: handlePause,
+  actions: [
+    // ... your actions
+  ]
+});
+```
+
 #### `getContent`
 
 Retrieves the full content of the current page state.
