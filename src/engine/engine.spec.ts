@@ -90,6 +90,43 @@ const createTestServer = async (): Promise<FastifyInstance> => {
     reply.send(`Submitted urlencoded: ${body.urlencoded_input}`);
   });
 
+  // Extract test page
+  server.get('/extract-test', (req, reply) => {
+    reply.type('text/html').send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Extract Test Page</title>
+      </head>
+      <body>
+        <h1 class="title">Article Title</h1>
+        <div class="author" data-id="123">
+          <span class="name">John Doe</span>
+          <a class="profile-link" href="/profiles/johndoe">View Profile</a>
+        </div>
+        <div class="content">
+          <p>Some content here.</p>
+        </div>
+        <ul class="tags">
+          <li class="tag">tech</li>
+          <li class="tag">news</li>
+          <li class="tag">web</li>
+        </ul>
+        <div class="comments">
+          <div class="comment">
+            <span class="user">User1</span>
+            <p class="text">Comment 1</p>
+          </div>
+          <div class="comment">
+            <span class="user">User2</span>
+            <p class="text">Comment 2</p>
+          </div>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
   return server;
 };
 
@@ -217,6 +254,68 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
         expect.objectContaining({ name: 'test', value: '123' })
       ]));
     });
+
+    it('should extract structured data from a page', async () => {
+      const testSchema = {
+        type: 'object',
+        properties: {
+          title: {
+            selector: '.title',
+            type: 'string',
+          },
+          author: {
+            type: 'object',
+            selector: '.author',
+            properties: {
+              id: {
+                attribute: 'data-id',
+                type: 'number',
+              },
+              name: {
+                selector: '.name',
+              },
+              profileLink: {
+                selector: '.profile-link',
+                attribute: 'href',
+              },
+            },
+          },
+          tags: {
+            type: 'array',
+            selector: '.tag',
+            items: { type: 'string' },
+          },
+          comments: {
+              type: 'array',
+              selector: '.comment',
+              items: {
+                  type: 'object',
+                  properties: {
+                      user: { selector: '.user' },
+                      text: { selector: '.text' },
+                  }
+              }
+          }
+        },
+      } as const;
+
+      await engine.goto(`${baseUrl}/extract-test`);
+      const data = await engine.extract(testSchema);
+
+      expect(data).toEqual({
+        title: 'Article Title',
+        author: {
+          id: 123,
+          name: 'John Doe',
+          profileLink: '/profiles/johndoe',
+        },
+        tags: ['tech', 'news', 'web'],
+        comments: [
+            { user: 'User1', text: 'Comment 1' },
+            { user: 'User2', text: 'Comment 2' },
+        ]
+      });
+    }, TEST_TIMEOUT);
   });
 };
 

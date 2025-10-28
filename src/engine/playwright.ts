@@ -4,8 +4,12 @@ import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type Wai
 import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
+import { ExtractSchema, ExtractValueSchema } from '../core/extract';
 
 const DefaultTimeoutMs = 30_000;
+
+type Page = NonNullable<PlaywrightCrawlingContext['page']>;
+type Locator = ReturnType<Page['locator']>;
 
 export class PlaywrightFetchEngine extends FetchEngine {
   static readonly id = 'playwright';
@@ -40,6 +44,38 @@ export class PlaywrightFetchEngine extends FetchEngine {
     };
   }
 
+  protected async _querySelectorAll(context: Locator, selector: string): Promise<any[]> {
+    return context.locator(selector).all();
+  }
+
+  protected async _extractValue(schema: ExtractValueSchema, context: Locator): Promise<any> {
+    const { attribute, type = 'string' } = schema;
+
+    if (await context.count() === 0) return null;
+
+    let value: string | null = '';
+    if (attribute) {
+      value = await context.getAttribute(attribute);
+    } else if (type === 'html') {
+      value = await context.innerHTML();
+    } else {
+      value = await context.textContent();
+    }
+
+    if (value === null) return null;
+    value = value.trim();
+
+    switch (type) {
+      case 'number':
+        return parseFloat(value.replace(/[^0-9.-]+/g, '')) || null;
+      case 'boolean':
+        const lowerValue = value.toLowerCase();
+        return lowerValue === 'true' || lowerValue === '1';
+      default:
+        return value;
+    }
+  }
+
   protected async executeAction(context: PlaywrightCrawlingContext, action: FetchEngineAction): Promise<any> {
     const { page } = context;
     const defaultTimeout = this.opts?.timeoutMs || DefaultTimeoutMs;
@@ -49,18 +85,21 @@ export class PlaywrightFetchEngine extends FetchEngine {
           waitUntil: action.opts?.waitUntil || 'domcontentloaded',
           timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
         });
-        if (response) context = {...context, response}
+        if (response) context = { ...context, response };
         const fetchResponse = await this.buildResponse(context);
         this.lastResponse = fetchResponse;
         return fetchResponse;
       }
+      case 'extract': {
+        return this._extract(action.schema, page.locator('body'));
+      }
       case 'click': {
         // const beforePageId = page.mainFrame().url();
-        await page.click(action.selector, { timeout: defaultTimeout })
+        await page.click(action.selector, { timeout: defaultTimeout });
         await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
         // if (beforePageId !== page.mainFrame().url()) {
-          const navResponse = await this.buildResponse(context);
-          this.lastResponse = navResponse;
+        const navResponse = await this.buildResponse(context);
+        this.lastResponse = navResponse;
         // }
         return;
       }
@@ -239,6 +278,10 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
   async submit(selector?: string, options?: SubmitActionOptions): Promise<void> {
     return this.dispatchAction({ type: 'submit', selector, options });
+  }
+
+  async extract<T>(schema: ExtractSchema): Promise<T> {
+    return this.dispatchAction({ type: 'extract', schema });
   }
 }
 

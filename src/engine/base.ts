@@ -9,6 +9,7 @@ import {
   type PlaywrightCrawler,
 } from 'crawlee';
 import { FetchEngineContext } from '../core/context';
+import { ExtractSchema, ExtractArraySchema, ExtractObjectSchema, ExtractValueSchema } from '../core/extract';
 import {
   BaseFetcherProperties,
   FetchEngineType,
@@ -82,6 +83,7 @@ export type FetchEngineAction =
   | { type: 'submit'; selector?: any; options?: SubmitActionOptions }
   | { type: 'getContent' }
   | { type: 'navigate'; url: string; opts?: GotoActionOptions }
+  | { type: 'extract'; schema: ExtractSchema }
   | { type: 'dispose' };
 
 /**
@@ -228,6 +230,51 @@ export abstract class FetchEngine {
   protected blockedTypes = new Set<string>();
 
   protected _cleanup?(): Promise<void>;
+
+  protected abstract _querySelectorAll(context: any, selector: string): Promise<any[]>;
+  protected abstract _extractValue(schema: ExtractValueSchema, context: any): Promise<any>;
+
+  protected async _extract(schema: ExtractSchema, context: any): Promise<any> {
+    const schemaType = (schema as any).type;
+
+    if (schemaType === 'object') {
+      const { selector, properties } = schema as ExtractObjectSchema;
+      let newContext = context;
+      if (selector) {
+        const elements = await this._querySelectorAll(context, selector);
+        newContext = elements.length > 0 ? elements[0] : null;
+      }
+      if (!newContext) return null;
+
+      const result: Record<string, any> = {};
+      for (const key in properties) {
+        result[key] = await this._extract(properties[key], newContext);
+      }
+      return result;
+    }
+
+    if (schemaType === 'array') {
+      const { selector, items } = schema as ExtractArraySchema;
+      const elements = await this._querySelectorAll(context, selector);
+      const results: any[] = [];
+      for (const element of elements) {
+        results.push(await this._extract(items, element));
+      }
+      return results;
+    }
+
+    const { selector } = schema as ExtractValueSchema;
+    let elementToExtract = context;
+    if (selector) {
+      const elements = await this._querySelectorAll(context, selector);
+      elementToExtract = elements.length > 0 ? elements[0] : null;
+    }
+
+    if (!elementToExtract) return null;
+
+    return this._extractValue(schema as ExtractValueSchema, elementToExtract);
+  }
+
   /**
    * Abstract method for initializing engine's underlying crawler.
    *
@@ -320,6 +367,14 @@ export abstract class FetchEngine {
    * @throws {Error} When no active page context exists
    */
   abstract submit(selector?: any, options?: SubmitActionOptions): Promise<void>; // http: post form 模拟
+
+  /**
+   * Extracts structured data from the current page content.
+   *
+   * @param schema - An object defining the data to extract.
+   * @returns A promise that resolves to an object with the extracted data.
+   */
+  abstract extract<T>(schema: ExtractSchema): Promise<T>;
 
   /**
    * Gets the unique identifier of this engine implementation.
@@ -461,7 +516,6 @@ export abstract class FetchEngine {
   protected async _sharedFailedRequestHandler(context: CrawlingContext, error?: Error): Promise<void> {
     const { request } = context;
     const gotoPromise = this.pendingRequests.get(request.userData.requestId);
-    console.log('🚀 ~ file: base.ts:457 ~ this.ctx?.throwHttpErrors:', error, this.ctx?.throwHttpErrors)
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
       this.pendingRequests.delete(request.userData.requestId);
       const response = (error as any).response;
