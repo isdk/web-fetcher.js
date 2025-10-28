@@ -86,7 +86,14 @@ async function searchGoogle(query: string) {
       { id: 'fill', params: { selector: 'textarea[name=q]', value: query } },
       { id: 'submit', params: { selector: 'form' } },
       { id: 'waitFor', params: { selector: '#search' } }, // Wait for the search results container to appear
-      { id: 'getContent', storeAs: 'searchResultsPage' },
+      {
+        id: 'extract',
+        params: {
+          "selector": "a",
+          "attribute": "href"
+        },
+        storeAs: 'searchResultsPage',
+      },
     ]
   });
 
