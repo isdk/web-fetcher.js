@@ -1,0 +1,11 @@
+{
+  "title": "should handle page navigation by clicking a link",
+  "actions": [
+    { "action": "goto", "url": "/" },
+    { "action": "click", "selector": "a[href=\"/page2\"]" }
+  ],
+  "expected": {
+    "finalUrl": "/page2",
+    "html": { "contains": "<h2>Page 2</h2>" }
+  }
+}
