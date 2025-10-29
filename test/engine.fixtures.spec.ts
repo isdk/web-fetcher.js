@@ -53,6 +53,7 @@ const runDynamicTests = async () => {
     try {
       const jsonContent = await readFile(fixtureJsonPath, 'utf-8');
       const fixture = JSON.parse(jsonContent);
+      if (fixture.skip) continue;
 
       describe(testCase.name, () => {
         engineTestSuite(testCase.name, fixture, caseDir, CheerioFetchEngine, 'cheerio');
