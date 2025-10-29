@@ -263,7 +263,7 @@ export abstract class FetchEngine {
       const elements = selector ? await this._querySelectorAll(context, selector) : [context];
       const results: any[] = [];
       for (const element of elements) {
-        results.push(await this._extract(items, element));
+        results.push(await this._extract(items!, element));
       }
       return results;
     }
@@ -388,7 +388,51 @@ export abstract class FetchEngine {
    * @param schema - An object defining the data to extract.
    * @returns A promise that resolves to an object with the extracted data.
    */
-  abstract extract<T>(schema: ExtractSchema): Promise<T>;
+  extract<T>(schema: ExtractSchema): Promise<T> {
+    const normalizedSchema = this._normalizeSchema(schema);
+    return this.dispatchAction({ type: 'extract', schema: normalizedSchema });
+  }
+
+  protected _normalizeSchema(schema: ExtractSchema): ExtractSchema {
+    const newSchema = JSON.parse(JSON.stringify(schema)) as any;
+
+    if (newSchema.properties) {
+      for (const key in newSchema.properties) {
+        newSchema.properties[key] = this._normalizeSchema(newSchema.properties[key]);
+      }
+    }
+    if (newSchema.items) {
+      newSchema.items = this._normalizeSchema(newSchema.items);
+    }
+
+    if (newSchema.type === 'array') {
+      if (newSchema.attribute && !newSchema.items) {
+        newSchema.items = { attribute: newSchema.attribute };
+        delete newSchema.attribute;
+      }
+      if (!newSchema.items) {
+        newSchema.items = { type: 'string' };
+      }
+    }
+
+    if (newSchema.selector && (newSchema.has || newSchema.exclude)) {
+      const { selector, has, exclude } = newSchema;
+      const finalSelector = selector
+        .split(',')
+        .map((s: string) => {
+          let part = s.trim();
+          if (has) part = `${part}:has(${has})`;
+          if (exclude) part = `${part}:not(${exclude})`;
+          return part;
+        })
+        .join(', ');
+      newSchema.selector = finalSelector;
+      delete newSchema.has;
+      delete newSchema.exclude;
+    }
+
+    return newSchema;
+  }
 
   /**
    * Gets the unique identifier of this engine implementation.
