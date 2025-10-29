@@ -88,32 +88,131 @@ There are two primary engine implementations:
 
 ## 📊 5. Data Extraction with `extract()`
 
-The `extract()` method provides a powerful, declarative way to pull structured data from a web page. You define a schema that mirrors your desired JSON output, and the engine handles the traversal and data extraction.
+The `extract()` method provides a powerful, declarative way to pull structured data from a web page. It uses a **Schema** to define the structure of your desired JSON output, and the engine automatically handles DOM traversal and data extraction.
 
-**Example**:
+### Core Design: Schema Normalization
+
+To enhance usability and flexibility, the `extract` method internally implements a **"Normalization"** layer. This means you can provide semantically clear shorthands, and the engine will automatically convert them into a standard, more verbose internal format before execution. This makes writing complex extraction rules simple and intuitive.
+
+### Schema Structure
+
+A schema can be one of three types:
+
+* **Value Extraction (`ExtractValueSchema`)**: Extracts a single value.
+  * `selector`: (Optional) A CSS selector to locate the element.
+  * `type`: (Optional) The type of the extracted value, such as `'string'` (default), `'number'`, `'boolean'`, or `'html'` (extracts inner HTML).
+  * `attribute`: (Optional) If provided, extracts the value of the specified attribute (e.g., `href`) instead of its text content.
+* **Object Extraction (`ExtractObjectSchema`)**: Extracts a JSON object.
+  * `selector`: (Optional) The root element for the object's data.
+  * `properties`: Defines sub-extraction rules for each field of the object.
+* **Array Extraction (`ExtractArraySchema`)**: Extracts an array.
+  * `selector`: A CSS selector to match each item element in the list.
+  * `items`: (Optional) The extraction rule to apply to each item element. **If omitted, it defaults to extracting the element's text content**.
+
+### Advanced Features (via Normalization)
+
+#### 1. Shorthand Syntax
+
+To simplify common scenarios, the following shorthands are supported:
+
+* **Extracting an Array of Attributes**: You can use the `attribute` property directly on an `array` type schema as a shorthand for `items: { attribute: '...' }`.
+
+    **Shorthand:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".post a",
+      "attribute": "href"
+    }
+    ```
+
+    **Equivalent to:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".post a",
+      "items": { "attribute": "href" }
+    }
+    ```
+
+* **Extracting an Array of Texts**: Simply provide the selector and omit `items`.
+
+    **Shorthand:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".tags li"
+    }
+    ```
+
+    **Equivalent to:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".tags li",
+      "items": { "type": "string" }
+    }
+    ```
+
+#### 2. Precise Filtering: `has` and `exclude`
+
+You can use the `has` and `exclude` fields in any schema that includes a `selector` to precisely control element selection.
+
+* `has`: A CSS selector to ensure the selected element **must contain** a descendant matching this selector (similar to `:has()`).
+* `exclude`: A CSS selector to **exclude** elements matching this selector from the results (similar to `:not()`).
+
+### Complete Example
+
+Suppose we have the following HTML and we want to extract the titles and links of all "important" articles, while excluding "archived" ones.
+
+```html
+<div id="articles">
+  <div class="post important">
+    <a href="/post/1"><h3>Post 1</h3></a>
+  </div>
+  <div class="post">
+    <!-- This one is NOT important, lacks h3 -->
+    <a href="/post/2">Post 2</a>
+  </div>
+  <div class="post important archived">
+    <!-- This one is important but archived -->
+    <a href="/post/3"><h3>Archived Post 3</h3></a>
+  </div>
+</div>
+```
+
+We can use the following schema:
 
 ```typescript
 const schema = {
-  type: 'object',
-  properties: {
-    title: { selector: '.title' },
-    author: {
-      type: 'object',
-      selector: '.author',
-      properties: {
-        name: { selector: '.name' },
-        profile: { selector: 'a', attribute: 'href' },
-      },
-    },
-    tags: {
-      type: 'array',
-      selector: '.tag',
-      items: { type: 'string' },
-    },
-  },
+  type: 'array',
+  selector: '.post',      // 1. Select all posts
+  has: 'h3',              // 2. Only keep posts that contain an <h3> (important)
+  exclude: '.archived',   // 3. Exclude posts with the .archived class
+  items: {
+    type: 'object',
+    properties: {
+      title: { selector: 'h3' },
+      link: { selector: 'a', attribute: 'href' },
+    }
+  }
 };
 
 const data = await engine.extract(schema);
+
+/*
+ Expected output:
+ [
+   {
+     "title": "Post 1",
+     "link": "/post/1"
+   }
+ ]
+*/
 ```
 
 ---

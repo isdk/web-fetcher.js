@@ -88,32 +88,131 @@
 
 ## 📊 5. 使用 `extract()` 进行数据提取
 
-`extract()` 方法提供了一种强大的声明式方式来从网页中提取结构化数据。您只需定义一个与您期望的 JSON 输出相对应的 schema，引擎将自动处理遍历和数据提取。
+`extract()` 方法提供了一种强大的声明式方式来从网页中提取结构化数据。它通过一个 **Schema (模式)** 来定义您期望的 JSON 输出结构,引擎会自动处理 DOM 遍历和数据提取。
 
-**示例**:
+### 核心设计: Schema 规范化
+
+为了提升易用性和灵活性,`extract` 方法在内部实现了一个**“规范化 (Normalization)”**层。这意味着您可以提供语义清晰的简写形式,在执行前,引擎会自动将其转换为标准的、更详细的内部格式。这使得编写复杂的提取规则变得简单直观。
+
+### Schema 结构
+
+一个 Schema 可以是以下三种类型之一:
+
+* **值提取 (`ExtractValueSchema`)**: 提取单个值。
+  * `selector`: (可选) 用于定位元素的 CSS 选择器。
+  * `type`: (可选) 提取值的类型,如 `'string'` (默认), `'number'`, `'boolean'`, 或 `'html'` (提取内部 HTML)。
+  * `attribute`: (可选) 如果提供,则提取元素的指定属性值(例如 `href`),而不是其文本内容。
+* **对象提取 (`ExtractObjectSchema`)**: 提取一个 JSON 对象。
+  * `selector`: (可选) 对象数据的根元素。
+  * `properties`: 定义对象每个字段的子提取规则。
+* **数组提取 (`ExtractArraySchema`)**: 提取一个数组。
+  * `selector`: 用于匹配列表中每个项目元素的 CSS 选择器。
+  * `items`: (可选) 应用于每个项目元素的提取规则。**如果省略,默认为提取元素的文本内容**。
+
+### 高级功能 (通过规范化实现)
+
+#### 1. 简写语法
+
+为了简化常见场景,我们支持以下简写:
+
+* **提取属性数组**: 您可以在 `array` 类型的 Schema 上直接使用 `attribute` 属性,作为 `items: { attribute: '...' }` 的简写。
+
+    **简写:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".post a",
+      "attribute": "href"
+    }
+    ```
+
+    **等效于:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".post a",
+      "items": { "attribute": "href" }
+    }
+    ```
+
+* **提取文本数组**: 只需提供选择器,省略 `items` 即可。
+
+    **简写:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".tags li"
+    }
+    ```
+
+    **等效于:**
+
+    ```json
+    {
+      "type": "array",
+      "selector": ".tags li",
+      "items": { "type": "string" }
+    }
+    ```
+
+#### 2. 精确筛选: `has` 和 `exclude`
+
+您可以在任何包含 `selector` 的 Schema 中使用 `has` 和 `exclude` 字段来精确控制元素的选择。
+
+* `has`: 一个 CSS 选择器,用于确保所选元素**必须包含**匹配此选择器的后代元素 (类似 `:has()`)。
+* `exclude`: 一个 CSS 选择器,用于从结果中**排除**匹配此选择器的元素 (类似 `:not()`)。
+
+### 完整示例
+
+假设我们有以下 HTML,我们想提取所有"重要"文章的标题和链接,同时排除掉"存档"文章。
+
+```html
+<div id="articles">
+  <div class="post important">
+    <a href="/post/1"><h3>Post 1</h3></a>
+  </div>
+  <div class="post">
+    <!-- This one is NOT important, lacks h3 -->
+    <a href="/post/2">Post 2</a>
+  </div>
+  <div class="post important archived">
+    <!-- This one is important but archived -->
+    <a href="/post/3"><h3>Archived Post 3</h3></a>
+  </div>
+</div>
+```
+
+我们可以使用以下 Schema:
 
 ```typescript
 const schema = {
-  type: 'object',
-  properties: {
-    title: { selector: '.title' },
-    author: {
-      type: 'object',
-      selector: '.author',
-      properties: {
-        name: { selector: '.name' },
-        profile: { selector: 'a', attribute: 'href' },
-      },
-    },
-    tags: {
-      type: 'array',
-      selector: '.tag',
-      items: { type: 'string' },
-    },
-  },
+  type: 'array',
+  selector: '.post',      // 1. 选择所有 post
+  has: 'h3',              // 2. 只保留包含 <h3> 的 post (重要文章)
+  exclude: '.archived',   // 3. 排除包含 .archived 类名的 post
+  items: {
+    type: 'object',
+    properties: {
+      title: { selector: 'h3' },
+      link: { selector: 'a', attribute: 'href' },
+    }
+  }
 };
 
 const data = await engine.extract(schema);
+
+/*
+ 预计输出:
+ [
+   {
+     "title": "Post 1",
+     "link": "/post/1"
+   }
+ ]
+*/
 ```
 
 ---

@@ -130,12 +130,12 @@ Pauses the execution of the Action Script to allow for manual user intervention 
 
 This action is only effective in `browser` mode and **requires** an `onPause` callback handler to be provided in the `fetchWeb` options. When triggered, this action calls the `onPause` handler and waits for it to complete.
 
-*   **`id`**: `pause`
-*   **`params`**:
-    *   `selector` (string, optional): If provided, the action will only pause if an element matching this selector exists.
-    *   `attribute` (string, optional): Used in conjunction with `selector`. If provided, the action will only pause if the element exists AND has the specified attribute.
-    *   `message` (string, optional): A message that will be passed to the `onPause` handler, which can be used to display prompts to the user.
-*   **`returns`**: `none`
+* **`id`**: `pause`
+* **`params`**:
+  * `selector` (string, optional): If provided, the action will only pause if an element matching this selector exists.
+  * `attribute` (string, optional): Used in conjunction with `selector`. If provided, the action will only pause if the element exists AND has the specified attribute.
+  * `message` (string, optional): A message that will be passed to the `onPause` handler, which can be used to display prompts to the user.
+* **`returns`**: `none`
 
 **Example: Handling a CAPTCHA in Google Search**
 
@@ -193,11 +193,119 @@ Retrieves the full content of the current page state.
 
 #### `extract`
 
-Extracts structured data from the page using a declarative schema.
+Extracts structured data from the page using a powerful and declarative Schema. This is the core Action for data collection.
 
 * **`id`**: `extract`
-* **`params`**: An `ExtractSchema` object.
-* **`returns`**: `any`
+* **`params`**: An `ExtractSchema` object that defines the extraction rules.
+* **`returns`**: `any` (the extracted data)
+
+##### Detailed Explanation of Extraction Schema
+
+The `params` object itself is a Schema that describes the data structure you want to extract.
+
+###### 1. Extracting a Single Value
+
+The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), and a `type` (string, number, boolean, html).
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "selector": "h1.main-title",
+    "type": "string"
+  }
+}
+```
+
+> The example above will extract the text content of the `<h1>` tag with the class `main-title`.
+
+###### 2. Extracting an Object
+
+Define a structured object using `type: 'object'` and the `properties` field.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "object",
+    "selector": ".author-bio",
+    "properties": {
+      "name": { "selector": ".author-name" },
+      "email": { "selector": "a.email", "attribute": "href" }
+    }
+  }
+}
+```
+
+###### 3. Extracting an Array (Convenient Usage)
+
+Extract a list using `type: 'array'`. To make the most common operations simpler, we provide some convenient usages.
+
+* **Extracting an Array of Texts (Default Behavior)**: When you want to extract a list of text, just provide the selector and omit `items`. This is the most common usage.
+
+    ```json
+    {
+      "id": "extract",
+      "params": {
+        "type": "array",
+        "selector": ".tags li"
+      }
+    }
+    ```
+
+    > The example above will return an array of the text from all `<li>` tags, e.g., `["tech", "news"]`.
+
+* **Extracting an Array of Attributes (Shortcut)**: When you only want to extract a list of attributes (e.g., all `href`s from links), there's no need to nest `items` either. Just declare `attribute` directly in the `array` definition.
+
+    ```json
+    {
+      "id": "extract",
+      "params": {
+        "type": "array",
+        "selector": ".gallery img",
+        "attribute": "src"
+      }
+    }
+    ```
+
+    > The example above will return an array of the `src` attributes from all `<img>` tags.
+
+###### 4. Precise Filtering: `has` and `exclude`
+
+You can use the `has` and `exclude` fields in any schema that includes a `selector` to precisely control element selection.
+
+* `has`: A CSS selector to ensure the selected element **must contain** a descendant matching this selector.
+* `exclude`: A CSS selector to **exclude** elements matching this selector from the results.
+
+**Complete Example: Extracting links of articles that have an image and are not marked as "draft"**
+
+```json
+{
+  "actions": [
+    { "id": "goto", "params": { "url": "https://example.com/articles" } },
+    {
+      "id": "extract",
+      "params": {
+        "type": "array",
+        "selector": "div.article-card",
+        "has": "img.cover-image",
+        "exclude": ".draft",
+        "items": {
+          "selector": "a.title-link",
+          "attribute": "href"
+        }
+      }
+    }
+  ]
+}
+```
+
+> The `extract` action above will:
+>
+> 1. Find all `div.article-card` elements.
+> 2. Filter them to only include those that contain an `<img class="cover-image">`.
+> 3. Further filter the results to exclude any that also have the `.draft` class.
+> 4. For each of the remaining `div.article-card` elements, find its descendant `a.title-link` and extract the `href` attribute.
 
 ### Building High-Level Semantic Actions via "Composition"
 
@@ -298,6 +406,7 @@ Collectors are defined in the `collectors` array of a main Action. Their executi
           "id": "extract",
           "name": "linkCollector",
           "params": {
+            "type": "array",
             "selector": "a",
             "attribute": "href"
           },

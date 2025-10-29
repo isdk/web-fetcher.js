@@ -130,12 +130,12 @@ export class FillAction extends FetchAction {
 
 此 Action 仅在 `browser` 模式下有效，并且**必须**在 `fetchWeb` 的选项中提供一个 `onPause` 回调处理器。当此 Action 被触发时，它会调用 `onPause` 处理器并等待其执行完成。
 
-*   **`id`**: `pause`
-*   **`params`**:
-    *   `selector` (string, optional): 如果提供，仅当匹配此选择器的元素存在时，Action 才会暂停。
-    *   `attribute` (string, optional): 与 `selector` 配合使用。如果提供，仅当元素存在且拥有该指定属性时，Action 才会暂停。
-    *   `message` (string, optional): 一个将传递给 `onPause` 处理器的消息，可用于向用户显示提示信息。
-*   **`returns`**: `none`
+* **`id`**: `pause`
+* **`params`**:
+  * `selector` (string, optional): 如果提供，仅当匹配此选择器的元素存在时，Action 才会暂停。
+  * `attribute` (string, optional): 与 `selector` 配合使用。如果提供，仅当元素存在且拥有该指定属性时，Action 才会暂停。
+  * `message` (string, optional): 一个将传递给 `onPause` 处理器的消息，可用于向用户显示提示信息。
+* **`returns`**: `none`
 
 **示例：在 Google 搜索中处理 CAPTCHA**
 
@@ -193,11 +193,136 @@ await fetchWeb({
 
 #### `extract`
 
-使用声明式 Schema 从页面中提取结构化数据。
+使用一个强大且声明式的 Schema 从当前页面中提取结构化数据。这是进行数据采集的核心 Action。
 
 * **`id`**: `extract`
-* **`params`**: 一个 `ExtractSchema` 对象。
-* **`returns`**: `any`
+* **`params`**: 一个 `ExtractSchema` 对象, 用于定义提取规则。
+* **`returns`**: `any` (提取出的数据)
+
+##### 提取 Schema 详解
+
+`params` 对象本身就是一个 Schema, 用于描述您想提取的数据结构。
+
+###### 1. 提取单个值
+
+最基础的提取,可以指定 `selector` (CSS 选择器), `attribute` (要提取的属性名), 以及 `type` (string, number, boolean, html)。
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "selector": "h1.main-title",
+    "type": "string"
+  }
+}
+```
+
+> 上例将提取 class 为 `main-title` 的 `<h1>` 标签的文本内容。
+
+###### 2. 提取对象
+
+通过 `type: 'object'` 和 `properties` 字段来定义一个结构化对象。
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "object",
+    "selector": ".author-bio",
+    "properties": {
+      "name": { "selector": ".author-name" },
+      "email": { "selector": "a.email", "attribute": "href" }
+    }
+  }
+}
+```
+
+###### 3. 提取数组 (便捷用法)
+
+通过 `type: 'array'` 来提取一个列表。为了让最常见的操作更简单,我们提供了一些便捷用法。
+
+* **提取文本数组 (默认行为)**: 当您想提取一个文本列表时,只需提供选择器,省略 `items` 即可。这是最常见的用法。
+
+    ```json
+
+    {
+
+      "id": "extract",
+
+      "params": {
+
+        "type": "array",
+
+        "selector": ".tags li"
+
+      }
+
+    }
+
+    ```
+
+    > 上例将返回一个包含所有 `<li>` 标签文本的数组, 如 `["tech", "news"]`。
+
+* **提取属性数组 (快捷方式)**: 当您只想提取一个属性列表(例如所有链接的 `href`)时,也无需嵌套 `items`。直接在 `array` 定义中声明 `attribute` 即可。
+
+    ```json
+
+    {
+
+      "id": "extract",
+
+      "params": {
+
+        "type": "array",
+
+        "selector": ".gallery img",
+
+        "attribute": "src"
+
+      }
+
+    }
+
+    ```
+
+    > 上例将返回一个包含所有 `<img>` 标签 `src` 属性的数组。
+
+###### 4. 精确筛选: `has` 和 `exclude`
+
+您可以在任何包含 `selector` 的 Schema 中使用 `has` 和 `exclude` 字段来精确控制元素的选择。
+
+* `has`: 一个 CSS 选择器,用于确保所选元素**必须包含**匹配此选择器的后代元素。
+* `exclude`: 一个 CSS 选择器,用于从结果中**排除**匹配此选择器的元素。
+
+**完整示例: 提取包含图片且未被标记为"草稿"的文章链接**
+
+```json
+{
+  "actions": [
+    { "id": "goto", "params": { "url": "https://example.com/articles" } },
+    {
+      "id": "extract",
+      "params": {
+        "type": "array",
+        "selector": "div.article-card",
+        "has": "img.cover-image",
+        "exclude": ".draft",
+        "items": {
+          "selector": "a.title-link",
+          "attribute": "href"
+        }
+      }
+    }
+  ]
+}
+```
+
+> 上述 `extract` Action 会:
+>
+> 1. 找到所有 `div.article-card` 元素。
+> 2. 筛选出其中必须包含 `<img class="cover-image">` 的元素。
+> 3. 再从结果中排除掉自身带有 `.draft` 类的元素。
+> 4. 对于最终剩下的每个 `div.article-card`, 找到其后代 `a.title-link` 并提取 `href` 属性。
 
 ### 通过“组合”构建高级语义 Action
 
@@ -298,6 +423,7 @@ await fetchWeb({
           "id": "extract",
           "name": "linkCollector",
           "params": {
+            "type": "array",
             "selector": "a",
             "attribute": "href"
           },
