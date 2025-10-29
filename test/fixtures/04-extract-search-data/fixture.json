@@ -1,0 +1,37 @@
+{
+  "title": "should extract search result from a page",
+  "actions": [
+    { "action": "goto", "args": ["/"] },
+    {
+      "action": "extract",
+      "args": [{
+        "type": "object",
+        "properties": {
+          "title": {
+            "selector": "#main #search h1",
+            "type": "string"
+          },
+          "urls": {
+            "type": "array",
+            "selector": "#main #search a:has(h3)",
+            "attribute": "href"
+          }
+        }
+      }]
+    }
+  ],
+  "expected": {
+    "data": {
+      "title": "搜索结果",
+      "urls": [
+        "https://gemini.google.com/",
+        "https://deepmind.google/models/gemini/",
+        "https://www.gemini.com/",
+        "https://play.google.com/store/apps/details?id=com.google.android.apps.bard",
+        "https://gemini.google/students/",
+        "https://ai.google.dev/",
+        "https://blog.google/technology/ai/google-gemini-ai/"
+      ]
+    }
+  }
+}
