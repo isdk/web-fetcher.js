@@ -40,11 +40,12 @@ const createTestServer = async (fixtureDir: string): Promise<FastifyInstance> =>
   return server;
 };
 
-// 2. 动态测试套件
-const runDynamicTests = async () => {
-  const testCases = await readdir(FIXTURES_DIR, { withFileTypes: true });
+async function getTestcases() {
+  const testCaseDirs = await readdir(FIXTURES_DIR, { withFileTypes: true });
+  let result = [] as any[];
+  let hasOnly: boolean = false;
 
-  for (const testCase of testCases) {
+  for (const testCase of testCaseDirs) {
     if (!testCase.isDirectory()) continue;
 
     const caseDir = join(FIXTURES_DIR, testCase.name);
@@ -54,14 +55,29 @@ const runDynamicTests = async () => {
       const jsonContent = await readFile(fixtureJsonPath, 'utf-8');
       const fixture = JSON.parse(jsonContent);
       if (fixture.skip) continue;
-
-      describe(testCase.name, () => {
-        engineTestSuite(testCase.name, fixture, caseDir, CheerioFetchEngine, 'cheerio');
-        engineTestSuite(testCase.name, fixture, caseDir, PlaywrightFetchEngine, 'playwright');
-      });
+      if (!fixture.name) fixture.name = testCase.name;
+      if (fixture.only) hasOnly = true;
+      fixture.caseDir = caseDir;
+      result.push(fixture)
     } catch (error) {
       console.warn(`Could not read or parse fixture.json in ${caseDir}:`, error);
     }
+  }
+
+  if (hasOnly) result = result.filter(fixture => fixture.only);
+
+  return result;
+}
+
+// 2. 动态测试套件
+const runDynamicTests = async () => {
+  const testCases = await getTestcases();
+
+  for (const testCase of testCases) {
+    describe(testCase.name, () => {
+      engineTestSuite(testCase.name, testCase, testCase.caseDir, CheerioFetchEngine, 'cheerio');
+      engineTestSuite(testCase.name, testCase, testCase.caseDir, PlaywrightFetchEngine, 'playwright');
+    });
   }
 };
 
