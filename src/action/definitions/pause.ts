@@ -1,6 +1,5 @@
 import { BaseFetchActionProperties, FetchAction } from "../fetch-action";
 import { FetchContext } from "../../core/context";
-import { OnFetchPauseCallback } from '../../core/types';
 
 export class PauseAction extends FetchAction {
   static override id = 'pause';
@@ -34,22 +33,11 @@ export class PauseAction extends FetchAction {
       }
     }
 
-    // 3. Get onPause callback from context
-    // The context object is expected to be the hydrated FetcherOptions.
-    const onPauseHandler = (context as any).onPause as OnFetchPauseCallback | undefined;
-
-    if (onPauseHandler) {
-      console.info(message || 'Execution paused for manual intervention.');
-
-      // 4. Execute and wait for the callback to complete
-      // The callback will be responsible for handling user interaction and waiting
-      await onPauseHandler({ message });
-
-      console.info('Resuming execution...');
+    // 3. Call engine's pause method
+    if (engine && 'pause' in engine) {
+      await (engine as any).pause(message);
     } else {
-      console.warn(
-        '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.'
-      );
+      console.warn('[PauseAction] was called, but the current engine does not support `pause`. Skipped.');
     }
   }
 }
