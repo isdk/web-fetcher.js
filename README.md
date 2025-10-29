@@ -11,7 +11,7 @@ English | [简体中文](./README.cn.md)
 
 * **⚙️ Dual-Engine Architecture**: Choose between **`http`** mode (powered by Cheerio) for speed on static sites, or **`browser`** mode (powered by Playwright) for full JavaScript execution on dynamic sites.
 * **📜 Declarative Action Scripts**: Define multi-step workflows (like logging in, filling forms, and clicking buttons) in a simple, readable JSON format.
-* **📊 Powerful Data Extraction**: Use a declarative schema to extract structured data (JSON) from web pages with a single `extract` action.
+* **📊 Powerful and Flexible Data Extraction**: Easily extract all kinds of structured data, from simple text to complex nested objects, through an intuitive and powerful declarative Schema.
 * **🧠 Smart Engine Selection**: Automatically detects dynamic sites and can upgrade the engine from `http` to `browser` on the fly.
 * **🧩 Extensible**: Easily create custom, high-level "composite" actions to encapsulate reusable business logic (e.g., a `login` action).
 * **🧲 Advanced Collectors**: Asynchronously collect data in the background, triggered by events during the execution of a main action.
@@ -20,13 +20,13 @@ English | [简体中文](./README.cn.md)
 
 ## 📦 Installation
 
-1.  **Install the Package:**
+1. **Install the Package:**
 
     ```bash
     npm install @isdk/web-fetcher
     ```
 
-2.  **Install Browsers (For `browser` mode):**
+2. **Install Browsers (For `browser` mode):**
 
     The `browser` engine is powered by Playwright, which requires separate browser binaries to be downloaded. If you plan to use the `browser` engine for interacting with dynamic websites, run the following command:
 
@@ -86,14 +86,7 @@ async function searchGoogle(query: string) {
       { id: 'fill', params: { selector: 'textarea[name=q]', value: query } },
       { id: 'submit', params: { selector: 'form' } },
       { id: 'waitFor', params: { selector: '#search' } }, // Wait for the search results container to appear
-      {
-        id: 'extract',
-        params: {
-          "selector": "a",
-          "attribute": "href"
-        },
-        storeAs: 'searchResultsPage',
-      },
+      { id: 'getContent', storeAs: 'searchResultsPage' },
     ]
   });
 
@@ -144,7 +137,7 @@ Here are the essential built-in actions:
 * `submit`: Submits a form.
 * `waitFor`: Pauses execution to wait for a specific condition (e.g., a timeout, a selector to appear, or network to be idle).
 * `getContent`: Retrieves the full content (HTML, text, etc.) of the current page state.
-* `extract`: Extracts structured data from the page using a declarative schema.
+* `extract`: Extracts any structured data from the page with ease using an expressive, declarative schema.
 
 ---
 
