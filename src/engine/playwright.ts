@@ -1,7 +1,7 @@
 import { PlaywrightCrawler } from 'crawlee';
 import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
 import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
-import { BaseFetcherProperties, FetchResponse } from '../core/types';
+import { BaseFetcherProperties, FetchResponse, type OnFetchPauseCallback } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
 import { ExtractSchema, ExtractValueSchema } from '../core/extract';
@@ -172,6 +172,19 @@ export class PlaywrightFetchEngine extends FetchEngine {
           return;
         }
       }
+      case 'pause': {
+        const onPauseHandler = (this.ctx as any)?.onPause as OnFetchPauseCallback | undefined;
+        if (onPauseHandler) {
+          console.info(action.message || 'Execution paused for manual intervention.');
+          await onPauseHandler({ message: action.message });
+          console.info('Resuming execution...');
+        } else {
+          console.warn(
+            '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.',
+          );
+        }
+        return;
+      }
       case 'getContent': {
         return this.buildResponse(context);
       }
@@ -280,6 +293,10 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
   async submit(selector?: string, options?: SubmitActionOptions): Promise<void> {
     return this.dispatchAction({ type: 'submit', selector, options });
+  }
+
+  async pause(message?: string): Promise<void> {
+    return this.dispatchAction({ type: 'pause', message });
   }
 
   async extract<T>(schema: ExtractSchema): Promise<T> {

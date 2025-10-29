@@ -255,6 +255,35 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       ]));
     });
 
+    it('should handle pause action', async () => {
+      let pauseCalled = false;
+      let pauseMessage = '';
+
+      // Re-create engine with onPause handler for this test
+      await engine.dispose(); // Dispose the one from beforeEach
+
+      (context as any).onPause = async (params: { message?: string }) => {
+        pauseCalled = true;
+        pauseMessage = params.message || '';
+      };
+
+      engine = (await FetchEngine.create(context, {
+        engine: engineName as any,
+        headers: { 'User-Agent': 'web-fetcher/1.0' },
+      })) as FetchEngine;
+
+      await engine.goto(baseUrl);
+      await engine.pause('Test pause message');
+
+      if (engineName === 'playwright') {
+        expect(pauseCalled).toBe(true);
+        expect(pauseMessage).toBe('Test pause message');
+      } else {
+        // For cheerio, it should be a no-op
+        expect(pauseCalled).toBe(false);
+      }
+    }, TEST_TIMEOUT);
+
     it('should extract structured data from a page', async () => {
       const testSchema = {
         type: 'object',
