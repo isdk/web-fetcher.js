@@ -329,9 +329,7 @@ export class CheerioFetchEngine extends FetchEngine {
     return this.dispatchAction({ type: 'pause', message });
   }
 
-  async extract<T>(schema: ExtractSchema): Promise<T> {
-    return this.dispatchAction({ type: 'extract', schema });
-  }
+
 }
 
 FetchEngine.register(CheerioFetchEngine);

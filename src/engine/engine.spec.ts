@@ -127,6 +127,31 @@ const createTestServer = async (): Promise<FastifyInstance> => {
     `);
   });
 
+  server.get('/extract-advanced-test', (req, reply) => {
+    reply.type('text/html').send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Advanced Extract</title></head>
+      <body>
+        <div id="links">
+          <a href="/link1"><span>Link 1</span></a>
+          <a href="/link2">Link 2</a>
+          <a href="/link3" class="exclude-me"><span>Link 3</span></a>
+          <div id="to-exclude">
+            <a href="/link4">Link 4</a>
+          </div>
+          <a href="/link5"><span>Link 5</span></a>
+        </div>
+        <div id="items">
+          <div class="item">Item 1 Text</div>
+          <div class="item" data-attr="value2">Item 2 Text</div>
+          <div class="item">Item 3 Text</div>
+        </div>
+      </body>
+      </html>
+    `);
+  });
+
   return server;
 };
 
@@ -400,6 +425,65 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       const data3 = await engine.extract(schema3);
       expect(data3).toBeNull();
     }, TEST_TIMEOUT);
+
+    it('should handle advanced extraction with shorthands, has, and exclude', async () => {
+      await engine.goto(`${baseUrl}/extract-advanced-test`);
+
+      // Test `has`
+      const hasData = await engine.extract({
+        type: 'array',
+        selector: '#links a',
+        has: 'span',
+        items: { attribute: 'href' },
+      });
+      expect(hasData).toEqual(['/link1', '/link3', '/link5']);
+
+      // Test `exclude`
+      const excludeData = await engine.extract({
+        type: 'array',
+        selector: '#links a',
+        exclude: '.exclude-me',
+        items: { attribute: 'href' },
+      });
+      expect(excludeData).toEqual(['/link1', '/link2', '/link4', '/link5']);
+
+      // Test `has` and `exclude` combined
+      const combinedData = await engine.extract({
+        type: 'array',
+        selector: '#links a',
+        has: 'span',
+        exclude: '.exclude-me',
+        items: { attribute: 'href' },
+      });
+      expect(combinedData).toEqual(['/link1', '/link5']);
+
+      // Test `exclude` with descendant selector
+      const excludeDescendantData = await engine.extract({
+        type: 'array',
+        selector: '#links a',
+        exclude: '#to-exclude a',
+        items: { attribute: 'href' },
+      });
+      expect(excludeDescendantData).toEqual(['/link1', '/link2', '/link3', '/link5']);
+
+      // Test array `attribute` shorthand
+      const attrShorthandData = await engine.extract({
+        type: 'array',
+        selector: '#links a',
+        has: 'span',
+        exclude: '.exclude-me',
+        attribute: 'href', // Shorthand
+      });
+      expect(attrShorthandData).toEqual(['/link1', '/link5']);
+
+      // Test array `items` missing shorthand (default to text)
+      const textShorthandData = await engine.extract({
+        type: 'array',
+        selector: '#items .item',
+      });
+      expect(textShorthandData).toEqual(['Item 1 Text', 'Item 2 Text', 'Item 3 Text']);
+    }, TEST_TIMEOUT);
+
   });
 };
 
