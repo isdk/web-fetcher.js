@@ -1,10 +1,10 @@
 {
   "title": "should extract structured data from a page",
   "actions": [
-    { "action": "goto", "url": "/" },
+    { "action": "goto", "args": ["/"] },
     {
       "action": "extract",
-      "schema": {
+      "args": [{
         "type": "object",
         "properties": {
           "title": {
@@ -45,7 +45,7 @@
             }
           }
         }
-      }
+      }]
     }
   ],
   "expected": {

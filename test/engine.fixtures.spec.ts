@@ -1,12 +1,13 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { AddressInfo } from 'net';
+import { readdir, readFile } from 'fs/promises';
+import { resolve, join } from 'path';
+import fastify, { FastifyInstance } from 'fastify';
 import { FetchEngine } from '../src/engine/base';
 import { CheerioFetchEngine } from '../src/engine/cheerio';
 import { PlaywrightFetchEngine } from '../src/engine/playwright';
 import { FetchEngineContext } from '../src/core/context';
-import fastify, { FastifyInstance } from 'fastify';
-import { AddressInfo } from 'net';
-import { readdir, readFile } from 'fs/promises';
-import { resolve, join } from 'path';
+import { absoluteUrlFrom } from '../src/utils/helpers';
 
 const TEST_TIMEOUT = 5000; // 5s
 const FIXTURES_DIR = resolve(__dirname, 'fixtures');
@@ -100,18 +101,15 @@ const engineTestSuite = (
       let result: any;
 
       for (const action of fixture.actions) {
-        switch (action.action) {
-          case 'goto':
-            await engine.goto(`${baseUrl}${action.url}`);
-            break;
-          case 'click':
-            await engine.click(action.selector);
-            break;
-          case 'extract':
-            result = await engine.extract(action.schema);
-            break;
-          // 其他 action 可以按需添加
+        const method = (engine as any)[action.action];
+        if (typeof method !== 'function') {
+          throw new Error(`Action ${action.action} not supported by ${engineName}`);
         }
+        const args = [...action.args];
+        if (action.action === 'goto') {
+          args[0] = absoluteUrlFrom(baseUrl, args[0]);
+        }
+        result = await method.apply(engine, args);
       }
 
       const content = await engine.getContent();
