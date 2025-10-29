@@ -1,0 +1,66 @@
+{
+  "title": "should extract structured data from a page",
+  "actions": [
+    { "action": "goto", "url": "/" },
+    {
+      "action": "extract",
+      "schema": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "selector": ".title",
+            "type": "string"
+          },
+          "author": {
+            "type": "object",
+            "selector": ".author",
+            "properties": {
+              "id": {
+                "attribute": "data-id",
+                "type": "number"
+              },
+              "name": {
+                "selector": ".name"
+              },
+              "profileLink": {
+                "selector": ".profile-link",
+                "attribute": "href"
+              }
+            }
+          },
+          "tags": {
+            "type": "array",
+            "selector": ".tag",
+            "items": { "type": "string" }
+          },
+          "comments": {
+            "type": "array",
+            "selector": ".comment",
+            "items": {
+              "type": "object",
+              "properties": {
+                "user": { "selector": ".user" },
+                "text": { "selector": ".text" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "title": "Article Title",
+      "author": {
+        "id": 123,
+        "name": "John Doe",
+        "profileLink": "/profiles/johndoe"
+      },
+      "tags": ["tech", "news", "web"],
+      "comments": [
+        { "user": "User1", "text": "Comment 1" },
+        { "user": "User2", "text": "Comment 2" }
+      ]
+    }
+  }
+}
