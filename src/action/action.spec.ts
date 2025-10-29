@@ -14,6 +14,7 @@ import { GetContentAction } from './definitions/get-content';
 import { ClickAction } from './definitions/click';
 import { WaitForAction } from './definitions/wait-for';
 import { ExtractAction } from './definitions/extract';
+import { PauseAction } from './definitions/pause';
 
 
 // Dependencies for testing
@@ -270,6 +271,35 @@ const actionTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
         },
         tags: ['tech', 'news', 'web'],
       });
+    }, TEST_TIMEOUT);
+
+    it('should execute pause action', async () => {
+      let pauseCalled = false;
+      let pauseMessage = '';
+
+      // Add onPause to the engine's context.
+      (engine.context as any).onPause = async (params: { message?: string }) => {
+        pauseCalled = true;
+        pauseMessage = params.message || '';
+      };
+      (context as any).onPause = (engine.context as any).onPause;
+
+      await engine.goto(baseUrl);
+
+      const pauseAction = FetchAction.create('pause');
+      expect(pauseAction).toBeInstanceOf(PauseAction);
+
+      const result = await pauseAction!.execute(context, { params: { message: 'Action pause test' } });
+
+      expect(result.status).toBe(FetchActionResultStatus.Success);
+
+      if (engineName === 'playwright') {
+        expect(pauseCalled).toBe(true);
+        expect(pauseMessage).toBe('Action pause test');
+      } else {
+        // For cheerio, it should be a no-op, and the action should still "succeed".
+        expect(pauseCalled).toBe(false);
+      }
     }, TEST_TIMEOUT);
 
   });
