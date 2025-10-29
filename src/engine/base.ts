@@ -84,6 +84,7 @@ export type FetchEngineAction =
   | { type: 'getContent' }
   | { type: 'navigate'; url: string; opts?: GotoActionOptions }
   | { type: 'extract'; schema: ExtractSchema }
+  | { type: 'pause'; message?: string }
   | { type: 'dispose' };
 
 /**
@@ -371,6 +372,15 @@ export abstract class FetchEngine {
    * @throws {Error} When no active page context exists
    */
   abstract submit(selector?: any, options?: SubmitActionOptions): Promise<void>; // http: post form 模拟
+
+  /**
+   * Pauses execution, allowing for manual intervention or inspection.
+   *
+   * @param message - Optional message to display during pause
+   * @returns Promise resolving when execution is resumed
+   * @throws {Error} When no active page context exists
+   */
+  abstract pause(message?: string): Promise<void>;
 
   /**
    * Extracts structured data from the current page content.

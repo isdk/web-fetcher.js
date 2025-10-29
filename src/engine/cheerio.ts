@@ -131,6 +131,9 @@ export class CheerioFetchEngine extends FetchEngine {
           await new Promise((resolve) => setTimeout(resolve, action.options!.ms));
         }
         return;
+      case 'pause':
+        // Pause is a no-op in Cheerio engine
+        return;
       case 'submit': {
         if (!$) throw new CommonError(`Cheerio context not available for action: ${action.type}`, 'submit');
         const $form: CheerioNode = typeof action.selector === 'string' ? $(action.selector).first() : action.selector != null ? action.selector : $('form').first();
@@ -320,6 +323,10 @@ export class CheerioFetchEngine extends FetchEngine {
 
   async submit(selector?: string | CheerioNode, options?: SubmitActionOptions): Promise<void> {
     return this.dispatchAction({ type: 'submit', selector, options });
+  }
+
+  async pause(message?: string): Promise<void> {
+    return this.dispatchAction({ type: 'pause', message });
   }
 
   async extract<T>(schema: ExtractSchema): Promise<T> {
