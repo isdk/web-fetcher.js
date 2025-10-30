@@ -328,13 +328,9 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       await engine.goto(baseUrl);
       await engine.pause('Test pause message');
 
-      if (engineName === 'playwright') {
-        expect(pauseCalled).toBe(true);
-        expect(pauseMessage).toBe('Test pause message');
-      } else {
-        // For cheerio, it should be a no-op
-        expect(pauseCalled).toBe(false);
-      }
+      expect(pauseCalled).toBe(true);
+      expect(pauseMessage).toBe('Test pause message');
+
     }, TEST_TIMEOUT);
 
     it('should extract structured data from a page', async () => {

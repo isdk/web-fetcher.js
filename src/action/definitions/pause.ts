@@ -4,8 +4,7 @@ import { FetchContext } from "../../core/context";
 export class PauseAction extends FetchAction {
   static override id = 'pause';
 
-  // This action is only meaningful in browser mode
-  static override capabilities = { http: 'noop' as const, browser: 'native' as const };
+  static override capabilities = { http: 'native' as const, browser: 'native' as const };
 
   static override returnType = 'none' as const;
 
