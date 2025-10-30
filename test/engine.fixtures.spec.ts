@@ -30,6 +30,7 @@ interface Fixture {
   skip?: boolean;
   only?: boolean;
   engine?: string;
+  options?: Record<string, any>;
 }
 
 const TEST_TIMEOUT = 5000; // 5s
@@ -137,7 +138,11 @@ const engineTestSuite = (
         retries: 1,
       } as any;
 
-      engine = await FetchEngine.create(context, { engine: engineName }) as any;
+      engine = await FetchEngine.create(context, { 
+        engine: engineName,
+        ...(fixture.options || {})
+      }) as any;
+
       expect(engine).toBeInstanceOf(FetchEngine);
 
       let result: any;

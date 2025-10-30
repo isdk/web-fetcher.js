@@ -1,0 +1,20 @@
+{
+  "title": "should not use firefox by default when antibot is disabled",
+  "engine": "playwright",
+  "options": {
+    "antibot": false
+  },
+  "actions": [
+    { "action": "goto", "args": ["/"] },
+    {
+      "action": "extract",
+      "args": [{
+        "type": "string",
+        "selector": "#results"
+      }]
+    }
+  ],
+  "expected": {
+    "html": { "contains": "\"webdriver\":false" }
+  }
+}

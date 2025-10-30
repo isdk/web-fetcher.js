@@ -1,0 +1,15 @@
+<!DOCTYPE html>
+<html>
+<head><title>Anti-bot Check</title></head>
+<body>
+  <h1>Bot Detection Page</h1>
+  <pre id="results"></pre>
+  <script>
+    const results = {
+      webdriver: navigator.webdriver,
+      userAgent: navigator.userAgent,
+    };
+    document.getElementById('results').textContent = JSON.stringify(results);
+  </script>
+</body>
+</html>

@@ -1,0 +1,20 @@
+{
+  "title": "should use firefox for camoufox-js to bypass bot detection when antibot is enabled",
+  "engine": "playwright",
+  "options": {
+    "antibot": true
+  },
+  "actions": [
+    { "action": "goto", "args": ["/"] },
+    {
+      "action": "extract",
+      "args": [{
+        "type": "string",
+        "selector": "#results"
+      }]
+    }
+  ],
+  "expected": {
+    "html": { "contains": "\"webdriver\":false" }
+  }
+}
