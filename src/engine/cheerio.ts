@@ -12,7 +12,7 @@ import { BaseFetcherProperties, FetchResponse } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { createPromiseLock } from './promise-lock';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
-import { ExtractSchema, ExtractValueSchema } from '../core/extract';
+import { ExtractValueSchema } from '../core/extract';
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
 type CheerioSelection = ReturnType<CheerioAPI>;
@@ -246,7 +246,8 @@ export class CheerioFetchEngine extends FetchEngine {
     };
 
     this.crawler = new CheerioCrawler(crawlerOptions);
-    this.crawler.run().catch((error) => {
+    this.crawler.run().then(()=>{this.isCrawlerReady = true}).catch((error) => {
+      this.isCrawlerReady = false;
       console.error('Crawler background error:', error);
     });
   }

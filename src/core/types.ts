@@ -132,7 +132,7 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
   // engine: 'http',
   enableSmart: true,
   useSiteRegistry: true,
-  antibot: true,
+  antibot: false,
   headers: {},
   cookies: [],
   reuseCookies: true,

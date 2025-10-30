@@ -1,4 +1,4 @@
-import { defaultsDeep } from 'lodash-es';
+import { defaultsDeep, merge } from 'lodash-es';
 import { EventEmitter } from 'events-ex';
 import { CommonError } from '@isdk/common-error';
 import {
@@ -189,12 +189,12 @@ export abstract class FetchEngine {
    * Primary entry point for engine creation. Selects appropriate implementation based on `engine` name of the option or context.
    */
   static async create(ctx: FetchEngineContext, options?: BaseFetcherProperties) {
-    options = defaultsDeep(options, DefaultFetcherProperties) as BaseFetcherProperties;
-    const engineName = (options.engine ?? ctx.engine) as FetchEngineType;
+    const finalOptions = defaultsDeep(options, ctx, DefaultFetcherProperties) as BaseFetcherProperties;
+    const engineName = (finalOptions.engine ?? ctx.engine) as FetchEngineType;
     const Engine = engineName ? (this.get(engineName!) ?? this.getByMode(engineName)) : this !== FetchEngine ? this : null;
     if (Engine) {
       const result = new (Engine as any)() as FetchEngine;
-      await result.initialize(ctx, options);
+      await result.initialize(ctx, finalOptions);
       return result;
     }
   }
@@ -218,6 +218,7 @@ export abstract class FetchEngine {
   declare protected ctx?: FetchEngineContext;
   declare protected opts?: BaseFetcherProperties;
   declare protected crawler?: CheerioCrawler | PlaywrightCrawler;
+  declare protected isCrawlerReady?: boolean;
   declare protected requestQueue?: RequestQueue;
 
   protected hdrs: Record<string, string> = {};
@@ -468,6 +469,10 @@ export abstract class FetchEngine {
    */
   async initialize(context: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
     if (!this.ctx) {
+      // Deep merge the final resolved options back into the context,
+      // so the context object always holds the most up-to-date data.
+      merge(context, options);
+
       this.ctx = context;
       this.opts = options;
       this.hdrs = normalizeHeaders(options?.headers);
@@ -617,6 +622,7 @@ export abstract class FetchEngine {
       }
       this.crawler = undefined;
     }
+    this.isCrawlerReady = undefined;
 
     if (this.requestQueue) {
       await this.requestQueue.drop();

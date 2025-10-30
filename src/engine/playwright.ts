@@ -1,10 +1,12 @@
 import { PlaywrightCrawler } from 'crawlee';
 import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
+import { firefox } from 'playwright';
+import { launchOptions } from 'camoufox-js';
 import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
 import { BaseFetcherProperties, FetchResponse, type OnFetchPauseCallback } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
-import { ExtractSchema, ExtractValueSchema } from '../core/extract';
+import { ExtractValueSchema } from '../core/extract';
 
 const DefaultTimeoutMs = 30_000;
 
@@ -18,7 +20,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
   protected async buildResponse(context: PlaywrightCrawlingContext): Promise<FetchResponse> {
     const { page, response, request } = context;
     // In case of failed request, page might be closed.
-    if (page.isClosed()) {
+    if (!page || page.isClosed()) {
       return {
         url: request.url,
         finalUrl: request.loadedUrl || request.url,
@@ -246,8 +248,37 @@ export class PlaywrightFetchEngine extends FetchEngine {
       ],
     };
 
+    if (this.opts?.antibot) {
+      console.log('[DEBUG] antibot enabled, configuring camoufox...');
+      crawlerOptions.browserPoolOptions = {
+        // Disable the default fingerprint spoofing to avoid conflicts with Camoufox.
+        useFingerprints: false,
+      };
+
+      console.log('[DEBUG] Calling launchOptions...');
+      const lo = await launchOptions({
+          headless,
+      });
+      console.log('[DEBUG] launchOptions returned.');
+
+      crawlerOptions.launchContext = {
+        launcher: firefox,
+        launchOptions: lo,
+      };
+
+      crawlerOptions.postNavigationHooks = [
+        async ({ page, handleCloudflareChallenge }) => {
+            console.log(`[DEBUG] In postNavigationHook for ${page.url()}. Calling handleCloudflareChallenge...`);
+            await handleCloudflareChallenge();
+            console.log('[DEBUG] handleCloudflareChallenge returned.');
+        },
+      ];
+      console.log('[DEBUG] camoufox configuration complete.');
+    }
+
     this.crawler = new PlaywrightCrawler(crawlerOptions);
-    this.crawler.run().catch((error) => {
+    this.crawler.run().then(()=>{this.isCrawlerReady = true}).catch((error) => {
+      this.isCrawlerReady = false;
       console.error('Crawler background error:', error);
     });
   }
