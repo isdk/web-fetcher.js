@@ -3,11 +3,34 @@ import { AddressInfo } from 'net';
 import { readdir, readFile } from 'fs/promises';
 import { resolve, join } from 'path';
 import fastify, { FastifyInstance } from 'fastify';
-import { FetchEngine } from '../src/engine/base';
-import { CheerioFetchEngine } from '../src/engine/cheerio';
-import { PlaywrightFetchEngine } from '../src/engine/playwright';
+import { FetchEngine } from '../src/engine';
 import { FetchEngineContext } from '../src/core/context';
 import { absoluteUrlFrom } from '../src/utils/helpers';
+
+interface FixtureAction {
+  action: typeof FetchEngine;
+  args: any[];
+}
+
+interface FixtureExpected {
+  statusCode?: number;
+  html?: {
+    contains: string;
+  };
+  finalUrl?: string;
+  data?: any;
+}
+
+interface Fixture {
+  name: string;
+  caseDir: string;
+  title: string;
+  actions: FixtureAction[];
+  expected: FixtureExpected;
+  skip?: boolean;
+  only?: boolean;
+  engine?: string;
+}
 
 const TEST_TIMEOUT = 5000; // 5s
 const FIXTURES_DIR = resolve(__dirname, 'fixtures');
@@ -42,7 +65,7 @@ const createTestServer = async (fixtureDir: string): Promise<FastifyInstance> =>
 
 async function getTestcases() {
   const testCaseDirs = await readdir(FIXTURES_DIR, { withFileTypes: true });
-  let result = [] as any[];
+  let result = [] as Fixture[];
   let hasOnly: boolean = false;
 
   for (const testCase of testCaseDirs) {
@@ -75,19 +98,21 @@ const runDynamicTests = async () => {
 
   for (const testCase of testCases) {
     describe(testCase.name, () => {
-      engineTestSuite(testCase.name, testCase, testCase.caseDir, CheerioFetchEngine, 'cheerio');
-      engineTestSuite(testCase.name, testCase, testCase.caseDir, PlaywrightFetchEngine, 'playwright');
+      if (testCase.engine) {
+        engineTestSuite(testCase, testCase.caseDir, testCase.engine);
+      } else {
+        engineTestSuite(testCase, testCase.caseDir, 'cheerio');
+        engineTestSuite(testCase, testCase.caseDir, 'playwright');
+      }
     });
   }
 };
 
 // 3. 可复用的测试引擎套件
 const engineTestSuite = (
-  caseName: string,
   fixture: any,
   caseDir: string,
-  EngineClass: typeof CheerioFetchEngine | typeof PlaywrightFetchEngine,
-  engineName: 'cheerio' | 'playwright'
+  engineName: 'cheerio' | 'playwright' | string,
 ) => {
   describe.sequential(engineName, () => {
     let server: FastifyInstance;
@@ -113,7 +138,7 @@ const engineTestSuite = (
       } as any;
 
       engine = await FetchEngine.create(context, { engine: engineName }) as any;
-      expect(engine).toBeInstanceOf(EngineClass);
+      expect(engine).toBeInstanceOf(FetchEngine);
 
       let result: any;
 
