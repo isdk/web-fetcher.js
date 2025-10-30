@@ -288,7 +288,7 @@ export abstract class FetchAction {
     context.currentAction = actionInfo;
 
     // 4. 触发开始事件
-    const data = {
+    const data: FetchActionInContext = {
       action: this,
       context,
       options,
