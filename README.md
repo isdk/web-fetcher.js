@@ -15,6 +15,7 @@ English | [简体中文](./README.cn.md)
 * **🧠 Smart Engine Selection**: Automatically detects dynamic sites and can upgrade the engine from `http` to `browser` on the fly.
 * **🧩 Extensible**: Easily create custom, high-level "composite" actions to encapsulate reusable business logic (e.g., a `login` action).
 * **🧲 Advanced Collectors**: Asynchronously collect data in the background, triggered by events during the execution of a main action.
+* **🛡️ Anti-Bot Evasion**: In `browser` mode, an optional `antibot` flag helps to bypass common anti-bot measures like Cloudflare challenges.
 
 ---
 

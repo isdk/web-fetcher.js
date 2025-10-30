@@ -84,6 +84,18 @@
   * ⚠️ **资源密集型**：比 Cheerio 引擎慢，需要更多的内存/CPU。
 * **用例**: 与现代动态 Web 应用程序（SPA）或任何严重依赖 JavaScript 的网站进行交互。
 
+#### 反爬虫/反屏蔽 (`antibot` 选项)
+
+为了对抗复杂的反机器人措施，`PlaywrightFetchEngine` 提供了一个 `antibot` 模式。启用后，它会集成 [Camoufox](https://github.com/prescience-data/camoufox) 来增强其规避能力。
+
+* **机制**:
+  * 通过 `camoufox-js` 使用一个经过加固的 Firefox 浏览器。
+  * 禁用默认的指纹伪装，由 Camoufox 管理浏览器指纹。
+  * 自动尝试解决在导航过程中遇到的 Cloudflare 挑战。
+* **如何启用**: 在创建 fetcher 属性时设置 `antibot: true` 选项。
+* **用例**: 抓取受 Cloudflare 或其他高级机器人检测系统保护的网站。
+* **注意**: 此功能需要额外的依赖项（`camoufox-js`, `firefox`），并可能带来性能开销。
+
 ---
 
 ## 📊 5. 使用 `extract()` 进行数据提取

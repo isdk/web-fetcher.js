@@ -84,6 +84,18 @@ There are two primary engine implementations:
   * ⚠️ **Resource Intensive**: Slower and requires more memory/CPU.
 * **Use Case**: Interacting with modern, dynamic web applications (SPAs) or any site that relies heavily on JavaScript.
 
+#### Anti-Bot Evasion (`antibot` option)
+
+To combat sophisticated anti-bot measures, the `PlaywrightFetchEngine` offers an `antibot` mode. When enabled, it integrates [Camoufox](https://github.com/prescience-data/camoufox) to enhance its stealth capabilities.
+
+* **Mechanism**:
+  * Uses a hardened Firefox browser via `camoufox-js`.
+  * Disables default fingerprint spoofing to let Camoufox manage the browser's fingerprint.
+  * Automatically attempts to solve Cloudflare challenges encountered during navigation.
+* **How to enable**: Set the `antibot: true` option when creating the fetcher properties.
+* **Use Case**: Scraping websites protected by services like Cloudflare or other advanced bot-detection systems.
+* **Note**: This feature requires additional dependencies (`camoufox-js`, `firefox`) and may have a performance overhead.
+
 ---
 
 ## 📊 5. Data Extraction with `extract()`
