@@ -8,7 +8,7 @@ import {
   type WaitForActionOptions,
   FetchEngineAction,
 } from './base';
-import { BaseFetcherProperties, FetchResponse } from '../core/types';
+import { BaseFetcherProperties, FetchResponse, OnFetchPauseCallback } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { createPromiseLock } from './promise-lock';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
@@ -132,7 +132,16 @@ export class CheerioFetchEngine extends FetchEngine {
         }
         return;
       case 'pause':
-        // Pause is a no-op in Cheerio engine
+        const onPauseHandler = (this.ctx as any)?.onPause as OnFetchPauseCallback | undefined;
+        if (onPauseHandler) {
+          console.info(action.message || 'Execution paused for manual intervention.');
+          await onPauseHandler({ message: action.message });
+          console.info('Resuming execution...');
+        } else {
+          console.warn(
+            '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.',
+          );
+        }
         return;
       case 'submit': {
         if (!$) throw new CommonError(`Cheerio context not available for action: ${action.type}`, 'submit');
