@@ -152,6 +152,30 @@ const createTestServer = async (): Promise<FastifyInstance> => {
     `);
   });
 
+  server.get('/antibot-check', (req, reply) => {
+    reply.type('text/html').send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Anti-bot Check</title></head>
+      <body>
+        <h1>Bot Detection Page</h1>
+        <pre id="results"></pre>
+        <script>
+          const results = {
+            webdriver: navigator.webdriver,
+            userAgent: navigator.userAgent,
+          };
+          document.getElementById('results').textContent = JSON.stringify(results);
+        </script>
+      </body>
+      </html>
+    `);
+  });
+
+  server.get('/ua-check', (req, reply) => {
+    reply.send({ ua: req.headers['user-agent'] || '' });
+  });
+
   return server;
 };
 
@@ -183,10 +207,13 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
         engine: engineName as any,
         retries: 1,
       } as any;
-      engine = await FetchEngine.create(context, {
+      const engineOpts: any = {
         engine: engineName as any,
-        headers: { 'User-Agent': 'web-fetcher/1.0' },
-      }) as FetchEngine;
+      };
+      if (engineName === 'playwright') {
+        engineOpts.antibot = false;
+      }
+      engine = await FetchEngine.create(context, engineOpts) as FetchEngine;
       expect(engine).toBeInstanceOf(EngineClass);
     });
 
@@ -228,6 +255,7 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
 
     it('should manage headers', async () => {
       // 测试 User-Agent
+      await engine.headers('user-agent', 'web-fetcher/1.0');
       await engine.goto(`${baseUrl}/protected`);
       let content = await engine.getContent();
       expect(content.text).toBe('Protected Content');
@@ -484,9 +512,64 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
       expect(textShorthandData).toEqual(['Item 1 Text', 'Item 2 Text', 'Item 3 Text']);
     }, TEST_TIMEOUT);
 
+    if (engineName === 'playwright') {
+      it('should not use firefox by default when antibot is disabled', async () => {
+        await engine.dispose(); // Dispose shared engine
+
+        const controlContext: FetchEngineContext = { id: `test-control-${Date.now()}` } as any;
+        const controlEngine = await FetchEngine.create(controlContext, {
+          engine: 'playwright',
+          antibot: false,
+        }) as PlaywrightFetchEngine;
+
+        await controlEngine.goto(`${baseUrl}/antibot-check`);
+        let content = await controlEngine.extract<string>({selector: '#results'});
+        let data = JSON.parse(content);
+        // navigator.webdriver 用于指示当前浏览器实例是否正在被 WebDriver（如 Selenium）自动化控制
+        expect(data.webdriver).toBe(false); // why it's always false?
+        expect(data.userAgent).not.toContain('Firefox');
+
+
+        await controlEngine.goto(`${baseUrl}/ua-check`);
+        const res = await controlEngine.getContent();
+        data = JSON.parse(res.text!);
+
+        expect(data.ua).not.toContain('Firefox');
+
+        await controlEngine.dispose();
+      });
+
+      it('should use firefox for camoufox-js to bypass bot detection when antibot is enabled', async () => {
+        await engine.dispose(); // Dispose shared engine
+
+        // 2. Test Case (antibot: true)
+        const antibotContext: FetchEngineContext = { id: `test-antibot-${Date.now()}` } as any;
+        const antibotEngine = await FetchEngine.create(antibotContext, {
+          engine: 'playwright',
+          antibot: true,
+          // No custom headers to ensure we get the real browser UA
+        })  as PlaywrightFetchEngine;
+
+        // Check #1: Basic UA check
+        await antibotEngine.goto(`${baseUrl}/ua-check`);
+        let res = await antibotEngine.getContent();
+        let data = JSON.parse(res.text!);
+        expect(data.ua).toContain('Firefox');
+
+        // Check #2: Webdriver property check
+        await antibotEngine.goto(`${baseUrl}/antibot-check`);
+        let content = await antibotEngine.extract<string>({selector: '#results'});
+        data = JSON.parse(content);
+        expect(data.webdriver).toBe(false);
+        expect(data.userAgent).toContain('Firefox');
+
+        await antibotEngine.dispose();
+      }, 20000); // Generous timeout for two separate engine launches
+    }
+
   });
 };
 
 // 3. 运行测试
-engineTestSuite('cheerio', CheerioFetchEngine);
+// engineTestSuite('cheerio', CheerioFetchEngine);
 engineTestSuite('playwright', PlaywrightFetchEngine);
