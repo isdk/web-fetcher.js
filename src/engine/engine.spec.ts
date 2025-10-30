@@ -571,5 +571,5 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
 };
 
 // 3. 运行测试
-// engineTestSuite('cheerio', CheerioFetchEngine);
+engineTestSuite('cheerio', CheerioFetchEngine);
 engineTestSuite('playwright', PlaywrightFetchEngine);
