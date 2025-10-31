@@ -6,7 +6,7 @@
 
 # Interface: PendingEngineRequest
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:108](https://github.com/isdk/web-fetcher.js/blob/ef3a4e527bf3ca75213d55b02c017b9a30a036fd/src/engine/base.ts#L108)
+Defined in: [packages/web-fetcher/src/engine/base.ts:108](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L108)
 
 Represents a pending navigation request awaiting resolution.
 
@@ -20,7 +20,7 @@ Tracks navigation requests that have been queued but not yet processed by the re
 
 > **reject**: (`reason?`) => `void`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:110](https://github.com/isdk/web-fetcher.js/blob/ef3a4e527bf3ca75213d55b02c017b9a30a036fd/src/engine/base.ts#L110)
+Defined in: [packages/web-fetcher/src/engine/base.ts:110](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L110)
 
 #### Parameters
 
@@ -38,7 +38,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:110](https://github.com/isd
 
 > **resolve**: (`value`) => `void`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:109](https://github.com/isdk/web-fetcher.js/blob/ef3a4e527bf3ca75213d55b02c017b9a30a036fd/src/engine/base.ts#L109)
+Defined in: [packages/web-fetcher/src/engine/base.ts:109](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L109)
 
 #### Parameters
 

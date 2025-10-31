@@ -8,7 +8,7 @@
 
 > **FetchEngineAction** = \{ `selector`: `string`; `type`: `"click"`; \} \| \{ `selector`: `string`; `type`: `"fill"`; `value`: `string`; \} \| \{ `options?`: [`WaitForActionOptions`](../interfaces/WaitForActionOptions.md); `type`: `"waitFor"`; \} \| \{ `options?`: [`SubmitActionOptions`](../interfaces/SubmitActionOptions.md); `selector?`: `any`; `type`: `"submit"`; \} \| \{ `type`: `"getContent"`; \} \| \{ `opts?`: [`GotoActionOptions`](../interfaces/GotoActionOptions.md); `type`: `"navigate"`; `url`: `string`; \} \| \{ `schema`: `ExtractSchema`; `type`: `"extract"`; \} \| \{ `message?`: `string`; `type`: `"pause"`; \} \| \{ `type`: `"dispose"`; \}
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:78](https://github.com/isdk/web-fetcher.js/blob/ef3a4e527bf3ca75213d55b02c017b9a30a036fd/src/engine/base.ts#L78)
+Defined in: [packages/web-fetcher/src/engine/base.ts:78](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L78)
 
 Union type representing all possible engine actions that can be dispatched.
 
