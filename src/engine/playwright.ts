@@ -237,17 +237,14 @@ export class PlaywrightFetchEngine extends FetchEngine<
     };
 
     if (this.opts?.antibot) {
-      console.log('[DEBUG] antibot enabled, configuring camoufox...');
       crawlerOptions.browserPoolOptions = {
         // Disable the default fingerprint spoofing to avoid conflicts with Camoufox.
         useFingerprints: false,
       };
 
-      console.log('[DEBUG] Calling launchOptions...');
       const lo = await launchOptions({
           headless,
       });
-      console.log('[DEBUG] launchOptions returned.');
 
       crawlerOptions.launchContext = {
         launcher: firefox,
@@ -256,12 +253,9 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
       crawlerOptions.postNavigationHooks = [
         async ({ page, handleCloudflareChallenge }) => {
-            console.log(`[DEBUG] In postNavigationHook for ${page.url()}. Calling handleCloudflareChallenge...`);
             await handleCloudflareChallenge();
-            console.log('[DEBUG] handleCloudflareChallenge returned.');
         },
       ];
-      console.log('[DEBUG] camoufox configuration complete.');
     }
 
     return crawlerOptions;
