@@ -15,6 +15,9 @@
     }
   ],
   "expected": {
-    "html": { "contains": "\"webdriver\":false" }
+    "html": [
+      { "contains": "\"webdriver\":false" },
+      { "not": { "contains": "firefox", "caseInsensitive": true } }
+    ]
   }
 }
