@@ -128,7 +128,7 @@ Pauses execution to wait for a specific condition to be met.
 
 Pauses the execution of the Action Script to allow for manual user intervention (e.g., solving a CAPTCHA).
 
-This action is only effective in `browser` mode and **requires** an `onPause` callback handler to be provided in the `fetchWeb` options. When triggered, this action calls the `onPause` handler and waits for it to complete.
+This action **requires** an `onPause` callback handler to be provided in the `fetchWeb` options. When triggered, this action calls the `onPause` handler and waits for it to complete.
 
 * **`id`**: `pause`
 * **`params`**:
