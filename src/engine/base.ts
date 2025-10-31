@@ -502,6 +502,7 @@ export abstract class FetchEngine<
     }
     context.internal.engine = this;
     context.engine = this.mode;
+    this.actionEmitter.setMaxListeners(100); // Set a higher limit to prevent memory leak warnings
     this.requestQueue = await RequestQueue.open();
 
     const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
