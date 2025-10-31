@@ -4,10 +4,9 @@ import { CommonError } from '@isdk/common-error';
 import {
   Configuration,
   RequestQueue,
-  type CheerioCrawler,
-  type CrawlingContext,
-  type PlaywrightCrawler,
 } from 'crawlee';
+import type { BasicCrawler, BasicCrawlerOptions, CrawlingContext } from 'crawlee';
+
 import { FetchEngineContext } from '../core/context';
 import { ExtractSchema, ExtractArraySchema, ExtractObjectSchema, ExtractValueSchema } from '../core/extract';
 import {
@@ -133,23 +132,31 @@ export interface PendingEngineRequest {
  * const response = await engine.getContent();
  * ```
  */
-export abstract class FetchEngine {
+
+type AnyFetchEngine = FetchEngine<any, any, any>;
+type AnyFetchEngineCtor = new (...args: any[]) => AnyFetchEngine;
+
+export abstract class FetchEngine<
+  TContext extends CrawlingContext = any,
+  TCrawler extends BasicCrawler<TContext> = any,
+  TOptions extends BasicCrawlerOptions<TContext>  = any
+> {
   // ===== 静态成员：注册管理 =====
-  private static registry = new Map<string, typeof FetchEngine>();
+  private static registry = new Map<string, AnyFetchEngineCtor>();
 
   /**
    * Registers a fetch engine implementation with the global registry.
    *
    * @param engineClass - The engine class to register
-   * @throws {Error} When engine class lacks static [id](file:///home/riceball/Documents/mywork/public/@isdk/ai-tools/packages/web-fetcher/src/engine/cheerio.ts#L20-L20) or ID is already registered
+   * @throws {Error} When engine class lacks static `id` or ID is already registered
    *
    * @example
    * ```ts
    * FetchEngine.register(CheerioFetchEngine);
    * ```
    */
-  static register<T extends typeof FetchEngine>(engineClass: T): void {
-    const id = engineClass.id;
+  static register(engineClass: AnyFetchEngineCtor): void {
+    const id = (engineClass as any).id;
     if (!id) throw new Error('Engine must define static id');
     if (this.registry.has(id)) throw new Error(`Engine id duplicated: ${id}`);
     this.registry.set(id, engineClass);
@@ -161,7 +168,7 @@ export abstract class FetchEngine {
    * @param id - The ID of the engine to retrieve
    * @returns Engine class if found, otherwise `undefined`
    */
-  static get(id: string): typeof FetchEngine | undefined {
+  static get(id: string): AnyFetchEngineCtor | undefined {
     return this.registry.get(id);
   }
 
@@ -171,9 +178,9 @@ export abstract class FetchEngine {
    * @param mode - Execution mode (`'http'` or `'browser'`)
    * @returns Engine class if found, otherwise `undefined`
    */
-  static getByMode(mode: FetchEngineType): typeof FetchEngine | undefined {
+  static getByMode(mode: FetchEngineType): AnyFetchEngineCtor | undefined {
     for (const [_id, engineClass] of this.registry.entries()) {
-      if (engineClass.mode === mode) return engineClass;
+      if ((engineClass as any).mode === mode) return engineClass;
     }
   }
 
@@ -191,9 +198,9 @@ export abstract class FetchEngine {
   static async create(ctx: FetchEngineContext, options?: BaseFetcherProperties) {
     const finalOptions = defaultsDeep(options, ctx, DefaultFetcherProperties) as BaseFetcherProperties;
     const engineName = (finalOptions.engine ?? ctx.engine) as FetchEngineType;
-    const Engine = engineName ? (this.get(engineName!) ?? this.getByMode(engineName)) : this !== FetchEngine ? this : null;
+    const Engine = engineName ? (this.get(engineName!) ?? this.getByMode(engineName)) : null;
     if (Engine) {
-      const result = new (Engine as any)() as FetchEngine;
+      const result = new Engine();
       await result.initialize(ctx, finalOptions);
       return result;
     }
@@ -217,7 +224,7 @@ export abstract class FetchEngine {
 
   declare protected ctx?: FetchEngineContext;
   declare protected opts?: BaseFetcherProperties;
-  declare protected crawler?: CheerioCrawler | PlaywrightCrawler;
+  declare protected crawler?: TCrawler;
   declare protected isCrawlerReady?: boolean;
   declare protected requestQueue?: RequestQueue;
 
@@ -282,17 +289,18 @@ export abstract class FetchEngine {
   }
 
   /**
-   * Abstract method for initializing engine's underlying crawler.
-   *
-   * @param ctx - Fetch engine context
-   * @param options - Configuration options
-   * @returns Promise resolving when initialization completes
-   *
-   * @remarks
-   * Concrete implementations must provide this to set up their specific crawler instance.
+   * Creates the crawler instance for the specific engine implementation.
+   * @param options - The final crawler options.
    * @internal
    */
-  protected abstract _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void>;
+  protected abstract _createCrawler(options: TOptions): TCrawler;
+
+  /**
+   * Gets the crawler-specific options from the subclass.
+   * @param ctx - The fetch engine context.
+   * @internal
+   */
+  protected abstract _getSpecificCrawlerOptions(ctx: FetchEngineContext): Promise<Partial<TOptions>> | Partial<TOptions>;
   /**
    * Abstract method for building standard [FetchResponse] from Crawlee context.
    *
@@ -303,7 +311,7 @@ export abstract class FetchEngine {
    * Converts implementation-specific context (Playwright `page` or Cheerio `$`) to standardized response.
    * @internal
    */
-  protected abstract buildResponse(context: CrawlingContext): Promise<FetchResponse>;
+  protected abstract buildResponse(context: TContext): Promise<FetchResponse>;
   /**
    * Abstract method for executing action within current page context.
    *
@@ -315,7 +323,7 @@ export abstract class FetchEngine {
    * Handles specific user interactions using underlying technology (Playwright/Cheerio).
    * @internal
    */
-  protected abstract executeAction(context: CrawlingContext, action: FetchEngineAction): Promise<any>;
+  protected abstract executeAction(context: TContext, action: FetchEngineAction): Promise<any>;
 
   /**
    * Navigates to the specified URL.
@@ -343,7 +351,9 @@ export abstract class FetchEngine {
    * await engine.waitFor({ selector: '#content' }); // Wait for element
    * ```
    */
-  abstract waitFor(params?: WaitForActionOptions): Promise<void>;
+  waitFor(params?: WaitForActionOptions): Promise<void> {
+    return this.dispatchAction({ type: 'waitFor', options: params });
+  }
 
   /**
    * Clicks on element matching selector.
@@ -352,7 +362,9 @@ export abstract class FetchEngine {
    * @returns Promise resolving when click is processed
    * @throws {Error} When no active page context exists
    */
-  abstract click(selector: string): Promise<void>;
+  click(selector: string): Promise<void> {
+    return this.dispatchAction({ type: 'click', selector });
+  }
 
   /**
    * Fills input element with specified value.
@@ -362,7 +374,9 @@ export abstract class FetchEngine {
    * @returns Promise resolving when fill operation completes
    * @throws {Error} When no active page context exists
    */
-  abstract fill(selector: string, value: string): Promise<void>;
+  fill(selector: string, value: string): Promise<void> {
+    return this.dispatchAction({ type: 'fill', selector, value });
+  }
 
   /**
    * Submits a form.
@@ -372,7 +386,9 @@ export abstract class FetchEngine {
    * @returns Promise resolving when form is submitted
    * @throws {Error} When no active page context exists
    */
-  abstract submit(selector?: any, options?: SubmitActionOptions): Promise<void>; // http: post form 模拟
+  submit(selector?: any, options?: SubmitActionOptions): Promise<void> {
+    return this.dispatchAction({ type: 'submit', selector, options });
+  }
 
   /**
    * Pauses execution, allowing for manual intervention or inspection.
@@ -381,7 +397,9 @@ export abstract class FetchEngine {
    * @returns Promise resolving when execution is resumed
    * @throws {Error} When no active page context exists
    */
-  abstract pause(message?: string): Promise<void>;
+  pause(message?: string): Promise<void> {
+    return this.dispatchAction({ type: 'pause', message });
+  }
 
   /**
    * Extracts structured data from the current page content.
@@ -468,25 +486,51 @@ export abstract class FetchEngine {
    * Automatically called when creating engine via `FetchEngine.create()`.
    */
   async initialize(context: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
-    if (!this.ctx) {
-      // Deep merge the final resolved options back into the context,
-      // so the context object always holds the most up-to-date data.
-      merge(context, options);
-
-      this.ctx = context;
-      this.opts = options;
-      this.hdrs = normalizeHeaders(options?.headers);
-
-      this.jar = [...(options?.cookies ?? [])];
-      if (!context.internal) {
-        context.internal = {};
-      }
-      context.internal.engine = this;
-      context.engine = this.mode;
-      // this.requestQueue = await RequestQueue.open(`cheerio-queue-${ctx.id}`); // 带id会创建持久化请求队列。
-      this.requestQueue = await RequestQueue.open();
-      await this._initialize(context, options);
+    if (this.ctx) {
+      return;
     }
+    // Deep merge the final resolved options back into the context,
+    // so the context object always holds the most up-to-date data.
+    merge(context, options);
+
+    this.ctx = context;
+    this.opts = context; // Use the merged context
+    this.hdrs = normalizeHeaders(context.headers);
+    this.jar = [...(context.cookies ?? [])];
+    if (!context.internal) {
+      context.internal = {};
+    }
+    context.internal.engine = this;
+    context.engine = this.mode;
+    this.requestQueue = await RequestQueue.open();
+
+    const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
+
+    const finalCrawlerOptions = {
+      ...defaultsDeep(specificCrawlerOptions, {
+        requestQueue: this.requestQueue,
+        maxConcurrency: 1,
+        minConcurrency: 1,
+        useSessionPool: true,
+        persistCookiesPerSession: true,
+        sessionPoolOptions: {
+          maxPoolSize: 1,
+          persistenceOptions: { enable: false },
+          sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
+        },
+      }),
+      // Force these handlers, they are critical for the engine's operation
+      requestHandler: this._requestHandler.bind(this),
+      errorHandler: this._failedRequestHandler.bind(this),
+      failedRequestHandler: this._failedRequestHandler.bind(this),
+    };
+
+    this.crawler = this._createCrawler(finalCrawlerOptions as TOptions);
+
+    this.crawler.run().then(()=>{this.isCrawlerReady = true}).catch((error) => {
+      this.isCrawlerReady = false;
+      console.error('Crawler background error:', error);
+    });
   }
 
   async cleanup(): Promise<void> {
@@ -525,7 +569,7 @@ export abstract class FetchEngine {
    * @throws {Error} If called outside valid page context window (`!this.isPageActive`)
    * @internal Engine infrastructure method - not for direct consumer use
    */
-  protected async _executePendingActions(context: CrawlingContext) {
+  protected async _executePendingActions(context: TContext) {
     await new Promise<void>((resolveLoop) => {
       const listener = async ({ action, resolve, reject }: DispatchedEngineAction) => {
         try {
@@ -548,7 +592,7 @@ export abstract class FetchEngine {
     });
   }
 
-  protected async _sharedRequestHandler(context: CrawlingContext): Promise<void> {
+  protected async _sharedRequestHandler(context: TContext): Promise<void> {
     try {
       const { request } = context;
       this.isPageActive = true;
@@ -576,7 +620,7 @@ export abstract class FetchEngine {
     }
   }
 
-  protected async _sharedFailedRequestHandler(context: CrawlingContext, error?: Error): Promise<void> {
+  protected async _sharedFailedRequestHandler(context: TContext, error?: Error): Promise<void> {
     const { request } = context;
     const gotoPromise = this.pendingRequests.get(request.userData.requestId);
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
@@ -599,6 +643,14 @@ export abstract class FetchEngine {
     return new Promise<T>((resolve, reject) => {
       this.actionEmitter.emit('dispatch', { action, resolve, reject });
     });
+  }
+
+  private async _requestHandler(context: TContext): Promise<void> {
+    await this._sharedRequestHandler(context);
+  }
+
+  private async _failedRequestHandler(context: TContext, error: Error): Promise<void> {
+    await this._sharedFailedRequestHandler(context, error);
   }
 
   protected async _commonCleanup() {
