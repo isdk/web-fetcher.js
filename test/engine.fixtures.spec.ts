@@ -7,6 +7,91 @@ import { FetchEngine } from '../src/engine';
 import { FetchEngineContext } from '../src/core/context';
 import { absoluteUrlFrom } from '../src/utils/helpers';
 
+
+const isConditionObject = (obj: any): boolean => {
+  if (typeof obj !== 'object' || obj === null || Array.isArray(obj)) {
+    return false;
+  }
+  const keys = Object.keys(obj);
+  return keys.some(key => ['and', 'or', 'not', 'contains', 'equals'].includes(key));
+};
+
+const checkExpectations = (value: any, expectations: any) => {
+  if (Array.isArray(expectations)) {
+    expectations.forEach(c => checkExpectations(value, c));
+    return;
+  }
+
+  if (typeof expectations === 'string') {
+    expect(String(value)).toContain(expectations);
+    return;
+  }
+
+  if (typeof expectations !== 'object' || expectations === null) {
+    expect(value).toEqual(expectations);
+    return;
+  }
+
+  if (expectations.and) {
+    expectations.and.forEach(c => checkExpectations(value, c));
+    return;
+  }
+  if (expectations.or) {
+    const passed = expectations.or.some(c => {
+      try {
+        checkExpectations(value, c);
+        return true;
+      } catch {
+        return false;
+      }
+    });
+
+    if (!passed) {
+      if (expectations.or.length > 0) {
+        try {
+          checkExpectations(value, expectations.or[0]);
+        } catch (e) {
+          throw new Error(`None of the "or" conditions were met. First failure: ${(e as Error).message}`);
+        }
+      }
+      expect.fail('None of the "or" conditions were met.');
+    }
+    return;
+  }
+  
+  if (expectations.not) {
+    const notCondition = expectations.not;
+    const passed = (() => {
+      try {
+        checkExpectations(value, notCondition);
+        return true;
+      } catch {
+        return false;
+      }
+    })();
+
+    if(passed) {
+      expect.fail(`NOT condition failed: wrapped condition should have failed but passed. Condition: ${JSON.stringify(notCondition)}`);
+    }
+    
+    return;
+  }
+  
+  // Matcher
+  if ('contains' in expectations) {
+    const { contains, caseInsensitive } = expectations;
+    const target = String(value);
+    if (caseInsensitive) {
+      expect(target.toLowerCase()).toContain(String(contains).toLowerCase());
+    } else {
+      expect(target).toContain(String(contains));
+    }
+  }
+  if ('equals' in expectations) {
+    expect(value).toEqual(expectations.equals);
+  }
+};
+
 interface FixtureAction {
   action: typeof FetchEngine;
   args: any[];
@@ -14,12 +99,11 @@ interface FixtureAction {
 
 interface FixtureExpected {
   statusCode?: number;
-  html?: {
-    contains: string;
-  };
+  html?: any;
   finalUrl?: string;
   data?: any;
 }
+
 
 interface Fixture {
   name: string;
@@ -164,8 +248,8 @@ const engineTestSuite = (
       if (fixture.expected.statusCode) {
         expect(content.statusCode).toBe(fixture.expected.statusCode);
       }
-      if (fixture.expected.html?.contains) {
-        expect(content.html).toContain(fixture.expected.html.contains);
+      if (fixture.expected.html) {
+        checkExpectations(content.html, fixture.expected.html);
       }
       if (fixture.expected.finalUrl) {
         const expectedUrl = new URL(fixture.expected.finalUrl, baseUrl).toString();
@@ -173,8 +257,12 @@ const engineTestSuite = (
         // 只比较路径
         expect(new URL(actualUrl).pathname).toBe(new URL(expectedUrl).pathname);
       }
-      if (fixture.expected.data) {
-        expect(result).toEqual(fixture.expected.data);
+      if ('data' in fixture.expected) {
+        if (isConditionObject(fixture.expected.data)) {
+          checkExpectations(result, fixture.expected.data);
+        } else {
+          expect(result).toEqual(fixture.expected.data);
+        }
       }
 
       await engine.dispose();
