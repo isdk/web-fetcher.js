@@ -233,7 +233,8 @@ const data = await engine.extract(schema);
 
 添加新的抓取引擎非常简单：
 
-1.  **创建类**：定义一个扩展泛型 `FetchEngine` 的新类，并提供具体的 `Context`、`Crawler` 和 `Options` 类型。
+1. **创建类**：定义一个扩展泛型 `FetchEngine` 的新类，并提供具体的 `Context`、`Crawler` 和 `Options` 类型。
+
     ```typescript
     import { PlaywrightCrawler, PlaywrightCrawlerOptions, PlaywrightCrawlingContext } from 'crawlee';
 
@@ -245,13 +246,14 @@ const data = await engine.extract(schema);
       // ...
     }
     ```
-2.  **定义静态属性**：设置唯一的 `id` 和 `mode`。
-3.  **实现抽象方法**：为基类的抽象方法提供具体实现：
-    *   `_getSpecificCrawlerOptions()`: 返回一个包含爬虫特定选项的对象（例如，`headless` 模式、`preNavigationHooks`）。
-    *   `_createCrawler()`: 返回一个新的爬虫实例（例如，`new PlaywrightCrawler(options)`）。
-    *   `buildResponse()`: 将爬取上下文转换为标准的 `FetchResponse`。
-    *   `executeAction()`: 处理特定引擎的动作实现，如 `click`、`fill` 等。
-4.  **注册引擎**：调用 `FetchEngine.register(MyNewEngine)`。
+
+2. **定义静态属性**：设置唯一的 `id` 和 `mode`。
+3. **实现抽象方法**：为基类的抽象方法提供具体实现：
+    * `_getSpecificCrawlerOptions()`: 返回一个包含爬虫特定选项的对象（例如，`headless` 模式、`preNavigationHooks`）。
+    * `_createCrawler()`: 返回一个新的爬虫实例（例如，`new PlaywrightCrawler(options)`）。
+    * `buildResponse()`: 将爬取上下文转换为标准的 `FetchResponse`。
+    * `executeAction()`: 处理特定引擎的动作实现，如 `click`、`fill` 等。
+4. **注册引擎**：调用 `FetchEngine.register(MyNewEngine)`。
 
 ---
 
