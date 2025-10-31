@@ -128,7 +128,7 @@ export class FillAction extends FetchAction {
 
 暂停 Action 脚本的执行，以允许用户手动介入（例如，解决验证码）。
 
-此 Action 仅在 `browser` 模式下有效，并且**必须**在 `fetchWeb` 的选项中提供一个 `onPause` 回调处理器。当此 Action 被触发时，它会调用 `onPause` 处理器并等待其执行完成。
+此 Action **必须**在 `fetchWeb` 的选项中提供一个 `onPause` 回调处理器。当此 Action 被触发时，它会调用 `onPause` 处理器并等待其执行完成。
 
 * **`id`**: `pause`
 * **`params`**:
