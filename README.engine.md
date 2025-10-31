@@ -233,10 +233,25 @@ const data = await engine.extract(schema);
 
 Adding a new fetch engine is straightforward:
 
-1. **Create the Class**: Define a new class that extends `FetchEngine`.
-2. **Define Static Properties**: Set the unique `id` and `mode`.
-3. **Implement Abstract Methods**: Provide concrete implementations for methods like `_initialize`, `buildResponse`, and `executeAction`.
-4. **Register the Engine**: Call `FetchEngine.register(MyNewEngine)`.
+1.  **Create the Class**: Define a new class that extends the generic `FetchEngine`, providing the specific `Context`, `Crawler`, and `Options` types from Crawlee.
+    ```typescript
+    import { PlaywrightCrawler, PlaywrightCrawlerOptions, PlaywrightCrawlingContext } from 'crawlee';
+
+    class MyPlaywrightEngine extends FetchEngine<
+      PlaywrightCrawlingContext,
+      PlaywrightCrawler,
+      PlaywrightCrawlerOptions
+    > {
+      // ...
+    }
+    ```
+2.  **Define Static Properties**: Set the unique `id` and `mode`.
+3.  **Implement Abstract Methods**: Provide concrete implementations for the abstract methods from the base class:
+    *   `_getSpecificCrawlerOptions()`: Return an object with crawler-specific options (e.g., `headless` mode, `preNavigationHooks`).
+    *   `_createCrawler()`: Return a new instance of your crawler (e.g., `new PlaywrightCrawler(options)`).
+    *   `buildResponse()`: Convert the crawling context to a standard `FetchResponse`.
+    *   `executeAction()`: Handle engine-specific implementations for actions like `click`, `fill`, etc.
+4.  **Register the Engine**: Call `FetchEngine.register(MyNewEngine)`.
 
 ---
 

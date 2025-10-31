@@ -4,11 +4,9 @@ import * as cheerio from 'cheerio';
 import {
   FetchEngine,
   type GotoActionOptions,
-  type SubmitActionOptions,
-  type WaitForActionOptions,
   FetchEngineAction,
 } from './base';
-import { BaseFetcherProperties, FetchResponse, OnFetchPauseCallback } from '../core/types';
+import { FetchResponse, OnFetchPauseCallback } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { createPromiseLock } from './promise-lock';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
@@ -18,7 +16,12 @@ type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>;
 type CheerioSelection = ReturnType<CheerioAPI>;
 type CheerioNode = ReturnType<CheerioSelection['first']>;
 
-export class CheerioFetchEngine extends FetchEngine {
+
+export class CheerioFetchEngine extends FetchEngine<
+  CheerioCrawlingContext,
+  CheerioCrawler,
+  CheerioCrawlerOptions
+> {
   static readonly id = 'cheerio';
   static readonly mode = 'http';
 
@@ -215,50 +218,28 @@ export class CheerioFetchEngine extends FetchEngine {
     };
   }
 
-  private async requestHandler(context: CheerioCrawlingContext): Promise<void> {
-    await this._sharedRequestHandler(context);
+  protected _createCrawler(options: CheerioCrawlerOptions): CheerioCrawler {
+    return new CheerioCrawler(options);
   }
 
-  private async failedRequestHandler(context: CheerioCrawlingContext, error: Error): Promise<void> {
-    await this._sharedFailedRequestHandler(context, error);
-  }
-
-  protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
+  protected _getSpecificCrawlerOptions(ctx: FetchEngineContext): CheerioCrawlerOptions {
     const proxyUrls = this.opts?.proxy ? (typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy) : undefined;
     const proxy = proxyUrls?.length ? new ProxyConfiguration({ proxyUrls }) : undefined;
 
     const crawlerOptions: CheerioCrawlerOptions = {
       additionalMimeTypes: ['text/plain'],
-      requestQueue: this.requestQueue,
-      maxConcurrency: 1,
-      minConcurrency: 1,
       maxRequestRetries: 1,
       requestHandlerTimeoutSecs: Math.max(5, Math.floor((this.opts?.timeoutMs || 30000) / 1000)),
-      useSessionPool: true,
-      persistCookiesPerSession: true,
-      sessionPoolOptions: {
-        maxPoolSize: 1,
-        persistenceOptions: { enable: false },
-        sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
-      },
       proxyConfiguration: proxy,
       preNavigationHooks: [
-        (crawlingContext, gotOptions) => {
+        (_crawlingContext, gotOptions) => {
           // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
           gotOptions.throwHttpErrors = ctx.throwHttpErrors;
           if (this.opts?.timeoutMs) gotOptions.timeout = { request: this.opts.timeoutMs };
         },
       ],
-      requestHandler: this.requestHandler.bind(this),
-      errorHandler: this.failedRequestHandler.bind(this),
-      failedRequestHandler: this.failedRequestHandler.bind(this),
     };
-
-    this.crawler = new CheerioCrawler(crawlerOptions);
-    this.crawler.run().then(()=>{this.isCrawlerReady = true}).catch((error) => {
-      this.isCrawlerReady = false;
-      console.error('Crawler background error:', error);
-    });
+    return crawlerOptions;
   }
 
   async goto(url: string, params?: GotoActionOptions): Promise<void | FetchResponse> {
@@ -318,27 +299,6 @@ export class CheerioFetchEngine extends FetchEngine {
 
     return promise;
   }
-
-  async waitFor(options?: WaitForActionOptions): Promise<void> {
-    return this.dispatchAction({ type: 'waitFor', options });
-  }
-
-  async click(selector: string): Promise<void> {
-    return this.dispatchAction({ type: 'click', selector });
-  }
-
-  async fill(selector: string, value: string): Promise<void> {
-    return this.dispatchAction({ type: 'fill', selector, value });
-  }
-
-  async submit(selector?: string | CheerioNode, options?: SubmitActionOptions): Promise<void> {
-    return this.dispatchAction({ type: 'submit', selector, options });
-  }
-
-  async pause(message?: string): Promise<void> {
-    return this.dispatchAction({ type: 'pause', message });
-  }
-
 
 }
 

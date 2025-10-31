@@ -2,8 +2,8 @@ import { PlaywrightCrawler } from 'crawlee';
 import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
 import { firefox } from 'playwright';
 import { launchOptions } from 'camoufox-js';
-import { FetchEngine, type GotoActionOptions, type SubmitActionOptions, type WaitForActionOptions, FetchEngineAction } from './base';
-import { BaseFetcherProperties, FetchResponse, type OnFetchPauseCallback } from '../core/types';
+import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base';
+import { FetchResponse, type OnFetchPauseCallback } from '../core/types';
 import { FetchEngineContext } from '../core/context';
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
 import { ExtractValueSchema } from '../core/extract';
@@ -13,7 +13,11 @@ const DefaultTimeoutMs = 30_000;
 type Page = NonNullable<PlaywrightCrawlingContext['page']>;
 type Locator = ReturnType<Page['locator']>;
 
-export class PlaywrightFetchEngine extends FetchEngine {
+export class PlaywrightFetchEngine extends FetchEngine<
+  PlaywrightCrawlingContext,
+  PlaywrightCrawler,
+  PlaywrightCrawlerOptions
+> {
   static readonly id = 'playwright';
   static readonly mode = 'browser';
 
@@ -195,32 +199,16 @@ export class PlaywrightFetchEngine extends FetchEngine {
     }
   }
 
-  private async requestHandler(context: PlaywrightCrawlingContext): Promise<void> {
-    await this._sharedRequestHandler(context);
+  protected _createCrawler(options: PlaywrightCrawlerOptions): PlaywrightCrawler {
+    return new PlaywrightCrawler(options);
   }
 
-  private async failedRequestHandler(context: PlaywrightCrawlingContext): Promise<void> {
-    await this._sharedFailedRequestHandler(context);
-  }
-
-  protected async _initialize(ctx: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
+  protected async _getSpecificCrawlerOptions(ctx: FetchEngineContext): Promise<Partial<PlaywrightCrawlerOptions>> {
     const headless = ctx.browser?.headless ?? true;
 
-    const crawlerOptions: PlaywrightCrawlerOptions = {
-      requestQueue: this.requestQueue,
+    const crawlerOptions: Partial<PlaywrightCrawlerOptions> = {
       maxRequestRetries: ctx.retries || 3,
-      maxConcurrency: 1,
       headless,
-      useSessionPool: true,
-      persistCookiesPerSession: true,
-      sessionPoolOptions: {
-        maxPoolSize: 1,
-        persistenceOptions: { enable: false },
-        sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
-      },
-      requestHandler: this.requestHandler.bind(this),
-      errorHandler: this.failedRequestHandler.bind(this),
-      failedRequestHandler: this.failedRequestHandler.bind(this),
       preNavigationHooks: [
         async ({ page, request }, gotOptions) => {
           // await page.setExtraHTTPHeaders(this.hdrs);
@@ -276,11 +264,7 @@ export class PlaywrightFetchEngine extends FetchEngine {
       console.log('[DEBUG] camoufox configuration complete.');
     }
 
-    this.crawler = new PlaywrightCrawler(crawlerOptions);
-    this.crawler.run().then(()=>{this.isCrawlerReady = true}).catch((error) => {
-      this.isCrawlerReady = false;
-      console.error('Crawler background error:', error);
-    });
+    return crawlerOptions;
   }
 
   async goto(url: string, opts?: GotoActionOptions): Promise<FetchResponse> {
@@ -309,27 +293,6 @@ export class PlaywrightFetchEngine extends FetchEngine {
 
     return promise;
   }
-
-  async waitFor(options?: WaitForActionOptions): Promise<void> {
-    return this.dispatchAction({ type: 'waitFor', options });
-  }
-
-  async click(selector: string): Promise<void> {
-    return this.dispatchAction({ type: 'click', selector });
-  }
-
-  async fill(selector: string, value: string): Promise<void> {
-    return this.dispatchAction({ type: 'fill', selector, value });
-  }
-
-  async submit(selector?: string, options?: SubmitActionOptions): Promise<void> {
-    return this.dispatchAction({ type: 'submit', selector, options });
-  }
-
-  async pause(message?: string): Promise<void> {
-    return this.dispatchAction({ type: 'pause', message });
-  }
-
 
 }
 
