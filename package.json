@@ -1,6 +1,7 @@
 {
   "name": "@isdk/web-fetcher",
   "version": "0.2.1",
+  "license": "MIT",
   "author": "Riceball LEE <snowyu.lee@gmail.com>",
   "homepage": "https://github.com/isdk/web-fetcher.js",
   "repository": {
