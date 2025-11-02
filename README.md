@@ -1,9 +1,16 @@
 # 🕸️ @isdk/web-fetcher
 
+[![npm version](https://img.shields.io/npm/v/%40isdk%2Fweb-fetcher)](https://www.npmjs.com/package/@isdk/web-fetcher)
+[![npm downloads](https://img.shields.io/npm/dw/%40isdk%2Fweb-fetcher)](https://www.npmjs.com/package/@isdk/web-fetcher)
+[![License](https://img.shields.io/github/license/isdk/web-fetcher.js)](https://github.com/isdk/web-fetcher.js/blob/main/LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Types%20included-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/isdk/web-fetcher.js?logo=github)](https://github.com/isdk/web-fetcher.js)
+![antibot](https://img.shields.io/badge/antibot-optional-orange)
+
 English | [简体中文](./README.cn.md)
 
-> A powerful and flexible web fetching and browser automation library.
-> It features a dual-engine architecture (HTTP and Browser) and a declarative action system, making it perfect for AI agents and complex data scraping tasks.
+> An AI-friendly web automation library that simplifies complex web interactions into a declarative JSON action script. Write your script once and run it in either a fast **`http`** mode for static content or a full **`browser`** mode for dynamic sites. An optional **`antibot`** flag helps bypass detection mechanisms. The library is designed for targeted, task-oriented data extraction (e.g., get X from page Y), not for building whole-site crawlers.
 
 ---
 
@@ -137,6 +144,7 @@ Here are the essential built-in actions:
 * `fill`: Fills an input field with a specified value.
 * `submit`: Submits a form.
 * `waitFor`: Pauses execution to wait for a specific condition (e.g., a timeout, a selector to appear, or network to be idle).
+* `pause`: Pauses execution for manual intervention (e.g., solving a CAPTCHA).
 * `getContent`: Retrieves the full content (HTML, text, etc.) of the current page state.
 * `extract`: Extracts any structured data from the page with ease using an expressive, declarative schema.
 

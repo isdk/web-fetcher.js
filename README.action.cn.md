@@ -80,21 +80,21 @@ export class FillAction extends FetchAction {
 
 #### `goto`
 
-导航到新的 URL。
+将浏览器导航至指定 URL。
 
 * **`id`**: `goto`
 * **`params`**:
   * `url` (string): 要导航到的 URL。
-  * ...其他导航选项，如 `waitUntil`, `timeout`，这些选项会传递给引擎。
+  * ...其他导航选项，如 **`waitUntil`**, **`timeout`**，这些选项会传递给引擎。
 * **`returns`**: `response`
 
 #### `click`
 
-点击一个由选择器指定的元素。
+点击由 **`selector`** (CSS 选择器) 指定的元素。
 
 * **`id`**: `click`
 * **`params`**:
-  * `selector` (string): 用于标识要点击元素的 CSS 选择器或 XPath。
+  * **`selector`** (string): 用于标识要点击元素的 CSS 选择器。
 * **`returns`**: `none`
 
 #### `fill`
@@ -103,7 +103,7 @@ export class FillAction extends FetchAction {
 
 * **`id`**: `fill`
 * **`params`**:
-  * `selector` (string): 输入元素的选择器。
+  * **`selector`** (string): 输入元素的选择器。
   * `value` (string): 要填入元素中的文本。
 * **`returns`**: `none`
 
@@ -113,28 +113,31 @@ export class FillAction extends FetchAction {
 
 * **`id`**: `submit`
 * **`params`**:
-  * `selector` (string, optional): 表单元素的选择器。
+  * **`selector`** (string, optional): 表单元素的选择器。
 * **`returns`**: `none`
 
 #### `waitFor`
 
-暂停执行以等待特定条件满足。
+暂停执行，以等待一个或多个条件的满足。
+
+在 `browser` 模式下，如果提供了多个条件，它们将按顺序依次等待。例如，它会先等待选择器出现，然后等待网络空闲，最后再等待指定的毫秒数。
 
 * **`id`**: `waitFor`
-* **`params`**: 一个指定等待条件的对象 (例如 `ms`, `selector`, `networkIdle`)。
+* **`params`**: 一个指定等待条件的对象，可包含以下一个或多个键：
+  * **`ms`** (number): 等待指定的毫秒数。两个引擎都支持。
+  * **`selector`** (string): 等待匹配的选择器出现在页面中。仅 `browser` 模式支持。
+  * **`networkIdle`** (boolean): 等待直到网络空闲（即，在一段时间内没有新的网络请求）。仅 `browser` 模式支持。
 * **`returns`**: `none`
 
 #### `pause`
 
-暂停 Action 脚本的执行，以允许用户手动介入（例如，解决验证码）。
-
-此 Action **必须**在 `fetchWeb` 的选项中提供一个 `onPause` 回调处理器。当此 Action 被触发时，它会调用 `onPause` 处理器并等待其执行完成。
+暂停 Action 脚本的执行，以允许用户手动介入（例如，解决验证码）。此 Action **必须**在 **`fetchWeb`** 的选项中提供一个 **`onPause`** 回调处理器。当此 Action 被触发时，它会调用 **`onPause`** 处理器并等待其执行完成。
 
 * **`id`**: `pause`
 * **`params`**:
-  * `selector` (string, optional): 如果提供，仅当匹配此选择器的元素存在时，Action 才会暂停。
-  * `attribute` (string, optional): 与 `selector` 配合使用。如果提供，仅当元素存在且拥有该指定属性时，Action 才会暂停。
-  * `message` (string, optional): 一个将传递给 `onPause` 处理器的消息，可用于向用户显示提示信息。
+  * **`selector`** (string, optional): 如果提供，仅当匹配此选择器的元素存在时，Action 才会暂停。
+  * **`attribute`** (string, optional): 与 **`selector`** 配合使用。如果提供，仅当元素存在且拥有该指定属性时，Action 才会暂停。
+  * **`message`** (string, optional): 一个将传递给 **`onPause`** 处理器的消息，可用于向用户显示提示信息。
 * **`returns`**: `none`
 
 **示例：在 Google 搜索中处理 CAPTCHA**
@@ -193,10 +196,10 @@ await fetchWeb({
 
 #### `extract`
 
-使用一个强大且声明式的 Schema 从当前页面中提取结构化数据。这是进行数据采集的核心 Action。
+使用一个强大且声明式的 **`ExtractSchema`** 从当前页面中提取结构化数据。这是进行数据采集的核心 Action。
 
 * **`id`**: `extract`
-* **`params`**: 一个 `ExtractSchema` 对象, 用于定义提取规则。
+* **`params`**: 一个 **`ExtractSchema`** 对象, 用于定义提取规则。
 * **`returns`**: `any` (提取出的数据)
 
 ##### 提取 Schema 详解
@@ -205,7 +208,7 @@ await fetchWeb({
 
 ###### 1. 提取单个值
 
-最基础的提取,可以指定 `selector` (CSS 选择器), `attribute` (要提取的属性名), 以及 `type` (string, number, boolean, html)。
+最基础的提取，可以指定 **`selector`** (CSS 选择器), **`attribute`** (要提取的属性名), 以及 **`type`** (string, number, boolean, html)。
 
 ```json
 {
@@ -221,7 +224,7 @@ await fetchWeb({
 
 ###### 2. 提取对象
 
-通过 `type: 'object'` 和 `properties` 字段来定义一个结构化对象。
+通过 **`type: 'object'`** 和 **`properties`** 字段来定义一个结构化对象。
 
 ```json
 {
@@ -239,7 +242,7 @@ await fetchWeb({
 
 ###### 3. 提取数组 (便捷用法)
 
-通过 `type: 'array'` 来提取一个列表。为了让最常见的操作更简单,我们提供了一些便捷用法。
+通过 **`type: 'array'`** 来提取一个列表。为了让最常见的操作更简单，我们提供了一些便捷用法。
 
 * **提取文本数组 (默认行为)**: 当您想提取一个文本列表时,只需提供选择器,省略 `items` 即可。这是最常见的用法。
 
@@ -263,7 +266,7 @@ await fetchWeb({
 
     > 上例将返回一个包含所有 `<li>` 标签文本的数组, 如 `["tech", "news"]`。
 
-* **提取属性数组 (快捷方式)**: 当您只想提取一个属性列表(例如所有链接的 `href`)时,也无需嵌套 `items`。直接在 `array` 定义中声明 `attribute` 即可。
+* **提取属性数组 (快捷方式)**: 当您只想提取一个属性列表(例如所有链接的 **`href`**)时，也无需嵌套 `items`。直接在 `array` 定义中声明 **`attribute`** 即可。
 
     ```json
 
@@ -289,10 +292,10 @@ await fetchWeb({
 
 ###### 4. 精确筛选: `has` 和 `exclude`
 
-您可以在任何包含 `selector` 的 Schema 中使用 `has` 和 `exclude` 字段来精确控制元素的选择。
+您可以在任何包含 **`selector`** 的 Schema 中使用 **`has`** 和 **`exclude`** 字段来精确控制元素的选择。
 
-* `has`: 一个 CSS 选择器,用于确保所选元素**必须包含**匹配此选择器的后代元素。
-* `exclude`: 一个 CSS 选择器,用于从结果中**排除**匹配此选择器的元素。
+* **`has`**: 一个 CSS 选择器，用于确保所选元素**必须包含**匹配此选择器的后代元素。
+* **`exclude`**: 一个 CSS 选择器，用于从结果中**排除**匹配此选择器的元素。
 
 **完整示例: 提取包含图片且未被标记为"草稿"的文章链接**
 
