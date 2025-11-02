@@ -94,7 +94,7 @@ Clicks on an element specified by a selector.
 
 * **`id`**: `click`
 * **`params`**:
-  * `selector` (string): A CSS selector or XPath to identify the element to click.
+  * `selector` (string): A CSS selector to identify the element to click.
 * **`returns`**: `none`
 
 #### `fill`
@@ -118,10 +118,15 @@ Submits a form.
 
 #### `waitFor`
 
-Pauses execution to wait for a specific condition to be met.
+Pauses execution to wait for one or more conditions to be met.
+
+In `browser` mode, if multiple conditions are provided, they are awaited sequentially. For example, it will first wait for the selector to appear, then wait for the network to be idle, and finally wait for the specified duration.
 
 * **`id`**: `waitFor`
-* **`params`**: An object specifying the wait condition (e.g., `ms`, `selector`, `networkIdle`).
+* **`params`**: An object specifying the wait condition, which can contain one or more of the following keys:
+  * **`ms`** (number): Waits for the specified number of milliseconds. Supported by both engines.
+  * **`selector`** (string): Waits for an element matching the selector to appear on the page. Supported only in `browser` mode.
+  * **`networkIdle`** (boolean): Waits until the network is idle (i.e., no new network requests for a period of time). Supported only in `browser` mode.
 * **`returns`**: `none`
 
 #### `pause`

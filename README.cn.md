@@ -1,9 +1,16 @@
 # 🕸️ @isdk/web-fetcher
 
+[![npm version](https://img.shields.io/npm/v/%40isdk%2Fweb-fetcher)](https://www.npmjs.com/package/@isdk/web-fetcher)
+[![npm downloads](https://img.shields.io/npm/dw/%40isdk%2Fweb-fetcher)](https://www.npmjs.com/package/@isdk/web-fetcher)
+[![License](https://img.shields.io/github/license/isdk/web-fetcher.js)](https://github.com/isdk/web-fetcher.js/blob/main/LICENSE)
+[![Node](https://img.shields.io/badge/node-%3E%3D18-339933?logo=node.js)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-Types%20included-3178C6?logo=typescript)](https://www.typescriptlang.org/)
+[![GitHub Stars](https://img.shields.io/github/stars/isdk/web-fetcher.js?logo=github)](https://github.com/isdk/web-fetcher.js)
+![antibot](https://img.shields.io/badge/antibot-optional-orange)
+
 [English](./README.md) | 简体中文
 
-> 一个功能强大且灵活的 Web 抓取与浏览器自动化库。
-> 它采用双引擎架构（HTTP 和浏览器）和声明式动作系统，是 AI 代理和复杂数据抓取任务的理想选择。
+> 一个面向AI的网页自动化库，它将复杂的网页交互简化为声明式JSON动作脚本。一次编写，你的脚本即可在快速的 **`http`** 模式（用于静态内容）或完整的 **`browser`** 模式（用于动态站点）下运行。可选的 **`antibot`** 标志有助于绕过检测机制。该库专为有针对性的、面向任务的数据提取而设计（例如，从页面Y获取数据X），而非用于构建全站爬虫。
 
 ---
 
@@ -137,6 +144,7 @@ searchGoogle('gemini');
 * `fill`: 用指定的值填充一个输入字段。
 * `submit`: 提交一个表单。
 * `waitFor`: 暂停执行以等待特定条件（例如，超时、选择器出现或网络空闲）。
+* `pause`: 暂停执行以进行手动干预（例如，解决验证码）。
 * `getContent`: 获取当前页面状态的完整内容（HTML、文本等）。
 * `extract`: 使用富有表现力的声明式 Schema,可轻松提取页面中的任意结构化数据。
 
