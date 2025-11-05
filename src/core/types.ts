@@ -67,6 +67,7 @@ export interface BaseFetcherProperties {
   };
 
   timeoutMs?: number;
+  requestHandlerTimeoutSecs?: number;
   maxConcurrency?: number;
   maxRequestsPerMinute?: number;
   delayBetweenRequestsMs?: number;
