@@ -3,3 +3,6 @@ refactor:
     如何处理在导航内部的无关的动作，还是不允许无关的动作在里面？
     如果支持任意动作，是否允许嵌套？如何优雅的嵌套？
     是否需要在Engine层面支持？
+bug:
+  ☐ 在 pause 期间，会受到 crawlee 的 requestHandlerTimeoutSecs 的限制。如果 pause 时间过长会导致 requestHandler 超时
+    workaround: 设置 requestHandlerTimeoutSecs 更长的时间或禁用， 默认是60s
