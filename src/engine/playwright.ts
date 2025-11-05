@@ -209,6 +209,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const crawlerOptions: Partial<PlaywrightCrawlerOptions> = {
       maxRequestRetries: ctx.retries || 3,
       headless,
+      requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       preNavigationHooks: [
         async ({ page, request }, gotOptions) => {
           // await page.setExtraHTTPHeaders(this.hdrs);
