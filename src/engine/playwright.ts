@@ -21,7 +21,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
   static readonly id = 'playwright';
   static readonly mode = 'browser';
 
-  protected async buildResponse(context: PlaywrightCrawlingContext): Promise<FetchResponse> {
+  protected async _buildResponse(context: PlaywrightCrawlingContext): Promise<FetchResponse> {
     const { page, response, request } = context;
     // In case of failed request, page might be closed.
     if (!page || page.isClosed()) {

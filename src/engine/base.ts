@@ -311,7 +311,14 @@ export abstract class FetchEngine<
    * Converts implementation-specific context (Playwright `page` or Cheerio `$`) to standardized response.
    * @internal
    */
-  protected abstract buildResponse(context: TContext): Promise<FetchResponse>;
+  protected abstract _buildResponse(context: TContext): Promise<FetchResponse>;
+  protected async buildResponse(context: TContext): Promise<FetchResponse> {
+    const result = await this._buildResponse(context);
+    const contentTypeHeader = result.headers['content-type'] || '';
+    result.contentType = contentTypeHeader.split(';')[0].trim();
+    return result;
+  };
+
   /**
    * Abstract method for executing action within current page context.
    *
@@ -600,7 +607,7 @@ export abstract class FetchEngine<
 
       const gotoPromise = this.pendingRequests.get(request.userData.requestId);
       if (gotoPromise) {
-        const fetchResponse = await this.buildResponse(context);
+        const fetchResponse = await this._buildResponse(context);
 
         // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
         const isError = !fetchResponse.statusCode || fetchResponse.statusCode >= 400;

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from 'vitest
 import fastify, { FastifyInstance } from 'fastify';
 import formbody from '@fastify/formbody';
 import { AddressInfo } from 'net';
+import * as cheerio from 'cheerio';
 
 import '../engine';
 // The things to test
@@ -44,10 +45,10 @@ const createTestServer = async (): Promise<FastifyInstance> => {
     reply.type('text/html').send('<h2>Page 2</h2>');
   });
 
-  // 表单提交 (JSON)
+  // 表单提交
   server.post('/submit', (req, reply) => {
     const body = req.body as { test_input: string };
-    reply.send(`Submitted: ${body.test_input}`);
+    reply.type('text/html').send(`<html><body>Submitted: ${body.test_input}</body></html>`);
   });
 
   return server;
@@ -105,6 +106,25 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
       expect(content.html).toContain('<h1>Welcome</h1>');
     }, TEST_TIMEOUT);
 
+    if (engineName === 'cheerio') it('should fill an input field and update the state', async () => {
+      createSession();
+      await session.execute({ name: 'goto', params: { url: baseUrl } });
+
+      // Execute the fill action
+      await session.execute({
+        name: 'fill',
+        params: { selector: 'input[name="test_input"]', value: 'new_value' },
+      });
+
+      // Get the content and check if the input value has changed
+      const content = await session.context.internal.engine!.getContent();
+
+      // The HTML should reflect the change
+      const $ = cheerio.load(content.html as string);
+      const inputValue = $('input[name="test_input"]').val();
+      expect(inputValue).toBe('new_value');
+    }, TEST_TIMEOUT);
+
     it('should throw when executing on a closed session', async () => {
       createSession();
       await session.dispose();
@@ -125,6 +145,7 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
       ]);
 
       expect(result).toBeDefined();
+      expect(result!.contentType).toBe('text/html');
       expect(result!.text).toContain('Submitted: session_test');
       expect(outputs).toEqual({});
 
