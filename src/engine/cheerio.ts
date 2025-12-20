@@ -217,10 +217,10 @@ export class CheerioFetchEngine extends FetchEngine<
     headers = headers || {};
 
     const body = response.body;
-    const $ = context.$ || cheerio.load(body ?? '');
+    const $ = cheerio.load(body ?? '');
 
     // Also update the context's cheerio instance for any subsequent actions in the same handler
-    if (!context.$) { context.$ = $ }
+    (context as any).$ = $;
     context.response = response;
     context.body = body;
 
