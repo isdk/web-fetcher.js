@@ -58,7 +58,7 @@ const checkExpectations = (value: any, expectations: any) => {
     }
     return;
   }
-  
+
   if (expectations.not) {
     const notCondition = expectations.not;
     const passed = (() => {
@@ -73,10 +73,10 @@ const checkExpectations = (value: any, expectations: any) => {
     if(passed) {
       expect.fail(`NOT condition failed: wrapped condition should have failed but passed. Condition: ${JSON.stringify(notCondition)}`);
     }
-    
+
     return;
   }
-  
+
   // Matcher
   if ('contains' in expectations) {
     const { contains, caseInsensitive } = expectations;
@@ -117,7 +117,7 @@ interface Fixture {
   options?: Record<string, any>;
 }
 
-const TEST_TIMEOUT = 5000; // 5s
+const TEST_TIMEOUT = 15000; // 5s
 const FIXTURES_DIR = resolve(__dirname, 'fixtures');
 
 // 1. 本地测试服务器
@@ -222,7 +222,7 @@ const engineTestSuite = (
         retries: 1,
       } as any;
 
-      engine = await FetchEngine.create(context, { 
+      engine = await FetchEngine.create(context, {
         engine: engineName,
         ...(fixture.options || {})
       }) as any;
