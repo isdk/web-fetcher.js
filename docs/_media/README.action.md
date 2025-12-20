@@ -94,7 +94,7 @@ Clicks on an element specified by a selector.
 
 * **`id`**: `click`
 * **`params`**:
-  * `selector` (string): A CSS selector or XPath to identify the element to click.
+  * `selector` (string): A CSS selector to identify the element to click.
 * **`returns`**: `none`
 
 #### `fill`
@@ -105,7 +105,12 @@ Fills an input field with a specified value.
 * **`params`**:
   * `selector` (string): A selector for the input element.
   * `value` (string): The text to fill into the element.
-* **`returns`**: `none`
+* **`returns`**: `response`
+
+> **Note**: The behavior of the returned content differs between engines.
+>
+> * **`cheerio`**: This engine directly manipulates its internal HTML representation, so the returned content will include the filled value.
+> * **`playwright`**: This engine returns the rendered HTML of the page (similar to `document.documentElement.outerHTML`). However, when `page.fill()` updates an input, it changes the input's internal `value` property. This property is not always serialized back to the `value` attribute in the HTML source. As a result, the filled value will **not** be visible in the HTML returned by `page.content()`.
 
 #### `submit`
 
@@ -118,10 +123,15 @@ Submits a form.
 
 #### `waitFor`
 
-Pauses execution to wait for a specific condition to be met.
+Pauses execution to wait for one or more conditions to be met.
+
+In `browser` mode, if multiple conditions are provided, they are awaited sequentially. For example, it will first wait for the selector to appear, then wait for the network to be idle, and finally wait for the specified duration.
 
 * **`id`**: `waitFor`
-* **`params`**: An object specifying the wait condition (e.g., `ms`, `selector`, `networkIdle`).
+* **`params`**: An object specifying the wait condition, which can contain one or more of the following keys:
+  * **`ms`** (number): Waits for the specified number of milliseconds. Supported by both engines.
+  * **`selector`** (string): Waits for an element matching the selector to appear on the page. Supported only in `browser` mode.
+  * **`networkIdle`** (boolean): Waits until the network is idle (i.e., no new network requests for a period of time). Supported only in `browser` mode.
 * **`returns`**: `none`
 
 #### `pause`
