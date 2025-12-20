@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.2](https://github.com/isdk/web-fetcher.js/compare/v0.2.1...v0.2.2) (2025-12-20)
+
+
+### Features
+
+* add requestHandlerTimeoutSecs ([c9b10a9](https://github.com/isdk/web-fetcher.js/commit/c9b10a9b811356649540c1f406516666fcb72930))
+* **engine:** add contentType to response and refine `fill` behavior ([bf3b3e5](https://github.com/isdk/web-fetcher.js/commit/bf3b3e531577bf3426af1a062e2c73592a9578ae))
+
+
+### Bug Fixes
+
+* **engine:** increase actionEmitter max listeners to prevent memory leak ([815af93](https://github.com/isdk/web-fetcher.js/commit/815af93e3763b4080e64d5330bb8e49398250db4))
+* only update $ if no $ exists ([9d976e3](https://github.com/isdk/web-fetcher.js/commit/9d976e330f39f712a4e409b1bd1bd44a5fb476bf))
+* **test:** inc TEST_TIMEOUT ([bd60426](https://github.com/isdk/web-fetcher.js/commit/bd604266b75c097780a17f745ba1b44cf304492e))
+
 ## [0.2.1](https://github.com/isdk/web-fetcher.js/compare/v0.2.0...v0.2.1) (2025-10-31)
 
 ## 0.2.0 (2025-10-31)
