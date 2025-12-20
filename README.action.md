@@ -105,7 +105,12 @@ Fills an input field with a specified value.
 * **`params`**:
   * `selector` (string): A selector for the input element.
   * `value` (string): The text to fill into the element.
-* **`returns`**: `none`
+* **`returns`**: `response`
+
+> **Note**: The behavior of the returned content differs between engines.
+>
+> * **`cheerio`**: This engine directly manipulates its internal HTML representation, so the returned content will include the filled value.
+> * **`playwright`**: This engine returns the rendered HTML of the page (similar to `document.documentElement.outerHTML`). However, when `page.fill()` updates an input, it changes the input's internal `value` property. This property is not always serialized back to the `value` attribute in the HTML source. As a result, the filled value will **not** be visible in the HTML returned by `page.content()`.
 
 #### `submit`
 

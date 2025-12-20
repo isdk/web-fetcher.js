@@ -25,19 +25,30 @@ export class CheerioFetchEngine extends FetchEngine<
   static readonly id = 'cheerio';
   static readonly mode = 'http';
 
-  protected async buildResponse(context: CheerioCrawlingContext): Promise<FetchResponse> {
+  protected async _buildResponse(context: CheerioCrawlingContext): Promise<FetchResponse> {
     const { request, response, body, $ } = context;
     const newHtml = $?.html();
     let text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
     if (newHtml && newHtml !== text) {
       text = newHtml;
     }
+
+    let headers = response?.headers as Record<string, string>;
+    // If 'headers' object doesn't exist, create it from 'rawHeaders'
+    if (!headers && (response as any)?.rawHeaders) {
+        headers = {};
+        const rawHeaders = (response as any).rawHeaders;
+        for (let i = 0; i < rawHeaders.length; i += 2) {
+            headers[rawHeaders[i].toLowerCase()] = rawHeaders[i + 1];
+        }
+    }
+
     return {
       url: request.url,
       finalUrl: request.loadedUrl || request.url,
       statusCode: response?.statusCode ?? 200,
       statusText: response?.statusMessage,
-      headers: response?.headers as Record<string, string>,
+      headers: headers || {}, // Use the newly constructed headers
       body,
       html: text,
       text,
@@ -122,10 +133,9 @@ export class CheerioFetchEngine extends FetchEngine<
         if ($input.length === 0) throw new CommonError(`fill: selector not found: ${action.selector}`);
         if ($input.is('input, textarea, select')) {
           $input.val(action.value);
-          const res = this.buildResponse(context) as any;
-          this.lastResponse = res;
+          this.lastResponse = await this.buildResponse(context);
         } else {
-          throw new CommonError(`fill: not a form field: ${action.selector}`, 'fill');
+          throw new CommonError(`fill: not a form field: ${action.selector}`);
         }
         return;
       }
@@ -195,26 +205,41 @@ export class CheerioFetchEngine extends FetchEngine<
   }
 
   private _updateStateAfterNavigation(context: CheerioCrawlingContext, loadedRequest: any) {
-    const response = loadedRequest.response || loadedRequest;
+    const response = loadedRequest;
+    let headers = response.headers;
 
-    const { body, headers, statusCode, statusMessage } = response;
-    const { url, loadedUrl } = loadedRequest;
-
-    const text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
-
-    if (headers && headers['content-type']?.includes('html')) {
-      context.$ = cheerio.load(text) as any;
+    if (!headers && response.rawHeaders) {
+      headers = {};
+      for (let i = 0; i < response.rawHeaders.length; i += 2) {
+        headers[response.rawHeaders[i].toLowerCase()] = response.rawHeaders[i + 1];
+      }
     }
+    headers = headers || {};
+
+    const body = response.body;
+    const $ = cheerio.load(body ?? '');
+    
+    // Also update the context's cheerio instance for any subsequent actions in the same handler
+    context.$ = $;
+    context.response = response;
+    context.body = body;
+    
+    const html = $.html();
+    const text = $.text();
+
+    const contentTypeHeader = headers['content-type'] || '';
+    const contentType = contentTypeHeader.split(';')[0].trim();
 
     this.lastResponse = {
-      url,
-      finalUrl: loadedUrl || url,
-      statusCode,
-      statusText: statusMessage,
-      headers: (headers as Record<string, string>) || {},
-      body,
-      html: text,
-      text,
+      url: context.request.url,
+      finalUrl: response.url,
+      statusCode: response.statusCode,
+      statusText: response.statusMessage,
+      headers: headers,
+      contentType: contentType,
+      body: body,
+      html: html,
+      text: text,
     };
   }
 

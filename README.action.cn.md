@@ -105,7 +105,12 @@ export class FillAction extends FetchAction {
 * **`params`**:
   * **`selector`** (string): 输入元素的选择器。
   * `value` (string): 要填入元素中的文本。
-* **`returns`**: `none`
+* **`returns`**: `response`
+
+> **注意**：返回内容的具体行为在不同引擎之间存在差异。
+>
+> * **`cheerio`**：此引擎直接操作其内部的 HTML 表示，因此返回的内容会包含填充的值。
+> * **`playwright`**：此引擎返回的是页面的渲染后 HTML (类似于 `document.documentElement.outerHTML`)。然而，当 `page.fill()` 更新输入框时，它修改的是该输入框元素的内部 `value` 属性。这个属性不总会被序列化为 HTML 源代码中的 `value` 特性。因此，调用 `page.content()` 所返回的 HTML 中将**不会**看到填充的值。
 
 #### `submit`
 
