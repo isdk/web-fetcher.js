@@ -6,7 +6,7 @@
 
 # Interface: GotoActionOptions
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:41](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L41)
+Defined in: [packages/web-fetcher/src/engine/base.ts:41](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L41)
 
 Options for the [FetchEngine.goto](../classes/FetchEngine.md#goto), allowing configuration of HTTP method, payload, headers, and navigation behavior.
 
@@ -31,7 +31,7 @@ await engine.goto('https://example.com', {
 
 > `optional` **headers**: `Record`\<`string`, `string`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:44](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L44)
+Defined in: [packages/web-fetcher/src/engine/base.ts:44](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L44)
 
 ***
 
@@ -39,7 +39,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:44](https://github.com/isdk
 
 > `optional` **method**: `"GET"` \| `"HEAD"` \| `"POST"` \| `"PUT"` \| `"DELETE"` \| `"TRACE"` \| `"OPTIONS"` \| `"CONNECT"` \| `"PATCH"`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:42](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L42)
+Defined in: [packages/web-fetcher/src/engine/base.ts:42](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L42)
 
 ***
 
@@ -47,7 +47,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:42](https://github.com/isdk
 
 > `optional` **payload**: `any`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:43](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L43)
+Defined in: [packages/web-fetcher/src/engine/base.ts:43](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L43)
 
 ***
 
@@ -55,7 +55,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:43](https://github.com/isdk
 
 > `optional` **timeoutMs**: `number`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:46](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L46)
+Defined in: [packages/web-fetcher/src/engine/base.ts:46](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L46)
 
 ***
 
@@ -63,4 +63,4 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:46](https://github.com/isdk
 
 > `optional` **waitUntil**: `"load"` \| `"domcontentloaded"` \| `"networkidle"` \| `"commit"`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:45](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L45)
+Defined in: [packages/web-fetcher/src/engine/base.ts:45](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L45)

@@ -6,7 +6,7 @@
 
 # Interface: WaitForActionOptions
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:55](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L55)
+Defined in: [packages/web-fetcher/src/engine/base.ts:55](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L55)
 
 Options for the [FetchEngine.waitFor](../classes/FetchEngine.md#waitfor) action, specifying conditions to wait for before continuing.
 
@@ -20,7 +20,7 @@ Controls timing behavior for interactions, allowing waiting for elements, time i
 
 > `optional` **ms**: `number`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:56](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L56)
+Defined in: [packages/web-fetcher/src/engine/base.ts:56](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L56)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:56](https://github.com/isdk
 
 > `optional` **networkIdle**: `boolean`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:58](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L58)
+Defined in: [packages/web-fetcher/src/engine/base.ts:58](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L58)
 
 ***
 
@@ -36,4 +36,4 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:58](https://github.com/isdk
 
 > `optional` **selector**: `string`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:57](https://github.com/isdk/web-fetcher.js/blob/db611cb04a516e006310c5e147f90026827d6d80/src/engine/base.ts#L57)
+Defined in: [packages/web-fetcher/src/engine/base.ts:57](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L57)
