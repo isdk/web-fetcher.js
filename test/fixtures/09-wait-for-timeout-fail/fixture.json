@@ -1,7 +1,6 @@
 {
   "title": "waitFor should throw when failOnTimeout is default (true)",
   "engine": "playwright",
-  "only": true,
   "options": {
     "timeoutMs": 1000
   },

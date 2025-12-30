@@ -81,7 +81,13 @@ const checkExpectations = (value: any, expectations: any) => {
   // Matcher
   if ('contains' in expectations) {
     const { contains, caseInsensitive } = expectations;
-    const target = String(value);
+    let target = value;
+    if (typeof value === 'object' && value !== null) {
+      target = JSON.stringify(value);
+    } else {
+      target = String(value);
+    }
+    
     if (caseInsensitive) {
       expect(target.toLowerCase()).toContain(String(contains).toLowerCase());
     } else {
@@ -104,6 +110,7 @@ interface FixtureExpected {
   finalUrl?: string;
   data?: any;
   error?: string;
+  cookies?: any;
 }
 
 
@@ -117,17 +124,29 @@ interface Fixture {
   only?: boolean;
   engine?: string;
   options?: Record<string, any>;
+  server?: {
+    responseHeaders?: Record<string, string>;
+  };
 }
 
 const TEST_TIMEOUT = 15000; // 5s
 const FIXTURES_DIR = resolve(__dirname, 'fixtures');
 
 // 1. 本地测试服务器
-const createTestServer = async (fixtureDir: string): Promise<FastifyInstance> => {
+const createTestServer = async (fixtureDir: string, fixtureConfig?: Fixture): Promise<FastifyInstance> => {
   const server = fastify({ logger: false });
+
+  const setHeaders = (reply: any) => {
+    if (fixtureConfig?.server?.responseHeaders) {
+      Object.entries(fixtureConfig.server.responseHeaders).forEach(([key, value]) => {
+        reply.header(key, value);
+      });
+    }
+  };
 
   // 动态提供 fixture.html
   server.get('/', async (req, reply) => {
+    setHeaders(reply);
     try {
       const html = await readFile(join(fixtureDir, 'fixture.html'), 'utf-8');
       reply.type('text/html').send(html);
@@ -138,6 +157,7 @@ const createTestServer = async (fixtureDir: string): Promise<FastifyInstance> =>
 
   // 动态提供其他 HTML 文件
   server.get('/:page', async (req, reply) => {
+    setHeaders(reply);
     const { page } = req.params as any;
     try {
       const html = await readFile(join(fixtureDir, `${page}.html`), 'utf-8');
@@ -207,7 +227,7 @@ const engineTestSuite = (
     let engine: FetchEngine;
 
     beforeAll(async () => {
-      server = await createTestServer(caseDir);
+      server = await createTestServer(caseDir, fixture);
       await server.listen({ port: 0 });
       const address = server.server.address() as AddressInfo;
       baseUrl = `http://localhost:${address.port}`;
@@ -280,6 +300,9 @@ const engineTestSuite = (
         const actualUrl = new URL(content.finalUrl, baseUrl).toString();
         // 只比较路径
         expect(new URL(actualUrl).pathname).toBe(new URL(expectedUrl).pathname);
+      }
+      if (fixture.expected.cookies) {
+        checkExpectations(content.cookies, fixture.expected.cookies);
       }
       if ('data' in fixture.expected) {
         if (isConditionObject(fixture.expected.data)) {

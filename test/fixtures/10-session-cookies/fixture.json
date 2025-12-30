@@ -1,0 +1,28 @@
+{
+  "title": "Should retrieve cookies from the server response",
+  "only": true,
+  "actions": [
+    {
+      "action": "goto",
+      "args": ["/"]
+    }
+  ],
+  "server": {
+    "responseHeaders": {
+      "Set-Cookie": "test-cookie=test-value; Path=/; HttpOnly"
+    }
+  },
+  "expected": {
+    "statusCode": 200,
+    "cookies": {
+        "and": [
+          {
+            "contains": "test-cookie"
+          },
+          {
+            "contains": "test-value"
+          }
+        ]
+    }
+  }
+}

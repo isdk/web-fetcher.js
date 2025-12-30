@@ -80,6 +80,10 @@ export class FetchSession {
     return this.context.outputs
   }
 
+  async getState() {
+    return this.context.internal.engine?.getState()
+  }
+
   async dispose(): Promise<void> {
     if (this.closed) return
     const eventBus = this.context.eventBus

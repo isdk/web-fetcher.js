@@ -49,6 +49,7 @@ export class CheerioFetchEngine extends FetchEngine<
       statusCode: response?.statusCode ?? 200,
       statusText: response?.statusMessage,
       headers: headers || {}, // Use the newly constructed headers
+      cookies: context.session?.getCookies(request.url),
       body,
       html: text,
       text,
