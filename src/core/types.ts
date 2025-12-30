@@ -130,13 +130,14 @@ export interface FetchResponse {
 }
 
 export const DefaultFetcherProperties: BaseFetcherProperties = {
-  // engine: 'http',
+  engine: 'auto',
   enableSmart: true,
   useSiteRegistry: true,
   antibot: false,
   headers: {},
   cookies: [],
   reuseCookies: true,
+  throwHttpErrors: undefined,
   proxy: [],
   blockResources: [],
   ignoreSslErrors: true,
@@ -149,9 +150,12 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
     method: 'GET',
   },
   timeoutMs: 60000,
+  requestHandlerTimeoutSecs: undefined,
   maxConcurrency: 1,
   maxRequestsPerMinute: 1000,
   delayBetweenRequestsMs: 0,
   retries: 0,
   sites: [],
 }
+
+export const FetcherOptionKeys = Object.keys(DefaultFetcherProperties).concat(['actions', 'onPause']);
