@@ -148,6 +148,18 @@ searchGoogle('gemini');
 * `getContent`: 获取当前页面状态的完整内容（HTML、文本等）。
 * `extract`: 使用富有表现力的声明式 Schema,可轻松提取页面中的任意结构化数据。
 
+### 响应结构
+
+`fetchWeb` 函数返回一个对象，包含：
+
+* `result` (FetchResponse):
+  * `url`: 最终 URL。
+  * `statusCode`: HTTP 状态码。
+  * `headers`: HTTP 头信息。
+  * `cookies`: Cookie 数组。
+  * `text`, `html`: 页面内容。
+* `outputs` (Record<string, any>): 通过 `storeAs` 提取并存储的数据。
+
 ---
 
 ## 📜 许可证
