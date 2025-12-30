@@ -258,10 +258,21 @@ export class CheerioFetchEngine extends FetchEngine<
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       proxyConfiguration: proxy,
       preNavigationHooks: [
-        (_crawlingContext, gotOptions) => {
+        ({ session, request }, gotOptions) => {
           // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
           gotOptions.throwHttpErrors = ctx.throwHttpErrors;
           if (this.opts?.timeoutMs) gotOptions.timeout = { request: this.opts.timeoutMs };
+
+          if (this.jar.length > 0 && session) {
+            for (const cookie of this.jar) {
+              const cookieStr = `${cookie.name}=${cookie.value}`;
+              // Use the request URL as the context for setting the cookie.
+              // tough-cookie will handle domain validation/setting if we pass the correct url.
+              // If the cookie has a specific domain that differs from the request, this might be lossy,
+              // but for "restoring session" context, usually we want these cookies to apply to the current target.
+              session.setCookie(cookieStr, request.url);
+            }
+          }
         },
       ],
     };

@@ -227,13 +227,24 @@ export class PlaywrightFetchEngine extends FetchEngine<
           // await page.setExtraHTTPHeaders(this.hdrs);
           gotOptions.throwHttpErrors = ctx.throwHttpErrors;
           if (this.jar.length > 0) {
-            await page.context().addCookies(
-              this.jar.map((c) => ({
-                ...c,
-                url: request.url,
-                domain: c.domain || new URL(request.url).hostname,
-              })),
-            );
+            try {
+              const cookiesToAdd = this.jar.map((c) => {
+                const cookie = { ...c };
+                // Playwright requires either url or domain/path.
+                // If domain is present, we don't strictly need url, but adding it matches the request.
+                // However, strictly speaking, we should handle this carefully.
+                if (!cookie.domain && !cookie.url) {
+                   cookie.url = request.url;
+                }
+                // Ensure sameSite is compatible (Playwright expects Strict/Lax/None or undefined)
+                if (cookie.sameSite === 'no_restriction') cookie.sameSite = 'None';
+                return cookie;
+              });
+              
+              await page.context().addCookies(cookiesToAdd);
+            } catch (e) {
+              console.error('[Playwright] Failed to restore cookies:', e);
+            }
           }
           const blockedTypes = this.blockedTypes;
           if (blockedTypes.size > 0) {
