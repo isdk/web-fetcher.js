@@ -117,11 +117,19 @@ export class PlaywrightFetchEngine extends FetchEngine<
         this.lastResponse = navResponse;
         return;
       case 'waitFor':
-        if (action.options?.selector) {
-          await page.waitForSelector(action.options.selector, { timeout: defaultTimeout });
-        }
-        if (action.options?.networkIdle) {
-          await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
+        try {
+          if (action.options?.selector) {
+            await page.waitForSelector(action.options.selector, { timeout: defaultTimeout });
+          }
+          if (action.options?.networkIdle) {
+            await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
+          }
+        } catch (e) {
+          if (action.options?.failOnTimeout === false) {
+             // ignore error
+          } else {
+            throw e;
+          }
         }
         if (action.options?.ms) {
           await page.waitForTimeout(action.options.ms);

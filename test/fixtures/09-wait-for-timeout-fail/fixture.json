@@ -1,0 +1,26 @@
+{
+  "title": "waitFor should throw when failOnTimeout is default (true)",
+  "engine": "playwright",
+  "only": true,
+  "options": {
+    "timeoutMs": 1000
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "args": ["/"]
+    },
+    {
+      "action": "waitFor",
+      "args": [
+        {
+          "selector": "#non-existent",
+          "ms": 1000
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "error": "Timeout"
+  }
+}
