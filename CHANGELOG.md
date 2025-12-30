@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.3](https://github.com/isdk/web-fetcher.js/compare/v0.2.2...v0.2.3) (2025-12-30)
+
+
+### Features
+
+* **types:** add const FetcherOptionKeys ([e79b751](https://github.com/isdk/web-fetcher.js/commit/e79b7513b1cfb1d340f05612396e10e6516d2ff1))
+
+
+### Bug Fixes
+
+* **cheerio:** requestHandlerTimeoutSecs should follow ctx ([f5d518f](https://github.com/isdk/web-fetcher.js/commit/f5d518f0066809ed188ee253d6a725dbfbe7a7f4))
+
 ## [0.2.2](https://github.com/isdk/web-fetcher.js/compare/v0.2.1...v0.2.2) (2025-12-20)
 
 
