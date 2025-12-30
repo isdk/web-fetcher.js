@@ -1,0 +1,34 @@
+{
+  "title": "Should accept and restore complex cookies (sameSite mapping, domain)",
+  "actions": [
+    {
+      "action": "goto",
+      "args": ["/"]
+    }
+  ],
+  "options": {
+    "cookies": [
+      {
+        "name": "complex-cookie",
+        "value": "complex-value",
+        "domain": "localhost",
+        "path": "/",
+        "sameSite": "no_restriction",
+        "secure": true
+      },
+      {
+        "name": "simple-cookie",
+        "value": "simple-value"
+      }
+    ]
+  },
+  "expected": {
+    "statusCode": 200,
+    "cookies": {
+      "and": [
+        { "contains": "complex-cookie" },
+        { "contains": "simple-cookie" }
+      ]
+    }
+  }
+}
