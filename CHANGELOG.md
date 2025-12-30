@@ -2,6 +2,19 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.5](https://github.com/isdk/web-fetcher.js/compare/v0.2.4...v0.2.5) (2025-12-30)
+
+
+### Features
+
+* **fetcher:** add getState() and expose cookies in FetchResponse ([9fd6f52](https://github.com/isdk/web-fetcher.js/commit/9fd6f52ba7cd5cb6b34c39a71febc51bb99168ca))
+
+
+### Bug Fixes
+
+* **engine:** ensure cookies are correctly seeded and restored ([47c40c1](https://github.com/isdk/web-fetcher.js/commit/47c40c12392078c3d23a60c947b5233297c3f3c7))
+* **playwright:** solve TS comparison error with sameSite and apply session getState type ([454450f](https://github.com/isdk/web-fetcher.js/commit/454450fb9b2c03ba1bee72ac0677a667dd8faece))
+
 ## [0.2.4](https://github.com/isdk/web-fetcher.js/compare/v0.2.3...v0.2.4) (2025-12-30)
 
 
