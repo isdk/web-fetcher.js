@@ -469,6 +469,16 @@ export abstract class FetchEngine<
   }
 
   /**
+   * Returns the current state of the engine (cookies)
+   * that can be used to restore the session later.
+   */
+  async getState(): Promise<{ cookies: Cookie[] }> {
+    return {
+      cookies: await this.cookies(),
+    };
+  }
+
+  /**
    * Gets the execution mode of this engine (`'http'` or `'browser'`).
    */
   get mode() {
