@@ -1,6 +1,5 @@
 {
   "title": "Should retrieve cookies from the server response",
-  "only": true,
   "actions": [
     {
       "action": "goto",
