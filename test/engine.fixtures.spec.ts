@@ -87,7 +87,7 @@ const checkExpectations = (value: any, expectations: any) => {
     } else {
       target = String(value);
     }
-    
+
     if (caseInsensitive) {
       expect(target.toLowerCase()).toContain(String(contains).toLowerCase());
     } else {
@@ -273,7 +273,6 @@ const engineTestSuite = (
       const expectedError = fixture.expected.error;
       if (expectedError) {
         expect(error).toBeDefined();
-        console.log('🚀 ~ file: engine.fixtures.spec.ts:256 ~ error:', error)
         if (expectedError !== true) {
           if (isRegExpStr(expectedError)) {
             expect(error.message).toMatch(toRegExp(expectedError));
