@@ -8,4 +8,4 @@
 
 > **BrowserEngine** = `"playwright"` \| `"puppeteer"`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:21](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/types.ts#L21)
+Defined in: [packages/web-fetcher/src/core/types.ts:21](https://github.com/isdk/web-fetcher.js/blob/8bd7a48c89b74012f283a5397c5c3b526fdb7b09/src/core/types.ts#L21)
