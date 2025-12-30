@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.4](https://github.com/isdk/web-fetcher.js/compare/v0.2.3...v0.2.4) (2025-12-30)
+
+
+### Features
+
+* **action:** add failOnTimeout option to waitFor action ([8bd7a48](https://github.com/isdk/web-fetcher.js/commit/8bd7a48c89b74012f283a5397c5c3b526fdb7b09))
+
+
+### Bug Fixes
+
+* **playwright:** extract should update lastResponse too ([828acc5](https://github.com/isdk/web-fetcher.js/commit/828acc53ee8c6dbacd332f19652dcf18122d5be8))
+
 ## [0.2.3](https://github.com/isdk/web-fetcher.js/compare/v0.2.2...v0.2.3) (2025-12-30)
 
 
