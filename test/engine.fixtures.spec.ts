@@ -6,6 +6,7 @@ import fastify, { FastifyInstance } from 'fastify';
 import { FetchEngine } from '../src/engine';
 import { FetchEngineContext } from '../src/core/context';
 import { absoluteUrlFrom } from '../src/utils/helpers';
+import { isRegExpStr, toRegExp } from 'util-ex';
 
 
 const isConditionObject = (obj: any): boolean => {
@@ -33,11 +34,11 @@ const checkExpectations = (value: any, expectations: any) => {
   }
 
   if (expectations.and) {
-    expectations.and.forEach(c => checkExpectations(value, c));
+    expectations.and.forEach((c: any) => checkExpectations(value, c));
     return;
   }
   if (expectations.or) {
-    const passed = expectations.or.some(c => {
+    const passed = expectations.or.some((c: any) => {
       try {
         checkExpectations(value, c);
         return true;
@@ -102,6 +103,7 @@ interface FixtureExpected {
   html?: any;
   finalUrl?: string;
   data?: any;
+  error?: string;
 }
 
 
@@ -230,17 +232,39 @@ const engineTestSuite = (
       expect(engine).toBeInstanceOf(FetchEngine);
 
       let result: any;
+      let error: any;
 
-      for (const action of fixture.actions) {
-        const method = (engine as any)[action.action];
-        if (typeof method !== 'function') {
-          throw new Error(`Action ${action.action} not supported by ${engineName}`);
+      try {
+        for (const action of fixture.actions) {
+          const method = (engine as any)[action.action];
+          if (typeof method !== 'function') {
+            throw new Error(`Action ${action.action} not supported by ${engineName}`);
+          }
+          const args = [...action.args];
+          if (action.action === 'goto') {
+            args[0] = absoluteUrlFrom(baseUrl, args[0]);
+          }
+          result = await method.apply(engine, args);
         }
-        const args = [...action.args];
-        if (action.action === 'goto') {
-          args[0] = absoluteUrlFrom(baseUrl, args[0]);
+      } catch (e) {
+        error = e;
+      }
+
+      const expectedError = fixture.expected.error;
+      if (expectedError) {
+        expect(error).toBeDefined();
+        console.log('🚀 ~ file: engine.fixtures.spec.ts:256 ~ error:', error)
+        if (expectedError !== true) {
+          if (isRegExpStr(expectedError)) {
+            expect(error.message).toMatch(toRegExp(expectedError));
+          } else if (typeof expectedError === 'string') {
+            expect(error.message).toContain(expectedError);
+          }
         }
-        result = await method.apply(engine, args);
+        await engine.dispose();
+        return;
+      } else if (error) {
+        throw error;
       }
 
       const content = await engine.getContent();

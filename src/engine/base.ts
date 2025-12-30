@@ -56,6 +56,7 @@ export interface WaitForActionOptions {
   ms?: number;
   selector?: string;
   networkIdle?: boolean;
+  failOnTimeout?: boolean;
 }
 
 /**

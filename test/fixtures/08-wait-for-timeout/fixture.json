@@ -1,0 +1,36 @@
+{
+  "title": "waitFor should not throw when failOnTimeout is false",
+  "engine": "playwright",
+  "options": {
+    "timeoutMs": 1000
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "args": ["/"]
+    },
+    {
+      "action": "waitFor",
+      "args": [
+        {
+          "selector": "#non-existent",
+          "ms": 1000,
+          "failOnTimeout": false
+        }
+      ]
+    },
+    {
+      "action": "extract",
+      "args": [
+        {
+          "selector": "h1",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "data": "Hello World"
+  }
+}
