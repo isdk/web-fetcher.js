@@ -24,7 +24,7 @@
 * **关键抽象**：
   * **生命周期**：`initialize()` 和 `cleanup()` 方法。
   * **核心操作**：`goto()`、`getContent()`、`click()`、`fill()`、`submit()`、`waitFor()`、`extract()`。
-  * **配置**：`headers()`、`cookies()`、`blockResources()`。
+  * **配置与状态**：`headers()`、`cookies()`、`blockResources()`、`getState()`。
 * **静态注册表**：它维护所有可用引擎实现的静态注册表（`FetchEngine.register`），允许通过 `id` 或 `mode` 动态选择引擎。
 
 ### `FetchEngine.create(context, options)`

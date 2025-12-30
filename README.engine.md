@@ -24,7 +24,7 @@ This is the abstract base class that defines the contract for all fetch engines.
 * **Key Abstractions**:
   * **Lifecycle**: `initialize()` and `cleanup()` methods.
   * **Core Actions**: `goto()`, `getContent()`, `click()`, `fill()`, `submit()`, `waitFor()`, `extract()`.
-  * **Configuration**: `headers()`, `cookies()`, `blockResources()`.
+  * **Configuration & State**: `headers()`, `cookies()`, `blockResources()`, `getState()`.
 * **Static Registry**: It maintains a static registry of all available engine implementations (`FetchEngine.register`), allowing for dynamic selection by `id` or `mode`.
 
 ### `FetchEngine.create(context, options)`
