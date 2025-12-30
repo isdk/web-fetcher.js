@@ -152,6 +152,18 @@ Here are the essential built-in actions:
 * `getContent`: Retrieves the full content (HTML, text, etc.) of the current page state.
 * `extract`: Extracts any structured data from the page with ease using an expressive, declarative schema.
 
+### Response Structure
+
+The `fetchWeb` function returns an object containing:
+
+* `result` (FetchResponse):
+  * `url`: The final URL.
+  * `statusCode`: HTTP status code.
+  * `headers`: HTTP headers.
+  * `cookies`: Array of cookies.
+  * `text`, `html`: Page content.
+* `outputs` (Record<string, any>): Data extracted and stored via `storeAs`.
+
 ---
 
 ## 📜 License

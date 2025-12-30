@@ -6,7 +6,7 @@
 
 # Class: WebFetcher
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:4](https://github.com/isdk/web-fetcher.js/blob/8bd7a48c89b74012f283a5397c5c3b526fdb7b09/src/core/web-fetcher.ts#L4)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:4](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/core/web-fetcher.ts#L4)
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:4](https://github.com/
 
 > **new WebFetcher**(`defaults`): `WebFetcher`
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:5](https://github.com/isdk/web-fetcher.js/blob/8bd7a48c89b74012f283a5397c5c3b526fdb7b09/src/core/web-fetcher.ts#L5)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:5](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/core/web-fetcher.ts#L5)
 
 #### Parameters
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:5](https://github.com/
 
 > **createSession**(`options?`): `Promise`\<[`FetchSession`](FetchSession.md)\>
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:7](https://github.com/isdk/web-fetcher.js/blob/8bd7a48c89b74012f283a5397c5c3b526fdb7b09/src/core/web-fetcher.ts#L7)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:7](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/core/web-fetcher.ts#L7)
 
 #### Parameters
 
@@ -52,7 +52,7 @@ Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:7](https://github.com/
 
 > **fetch**(`url`, `options?`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: `undefined` \| [`FetchResponse`](../interfaces/FetchResponse.md); \}\>
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:12](https://github.com/isdk/web-fetcher.js/blob/8bd7a48c89b74012f283a5397c5c3b526fdb7b09/src/core/web-fetcher.ts#L12)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:12](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/core/web-fetcher.ts#L12)
 
 ##### Parameters
 
@@ -72,7 +72,7 @@ Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:12](https://github.com
 
 > **fetch**(`options`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: `undefined` \| [`FetchResponse`](../interfaces/FetchResponse.md); \}\>
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:13](https://github.com/isdk/web-fetcher.js/blob/8bd7a48c89b74012f283a5397c5c3b526fdb7b09/src/core/web-fetcher.ts#L13)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:13](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/core/web-fetcher.ts#L13)
 
 ##### Parameters
 
