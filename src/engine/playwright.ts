@@ -97,7 +97,9 @@ export class PlaywrightFetchEngine extends FetchEngine<
         return fetchResponse;
       }
       case 'extract': {
-        return this._extract(action.schema, page.locator('body'));
+        const result = await this._extract(action.schema, page.locator('body'));
+        this.lastResponse = await this.buildResponse(context);
+        return result;
       }
       case 'click': {
         // const beforePageId = page.mainFrame().url();
