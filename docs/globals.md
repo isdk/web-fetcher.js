@@ -66,6 +66,7 @@
 ## Variables
 
 - [DefaultFetcherProperties](variables/DefaultFetcherProperties.md)
+- [FetcherOptionKeys](variables/FetcherOptionKeys.md)
 
 ## Functions
 

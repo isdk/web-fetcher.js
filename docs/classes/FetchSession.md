@@ -6,7 +6,7 @@
 
 # Class: FetchSession
 
-Defined in: [packages/web-fetcher/src/core/session.ts:11](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L11)
+Defined in: [packages/web-fetcher/src/core/session.ts:11](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L11)
 
 ## Constructors
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:11](https://github.com/isd
 
 > **new FetchSession**(`options`): `FetchSession`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:18](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L18)
+Defined in: [packages/web-fetcher/src/core/session.ts:18](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L18)
 
 #### Parameters
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:18](https://github.com/isd
 
 > `readonly` **context**: [`FetchContext`](../interfaces/FetchContext.md)
 
-Defined in: [packages/web-fetcher/src/core/session.ts:13](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L13)
+Defined in: [packages/web-fetcher/src/core/session.ts:13](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L13)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:13](https://github.com/isd
 
 > `readonly` **id**: `string`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:12](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L12)
+Defined in: [packages/web-fetcher/src/core/session.ts:12](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L12)
 
 ## Methods
 
@@ -48,7 +48,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:12](https://github.com/isd
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:83](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L83)
+Defined in: [packages/web-fetcher/src/core/session.ts:83](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L83)
 
 #### Returns
 
@@ -60,7 +60,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:83](https://github.com/isd
 
 > **execute**\<`R`\>(`actionOptions`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:27](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L27)
+Defined in: [packages/web-fetcher/src/core/session.ts:27](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L27)
 
 执行单个动作
 
@@ -86,7 +86,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:27](https://github.com/isd
 
 > **executeAll**(`actions`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: `undefined` \| [`FetchResponse`](../interfaces/FetchResponse.md); \}\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:61](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L61)
+Defined in: [packages/web-fetcher/src/core/session.ts:61](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L61)
 
 #### Parameters
 
@@ -104,7 +104,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:61](https://github.com/isd
 
 > **getOutputs**(): `Record`\<`string`, `any`\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:79](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/session.ts#L79)
+Defined in: [packages/web-fetcher/src/core/session.ts:79](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/session.ts#L79)
 
 #### Returns
 

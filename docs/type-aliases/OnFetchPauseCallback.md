@@ -8,7 +8,7 @@
 
 > **OnFetchPauseCallback** = (`options`) => `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/core/types.ts:91](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/core/types.ts#L91)
+Defined in: [packages/web-fetcher/src/core/types.ts:91](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/core/types.ts#L91)
 
 ## Parameters
 

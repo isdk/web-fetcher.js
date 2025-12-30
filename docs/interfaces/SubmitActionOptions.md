@@ -6,7 +6,7 @@
 
 # Interface: SubmitActionOptions
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:67](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L67)
+Defined in: [packages/web-fetcher/src/engine/base.ts:67](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/engine/base.ts#L67)
 
 Options for the [FetchEngine.submit](../classes/FetchEngine.md#submit) action, configuring form submission behavior.
 
@@ -20,4 +20,4 @@ Specifies encoding type for form submissions, particularly relevant for JSON-bas
 
 > `optional` **enctype**: `"application/x-www-form-urlencoded"` \| `"application/json"` \| `"multipart/form-data"`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:68](https://github.com/isdk/web-fetcher.js/blob/9d976e330f39f712a4e409b1bd1bd44a5fb476bf/src/engine/base.ts#L68)
+Defined in: [packages/web-fetcher/src/engine/base.ts:68](https://github.com/isdk/web-fetcher.js/blob/ad509e5c670ead64b82e31f8e0f1d7a384833452/src/engine/base.ts#L68)
