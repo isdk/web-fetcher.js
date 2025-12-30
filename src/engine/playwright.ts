@@ -237,7 +237,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
                    cookie.url = request.url;
                 }
                 // Ensure sameSite is compatible (Playwright expects Strict/Lax/None or undefined)
-                if (cookie.sameSite === 'no_restriction') cookie.sameSite = 'None';
+                if ((cookie as any).sameSite === 'no_restriction') cookie.sameSite = 'None';
                 return cookie;
               });
               
