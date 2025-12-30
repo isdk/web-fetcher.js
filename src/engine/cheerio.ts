@@ -254,7 +254,7 @@ export class CheerioFetchEngine extends FetchEngine<
     const crawlerOptions: CheerioCrawlerOptions = {
       additionalMimeTypes: ['text/plain'],
       maxRequestRetries: 1,
-      requestHandlerTimeoutSecs: Math.max(5, Math.floor((this.opts?.timeoutMs || 30000) / 1000)),
+      requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       proxyConfiguration: proxy,
       preNavigationHooks: [
         (_crawlingContext, gotOptions) => {
