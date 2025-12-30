@@ -1,6 +1,6 @@
 import type { FetchContext } from './context'
 import { FetchAction, FetchActionOptions, FetchActionResult } from '../action/fetch-action'
-import { DefaultFetcherProperties, FetcherOptions } from './types'
+import { Cookie, DefaultFetcherProperties, FetcherOptions } from './types'
 import { FetchReturnType } from './fetch-return-type'
 import { createEvent } from '../event/create-event'
 import { defaultsDeep } from 'lodash-es'
@@ -80,7 +80,7 @@ export class FetchSession {
     return this.context.outputs
   }
 
-  async getState() {
+  async getState(): Promise<{ cookies: Cookie[] } | undefined> {
     return this.context.internal.engine?.getState()
   }
 
