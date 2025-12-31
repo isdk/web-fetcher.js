@@ -256,9 +256,10 @@ const engineTestSuite = (
 
       try {
         for (const action of fixture.actions) {
-          const method = (engine as any)[action.action];
+          const actionId = action.action || action.id || action.name;
+          const method = (engine as any)[actionId];
           if (typeof method !== 'function') {
-            throw new Error(`Action ${action.action} not supported by ${engineName}`);
+            throw new Error(`Action ${actionId} not supported by ${engineName}`);
           }
           const args = [...action.args];
           if (action.action === 'goto') {
@@ -274,7 +275,21 @@ const engineTestSuite = (
       if (expectedError) {
         expect(error).toBeDefined();
         if (expectedError !== true) {
-          if (isRegExpStr(expectedError)) {
+          if (typeof expectedError === 'object') {
+            Object.keys(expectedError).forEach(key => {
+              const expectedValue = expectedError[key];
+              const actualValue = error[key];
+              if (key === 'message') {
+                if (isRegExpStr(expectedValue)) {
+                  expect(actualValue).toMatch(toRegExp(expectedValue));
+                } else {
+                  expect(actualValue).toContain(expectedValue);
+                }
+              } else {
+                expect(actualValue).toEqual(expectedValue);
+              }
+            });
+          } else if (isRegExpStr(expectedError)) {
             expect(error.message).toMatch(toRegExp(expectedError));
           } else if (typeof expectedError === 'string') {
             expect(error.message).toContain(expectedError);
