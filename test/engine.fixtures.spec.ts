@@ -253,8 +253,10 @@ const engineTestSuite = (
 
       let result: any;
       let error: any;
+      let i = 0;
 
       try {
+        // TODO: should use the session.executeAll() method, but how to specify the engine?
         for (const action of fixture.actions) {
           const actionId = action.action || action.id || action.name;
           const method = (engine as any)[actionId];
@@ -266,8 +268,10 @@ const engineTestSuite = (
             args[0] = absoluteUrlFrom(baseUrl, args[0]);
           }
           result = await method.apply(engine, args);
+          i++;
         }
-      } catch (e) {
+      } catch (e: any) {
+        e.actionIndex = i;
         error = e;
       }
 
