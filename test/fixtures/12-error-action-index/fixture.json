@@ -1,0 +1,29 @@
+{
+  "title": "Should report correct actionIndex on failure",
+  "only": true,
+  "engine": "playwright",
+  "options": {
+    "timeoutMs": 1000
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "args": ["/"]
+    },
+    {
+      "action": "waitFor",
+      "args": [
+        {
+          "selector": "#non-existent",
+          "ms": 1000
+        }
+      ]
+    }
+  ],
+  "expected": {
+    "error": {
+      "message": "Timeout",
+      "actionIndex": 1
+    }
+  }
+}
