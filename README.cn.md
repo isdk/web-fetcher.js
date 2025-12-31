@@ -131,7 +131,7 @@ searchGoogle('gemini');
 
 * `url` (string): 要导航的初始 URL。
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
-* `actions` (FetchActionOptions[]): 要执行的动作对象数组。
+* `actions` (FetchActionOptions[]): 要执行的动作对象数组。（支持 `action`/`name` 作为 `id` 的别名，`args` 作为 `params` 的别名）
 * `headers` (Record<string, string>): 用于所有请求的头信息。
 * ...以及许多其他用于代理、Cookie、重试等的选项。
 

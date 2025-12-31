@@ -23,7 +23,7 @@ This approach allows users to describe a complete business process with intuitiv
 
 `FetchAction` is the abstract base class for all Actions. It defines the core elements of an Action:
 
-* `static id`: The unique identifier for the Action, e.g., `'click'`.
+* `static id`: The unique identifier for the Action, e.g., `'click'`. In Action Script, you can use `id`, `name`, or `action` to specify this identifier.
 * `static returnType`: The type of the result returned after the Action executes, e.g., `'none'`, `'response'`.
 * `static capabilities`: Declares the capability level of this Action in different engines (`http`, `browser`), such as `native`, `simulate`, or `noop`.
 * `static register()`: A static method to register the Action class in a global registry, allowing it to be dynamically created by its `id`.
@@ -62,14 +62,16 @@ Users define a complete automation workflow via a JSON-formatted `actions` array
 
 For simple, linear workflows, you can use a list of the library's built-in atomic actions directly.
 
+> **💡 Tip**: You can use `action` or `name` as an alias for `id`, and `args` as an alias for `params`.
+
 **Example: Searching for "gemini" on Google**
 
 ```json
 {
   "actions": [
-    { "id": "goto", "params": { "url": "https://www.google.com" } },
-    { "id": "fill", "params": { "selector": "textarea[name=q]", "value": "gemini" } },
-    { "id": "submit", "params": { "selector": "form" } }
+    { "action": "goto", "args": { "url": "https://www.google.com" } },
+    { "action": "fill", "args": { "selector": "textarea[name=q]", "value": "gemini" } },
+    { "action": "submit", "args": { "selector": "form" } }
   ]
 }
 ```

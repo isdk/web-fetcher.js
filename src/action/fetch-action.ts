@@ -44,7 +44,9 @@ export interface FetchActionResult<R extends FetchReturnType = FetchReturnType> 
 export interface BaseFetchActionProperties {
   id?: string
   name?: string // action id 的别名
+  action?: string|FetchAction // action id 的别名
   params?: any
+  args?: any // params 的别名
   // 如果设置则将结果存储到上下文的outputs[storeAs]
   storeAs?: string
   // defaults to true if in main action
@@ -56,7 +58,7 @@ export interface BaseFetchActionProperties {
   maxRetries?: number
   [key: string]: any
 }
-export type BaseFetchActionOptions = RequireAtLeastOne<BaseFetchActionProperties, 'id' | 'name'>
+export type BaseFetchActionOptions = RequireAtLeastOne<BaseFetchActionProperties, 'id' | 'name' | 'action'>
 
 export interface BaseFetchCollectorActionProperties extends BaseFetchActionProperties {
   // 启动事件，支持正则表达式，任意事件发生就启动`onStart`
@@ -69,13 +71,13 @@ export interface BaseFetchCollectorActionProperties extends BaseFetchActionPrope
   background?: boolean
 }
 
-export type BaseFetchCollectorOptions = RequireAtLeastOne<BaseFetchCollectorActionProperties, 'id' | 'name'>
+export type BaseFetchCollectorOptions = RequireAtLeastOne<BaseFetchCollectorActionProperties, 'id' | 'name' | 'action'>
 
 export interface FetchActionProperties extends BaseFetchActionProperties {
   collectors?: BaseFetchCollectorOptions[]
 }
 
-export type FetchActionOptions = RequireAtLeastOne<FetchActionProperties, 'id' | 'name'>
+export type FetchActionOptions = RequireAtLeastOne<FetchActionProperties, 'id' | 'name' | 'action'>
 
 export type FetchActionCapabilities = {
   [mode in FetchEngineType]?: FetchActionCapabilityMode
@@ -98,9 +100,9 @@ export abstract class FetchAction {
   static create(id: FetchActionOptions): FetchAction | undefined
   static create(id: string): FetchAction | undefined
   static create(idOrOptions: string|FetchActionOptions): FetchAction | undefined {
-    const id = typeof idOrOptions === 'string' ? idOrOptions : idOrOptions.id || idOrOptions.name;
-    if (!id) throw new Error('Action must have id or name');
-    const ActionClass = this.registry.get(id) as any
+    const id = typeof idOrOptions === 'string' ? idOrOptions : idOrOptions.id || idOrOptions.name || idOrOptions.action;
+    if (!id) throw new Error('Action must have id, name or action');
+    const ActionClass = id instanceof FetchAction ? id.constructor : this.registry.get(id) as any
     return ActionClass ? new ActionClass() : undefined
   }
 
@@ -361,6 +363,7 @@ export abstract class FetchAction {
 
   // the main action entry point
   async execute<R extends FetchReturnType = 'any'>(context: FetchContext, options?: FetchActionProperties): Promise<FetchActionResult<R>> {
+    if (options?.args && !options.params) options.params = options.args;
     const scope = await this.beforeExec(context, options);
     let result: FetchActionResult<R>|undefined;
     try {
