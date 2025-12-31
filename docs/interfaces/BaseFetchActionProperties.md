@@ -6,7 +6,7 @@
 
 # Interface: BaseFetchActionProperties
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:44](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L44)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:44](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L44)
 
 ## Extended by
 
@@ -20,11 +20,27 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:44](https://github.
 
 ## Properties
 
+### action?
+
+> `optional` **action**: `string` \| [`FetchAction`](../classes/FetchAction.md)
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:47](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L47)
+
+***
+
+### args?
+
+> `optional` **args**: `any`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:49](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L49)
+
+***
+
 ### failOnError?
 
 > `optional` **failOnError**: `boolean`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:52](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L52)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:54](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L54)
 
 ***
 
@@ -32,7 +48,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:52](https://github.
 
 > `optional` **failOnTimeout**: `boolean`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:54](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L54)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:56](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L56)
 
 ***
 
@@ -40,7 +56,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:54](https://github.
 
 > `optional` **id**: `string`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:45](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L45)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:45](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L45)
 
 ***
 
@@ -48,7 +64,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:45](https://github.
 
 > `optional` **maxRetries**: `number`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:56](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L56)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:58](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L58)
 
 ***
 
@@ -56,7 +72,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:56](https://github.
 
 > `optional` **name**: `string`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:46](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L46)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:46](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L46)
 
 ***
 
@@ -64,7 +80,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:46](https://github.
 
 > `optional` **params**: `any`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:47](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L47)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:48](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L48)
 
 ***
 
@@ -72,7 +88,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:47](https://github.
 
 > `optional` **storeAs**: `string`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:49](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L49)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:51](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L51)
 
 ***
 
@@ -80,4 +96,4 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:49](https://github.
 
 > `optional` **timeoutMs**: `number`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:55](https://github.com/isdk/web-fetcher.js/blob/454450fb9b2c03ba1bee72ac0677a667dd8faece/src/action/fetch-action.ts#L55)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:57](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/action/fetch-action.ts#L57)
