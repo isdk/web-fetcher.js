@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.6](https://github.com/isdk/web-fetcher.js/compare/v0.2.5...v0.2.6) (2025-12-31)
+
+
+### Features
+
+* **FetchAction:** add action alias and args alias ([e419cf3](https://github.com/isdk/web-fetcher.js/commit/e419cf3361832b87953f463086d5a6170944b772))
+* **session:** executeAll record the actionIndex when error ([7d7c2ec](https://github.com/isdk/web-fetcher.js/commit/7d7c2ececd6c911aec79e1098aa2dacd70c7484b))
+* **test:** add test error object supports ([d7b505c](https://github.com/isdk/web-fetcher.js/commit/d7b505cc39fc821039fb79f641e2e590d2fc028d))
+
 ## [0.2.5](https://github.com/isdk/web-fetcher.js/compare/v0.2.4...v0.2.5) (2025-12-30)
 
 
