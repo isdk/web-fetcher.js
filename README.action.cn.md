@@ -23,7 +23,7 @@ Action 脚本系统的核心目标是提供一个**声明式、引擎无关**的
 
 `FetchAction` 是所有 Action 的抽象基类，它定义了一个 Action 的核心要素：
 
-* `static id`: Action 的唯一标识符，例如 `'click'`。
+* `static id`: Action 的唯一标识符，例如 `'click'`。在 Action 脚本中，你可以使用 `id`、`name` 或 `action` 来指定此标识符。
 * `static returnType`: Action 执行后返回结果的类型，例如 `'none'`, `'response'`。
 * `static capabilities`: 声明此 Action 在不同引擎（`http`, `browser`）下的能力级别（`native`, `simulate`, `noop`）。
 * `static register()`: 一个静态方法，用于将 Action 类注册到全局注册表中，使其可以通过 `id` 被动态创建。
@@ -62,14 +62,16 @@ export class FillAction extends FetchAction {
 
 对于简单的线性流程，可以直接使用库内置的原子 Action 列表。
 
+> **💡 提示**：你可以使用 `action` 或 `name` 作为 `id` 的别名，使用 `args` 作为 `params` 的别名。
+
 **示例：在 Google 搜索 "gemini"**
 
 ```json
 {
   "actions": [
-    { "id": "goto", "params": { "url": "https://www.google.com" } },
-    { "id": "fill", "params": { "selector": "textarea[name=q]", "value": "gemini" } },
-    { "id": "submit", "params": { "selector": "form" } }
+    { "action": "goto", "args": { "url": "https://www.google.com" } },
+    { "action": "fill", "args": { "selector": "textarea[name=q]", "value": "gemini" } },
+    { "action": "submit", "args": { "selector": "form" } }
   ]
 }
 ```
