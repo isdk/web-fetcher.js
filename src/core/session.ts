@@ -59,11 +59,14 @@ export class FetchSession {
   }
 
   async executeAll(actions: FetchActionOptions[]) {
+    let i = 0;
     try {
-      for (let i = 0; i < actions.length; i++) {
+      while (i < actions.length) {
         const actionOptions = actions[i]
         await this.execute(actionOptions)
+        i++
       }
+
       const response = await this.execute({
         id: 'getContent'
       })
@@ -71,7 +74,8 @@ export class FetchSession {
         result: response?.result,
         outputs: this.getOutputs(),
       }
-    } catch (error) {
+    } catch (error: any) {
+      error.actionIndex = i
       throw error
     }
   }
