@@ -15,7 +15,7 @@ export class FetchSession {
   // private options!: FetchSessionOptions
   private closed = false
 
-  constructor(private options: FetcherOptions = {}) {
+  constructor(private options: FetcherOptions = {}, public readonly engine?: string) {
     this.id = generateId()
     this.context = this.createContext(options)
   }
@@ -108,7 +108,7 @@ export class FetchSession {
     }
     if (!this.context.internal.engine) {
       const url = actionOptions?.params?.url ?? this.context.url;
-      const engine = await maybeCreateEngine(this.context, { url })
+      const engine = await maybeCreateEngine(this.context, { url, engine: this.engine })
       if (!engine) {throw new Error('No engine found')}
     }
 
