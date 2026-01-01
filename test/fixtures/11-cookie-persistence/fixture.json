@@ -3,7 +3,9 @@
   "actions": [
     {
       "action": "goto",
-      "args": ["/"]
+      "params": {
+        "url": "/"
+      }
     }
   ],
   "options": {
@@ -26,8 +28,12 @@
     "statusCode": 200,
     "cookies": {
       "and": [
-        { "contains": "complex-cookie" },
-        { "contains": "simple-cookie" }
+        {
+          "contains": "complex-cookie"
+        },
+        {
+          "contains": "simple-cookie"
+        }
       ]
     }
   }

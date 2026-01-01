@@ -3,7 +3,7 @@ import { AddressInfo } from 'net';
 import { readdir, readFile } from 'fs/promises';
 import { resolve, join } from 'path';
 import fastify, { FastifyInstance } from 'fastify';
-import { FetchEngine } from '../src/engine';
+import { FetchEngine, WebFetcher } from '../src/index';
 import { FetchEngineContext } from '../src/core/context';
 import { absoluteUrlFrom } from '../src/utils/helpers';
 import { isRegExpStr, toRegExp } from 'util-ex';
@@ -224,7 +224,6 @@ const engineTestSuite = (
   describe.sequential(engineName, () => {
     let server: FastifyInstance;
     let baseUrl: string;
-    let engine: FetchEngine;
 
     beforeAll(async () => {
       server = await createTestServer(caseDir, fixture);
@@ -238,40 +237,45 @@ const engineTestSuite = (
     });
 
     it(fixture.title, async () => {
-      const context: FetchEngineContext = {
-        id: `test-${engineName}-${Date.now()}`,
+      const fetcher = new WebFetcher();
+      const session = await fetcher.createSession({
         engine: engineName,
-        retries: 1,
-      } as any;
-
-      engine = await FetchEngine.create(context, {
-        engine: engineName,
+        retries: 0,
         ...(fixture.options || {})
-      }) as any;
-
-      expect(engine).toBeInstanceOf(FetchEngine);
+      });
 
       let result: any;
       let error: any;
-      let i = 0;
 
       try {
-        // TODO: should use the session.executeAll() method, but how to specify the engine?
-        for (const action of fixture.actions) {
-          const actionId = action.action || action.id || action.name;
-          const method = (engine as any)[actionId];
-          if (typeof method !== 'function') {
-            throw new Error(`Action ${actionId} not supported by ${engineName}`);
+        const actions = fixture.actions.map((actionConf: any) => {
+          const actionId = actionConf.action || actionConf.id || actionConf.name;
+          const action = { ...actionConf, id: actionId };
+          if (!action.params) action.params = {};
+
+          if (actionId === 'goto' && action.params.url) {
+            action.params = {
+              ...action.params,
+              url: absoluteUrlFrom(baseUrl, action.params.url)
+            };
           }
-          const args = [...action.args];
-          if (action.action === 'goto') {
-            args[0] = absoluteUrlFrom(baseUrl, args[0]);
+
+          if (actionId === 'extract' && !action.storeAs) {
+            action.storeAs = '__test_result__';
           }
-          result = await method.apply(engine, args);
-          i++;
+
+          return action;
+        });
+
+        const res = await session.executeAll(actions);
+
+        if (res.outputs && '__test_result__' in res.outputs) {
+          result = res.outputs.__test_result__;
+        } else {
+          result = res.result;
         }
+
       } catch (e: any) {
-        e.actionIndex = i;
         error = e;
       }
 
@@ -299,13 +303,13 @@ const engineTestSuite = (
             expect(error.message).toContain(expectedError);
           }
         }
-        await engine.dispose();
+        await session.dispose();
         return;
       } else if (error) {
         throw error;
       }
 
-      const content = await engine.getContent();
+      const content = (result && result.statusCode) ? result : await session.execute({ id: 'getContent' }).then(r => r.result);
 
       if (fixture.expected.statusCode) {
         expect(content.statusCode).toBe(fixture.expected.statusCode);
@@ -316,11 +320,11 @@ const engineTestSuite = (
       if (fixture.expected.finalUrl) {
         const expectedUrl = new URL(fixture.expected.finalUrl, baseUrl).toString();
         const actualUrl = new URL(content.finalUrl, baseUrl).toString();
-        // 只比较路径
         expect(new URL(actualUrl).pathname).toBe(new URL(expectedUrl).pathname);
       }
       if (fixture.expected.cookies) {
-        checkExpectations(content.cookies, fixture.expected.cookies);
+        const state = await session.getState();
+        checkExpectations(state?.cookies, fixture.expected.cookies);
       }
       if ('data' in fixture.expected) {
         if (isConditionObject(fixture.expected.data)) {
@@ -330,7 +334,7 @@ const engineTestSuite = (
         }
       }
 
-      await engine.dispose();
+      await session.dispose();
     }, TEST_TIMEOUT);
   });
 };

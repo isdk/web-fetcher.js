@@ -1,10 +1,17 @@
 {
   "title": "should goto a page and get content",
   "actions": [
-    { "action": "goto", "args" : ["/"] }
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    }
   ],
   "expected": {
     "statusCode": 200,
-    "html": { "contains": "<h1>Welcome</h1>" }
+    "html": {
+      "contains": "<h1>Welcome</h1>"
+    }
   }
 }

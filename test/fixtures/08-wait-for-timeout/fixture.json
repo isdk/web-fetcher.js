@@ -2,31 +2,28 @@
   "title": "waitFor should not throw when failOnTimeout is false",
   "engine": "playwright",
   "options": {
-    "timeoutMs": 1000
+    "timeoutMs": 100
   },
   "actions": [
     {
       "action": "goto",
-      "args": ["/"]
+      "params": {
+        "url": "/"
+      }
     },
     {
       "action": "waitFor",
-      "args": [
-        {
-          "selector": "#non-existent",
-          "ms": 1000,
-          "failOnTimeout": false
-        }
-      ]
+      "params": {
+        "selector": "#non-existent",
+        "failOnTimeout": false
+      }
     },
     {
       "action": "extract",
-      "args": [
-        {
-          "selector": "h1",
-          "type": "string"
-        }
-      ]
+      "params": {
+        "selector": "h1",
+        "type": "string"
+      }
     }
   ],
   "expected": {

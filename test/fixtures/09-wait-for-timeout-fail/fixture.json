@@ -7,16 +7,16 @@
   "actions": [
     {
       "action": "goto",
-      "args": ["/"]
+      "params": {
+        "url": "/"
+      }
     },
     {
       "action": "waitFor",
-      "args": [
-        {
-          "selector": "#non-existent",
-          "ms": 1000
-        }
-      ]
+      "params": {
+        "selector": "#non-existent",
+        "ms": 1000
+      }
     }
   ],
   "expected": {
