@@ -2,16 +2,23 @@
   "engine": "playwright",
   "title": "should get js page content",
   "actions": [
-    { "action": "goto", "args": ["/"] },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
     {
       "action": "extract",
-      "args": [{
+      "params": {
         "type": "string",
         "selector": "#results"
-      }]
+      }
     }
   ],
   "expected": {
-    "html": { "contains": "<pre id=\"results\">{\"webdriver\":false" }
+    "html": {
+      "contains": "<pre id=\"results\">{\"webdriver\":false"
+    }
   }
 }

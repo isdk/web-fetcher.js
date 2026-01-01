@@ -3,7 +3,9 @@
   "actions": [
     {
       "action": "goto",
-      "args": ["/"]
+      "params": {
+        "url": "/"
+      }
     }
   ],
   "server": {
@@ -14,14 +16,14 @@
   "expected": {
     "statusCode": 200,
     "cookies": {
-        "and": [
-          {
-            "contains": "test-cookie"
-          },
-          {
-            "contains": "test-value"
-          }
-        ]
+      "and": [
+        {
+          "contains": "test-cookie"
+        },
+        {
+          "contains": "test-value"
+        }
+      ]
     }
   }
 }

@@ -1,23 +1,21 @@
 {
   "title": "Should report correct actionIndex on failure",
-  "only": true,
   "engine": "playwright",
   "options": {
-    "timeoutMs": 1000
+    "timeoutMs": 100
   },
   "actions": [
     {
       "action": "goto",
-      "args": ["/"]
+      "params": {
+        "url": "/"
+      }
     },
     {
       "action": "waitFor",
-      "args": [
-        {
-          "selector": "#non-existent",
-          "ms": 1000
-        }
-      ]
+      "params": {
+        "selector": "#non-existent"
+      }
     }
   ],
   "expected": {

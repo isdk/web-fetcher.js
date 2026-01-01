@@ -1,10 +1,15 @@
 {
   "title": "should extract structured data from a page",
   "actions": [
-    { "action": "goto", "args": ["/"] },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
     {
       "action": "extract",
-      "args": [{
+      "params": {
         "type": "object",
         "properties": {
           "title": {
@@ -31,7 +36,9 @@
           "tags": {
             "type": "array",
             "selector": ".tag",
-            "items": { "type": "string" }
+            "items": {
+              "type": "string"
+            }
           },
           "comments": {
             "type": "array",
@@ -39,13 +46,17 @@
             "items": {
               "type": "object",
               "properties": {
-                "user": { "selector": ".user" },
-                "text": { "selector": ".text" }
+                "user": {
+                  "selector": ".user"
+                },
+                "text": {
+                  "selector": ".text"
+                }
               }
             }
           }
         }
-      }]
+      }
     }
   ],
   "expected": {
@@ -56,10 +67,20 @@
         "name": "John Doe",
         "profileLink": "/profiles/johndoe"
       },
-      "tags": ["tech", "news", "web"],
+      "tags": [
+        "tech",
+        "news",
+        "web"
+      ],
       "comments": [
-        { "user": "User1", "text": "Comment 1" },
-        { "user": "User2", "text": "Comment 2" }
+        {
+          "user": "User1",
+          "text": "Comment 1"
+        },
+        {
+          "user": "User2",
+          "text": "Comment 2"
+        }
       ]
     }
   }

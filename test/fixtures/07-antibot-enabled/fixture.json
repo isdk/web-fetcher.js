@@ -5,20 +5,30 @@
     "antibot": true
   },
   "actions": [
-    { "action": "goto", "args": ["/"] },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
     {
       "action": "extract",
-      "args": [{
+      "params": {
         "type": "string",
         "selector": "#results"
-      }]
+      }
     }
   ],
   "expected": {
     "html": {
       "and": [
-        { "contains": "\"webdriver\":false" },
-        { "contains": "firefox", "caseInsensitive": true }
+        {
+          "contains": "\"webdriver\":false"
+        },
+        {
+          "contains": "firefox",
+          "caseInsensitive": true
+        }
       ]
     }
   }

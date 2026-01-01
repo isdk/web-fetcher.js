@@ -1,10 +1,15 @@
 {
   "title": "should extract search result from a page",
   "actions": [
-    { "action": "goto", "args": ["/"] },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
     {
       "action": "extract",
-      "args": [{
+      "params": {
         "type": "object",
         "properties": {
           "title": {
@@ -17,7 +22,7 @@
             "attribute": "href"
           }
         }
-      }]
+      }
     }
   ],
   "expected": {
