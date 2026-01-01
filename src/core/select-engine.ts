@@ -2,12 +2,21 @@ import { FetchEngine } from "../engine/base";
 import { FetchContext } from "./context";
 import { BaseFetcherProperties, FetchResponse, FetchSite } from "./types";
 
-export async function maybeCreateEngine(ctx: FetchContext, args?: { url?: string }) {
+export async function maybeCreateEngine(ctx: FetchContext, args?: { url?: string, engine?: string }) {
+  let result: FetchEngine | undefined;
+  if (args?.engine) {
+    result = await FetchEngine.create(ctx, { engine: args.engine });
+    if (!result) {
+      throw new Error(`No engine available for ${args.engine}`);
+    }
+    return result;
+  }
+
   const url = args?.url || ctx.url;
   const matched = pickSiteMatched(url, ctx.sites);
   const enginePref = (ctx.engine || matched?.engine || 'auto') as BaseFetcherProperties['engine'];
 
-  let result = await FetchEngine.create(ctx, { engine: enginePref });
+  result = await FetchEngine.create(ctx, { engine: enginePref });
   if (!result) {
     result = await FetchEngine.create(ctx, { engine: 'http' });
   }

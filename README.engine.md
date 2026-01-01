@@ -31,6 +31,19 @@ This is the abstract base class that defines the contract for all fetch engines.
 
 This static factory method is the designated entry point for creating an engine instance. It automatically selects and initializes the appropriate engine.
 
+### `FetchSession(options, engine)`
+
+The `FetchSession` class manages the lifecycle of a fetch operation. It now supports an optional `engine` parameter in its constructor to force a specific engine implementation for that session, bypassing any auto-detection or registry-based selection.
+
+### Engine Selection Priority
+
+When the library determines which engine to use (via internal `maybeCreateEngine`), it follows this priority:
+
+1. **Explicit Forced Engine**: If an engine ID is explicitly passed during session or engine creation (e.g., the new `engine` parameter in `FetchSession`).
+2. **Configuration Engine**: The `engine` property defined in `FetcherOptions`.
+3. **Site Registry**: If the target URL matches a domain in the configured `sites` registry, it uses the engine preferred for that site.
+4. **Default**: Defaults to `auto`, which intelligently switches between `http` and `browser` if `enableSmart` is enabled, or defaults to `http` otherwise.
+
 ---
 
 ## 🏗️ 3. Architecture and Workflow
