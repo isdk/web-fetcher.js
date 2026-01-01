@@ -365,9 +365,9 @@ export abstract class FetchAction {
   async execute<R extends FetchReturnType = 'any'>(context: FetchContext, options?: FetchActionProperties): Promise<FetchActionResult<R>> {
     if (options?.args && !options.params) options.params = options.args;
     const scope = await this.beforeExec(context, options);
+    const failOnError = options?.failOnError ?? true;
     let result: FetchActionResult<R>|undefined;
     try {
-      const failOnError = options?.failOnError ?? true;
       context.throwHttpErrors = failOnError;
       result = await this.onExecute(context, options);
       if (!result || !result.returnType) {
@@ -388,7 +388,7 @@ export abstract class FetchAction {
           capability: this.getCapability(context.engine as any),
         },
       };
-      if (!options?.failOnError) {
+      if (!failOnError) {
         return result;
       } else throw error;
     } finally {
