@@ -1,0 +1,69 @@
+{
+  "title": "Should override session state cookies with explicit cookies",
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    }
+  ],
+  "options": {
+    "forceSessionState": true,
+    "cookies": [
+      {
+        "name": "common-cookie",
+        "value": "new-value",
+        "domain": "localhost",
+        "path": "/"
+      }
+    ],
+    "sessionState": {
+      "sessions": [
+        {
+          "id": "override-session",
+          "cookieJar": {
+            "version": "tough-cookie@4.1.2",
+            "storeType": "MemoryCookieStore",
+            "rejectPublicSuffixes": true,
+            "cookies": [
+              {
+                "key": "common-cookie",
+                "value": "old-value",
+                "domain": "localhost",
+                "path": "/",
+                "hostOnly": true,
+                "creation": "2024-01-01T00:00:00.000Z",
+                "lastAccessed": "2024-01-01T00:00:00.000Z"
+              },
+               {
+                "key": "unique-state-cookie",
+                "value": "i-survived",
+                "domain": "localhost",
+                "path": "/",
+                "hostOnly": true,
+                "creation": "2024-01-01T00:00:00.000Z",
+                "lastAccessed": "2024-01-01T00:00:00.000Z"
+              }
+            ]
+          },
+          "userData": {},
+          "maxErrorScore": 3,
+          "errorScore": 0,
+          "usageCount": 0,
+          "createdAt": "2024-01-01T00:00:00.000Z"
+        }
+      ]
+    }
+  },
+  "expected": {
+    "statusCode": 200,
+    "cookies": {
+      "and": [
+        { "contains": "new-value" },
+        { "contains": "i-survived" },
+        { "not": { "contains": "old-value" } }
+      ]
+    }
+  }
+}

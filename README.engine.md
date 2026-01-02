@@ -44,6 +44,21 @@ When the library determines which engine to use (via internal `maybeCreateEngine
 3. **Site Registry**: If the target URL matches a domain in the configured `sites` registry, it uses the engine preferred for that site.
 4. **Default**: Defaults to `auto`, which intelligently switches between `http` and `browser` if `enableSmart` is enabled, or defaults to `http` otherwise.
 
+### Session Management & State Persistence
+
+The engine supports persisting and restoring session state (primarily cookies) between executions.
+
+* **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This is set during engine initialization.
+* **`overrideSessionState`**: If set to `true`, it forces the engine to overwrite any existing persistent state in the storage with the provided `sessionState`. This is useful when you want to ensure the session starts with the exact state provided, ignoring any stale data in the persistence layer.
+* **`cookies`**: An array of explicit cookies to use for the session.
+
+**Precedence Rule:**
+If both `sessionState` and `cookies` are provided, the engine adopts a **"Merge and Override"** strategy:
+1. The session is first restored from the `sessionState`.
+2. The explicit `cookies` are then applied on top.
+   * **Result:** Any conflicting cookies in `sessionState` will be **overwritten** by the explicit `cookies`.
+   * A warning will be logged if both are present to alert the user of this override behavior.
+
 ---
 
 ## 🏗️ 3. Architecture and Workflow

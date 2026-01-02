@@ -38,6 +38,8 @@ export interface BaseFetcherProperties {
 
   headers?: Record<string, string>;
   cookies?: Cookie[];
+  sessionState?: any;
+  overrideSessionState?: boolean;
   reuseCookies?: boolean; // 默认 true
   throwHttpErrors?: boolean;
 

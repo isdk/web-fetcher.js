@@ -42,7 +42,22 @@
 1. **显式强制引擎**：如果在会话或引擎创建期间显式传递了引擎 ID（例如 `FetchSession` 中的新 `engine` 参数）。
 2. **配置引擎**：在 `FetcherOptions` 中定义的 `engine` 属性。
 3. **站点注册表**：如果目标 URL 匹配已配置 `sites` 注册表中的域名，则使用该站点首选的引擎。
-4. **默认值**：默认为 `auto`。如果启用了 `enableSmart`，它会智能地在 `http` 和 `browser` 之间切换，否则默认为 `http`。
+4. **默认值**：默认为 `auto`。如果启用了 `enableSmart`，它会智能地在 `http` 和 `browser`之间切换，否则默认为 `http`。
+
+### 会话管理与状态持久化
+
+引擎支持在多次执行之间持久化和恢复会话状态（主要是 Cookie）。
+
+* **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。这在引擎初始化期间设置。
+* **`overrideSessionState`**: 如果设置为 `true`，则强制引擎使用提供的 `sessionState` 覆盖存储中的任何现有持久化状态。当你希望确保会话以确切提供的状态启动，忽略持久化层中的任何陈旧数据时，这非常有用。
+* **`cookies`**: 用于会话的显式 Cookie 数组。
+
+**优先级规则：**
+如果同时提供了 `sessionState` 和 `cookies`，引擎将采用**“合并并覆盖”**策略：
+1. 首先从 `sessionState` 恢复会话。
+2. 然后在之上应用显式的 `cookies`。
+   * **结果**：`sessionState` 中任何冲突的 Cookie 都会被显式的 `cookies` **覆盖**。
+   * 如果两者同时存在，系统将记录一条警告日志，以提醒用户这种覆盖行为。
 
 ---
 

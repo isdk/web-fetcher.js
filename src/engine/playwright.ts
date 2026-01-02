@@ -1,7 +1,6 @@
 import { PlaywrightCrawler } from 'crawlee';
 import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
 import { firefox } from 'playwright';
-import { launchOptions } from 'camoufox-js';
 import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base';
 import { FetchResponse, type OnFetchPauseCallback } from '../core/types';
 import { FetchEngineContext } from '../core/context';
@@ -22,7 +21,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
   static readonly mode = 'browser';
 
   protected async _buildResponse(context: PlaywrightCrawlingContext): Promise<FetchResponse> {
-    const { page, response, request } = context;
+    const { page, response, request, session } = context;
     // In case of failed request, page might be closed.
     if (!page || page.isClosed()) {
       return {
@@ -39,13 +38,18 @@ export class PlaywrightFetchEngine extends FetchEngine<
     }
     const body = await page.content();
     const text = await page.textContent('body');
+    const cookies = await page.context().cookies();
+    console.log('[PlaywrightEngine] Cookies from page context:', cookies);
+    if (session) {
+      session.setCookies(cookies, request.url);
+    }
     return {
       url: page.url(),
       finalUrl: page.url(),
       statusCode: response?.status(),
       statusText: response?.statusText(),
       headers: (await response?.allHeaders()) || {},
-      cookies: await page.context().cookies(),
+      cookies,
       body,
       html: body,
       text: text || '',
@@ -226,26 +230,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
         async ({ page, request }, gotOptions) => {
           // await page.setExtraHTTPHeaders(this.hdrs);
           gotOptions.throwHttpErrors = ctx.throwHttpErrors;
-          if (this.jar.length > 0) {
-            try {
-              const cookiesToAdd = this.jar.map((c) => {
-                const cookie = { ...c };
-                // Playwright requires either url or domain/path.
-                // If domain is present, we don't strictly need url, but adding it matches the request.
-                // However, strictly speaking, we should handle this carefully.
-                if (!cookie.domain && !cookie.url) {
-                   cookie.url = request.url;
-                }
-                // Ensure sameSite is compatible (Playwright expects Strict/Lax/None or undefined)
-                if ((cookie as any).sameSite === 'no_restriction') cookie.sameSite = 'None';
-                return cookie;
-              });
-              
-              await page.context().addCookies(cookiesToAdd);
-            } catch (e) {
-              console.error('[Playwright] Failed to restore cookies:', e);
-            }
-          }
+
           const blockedTypes = this.blockedTypes;
           if (blockedTypes.size > 0) {
             await page.route('**/*', (route) => {
@@ -266,6 +251,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
         useFingerprints: false,
       };
 
+      const { launchOptions } = await import('camoufox-js');
       const lo = await launchOptions({
           headless,
       });

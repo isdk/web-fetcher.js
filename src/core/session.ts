@@ -84,7 +84,7 @@ export class FetchSession {
     return this.context.outputs
   }
 
-  async getState(): Promise<{ cookies: Cookie[] } | undefined> {
+  async getState(): Promise<{ cookies: Cookie[], sessionState?: any } | undefined> {
     return this.context.internal.engine?.getState()
   }
 

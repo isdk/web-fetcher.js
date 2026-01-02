@@ -187,6 +187,21 @@ async function getTestcases() {
       if (fixture.skip) continue;
       if (!fixture.name) fixture.name = testCase.name;
       if (fixture.only) hasOnly = true;
+
+      if (fixture.options?.sessionState?.sessions) {
+        const now = new Date();
+        fixture.options.sessionState.sessions.forEach((s: any) => {
+          s.createdAt = now.toISOString();
+          s.expiresAt = new Date(now.getTime() + 3600 * 1000).toISOString(); // +1 hour
+          if (s.cookieJar?.cookies) {
+            s.cookieJar.cookies.forEach((c: any) => {
+              c.creation = now.toISOString();
+              c.lastAccessed = now.toISOString();
+            });
+          }
+        });
+      }
+
       fixture.caseDir = caseDir;
       result.push(fixture)
     } catch (error) {
