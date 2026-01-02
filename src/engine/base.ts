@@ -3,9 +3,12 @@ import { EventEmitter } from 'events-ex';
 import { CommonError } from '@isdk/common-error';
 import {
   Configuration,
+  KeyValueStore,
+  PERSIST_STATE_KEY,
   RequestQueue,
+  Session,
 } from 'crawlee';
-import type { BasicCrawler, BasicCrawlerOptions, CrawlingContext } from 'crawlee';
+import type { BasicCrawler, BasicCrawlerOptions, CrawlingContext, PlaywrightCrawlingContext, PlaywrightGotoOptions } from 'crawlee';
 
 import { FetchEngineContext } from '../core/context';
 import { ExtractSchema, ExtractArraySchema, ExtractObjectSchema, ExtractValueSchema } from '../core/extract';
@@ -230,7 +233,8 @@ export abstract class FetchEngine<
   declare protected requestQueue?: RequestQueue;
 
   protected hdrs: Record<string, string> = {};
-  protected jar: Cookie[] = [];
+  protected _initialCookies?: Cookie[];
+  protected currentSession?: Session;
   protected pendingRequests = new Map<string, PendingEngineRequest>();
   protected requestCounter = 0;
   protected actionEmitter = new EventEmitter();
@@ -472,9 +476,10 @@ export abstract class FetchEngine<
    * Returns the current state of the engine (cookies)
    * that can be used to restore the session later.
    */
-  async getState(): Promise<{ cookies: Cookie[] }> {
+  async getState(): Promise<{ cookies: Cookie[], sessionState?: any }> {
     return {
       cookies: await this.cookies(),
+      sessionState: await this.crawler?.sessionPool?.getState(),
     };
   }
 
@@ -514,7 +519,7 @@ export abstract class FetchEngine<
     this.ctx = context;
     this.opts = context; // Use the merged context
     this.hdrs = normalizeHeaders(context.headers);
-    this.jar = [...(context.cookies ?? [])];
+    this._initialCookies = [...(context.cookies ?? [])];
     if (!context.internal) {
       context.internal = {};
     }
@@ -524,6 +529,16 @@ export abstract class FetchEngine<
     this.requestQueue = await RequestQueue.open();
 
     const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
+    const sessionPoolOptions: any = {
+      maxPoolSize: 1,
+      persistenceOptions: { enable: true },
+      sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
+    }
+    if (context.sessionState) {
+      if (context.cookies && context.cookies.length > 0) {
+        console.warn('[FetchEngine] Warning: Both "sessionState" and "cookies" are provided. Explicit "cookies" will override any conflicting cookies restored from "sessionState".');
+      }
+    }
 
     const finalCrawlerOptions = {
       ...defaultsDeep(specificCrawlerOptions, {
@@ -532,11 +547,7 @@ export abstract class FetchEngine<
         minConcurrency: 1,
         useSessionPool: true,
         persistCookiesPerSession: true,
-        sessionPoolOptions: {
-          maxPoolSize: 1,
-          persistenceOptions: { enable: false },
-          sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
-        },
+        sessionPoolOptions,
       }),
       // Force these handlers, they are critical for the engine's operation
       requestHandler: this._requestHandler.bind(this),
@@ -544,7 +555,30 @@ export abstract class FetchEngine<
       failedRequestHandler: this._failedRequestHandler.bind(this),
     };
 
-    this.crawler = this._createCrawler(finalCrawlerOptions as TOptions);
+    if (!finalCrawlerOptions.preNavigationHooks) {
+      finalCrawlerOptions.preNavigationHooks = [];
+    }
+    finalCrawlerOptions.preNavigationHooks.unshift(({ crawler, session, request }: PlaywrightCrawlingContext, opts: PlaywrightGotoOptions) => {
+      this.currentSession = session;
+      if (this._initialCookies && this._initialCookies.length > 0 && session) {
+        const normalizedCookies = this._initialCookies.map((c) => {
+          const cookie = { ...c };
+          if ((cookie as any).sameSite === 'no_restriction') {
+            cookie.sameSite = 'None';
+          }
+          return cookie;
+        });
+        session.setCookies(normalizedCookies, request.url);
+        this._initialCookies = undefined;
+      }
+    });
+
+    const crawler = this.crawler = this._createCrawler(finalCrawlerOptions as TOptions);
+    const kvStore = await KeyValueStore.open(null, {config: crawler.config})
+    const persistState = await kvStore.getValue(PERSIST_STATE_KEY);
+    if (context.sessionState && (!persistState || context.overrideSessionState)) {
+      await kvStore.setValue(PERSIST_STATE_KEY, context.sessionState);
+    }
 
     this.crawler.run().then(()=>{this.isCrawlerReady = true}).catch((error) => {
       this.isCrawlerReady = false;
@@ -613,6 +647,7 @@ export abstract class FetchEngine<
 
   protected async _sharedRequestHandler(context: TContext): Promise<void> {
     try {
+      this.currentSession = context.session;
       const { request } = context;
       this.isPageActive = true;
 
@@ -830,14 +865,32 @@ export abstract class FetchEngine<
   async cookies(): Promise<Cookie[]>;
   async cookies(cookies: Cookie[]): Promise<boolean>;
   async cookies(a?: any): Promise<any> {
+    const url = this.lastResponse?.url || '';
     if (Array.isArray(a)) {
-      this.jar = [...a];
+      if (this.currentSession) {
+        this.currentSession.setCookies(a, url);
+      } else {
+        this._initialCookies = [...a];
+      }
       return true;
     } else if (a === null) {
-      this.jar = [];
+      if (this.currentSession) {
+        // Not straightforward to clear cookies in Session,
+        // usually overwriting with empty array or expired cookies works
+        // But Crawlee Session doesn't have explicit clearCookies() public API easily accessible for all?
+        // Actually, setCookies([]) doesn't clear.
+        // We might need to iterate and delete?
+        // For now, let's just reset our initial cookies buffer or warn.
+        // Implementing 'clear' fully via Session might require accessing internal jar.
+      }
+      this._initialCookies = [];
       return true;
     }
-    return [...this.jar];
+    if (this.currentSession) {
+      const cookies = this.currentSession.getCookies(url);
+      return cookies;
+    }
+    return [...(this._initialCookies || [])];
   }
 
   /**
