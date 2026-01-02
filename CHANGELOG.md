@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.7](https://github.com/isdk/web-fetcher.js/compare/v0.2.6...v0.2.7) (2026-01-02)
+
+
+### Features
+
+* **engine:** enhance session state management and restoration ([67ac2ab](https://github.com/isdk/web-fetcher.js/commit/67ac2abdb01356cc0cf363248f4ef8f77c28d78f))
+* **session:** add engine parameter to FetchSession to force specific engine ([c29a847](https://github.com/isdk/web-fetcher.js/commit/c29a847403de9b7e232a3dbeee86ff3c7fb239d6))
+
+
+### Bug Fixes
+
+* **FetchAction:** should throw error if failOnError !== false ([5102206](https://github.com/isdk/web-fetcher.js/commit/5102206f382aaac12f747bc04d9dfe7e5eb88376))
+
+
+### Refactor
+
+* **test:** use the session.executeAll to run fixture's actions ([8a71db6](https://github.com/isdk/web-fetcher.js/commit/8a71db67543ed3d683e82c52f617e21b87184ad0))
+
 ## [0.2.6](https://github.com/isdk/web-fetcher.js/compare/v0.2.5...v0.2.6) (2025-12-31)
 
 
