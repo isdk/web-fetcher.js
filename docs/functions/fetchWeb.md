@@ -10,7 +10,7 @@
 
 > **fetchWeb**(`options`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: `undefined` \| [`FetchResponse`](../interfaces/FetchResponse.md); \}\>
 
-Defined in: [packages/web-fetcher/src/fetch-web.ts:4](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/fetch-web.ts#L4)
+Defined in: [packages/web-fetcher/src/fetch-web.ts:4](https://github.com/isdk/web-fetcher.js/blob/67ac2abdb01356cc0cf363248f4ef8f77c28d78f/src/fetch-web.ts#L4)
 
 ### Parameters
 
@@ -26,7 +26,7 @@ Defined in: [packages/web-fetcher/src/fetch-web.ts:4](https://github.com/isdk/we
 
 > **fetchWeb**(`url`, `options?`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: `undefined` \| [`FetchResponse`](../interfaces/FetchResponse.md); \}\>
 
-Defined in: [packages/web-fetcher/src/fetch-web.ts:5](https://github.com/isdk/web-fetcher.js/blob/d7b505cc39fc821039fb79f641e2e590d2fc028d/src/fetch-web.ts#L5)
+Defined in: [packages/web-fetcher/src/fetch-web.ts:5](https://github.com/isdk/web-fetcher.js/blob/67ac2abdb01356cc0cf363248f4ef8f77c28d78f/src/fetch-web.ts#L5)
 
 ### Parameters
 
