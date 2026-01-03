@@ -6,7 +6,7 @@
 
 # Interface: FetchReturnTypeRegistry
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:7](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/fetch-return-type.ts#L7)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:7](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/fetch-return-type.ts#L7)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:7](https://githu
 
 > **any**: `any`
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:12](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/fetch-return-type.ts#L12)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:12](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/fetch-return-type.ts#L12)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:12](https://gith
 
 > **context**: [`FetchContext`](FetchContext.md)
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:9](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/fetch-return-type.ts#L9)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:9](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/fetch-return-type.ts#L9)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:9](https://githu
 
 > **none**: `void`
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:13](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/fetch-return-type.ts#L13)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:13](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/fetch-return-type.ts#L13)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:13](https://gith
 
 > **outputs**: `Record`\<`string`, `any`\>
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:11](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/fetch-return-type.ts#L11)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:11](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/fetch-return-type.ts#L11)
 
 ***
 
@@ -46,7 +46,7 @@ Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:11](https://gith
 
 > **response**: [`FetchResponse`](FetchResponse.md)
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:8](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/fetch-return-type.ts#L8)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:8](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/fetch-return-type.ts#L8)
 
 ***
 
@@ -54,4 +54,4 @@ Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:8](https://githu
 
 > **result**: `undefined` \| [`FetchActionResult`](FetchActionResult.md)\<`any`\>
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:10](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/fetch-return-type.ts#L10)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:10](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/fetch-return-type.ts#L10)

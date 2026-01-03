@@ -160,6 +160,7 @@ searchGoogle('gemini');
   * `statusCode`: HTTP 状态码。
   * `headers`: HTTP 头信息。
   * `cookies`: Cookie 数组。
+  * `sessionState`: Crawlee 会话状态。
   * `text`, `html`: 页面内容。
 * `outputs` (Record<string, any>): 通过 `storeAs` 提取并存储的数据。
 

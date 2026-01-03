@@ -48,11 +48,13 @@ When the library determines which engine to use (via internal `maybeCreateEngine
 
 The engine supports persisting and restoring session state (primarily cookies) between executions.
 
-* **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This is set during engine initialization.
+* **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This state is **automatically included in every `FetchResponse`**, making it easy to persist and later provide back to the engine during initialization.
 * **`sessionPoolOptions`**: Allows advanced configuration of the underlying Crawlee `SessionPool` (e.g., `maxUsageCount`, `maxPoolSize`).
   > **Note**: `persistenceOptions.enable` is forced to `true` to ensure proper session state management.
 * **`overrideSessionState`**: If set to `true`, it forces the engine to overwrite any existing persistent state in the storage with the provided `sessionState`. This is useful when you want to ensure the session starts with the exact state provided, ignoring any stale data in the persistence layer.
 * **`cookies`**: An array of explicit cookies to use for the session.
+
+> **Consistency Note**: The engine uses Crawlee's `Session` as the single source of truth for cookies. In `browser` mode, cookies are synchronized in real-time from the browser to the session during interactions (like clicks), ensuring that `getContent()` or `extract()` always reflect the latest state.
 
 **Precedence Rule:**
 If both `sessionState` and `cookies` are provided, the engine adopts a **"Merge and Override"** strategy:
