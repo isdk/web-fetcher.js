@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.9](https://github.com/isdk/web-fetcher.js/compare/v0.2.8...v0.2.9) (2026-01-03)
+
+
+### Features
+
+* **engine:** include sessionState in FetchResponse ([01cca2d](https://github.com/isdk/web-fetcher.js/commit/01cca2d0c1fff7f4a39b581c7ab78606d6005f6f))
+
+
+### Refactor
+
+* **engine:** unify response building and cookie synchronization ([484b283](https://github.com/isdk/web-fetcher.js/commit/484b283182119df968a69e03f4f24b30ddee05c4))
+
 ## [0.2.8](https://github.com/isdk/web-fetcher.js/compare/v0.2.7...v0.2.8) (2026-01-03)
 
 
