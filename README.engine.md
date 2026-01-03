@@ -54,6 +54,8 @@ The engine supports persisting and restoring session state (primarily cookies) b
 * **`overrideSessionState`**: If set to `true`, it forces the engine to overwrite any existing persistent state in the storage with the provided `sessionState`. This is useful when you want to ensure the session starts with the exact state provided, ignoring any stale data in the persistence layer.
 * **`cookies`**: An array of explicit cookies to use for the session.
 
+> **Consistency Note**: The engine uses Crawlee's `Session` as the single source of truth for cookies. In `browser` mode, cookies are synchronized in real-time from the browser to the session during interactions (like clicks), ensuring that `getContent()` or `extract()` always reflect the latest state.
+
 **Precedence Rule:**
 If both `sessionState` and `cookies` are provided, the engine adopts a **"Merge and Override"** strategy:
 1. The session is first restored from the `sessionState`.
