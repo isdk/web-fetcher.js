@@ -62,6 +62,36 @@ We use a **data-driven testing** approach for the fetch engine, located in `test
 }
 ```
 
+#### Dynamic Server Logic (`server.mjs`)
+
+For complex tests requiring dynamic server behavior (e.g., custom routes, cookie manipulation, headers inspection), you can add a `server.mjs` (or `server.js`) file in the fixture directory.
+
+**Example `server.mjs`:**
+```javascript
+import cookie from '@fastify/cookie';
+
+/**
+ * @param {import('fastify').FastifyInstance} server
+ */
+export default async function(server) {
+  // Register plugins if needed
+  await server.register(cookie);
+
+  // Define custom routes
+  server.get('/echo/cookies', async (req, reply) => {
+    return { cookies: req.cookies };
+  });
+
+  server.get('/custom-auth', async (req, reply) => {
+    if (req.headers.authorization === 'Bearer secret') {
+      return { status: 'authorized' };
+    }
+    reply.code(401).send({ status: 'unauthorized' });
+  });
+}
+```
+The test runner will automatically load this module and pass the Fastify server instance to the default exported function before running the test case.
+
 *   **`params` vs `args`**: We prioritize using the named `params` object for action arguments to match the `FetchActionOptions` interface and improve readability.
 *   **Engine**: By default, tests run on both `cheerio` (http) and `playwright` (browser) engines. You can restrict a test to a specific engine by adding `"engine": "playwright"` to the root of the JSON.
 

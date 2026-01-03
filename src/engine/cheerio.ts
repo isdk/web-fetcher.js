@@ -25,7 +25,19 @@ export class CheerioFetchEngine extends FetchEngine<
   static readonly id = 'cheerio';
   static readonly mode = 'http';
 
+  private _ensureCheerioContext(context: CheerioCrawlingContext) {
+    if (!context.$ && context.body) {
+      let text = typeof context.body === 'string' ? context.body : Buffer.isBuffer(context.body) ? context.body.toString('utf-8') : JSON.stringify(context.body);
+      // If it looks like JSON or just plain text, wrap it to allow basic selection
+      if (!text.trim().startsWith('<')) {
+        text = `<html><body><pre>${text}</pre></body></html>`;
+      }
+      (context as any).$ = cheerio.load(text);
+    }
+  }
+
   protected async _buildResponse(context: CheerioCrawlingContext): Promise<FetchResponse> {
+    this._ensureCheerioContext(context);
     const { request, response, body, $ } = context;
     const newHtml = $?.html();
     let text = typeof body === 'string' ? body : Buffer.isBuffer(body) ? body.toString('utf-8') : String(body ?? '');
