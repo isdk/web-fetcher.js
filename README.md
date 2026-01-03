@@ -160,6 +160,7 @@ The `fetchWeb` function returns an object containing:
   * `statusCode`: HTTP status code.
   * `headers`: HTTP headers.
   * `cookies`: Array of cookies.
+  * `sessionState`: Crawlee session state.
   * `text`, `html`: Page content.
 * `outputs` (Record<string, any>): Data extracted and stored via `storeAs`.
 

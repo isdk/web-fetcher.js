@@ -48,7 +48,7 @@
 
 引擎支持在多次执行之间持久化和恢复会话状态（主要是 Cookie）。
 
-* **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。这在引擎初始化期间设置。
+* **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。该状态会**自动包含在每个 `FetchResponse` 中**，方便进行持久化，并在以后初始化引擎时通过选项传回。
 * **`sessionPoolOptions`**: 允许对底层的 Crawlee `SessionPool` 进行高级配置（例如 `maxUsageCount`, `maxPoolSize`）。
   > **注意**: 为了确保会话状态管理的正常运行，`persistenceOptions.enable` 会被强制设置为 `true`。
 * **`overrideSessionState`**: 如果设置为 `true`，则强制引擎使用提供的 `sessionState` 覆盖存储中的任何现有持久化状态。当你希望确保会话以确切提供的状态启动，忽略持久化层中的任何陈旧数据时，这非常有用。
