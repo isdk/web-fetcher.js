@@ -9,7 +9,7 @@
     }
   ],
   "options": {
-    "forceSessionState": true,
+    "overrideSessionState": true,
     "cookies": [
       {
         "name": "common-cookie",
