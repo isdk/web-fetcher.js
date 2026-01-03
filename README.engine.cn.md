@@ -24,7 +24,7 @@
 * **关键抽象**：
   * **生命周期**：`initialize()` 和 `cleanup()` 方法。
   * **核心操作**：`goto()`、`getContent()`、`click()`、`fill()`、`submit()`、`waitFor()`、`extract()`。
-  * **配置与状态**：`headers()`、`cookies()`、`blockResources()`、`getState()`。
+  * **配置与状态**：`headers()`、`cookies()`、`blockResources()`、`getState()`、`sessionPoolOptions`。
 * **静态注册表**：它维护所有可用引擎实现的静态注册表（`FetchEngine.register`），允许通过 `id` 或 `mode` 动态选择引擎。
 
 ### `FetchEngine.create(context, options)`
@@ -49,6 +49,7 @@
 引擎支持在多次执行之间持久化和恢复会话状态（主要是 Cookie）。
 
 * **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。这在引擎初始化期间设置。
+* **`sessionPoolOptions`**: 允许对底层的 Crawlee `SessionPool` 进行高级配置（例如 `maxUsageCount`, `maxPoolSize`）。
 * **`overrideSessionState`**: 如果设置为 `true`，则强制引擎使用提供的 `sessionState` 覆盖存储中的任何现有持久化状态。当你希望确保会话以确切提供的状态启动，忽略持久化层中的任何陈旧数据时，这非常有用。
 * **`cookies`**: 用于会话的显式 Cookie 数组。
 
