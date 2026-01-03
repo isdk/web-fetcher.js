@@ -127,14 +127,21 @@ Submits a form.
 
 Pauses execution to wait for one or more conditions to be met.
 
-In `browser` mode, if multiple conditions are provided, they are awaited sequentially. For example, it will first wait for the selector to appear, then wait for the network to be idle, and finally wait for the specified duration.
+In `browser` mode, if multiple conditions are provided, they are awaited sequentially. For example, it will first wait for the selector to appear, then wait for the network to be idle, and **finally** wait for the specified duration (`ms`).
 
 * **`id`**: `waitFor`
 * **`params`**: An object specifying the wait condition, which can contain one or more of the following keys:
-  * **`ms`** (number): Waits for the specified number of milliseconds. Supported by both engines.
   * **`selector`** (string): Waits for an element matching the selector to appear on the page. Supported only in `browser` mode.
   * **`networkIdle`** (boolean): Waits until the network is idle (i.e., no new network requests for a period of time). Supported only in `browser` mode.
+  * **`ms`** (number): Waits for the specified number of milliseconds **after** other conditions are met. Supported by both engines.
 * **`returns`**: `none`
+
+> **⚠️ Critical Distinction: `ms` vs Timeout**
+>
+> Do not confuse the **`ms`** parameter with a timeout setting.
+>
+> * **`ms` (Duration)**: This forces the script to sleep/pause for a fixed amount of time. If used with `selector`, it adds an **extra delay** after the element is found.
+> * **Timeout (Deadline)**: The maximum time the script will wait for a condition (like `selector` or `networkIdle`) to be met before failing is controlled by the session-level **`timeoutMs`** option (default is usually 30s), not this `ms` parameter.
 
 #### `pause`
 
