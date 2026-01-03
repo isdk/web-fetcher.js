@@ -1,4 +1,4 @@
-import type { Cookie } from 'crawlee';
+import type { Cookie, SessionPoolOptions } from 'crawlee';
 import { FetchActionOptions } from "../action/fetch-action";
 
 export type { Cookie } from 'crawlee';
@@ -39,6 +39,7 @@ export interface BaseFetcherProperties {
   headers?: Record<string, string>;
   cookies?: Cookie[];
   sessionState?: any;
+  sessionPoolOptions?: SessionPoolOptions;
   overrideSessionState?: boolean;
   reuseCookies?: boolean; // 默认 true
   throwHttpErrors?: boolean;
