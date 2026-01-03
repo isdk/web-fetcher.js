@@ -530,9 +530,8 @@ export abstract class FetchEngine<
     this.requestQueue = await RequestQueue.open();
 
     const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
-    const sessionPoolOptions: any = defaultsDeep(context.sessionPoolOptions || {}, {
+    const sessionPoolOptions: any = defaultsDeep({persistenceOptions: { enable: true }}, context.sessionPoolOptions, {
       maxPoolSize: 1,
-      persistenceOptions: { enable: true },
       sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
     });
     if (context.sessionState) {
