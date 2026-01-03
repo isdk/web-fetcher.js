@@ -54,6 +54,8 @@
 * **`overrideSessionState`**: 如果设置为 `true`，则强制引擎使用提供的 `sessionState` 覆盖存储中的任何现有持久化状态。当你希望确保会话以确切提供的状态启动，忽略持久化层中的任何陈旧数据时，这非常有用。
 * **`cookies`**: 用于会话的显式 Cookie 数组。
 
+> **一致性说明**: 引擎使用 Crawlee 的 `Session` 作为 Cookie 的唯一真理源。在 `browser` 模式下，Cookie 会在交互（如点击）期间实时从浏览器同步到 Session，确保 `getContent()` 或 `extract()` 始终反映最新状态。
+
 **优先级规则：**
 如果同时提供了 `sessionState` 和 `cookies`，引擎将采用**“合并并覆盖”**策略：
 1. 首先从 `sessionState` 恢复会话。
