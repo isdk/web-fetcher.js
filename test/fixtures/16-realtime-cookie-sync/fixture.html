@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Realtime Cookie Sync Test</title>
+</head>
+<body>
+  <h1>Cookie Test</h1>
+  <button id="login-btn">Login</button>
+  <div id="status">Not Logged In</div>
+  <script>
+    document.getElementById('login-btn').addEventListener('click', () => {
+      // Set a cookie via JavaScript
+      document.cookie = "auth-token=secret-12345; path=/";
+      document.getElementById('status').innerText = "Logged In";
+    });
+  </script>
+</body>
+</html>
