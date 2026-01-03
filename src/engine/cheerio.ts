@@ -1,4 +1,4 @@
-import { CheerioCrawler, ProxyConfiguration } from 'crawlee';
+import { CheerioCrawler, ProxyConfiguration, Configuration } from 'crawlee';
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee';
 import * as cheerio from 'cheerio';
 import {
@@ -231,8 +231,8 @@ export class CheerioFetchEngine extends FetchEngine<
     this.lastResponse = await this.buildResponse(context);
   }
 
-  protected _createCrawler(options: CheerioCrawlerOptions): CheerioCrawler {
-    return new CheerioCrawler(options);
+  protected _createCrawler(options: CheerioCrawlerOptions, config?: Configuration): CheerioCrawler {
+    return new CheerioCrawler(options, config);
   }
 
   protected _getSpecificCrawlerOptions(ctx: FetchEngineContext): CheerioCrawlerOptions {

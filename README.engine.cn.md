@@ -48,6 +48,7 @@
 
 引擎支持在多次执行之间持久化和恢复会话状态（主要是 Cookie）。
 
+* **严格的会话隔离**：每个引擎实例现在都采用私有的 Crawlee `Configuration` 实例。这确保了 `RequestQueue` 和 `KeyValueStore` 通过唯一的 ID 实现了完全隔离，防止了并发会话之间的数据泄露或冲突。
 * **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。该状态会**自动包含在每个 `FetchResponse` 中**，方便进行持久化，并在以后初始化引擎时通过选项传回。
 * **`sessionPoolOptions`**: 允许对底层的 Crawlee `SessionPool` 进行高级配置（例如 `maxUsageCount`, `maxPoolSize`）。
   > **注意**: 为了确保会话状态管理的正常运行，`persistenceOptions.enable` 会被强制设置为 `true`。
@@ -79,8 +80,8 @@
 
 **工作流程如下：**
 
-1. **初始化**：消费者调用 `FetchEngine.create()`，初始化一个在后台运行的 Crawlee 爬虫（例如 `PlaywrightCrawler`）。
-2. **导航 (`goto`)**：消费者调用 `await engine.goto(url)`。此方法将 URL 添加到 Crawlee 的 `RequestQueue`，并返回一个 `Promise`，该 `Promise` 将在页面加载后被解析。
+1. **初始化**：消费者调用 `FetchEngine.create()`，初始化一个私有的 `Configuration` 并在后台启动一个 Crawlee 爬虫（例如 `PlaywrightCrawler`）。
+2. **导航 (`goto`)**：消费者调用 `await engine.goto(url)`。此方法将 URL 添加到引擎私有的 `RequestQueue`，并返回一个 `Promise`，该 `Promise` 将在页面加载后被解析。
 3. **Crawlee 处理**：后台爬虫接收请求并调用引擎的 `requestHandler`，向其传递关键的页面上下文。
 4. **页面激活和动作循环**：在 `requestHandler` 内部：
     * 页面上下文用于解析 `goto()` 调用返回的 `Promise`。
@@ -88,7 +89,11 @@
     * 至关重要的是，在 `requestHandler` 返回之前，它会启动一个**动作循环** (`_executePendingActions`)。此循环通过监听 `EventEmitter` 上的事件，有效地**暂停 `requestHandler`**，从而保持页面上下文的存活。
 5. **交互式动作 (`click`, `fill` 等)**：消费者现在可以调用 `await engine.click(...)`。此方法将一个动作分派到 `EventEmitter` 并返回一个新的 `Promise`。
 6. **动作执行**：仍在原始 `requestHandler` 作用域内运行的动作循环，会监听到该事件。因为它能访问页面上下文，所以可以执行*实际的*交互（例如 `page.click(...)`）。
-7. **清理**：循环一直持续到分派 `dispose` 动作（例如，由新的 `goto()` 调用触发），该动作会终止循环，并允许 `requestHandler` 最终完成。
+7. **健壮的清理**：当调用 `dispose()` 或 `cleanup()` 时：
+    * 设置 `isEngineDisposed` 标志以阻止新动作。
+    * 发出 `dispose` 信号以唤醒并终止动作循环。
+    * 释放所有活动的锁（如 `navigationLock`）。
+    * 关闭爬虫 (`teardown`)，并删除私有的 `RequestQueue` 和 `KeyValueStore` 以确保清理干净。
 
 ---
 

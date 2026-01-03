@@ -81,9 +81,28 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
 
     afterEach(async () => {
       if (session) {
+        // console.log(`[TEST END] ${engineName}: disposing session ${session.id}`);
         await session.dispose();
       }
     });
+
+    // Debugging logs to track test execution
+    // (it.todo or it.skip can be used to isolate specific tests)
+    // import { currentTestName } from 'vitest';
+    // but we can just use a simple beforeEach
+    // vi.onTestStart((test) => { console.log(`[TEST START] ${test.name}`); });
+    // actually, vi.onTestStart is not available in all vitest versions easily.
+    // Let's just use it('...', () => { console.log('...') }) or a hook if possible.
+    // Wait, vitest doesn't have an easy way to get current test name in beforeEach without injecting.
+
+    // Instead, I'll add logs inside the 'it' blocks of the problematic tests or all of them.
+    // For now, let's just log in afterEach too to see when it finishes.
+
+    /*
+    beforeEach((context) => {
+      console.log(`\n[TEST START] ${engineName}: ${context.task.name}`);
+    });
+    */
 
     it('should create a session with a context', () => {
       createSession();
@@ -228,6 +247,37 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
       const sessionOutputs = session.getOutputs();
       expect(sessionOutputs).toEqual(outputs);
     }, TEST_TIMEOUT);
+
+    it('should run multiple sessions in parallel without RequestQueue collisions', async () => {
+      // Use a separate high concurrency test within the suite context
+      // Note: We create sessions manually here, separate from the 'beforeEach' session
+      const CONCURRENCY = 10;
+      const tasks = Array.from({ length: CONCURRENCY }).map(async (_, i) => {
+        const localSession = new FetchSession({
+          engine: engineName,
+          headers: { 'x-id': String(i) }
+        });
+        console.log(`[TEST CONCURRENCY] ${engineName}: starting localSession ${localSession.id}`);
+
+        try {
+          // Trigger engine initialization (which opens RequestQueue)
+          // Just initialization is enough to test the collision on storage opening
+          // But running a quick action confirms it works.
+          // Using a simple action that doesn't require a real URL to fail with "RequestQueue" error if bug exists
+          await localSession.execute({ name: 'getContent' });
+        } catch (error: any) {
+          if (error.message.includes('Request queue') || error.message.includes('does not exist')) {
+              throw error; // This is the error we want to prevent
+          }
+          // Ignore other expected errors (like "No content fetched yet")
+        } finally {
+          console.log(`[TEST CONCURRENCY] ${engineName}: disposing localSession ${localSession.id}`);
+          await localSession.dispose();
+        }
+      });
+
+      await Promise.all(tasks);
+    }, 20000); // Higher timeout for concurrency
 
   });
 }
