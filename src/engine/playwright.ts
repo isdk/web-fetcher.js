@@ -1,4 +1,4 @@
-import { PlaywrightCrawler } from 'crawlee';
+import { PlaywrightCrawler, Configuration } from 'crawlee';
 import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
 import { firefox } from 'playwright';
 import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base';
@@ -213,8 +213,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
     }
   }
 
-  protected _createCrawler(options: PlaywrightCrawlerOptions): PlaywrightCrawler {
-    return new PlaywrightCrawler(options);
+  protected _createCrawler(options: PlaywrightCrawlerOptions, config?: Configuration): PlaywrightCrawler {
+    return new PlaywrightCrawler(options, config);
   }
 
   protected async _getSpecificCrawlerOptions(ctx: FetchEngineContext): Promise<Partial<PlaywrightCrawlerOptions>> {

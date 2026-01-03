@@ -8,7 +8,7 @@ import {
   RequestQueue,
   Session,
 } from 'crawlee';
-import type { BasicCrawler, BasicCrawlerOptions, CrawlingContext, PlaywrightCrawlingContext, PlaywrightGotoOptions } from 'crawlee';
+import type { BasicCrawler, BasicCrawlerOptions, CrawlingContext, FinalStatistics, PlaywrightCrawlingContext, PlaywrightGotoOptions } from 'crawlee';
 
 import { FetchEngineContext } from '../core/context';
 import { ExtractSchema, ExtractArraySchema, ExtractObjectSchema, ExtractValueSchema } from '../core/extract';
@@ -230,7 +230,10 @@ export abstract class FetchEngine<
   declare protected opts?: BaseFetcherProperties;
   declare protected crawler?: TCrawler;
   declare protected isCrawlerReady?: boolean;
+  protected crawlerRunPromise?: Promise<FinalStatistics>;
+  protected config?: Configuration;
   declare protected requestQueue?: RequestQueue;
+  protected kvStore?: KeyValueStore;
 
   protected hdrs: Record<string, string> = {};
   protected _initialCookies?: Cookie[];
@@ -240,6 +243,7 @@ export abstract class FetchEngine<
   protected requestCounter = 0;
   protected actionEmitter = new EventEmitter();
   protected isPageActive = false;
+  protected isEngineDisposed = false;
   protected navigationLock: PromiseLock = createResolvedPromiseLock();
   protected lastResponse?: FetchResponse;
   protected blockedTypes = new Set<string>();
@@ -299,7 +303,7 @@ export abstract class FetchEngine<
    * @param options - The final crawler options.
    * @internal
    */
-  protected abstract _createCrawler(options: TOptions): TCrawler;
+  protected abstract _createCrawler(options: TOptions, config?: Configuration): TCrawler;
 
   /**
    * Gets the crawler-specific options from the subclass.
@@ -533,10 +537,15 @@ export abstract class FetchEngine<
     context.internal.engine = this;
     context.engine = this.mode;
     this.actionEmitter.setMaxListeners(100); // Set a higher limit to prevent memory leak warnings
-    this.requestQueue = await RequestQueue.open();
+
+    const config = this.config = new Configuration({ persistStorage: false });
+    this.requestQueue = await RequestQueue.open(context.id, { config });
 
     const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
-    const sessionPoolOptions: any = defaultsDeep({persistenceOptions: { enable: true }}, context.sessionPoolOptions, {
+    const sessionPoolOptions: any = defaultsDeep({
+      persistenceOptions: { enable: true, storeId: context.id },
+      persistStateKeyValueStoreId: context.id
+    }, context.sessionPoolOptions, {
       maxPoolSize: 1,
       sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
     });
@@ -581,15 +590,18 @@ export abstract class FetchEngine<
       }
     });
 
-    const crawler = this.crawler = this._createCrawler(finalCrawlerOptions as TOptions);
-    const kvStore = await KeyValueStore.open(null, {config: crawler.config})
+    const crawler = this.crawler = this._createCrawler(finalCrawlerOptions as TOptions, config);
+    const kvStore = this.kvStore = await KeyValueStore.open(context.id, { config })
     const persistState = await kvStore.getValue(PERSIST_STATE_KEY);
     if (context.sessionState && (!persistState || context.overrideSessionState)) {
       await kvStore.setValue(PERSIST_STATE_KEY, context.sessionState);
     }
 
-    this.crawler.run().then(()=>{this.isCrawlerReady = true}).catch((error) => {
+    this.isCrawlerReady = true;
+    this.crawlerRunPromise = crawler.run();
+    this.crawlerRunPromise.finally(() => {
       this.isCrawlerReady = false;
+    }).catch((error) => {
       console.error('Crawler background error:', error);
     });
   }
@@ -631,6 +643,7 @@ export abstract class FetchEngine<
    * @internal Engine infrastructure method - not for direct consumer use
    */
   protected async _executePendingActions(context: TContext) {
+    if (this.isEngineDisposed) return;
     await new Promise<void>((resolveLoop) => {
       const listener = async ({ action, resolve, reject }: DispatchedEngineAction) => {
         try {
@@ -645,11 +658,19 @@ export abstract class FetchEngine<
           reject(error);
         }
       };
-      this.actionEmitter.on('dispatch', listener);
-      this.actionEmitter.once('dispose', () => {
+
+      const onDispose = () => {
         this.actionEmitter.removeListener('dispatch', listener);
         resolveLoop();
-      });
+      };
+
+      this.actionEmitter.on('dispatch', listener);
+      this.actionEmitter.once('dispose', onDispose);
+
+      if (this.isEngineDisposed) {
+        onDispose();
+        this.actionEmitter.removeListener('dispose', onDispose);
+      }
     });
   }
 
@@ -722,35 +743,42 @@ export abstract class FetchEngine<
   }
 
   protected async _commonCleanup() {
+    this.isEngineDisposed = true;
     this._initializedSessions.clear();
-    if (this.isPageActive) {
-      await this.dispatchAction({ type: 'dispose' }).catch(() => {
-        /* ignore */
-      });
-    }
+    this.actionEmitter.emit('dispose');
+    this.navigationLock?.release();
 
     if (this.pendingRequests.size > 0) {
       for (const [, pendingRequest] of this.pendingRequests) {
         pendingRequest.reject(new Error('Cleanup:Request cancelled'));
       }
+      this.pendingRequests.clear();
     }
 
-    this.actionEmitter.removeAllListeners();
-
     if (this.crawler) {
-      try {await this.crawler.teardown?.();} catch (error) {
-        console.error('ccrawler teardown error:', error)
+      try {
+        await this.crawler.teardown?.();
+      } catch (error) {
+        console.error('crawler teardown error:', error)
       }
       this.crawler = undefined;
     }
+    this.crawlerRunPromise = undefined;
     this.isCrawlerReady = undefined;
 
     if (this.requestQueue) {
-      await this.requestQueue.drop();
+      await this.requestQueue.drop().catch(err => console.error('Error dropping requestQueue:', err));
       this.requestQueue = undefined;
     }
 
+    if (this.kvStore) {
+      await this.kvStore.drop().catch(err => console.error('Error dropping kvStore:', err));
+      this.kvStore = undefined;
+    }
+
+    this.actionEmitter.removeAllListeners();
     this.pendingRequests.clear();
+    this.config = undefined;
   }
 
   /**

@@ -1,0 +1,17 @@
+{
+  "title": "Should have isolated session state (no cookies from previous tests)",
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    }
+  ],
+  "expected": {
+    "cookies": [],
+    "sessionState": {
+      "not": null
+    }
+  }
+}
