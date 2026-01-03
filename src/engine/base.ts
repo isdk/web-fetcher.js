@@ -325,6 +325,9 @@ export abstract class FetchEngine<
     if (!result.cookies && context.session) {
       result.cookies = context.session.getCookies(context.request.url);
     }
+    if (this.crawler?.sessionPool) {
+      result.sessionState = await this.crawler.sessionPool.getState();
+    }
     return result;
   };
 
@@ -658,7 +661,7 @@ export abstract class FetchEngine<
 
       const gotoPromise = this.pendingRequests.get(request.userData.requestId);
       if (gotoPromise) {
-        const fetchResponse = await this._buildResponse(context);
+        const fetchResponse = await this.buildResponse(context);
 
         // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
         const isError = !fetchResponse.statusCode || fetchResponse.statusCode >= 400;
