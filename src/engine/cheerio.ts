@@ -61,7 +61,6 @@ export class CheerioFetchEngine extends FetchEngine<
       statusCode: response?.statusCode ?? 200,
       statusText: response?.statusMessage,
       headers: headers || {}, // Use the newly constructed headers
-      cookies: context.session?.getCookies(request.url),
       body,
       html: text,
       text,
@@ -137,7 +136,7 @@ export class CheerioFetchEngine extends FetchEngine<
         }
 
         const loadedRequest = await context.sendRequest({ url: absoluteUrl });
-        this._updateStateAfterNavigation(context, loadedRequest);
+        await this._updateStateAfterNavigation(context, loadedRequest);
         return;
       }
       case 'fill': {
@@ -207,7 +206,7 @@ export class CheerioFetchEngine extends FetchEngine<
           loadedRequest = await context.sendRequest({ url, method: 'POST', body, headers });
         }
 
-        this._updateStateAfterNavigation(context, loadedRequest);
+        await this._updateStateAfterNavigation(context, loadedRequest);
         return;
       }
       case 'getContent':
@@ -217,43 +216,19 @@ export class CheerioFetchEngine extends FetchEngine<
     }
   }
 
-  private _updateStateAfterNavigation(context: CheerioCrawlingContext, loadedRequest: any) {
+  private async _updateStateAfterNavigation(context: CheerioCrawlingContext, loadedRequest: any) {
     const response = loadedRequest;
-    let headers = response.headers;
 
-    if (!headers && response.rawHeaders) {
-      headers = {};
-      for (let i = 0; i < response.rawHeaders.length; i += 2) {
-        headers[response.rawHeaders[i].toLowerCase()] = response.rawHeaders[i + 1];
-      }
-    }
-    headers = headers || {};
-
-    const body = response.body;
-    const $ = cheerio.load(body ?? '');
-
-    // Also update the context's cheerio instance for any subsequent actions in the same handler
-    (context as any).$ = $;
+    // Update the context with the new response and body
     context.response = response;
-    context.body = body;
+    context.body = response.body;
+    // Clear $ to force re-evaluation in _ensureCheerioContext/buildResponse
+    (context as any).$ = undefined;
+    if (response.url) {
+      context.request.loadedUrl = response.url;
+    }
 
-    const html = $.html();
-    const text = $.text();
-
-    const contentTypeHeader = headers['content-type'] || '';
-    const contentType = contentTypeHeader.split(';')[0].trim();
-
-    this.lastResponse = {
-      url: context.request.url,
-      finalUrl: response.url,
-      statusCode: response.statusCode,
-      statusText: response.statusMessage,
-      headers: headers,
-      contentType: contentType,
-      body: body,
-      html: html,
-      text: text,
-    };
+    this.lastResponse = await this.buildResponse(context);
   }
 
   protected _createCrawler(options: CheerioCrawlerOptions): CheerioCrawler {

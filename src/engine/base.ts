@@ -322,6 +322,9 @@ export abstract class FetchEngine<
     const result = await this._buildResponse(context);
     const contentTypeHeader = result.headers['content-type'] || '';
     result.contentType = contentTypeHeader.split(';')[0].trim();
+    if (!result.cookies && context.session) {
+      result.cookies = context.session.getCookies(context.request.url);
+    }
     return result;
   };
 

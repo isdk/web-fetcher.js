@@ -30,7 +30,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
         statusCode: response?.status(),
         statusText: response?.statusText(),
         headers: (await response?.allHeaders()) || {},
-        cookies: [],
         body: '',
         html: '',
         text: '',
@@ -39,7 +38,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const body = await page.content();
     const text = await page.textContent('body');
     const cookies = await page.context().cookies();
-    console.log('[PlaywrightEngine] Cookies from page context:', cookies);
     if (session) {
       session.setCookies(cookies, request.url);
     }

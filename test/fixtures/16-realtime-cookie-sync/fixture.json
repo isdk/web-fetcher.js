@@ -1,0 +1,31 @@
+{
+  "title": "Should sync cookies in realtime within the same session handler (Playwright)",
+  "engine": "playwright",
+  "actions": [
+    {
+      "action": "goto",
+      "params": { "url": "/" }
+    },
+    {
+      "action": "click",
+      "params": { "selector": "#login-btn" }
+    },
+    {
+      "action": "waitFor",
+      "params": { "selector": "#status", "ms": 500 }
+    },
+    {
+      "action": "getContent",
+      "storeAs": "finalPage"
+    }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "cookies": {
+      "and": [
+        { "contains": "\"name\":\"auth-token\"" },
+        { "contains": "\"value\":\"secret-12345\"" }
+      ]
+    }
+  }
+}
