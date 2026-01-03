@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.8](https://github.com/isdk/web-fetcher.js/compare/v0.2.7...v0.2.8) (2026-01-03)
+
+
+### Bug Fixes
+
+* **engine:** enforce persistenceOptions.enable to true in sessionPoolOptions ([24aa447](https://github.com/isdk/web-fetcher.js/commit/24aa447ea9be9e3a1da373592877efd5d5bfa7a0))
+* **engine:** sync cookies between FetchEngine and Crawlee Session ([11a5aa0](https://github.com/isdk/web-fetcher.js/commit/11a5aa09745b7f4f3f37a5e47c9e8032e6e099c3))
+* **test:** rename forceSessionState to overrideSessionState ([4012d58](https://github.com/isdk/web-fetcher.js/commit/4012d5834ed0f65137f479e22955d65ac0436262))
+
 ## [0.2.7](https://github.com/isdk/web-fetcher.js/compare/v0.2.6...v0.2.7) (2026-01-02)
 
 
