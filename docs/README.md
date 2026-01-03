@@ -137,7 +137,10 @@ This is the main entry point for the library.
 * `engine` ('http' | 'browser' | 'auto'): The engine to use. Defaults to `auto`.
 * `actions` (FetchActionOptions[]): An array of action objects to execute. (Supports `action`/`name` as alias for `id`, and `args` as alias for `params`)
 * `headers` (Record<string, string>): Headers to use for all requests.
-* ...and many other options for proxy, cookies, retries, etc.
+* `cookies` (Cookie[]): Array of cookies to use.
+* `sessionState` (any): Crawlee session state to restore.
+* `sessionPoolOptions` (SessionPoolOptions): Advanced configuration for the underlying Crawlee SessionPool.
+* ...and many other options for proxy, retries, etc.
 
 ### Built-in Actions
 

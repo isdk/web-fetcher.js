@@ -133,7 +133,10 @@ searchGoogle('gemini');
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
 * `actions` (FetchActionOptions[]): 要执行的动作对象数组。（支持 `action`/`name` 作为 `id` 的别名，`args` 作为 `params` 的别名）
 * `headers` (Record<string, string>): 用于所有请求的头信息。
-* ...以及许多其他用于代理、Cookie、重试等的选项。
+* `cookies` (Cookie[]): 要使用的 Cookie 数组。
+* `sessionState` (any): 要恢复的 Crawlee 会话状态。
+* `sessionPoolOptions` (SessionPoolOptions): 底层 Crawlee SessionPool 的高级配置。
+* ...以及许多其他用于代理、重试等的选项。
 
 ### 内置动作
 
