@@ -234,6 +234,7 @@ export abstract class FetchEngine<
 
   protected hdrs: Record<string, string> = {};
   protected _initialCookies?: Cookie[];
+  protected _initializedSessions = new Set<string>();
   protected currentSession?: Session;
   protected pendingRequests = new Map<string, PendingEngineRequest>();
   protected requestCounter = 0;
@@ -529,11 +530,11 @@ export abstract class FetchEngine<
     this.requestQueue = await RequestQueue.open();
 
     const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
-    const sessionPoolOptions: any = {
+    const sessionPoolOptions: any = defaultsDeep(context.sessionPoolOptions || {}, {
       maxPoolSize: 1,
       persistenceOptions: { enable: true },
       sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
-    }
+    });
     if (context.sessionState) {
       if (context.cookies && context.cookies.length > 0) {
         console.warn('[FetchEngine] Warning: Both "sessionState" and "cookies" are provided. Explicit "cookies" will override any conflicting cookies restored from "sessionState".');
@@ -560,16 +561,18 @@ export abstract class FetchEngine<
     }
     finalCrawlerOptions.preNavigationHooks.unshift(({ crawler, session, request }: PlaywrightCrawlingContext, opts: PlaywrightGotoOptions) => {
       this.currentSession = session;
-      if (this._initialCookies && this._initialCookies.length > 0 && session) {
-        const normalizedCookies = this._initialCookies.map((c) => {
-          const cookie = { ...c };
-          if ((cookie as any).sameSite === 'no_restriction') {
-            cookie.sameSite = 'None';
-          }
-          return cookie;
-        });
-        session.setCookies(normalizedCookies, request.url);
-        this._initialCookies = undefined;
+      if (session && !this._initializedSessions.has(session.id)) {
+        if (this._initialCookies && this._initialCookies.length > 0) {
+          const normalizedCookies = this._initialCookies.map((c) => {
+            const cookie = { ...c };
+            if ((cookie as any).sameSite === 'no_restriction') {
+              cookie.sameSite = 'None';
+            }
+            return cookie;
+          });
+          session.setCookies(normalizedCookies, request.url);
+        }
+        this._initializedSessions.add(session.id);
       }
     });
 
@@ -646,9 +649,9 @@ export abstract class FetchEngine<
   }
 
   protected async _sharedRequestHandler(context: TContext): Promise<void> {
+    const { request } = context;
     try {
       this.currentSession = context.session;
-      const { request } = context;
       this.isPageActive = true;
 
       const gotoPromise = this.pendingRequests.get(request.userData.requestId);
@@ -669,6 +672,12 @@ export abstract class FetchEngine<
 
       await this._executePendingActions(context);
     } finally {
+      if (this.currentSession) {
+        const cookies = this.currentSession.getCookies(request.url);
+        if (cookies) {
+          this._initialCookies = cookies;
+        }
+      }
       this.isPageActive = false;
       this.navigationLock.release();
     }
@@ -708,6 +717,7 @@ export abstract class FetchEngine<
   }
 
   protected async _commonCleanup() {
+    this._initializedSessions.clear();
     if (this.isPageActive) {
       await this.dispatchAction({ type: 'dispose' }).catch(() => {
         /* ignore */

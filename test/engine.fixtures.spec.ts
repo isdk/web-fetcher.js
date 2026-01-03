@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { AddressInfo } from 'net';
-import { readdir, readFile } from 'fs/promises';
+import { readdir, readFile, stat } from 'fs/promises';
 import { resolve, join } from 'path';
 import fastify, { FastifyInstance } from 'fastify';
 import { FetchEngine, WebFetcher } from '../src/index';
@@ -135,6 +135,20 @@ const FIXTURES_DIR = resolve(__dirname, 'fixtures');
 // 1. 本地测试服务器
 const createTestServer = async (fixtureDir: string, fixtureConfig?: Fixture): Promise<FastifyInstance> => {
   const server = fastify({ logger: false });
+
+  // Load custom server setup from server.mjs if it exists
+  const serverScript = join(fixtureDir, 'server.mjs');
+  try {
+    await stat(serverScript);
+    const mod = await import(serverScript);
+    if (typeof mod.default === 'function') {
+      await mod.default(server);
+    }
+  } catch (e: any) {
+    if (e.code !== 'ENOENT') {
+      console.warn(`Failed to load server.mjs in ${fixtureDir}:`, e);
+    }
+  }
 
   const setHeaders = (reply: any) => {
     if (fixtureConfig?.server?.responseHeaders) {

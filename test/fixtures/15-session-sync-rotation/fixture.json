@@ -1,0 +1,38 @@
+{
+  "title": "Should sync cookies across session rotations (engine -> session -> engine)",
+  "options": {
+    "sessionPoolOptions": {
+      "sessionOptions": {
+        "maxUsageCount": 1
+      }
+    }
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/set-cookie?test-cookie=sync-value"
+      }
+    },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/echo/cookies"
+      }
+    },
+    {
+      "action": "extract",
+      "storeAs": "__test_result__",
+      "schema": {
+        "selector": "body",
+        "type": "string"
+      }
+    }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "data": {
+      "contains": "\"test-cookie\":\"sync-value\""
+    }
+  }
+}
