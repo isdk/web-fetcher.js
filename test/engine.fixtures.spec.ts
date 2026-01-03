@@ -355,6 +355,9 @@ const engineTestSuite = (
         const state = await session.getState();
         checkExpectations(state?.cookies, fixture.expected.cookies);
       }
+      if (fixture.expected.sessionState) {
+        checkExpectations(content.sessionState, fixture.expected.sessionState);
+      }
       if ('data' in fixture.expected) {
         if (isConditionObject(fixture.expected.data)) {
           checkExpectations(result, fixture.expected.data);

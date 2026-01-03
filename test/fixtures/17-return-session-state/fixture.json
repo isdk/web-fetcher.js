@@ -1,0 +1,17 @@
+{
+  "title": "Should return session state in response",
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "sessionState": {
+      "contains": "sessions"
+    }
+  }
+}

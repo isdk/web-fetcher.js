@@ -129,6 +129,7 @@ export interface FetchResponse {
   text?: string;
   json?: any;
   cookies?: Cookie[];
+  sessionState?: any;
   metadata?: FetchMetadata;
 }
 
