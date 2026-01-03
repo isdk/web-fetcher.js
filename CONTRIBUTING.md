@@ -31,9 +31,18 @@ The following is a set of guidelines for contributing to `@isdk/web-fetcher`. Th
 
 ## 🧪 Testing
 
-We use a **data-driven testing** approach for the fetch engine, located in `test/engine.fixtures.spec.ts`.
+The project employs a two-tier testing strategy:
 
-### Adding a New Test Case
+### 1. Low-level Unit Tests
+*   **Location**: Co-located with source files (e.g., `src/core/session.spec.ts`).
+*   **Purpose**: Traditional unit tests using Vitest for testing specific internal logic of classes and functions in isolation.
+
+### 2. Universal Fixture Tests
+*   **Location**: `test/fixtures/`
+*   **Runner**: `test/engine.fixtures.spec.ts`
+*   **Purpose**: Primary data-driven testing system that tests both `cheerio` and `playwright` engines against the same behaviors.
+
+#### Adding a New Fixture Test Case
 
 1.  Create a new directory in `test/fixtures/` (e.g., `test/fixtures/99-my-new-feature/`).
 2.  Create a `fixture.html` file with the HTML content to be served.
