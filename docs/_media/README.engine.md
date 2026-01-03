@@ -24,7 +24,7 @@ This is the abstract base class that defines the contract for all fetch engines.
 * **Key Abstractions**:
   * **Lifecycle**: `initialize()` and `cleanup()` methods.
   * **Core Actions**: `goto()`, `getContent()`, `click()`, `fill()`, `submit()`, `waitFor()`, `extract()`.
-  * **Configuration & State**: `headers()`, `cookies()`, `blockResources()`, `getState()`.
+  * **Configuration & State**: `headers()`, `cookies()`, `blockResources()`, `getState()`, `sessionPoolOptions`.
 * **Static Registry**: It maintains a static registry of all available engine implementations (`FetchEngine.register`), allowing for dynamic selection by `id` or `mode`.
 
 ### `FetchEngine.create(context, options)`
@@ -49,6 +49,8 @@ When the library determines which engine to use (via internal `maybeCreateEngine
 The engine supports persisting and restoring session state (primarily cookies) between executions.
 
 * **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This is set during engine initialization.
+* **`sessionPoolOptions`**: Allows advanced configuration of the underlying Crawlee `SessionPool` (e.g., `maxUsageCount`, `maxPoolSize`).
+  > **Note**: `persistenceOptions.enable` is forced to `true` to ensure proper session state management.
 * **`overrideSessionState`**: If set to `true`, it forces the engine to overwrite any existing persistent state in the storage with the provided `sessionState`. This is useful when you want to ensure the session starts with the exact state provided, ignoring any stale data in the persistence layer.
 * **`cookies`**: An array of explicit cookies to use for the session.
 

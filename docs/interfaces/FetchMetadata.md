@@ -6,7 +6,7 @@
 
 # Interface: FetchMetadata
 
-Defined in: [packages/web-fetcher/src/core/types.ts:102](https://github.com/isdk/web-fetcher.js/blob/67ac2abdb01356cc0cf363248f4ef8f77c28d78f/src/core/types.ts#L102)
+Defined in: [packages/web-fetcher/src/core/types.ts:103](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/types.ts#L103)
 
 ## Indexable
 
@@ -18,7 +18,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:102](https://github.com/isdk
 
 > `optional` **engine**: [`BrowserEngine`](../type-aliases/BrowserEngine.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:104](https://github.com/isdk/web-fetcher.js/blob/67ac2abdb01356cc0cf363248f4ef8f77c28d78f/src/core/types.ts#L104)
+Defined in: [packages/web-fetcher/src/core/types.ts:105](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/types.ts#L105)
 
 ***
 
@@ -26,7 +26,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:104](https://github.com/isdk
 
 > **mode**: [`FetchEngineType`](../type-aliases/FetchEngineType.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:103](https://github.com/isdk/web-fetcher.js/blob/67ac2abdb01356cc0cf363248f4ef8f77c28d78f/src/core/types.ts#L103)
+Defined in: [packages/web-fetcher/src/core/types.ts:104](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/types.ts#L104)
 
 ***
 
@@ -34,7 +34,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:103](https://github.com/isdk
 
 > `optional` **proxy**: `string`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:114](https://github.com/isdk/web-fetcher.js/blob/67ac2abdb01356cc0cf363248f4ef8f77c28d78f/src/core/types.ts#L114)
+Defined in: [packages/web-fetcher/src/core/types.ts:115](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/types.ts#L115)
 
 ***
 
@@ -42,7 +42,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:114](https://github.com/isdk
 
 > `optional` **timings**: `object`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:105](https://github.com/isdk/web-fetcher.js/blob/67ac2abdb01356cc0cf363248f4ef8f77c28d78f/src/core/types.ts#L105)
+Defined in: [packages/web-fetcher/src/core/types.ts:106](https://github.com/isdk/web-fetcher.js/blob/7bb51cb9bc54b4138642b08ddf371740d89af7ca/src/core/types.ts#L106)
 
 #### dns?
 
