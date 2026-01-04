@@ -200,7 +200,6 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
 
     afterAll(async () => {
       await server.close();
-      rmSync(tmpDir, { recursive: true, force: true });
     });
 
     // 每个测试前创建新引擎实例
@@ -575,6 +574,10 @@ engineTestSuite('cheerio', CheerioFetchEngine);
 engineTestSuite('playwright', PlaywrightFetchEngine);
 
 describe('Flexible Storage', () => {
+  afterAll(async () => {
+    rmSync(tmpDir, { recursive: true, force: true });
+  });
+
   it('should persist storage when purge is false', async () => {
     const storageId = `test-persist-${Date.now()}`;
     const storageDir =  path.join(tmpDir, `storage-${storageId}`);
@@ -609,7 +612,6 @@ describe('Flexible Storage', () => {
     expect(value).toBe('test-value');
 
     // Cleanup manually after test
-    console.log('🚀 ~ file: engine.spec.ts:609 ~ Cleanup:')
     await reOpenedStoreWithConfig.drop();
   });
 
