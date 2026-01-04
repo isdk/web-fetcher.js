@@ -72,8 +72,12 @@ export interface BaseFetcherProperties {
   sessionState?: any;
   sessionPoolOptions?: SessionPoolOptions;
   overrideSessionState?: boolean;
-  reuseCookies?: boolean; // 默认 true
   throwHttpErrors?: boolean;
+
+  output?: {
+    cookies?: boolean;      // 默认 true
+    sessionState?: boolean; // 默认 true
+  };
 
   proxy?: string | string[];
   // 阻止加载特定类型的资源
@@ -175,8 +179,11 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
   antibot: false,
   headers: {},
   cookies: [],
-  reuseCookies: true,
   throwHttpErrors: undefined,
+  output: {
+    cookies: true,
+    sessionState: true,
+  },
   proxy: [],
   blockResources: [],
   storage: {

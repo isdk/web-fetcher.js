@@ -1,0 +1,16 @@
+{
+  "title": "Should respect output control settings (disable cookies and sessionState)",
+  "options": {
+    "output": {
+      "cookies": false,
+      "sessionState": false
+    }
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } }
+  ],
+  "expected": {
+    "cookies": null,
+    "sessionState": null
+  }
+}

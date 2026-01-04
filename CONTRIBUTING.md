@@ -173,6 +173,14 @@ The `cleanup()` (aliased as `dispose()`) method manages the lifecycle of storage
     - **Solution**: We manually inject the session state into the `KeyValueStore` (using `PERSIST_STATE_KEY`) *immediately after* creating the crawler instance but *before* running it. This ensures `SessionPool` initializes with the correct state.
     - **ID Priority**: SessionPool persistence always follows the `storeId` (either user-provided or auto-generated), ensuring correct isolation or sharing of authentication states.
 
+### Engine Implementation: _buildResponse
+
+When implementing a new engine, the `_buildResponse(context)` method is responsible for constructing the `FetchResponse` object.
+
+*   **Contract**: It must return a valid `FetchResponse` object containing the current page state (url, html, etc.).
+*   **Output Control**: While `base.ts` handles the final filtering of `cookies` and `sessionState` based on `this.opts.output` (by explicitly deleting them if disabled), it is highly recommended that the engine implementation also respects `this.opts.output`.
+    *   **Performance**: If `this.opts.output.cookies` is `false`, the engine should avoid expensive operations (like IPC calls in browser automation) to retrieve cookies, unless they are needed for internal session synchronization.
+
 ## 📄 License
 
 By contributing, you agree that your contributions will be licensed under its MIT License.
