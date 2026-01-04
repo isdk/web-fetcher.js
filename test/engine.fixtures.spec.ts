@@ -239,7 +239,7 @@ const runDynamicTests = async () => {
         engineTestSuite(testCase, testCase.caseDir, testCase.engine);
       } else {
         engineTestSuite(testCase, testCase.caseDir, 'cheerio');
-        // engineTestSuite(testCase, testCase.caseDir, 'playwright');
+        engineTestSuite(testCase, testCase.caseDir, 'playwright');
       }
     });
   }

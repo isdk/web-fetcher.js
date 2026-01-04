@@ -326,11 +326,20 @@ export abstract class FetchEngine<
     const result = await this._buildResponse(context);
     const contentTypeHeader = result.headers['content-type'] || '';
     result.contentType = contentTypeHeader.split(';')[0].trim();
-    if (!result.cookies && context.session) {
-      result.cookies = context.session.getCookies(context.request.url);
+    if (this.opts?.output?.cookies !== false) {
+      if (!result.cookies && context.session) {
+        result.cookies = context.session.getCookies(context.request.url);
+      }
+    } else {
+      delete result.cookies;
     }
-    if (this.crawler?.sessionPool) {
-      result.sessionState = await this.crawler.sessionPool.getState();
+
+    if (this.opts?.output?.sessionState !== false) {
+      if (this.crawler?.sessionPool) {
+        result.sessionState = await this.crawler.sessionPool.getState();
+      }
+    } else {
+      delete result.sessionState;
     }
     return result;
   };

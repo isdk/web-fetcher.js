@@ -41,17 +41,20 @@ export class PlaywrightFetchEngine extends FetchEngine<
     if (session) {
       session.setCookies(cookies, request.url);
     }
-    return {
+    const result: FetchResponse = {
       url: page.url(),
       finalUrl: page.url(),
       statusCode: response?.status(),
       statusText: response?.statusText(),
       headers: (await response?.allHeaders()) || {},
-      cookies,
       body,
       html: body,
       text: text || '',
     };
+    if (this.opts?.output?.cookies !== false) {
+      result.cookies = cookies;
+    }
+    return result;
   }
 
   protected async _querySelectorAll(context: Locator, selector: string): Promise<any[]> {

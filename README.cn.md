@@ -140,6 +140,9 @@ searchGoogle('gemini');
     * `persist` (boolean): 是否将数据保存到磁盘。
     * `purge` (boolean): 是否在清理时删除数据（默认为 `true`）。
     * `config` (object): 原生 Crawlee 配置（例如 `{ localDataDirectory: './data' }`）。
+* `output` (object): 控制 `FetchResponse` 中的输出字段。
+    * `cookies` (boolean): 是否在响应中包含 Cookie（默认：`true`）。
+    * `sessionState` (boolean): 是否在响应中包含会话状态（默认：`true`）。
 * `sessionPoolOptions` (SessionPoolOptions): 底层 Crawlee SessionPool 的高级配置。
 * ...以及许多其他用于代理、重试等的选项。
 
