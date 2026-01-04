@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.10](https://github.com/isdk/web-fetcher.js/compare/v0.2.9...v0.2.10) (2026-01-04)
+
+
+### Features
+
+* **engine:** add output control for cookies and sessionState ([837d3c4](https://github.com/isdk/web-fetcher.js/commit/837d3c42417eac76c29e1d3c380eb3112a147d16))
+* **engine:** implement flexible session isolation and storage persistence ([c9e73d1](https://github.com/isdk/web-fetcher.js/commit/c9e73d1641b48cfa9c96858639a240ca7f2d9f5d))
+
+
+### Bug Fixes
+
+* **engine:** implement strict session isolation and fix cleanup deadlocks ([1f11d6b](https://github.com/isdk/web-fetcher.js/commit/1f11d6b2b691255ba6a88e80f258cdacdc5636d9))
+* **test:** remove tmp dir ([c6694f5](https://github.com/isdk/web-fetcher.js/commit/c6694f50698959edc7c0cdb928907e3e0ef9bb70))
+
 ## [0.2.9](https://github.com/isdk/web-fetcher.js/compare/v0.2.8...v0.2.9) (2026-01-03)
 
 
