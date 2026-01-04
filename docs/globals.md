@@ -45,6 +45,7 @@
 - [FetchSite](interfaces/FetchSite.md)
 - [GotoActionOptions](interfaces/GotoActionOptions.md)
 - [PendingEngineRequest](interfaces/PendingEngineRequest.md)
+- [StorageOptions](interfaces/StorageOptions.md)
 - [SubmitActionOptions](interfaces/SubmitActionOptions.md)
 - [WaitForActionOptions](interfaces/WaitForActionOptions.md)
 
