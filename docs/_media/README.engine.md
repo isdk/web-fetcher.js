@@ -48,9 +48,17 @@ When the library determines which engine to use (via internal `maybeCreateEngine
 
 The engine supports persisting and restoring session state (primarily cookies) between executions.
 
+* **Flexible Session Isolation & Storage**: The library provides fine-grained control over how session data is stored and isolated via the `storage` configuration:
+    * **`id`**: A custom string to identify the storage.
+        * **Isolation (Default)**: If omitted, each session gets a unique ID, ensuring complete isolation of `RequestQueue`, `KeyValueStore`, and `SessionPool`.
+        * **Sharing**: Providing the same `id` across sessions allows them to share the same underlying storage, useful for persistent login sessions.
+    * **`persist`**: (boolean) Whether to enable disk persistence (Crawlee's `persistStorage`). Defaults to `false` (in-memory).
+    * **`purge`**: (boolean) Whether to delete the storage (drop `RequestQueue` and `KeyValueStore`) when the session is closed. Defaults to `true`.
+        * Set `purge: false` and provide a fixed `id` to create a truly persistent session that survives across application restarts.
+    * **`config`**: Allows passing raw configuration to the underlying Crawlee instance.
+        * **Note**: When `persist` is true, use `localDataDirectory` in the config to specify the storage path (e.g., `storage: { persist: true, config: { localDataDirectory: './my-data' } }`).
 * **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This state is **automatically included in every `FetchResponse`**, making it easy to persist and later provide back to the engine during initialization.
 * **`sessionPoolOptions`**: Allows advanced configuration of the underlying Crawlee `SessionPool` (e.g., `maxUsageCount`, `maxPoolSize`).
-  > **Note**: `persistenceOptions.enable` is forced to `true` to ensure proper session state management.
 * **`overrideSessionState`**: If set to `true`, it forces the engine to overwrite any existing persistent state in the storage with the provided `sessionState`. This is useful when you want to ensure the session starts with the exact state provided, ignoring any stale data in the persistence layer.
 * **`cookies`**: An array of explicit cookies to use for the session.
 
@@ -79,8 +87,8 @@ Our engine solves this by creating a bridge between the external API calls and t
 
 **The workflow is as follows:**
 
-1. **Initialization**: A consumer calls `FetchEngine.create()`, which initializes a Crawlee crawler (e.g., `PlaywrightCrawler`) that runs in the background.
-2. **Navigation (`goto`)**: The consumer calls `await engine.goto(url)`. This adds the URL to Crawlee's `RequestQueue` and returns a `Promise` that will resolve when the page is loaded.
+1. **Initialization**: A consumer calls `FetchEngine.create()`, which initializes a private `Configuration` and starts a Crawlee crawler (e.g., `PlaywrightCrawler`) that runs in the background.
+2. **Navigation (`goto`)**: The consumer calls `await engine.goto(url)`. This adds the URL to the engine's private `RequestQueue` and returns a `Promise` that will resolve when the page is loaded.
 3. **Crawlee Processing**: The background crawler picks up the request and invokes the engine's `requestHandler`, passing it the crucial page context.
 4. **Page Activation & Action Loop**: Inside the `requestHandler`:
     * The page context is used to resolve the `Promise` from the `goto()` call.
@@ -88,7 +96,11 @@ Our engine solves this by creating a bridge between the external API calls and t
     * Crucially, before the `requestHandler` returns, it starts an **action loop** (`_executePendingActions`). This loop effectively **pauses the `requestHandler`** by listening for events on an `EventEmitter`, keeping the page context alive.
 5. **Interactive Actions (`click`, `fill`, etc.)**: The consumer can now call `await engine.click(...)`. This dispatches an action to the `EventEmitter` and returns a new `Promise`.
 6. **Action Execution**: The action loop, still running within the original `requestHandler`'s scope, hears the event. Because it has access to the page context, it can perform the *actual* interaction (e.g., `page.click(...)`).
-7. **Cleanup**: The loop continues until a `dispose` action is dispatched (e.g., by a new `goto()` call), which terminates the loop and allows the `requestHandler` to finally complete.
+7. **Robust Cleanup**: When `dispose()` or `cleanup()` is called:
+    * An `isEngineDisposed` flag is set to prevent new actions.
+    * A `dispose` signal is emitted to wake up and terminate the action loop.
+    * All active locks (`navigationLock`) are released.
+    * The crawler is torn down (`teardown`), and the private `RequestQueue` and `KeyValueStore` are dropped to ensure a clean state.
 
 ---
 

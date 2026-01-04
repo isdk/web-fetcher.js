@@ -8,4 +8,4 @@
 
 > `const` **FetcherOptionKeys**: `string`[]
 
-Defined in: [packages/web-fetcher/src/core/types.ts:165](https://github.com/isdk/web-fetcher.js/blob/3d2bbdd587d2e2a817155af67327a042c516fd6f/src/core/types.ts#L165)
+Defined in: [packages/web-fetcher/src/core/types.ts:210](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/core/types.ts#L210)
