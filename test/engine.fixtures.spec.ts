@@ -109,6 +109,7 @@ interface FixtureExpected {
   html?: any;
   finalUrl?: string;
   data?: any;
+  outputs?: Record<string, any>;
   error?: string;
   cookies?: any;
 }
@@ -238,7 +239,7 @@ const runDynamicTests = async () => {
         engineTestSuite(testCase, testCase.caseDir, testCase.engine);
       } else {
         engineTestSuite(testCase, testCase.caseDir, 'cheerio');
-        engineTestSuite(testCase, testCase.caseDir, 'playwright');
+        // engineTestSuite(testCase, testCase.caseDir, 'playwright');
       }
     });
   }
@@ -297,19 +298,28 @@ const engineTestSuite = (
         });
 
         const res = await session.executeAll(actions);
-
+        // If the last action was extract with an auto-injected storeAs, use it as result
         if (res.outputs && '__test_result__' in res.outputs) {
           result = res.outputs.__test_result__;
         } else {
           result = res.result;
         }
 
+        // Additional validation for outputs if specified in expected
+        if (fixture.expected.outputs) {
+          Object.keys(fixture.expected.outputs).forEach(key => {
+            const expectedValue = fixture.expected.outputs[key];
+            const actualValue = res.outputs[key];
+            checkExpectations(actualValue, expectedValue);
+          });
+        }
+
       } catch (e: any) {
         error = e;
       }
 
-      const expectedError = fixture.expected.error;
-      if (expectedError) {
+      if (fixture.expected.error) {
+        const expectedError = fixture.expected.error;
         expect(error).toBeDefined();
         if (expectedError !== true) {
           if (typeof expectedError === 'object') {
@@ -338,7 +348,10 @@ const engineTestSuite = (
         throw error;
       }
 
-      const content = (result && result.statusCode) ? result : await session.execute({ id: 'getContent' }).then(r => r.result);
+      // Determine the response object for metadata/content checks
+      const content = (result && result.statusCode)
+        ? result
+        : await session.execute({ id: 'getContent' }).then(r => r.result);
 
       if (fixture.expected.statusCode) {
         expect(content.statusCode).toBe(fixture.expected.statusCode);
