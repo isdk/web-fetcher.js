@@ -23,6 +23,37 @@ export type BrowserEngine = 'playwright' | 'puppeteer';
 type FetchEngineMode = FetchEngineType | 'auto' | string;
 export type ResourceType = 'image' | 'stylesheet' | 'font' | 'script' | 'media' | string;
 
+/**
+ * Storage configuration options for the fetch engine.
+ *
+ * @remarks
+ * Controls how Crawlee's internal storage (RequestQueue, KeyValueStore, SessionPool) is managed.
+ */
+export interface StorageOptions {
+  /**
+   * Custom identifier for the storage.
+   * If provided, multiple sessions can share the same storage by using the same ID.
+   * If not provided, a unique session ID is used (strong isolation).
+   */
+  id?: string;
+  /**
+   * Whether to persist storage to disk.
+   * If true, uses Crawlee's disk persistence. If false, data might be stored in memory or temporary directory.
+   * Corresponds to Crawlee's `persistStorage` configuration.
+   */
+  persist?: boolean;
+  /**
+   * Whether to delete the storage (RequestQueue and KeyValueStore) when the session is closed.
+   * Defaults to true. Set to false if you want to keep data for future reuse with the same `id`.
+   */
+  purge?: boolean;
+  /**
+   * Additional Crawlee configuration options.
+   * Allows fine-grained control over the underlying Crawlee instance.
+   */
+  config?: Record<string, any>;
+}
+
 export interface BaseFetcherProperties {
   /**
    * 抓取模式
@@ -48,6 +79,10 @@ export interface BaseFetcherProperties {
   // 阻止加载特定类型的资源
   blockResources?: ResourceType[];
 
+  /**
+   * Storage configuration for session isolation and persistence.
+   */
+  storage?: StorageOptions;
 
   // browser 模式下，没有对应的配置，需要根据浏览器类型去设置浏览器内部配置，也可能无法配置。
   ignoreSslErrors?: boolean;
@@ -144,6 +179,9 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
   throwHttpErrors: undefined,
   proxy: [],
   blockResources: [],
+  storage: {
+    purge: true,
+  },
   ignoreSslErrors: true,
   browser: {
     engine: 'playwright',

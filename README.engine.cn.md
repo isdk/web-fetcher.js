@@ -48,10 +48,17 @@
 
 引擎支持在多次执行之间持久化和恢复会话状态（主要是 Cookie）。
 
-* **严格的会话隔离**：每个引擎实例现在都采用私有的 Crawlee `Configuration` 实例。这确保了 `RequestQueue` 和 `KeyValueStore` 通过唯一的 ID 实现了完全隔离，防止了并发会话之间的数据泄露或冲突。
+* **灵活的会话隔离与存储控制**：库提供了对会话数据存储和隔离的精细控制，通过 `storage` 配置实现：
+    * **`id`**：自定义存储标识符。
+        * **隔离（默认）**：如果省略，每个会话将获得一个唯一 ID，确保 `RequestQueue`、`KeyValueStore` 和 `SessionPool` 完全隔离。
+        * **共享**：在不同会话中提供相同的 `id` 可以让它们共享底层存储，适用于保持持久登录状态。
+    * **`persist`**：(boolean) 是否启用磁盘持久化（对应 Crawlee 的 `persistStorage`）。默认为 `false`（仅在内存中）。
+    * **`purge`**：(boolean) 会话关闭时是否删除存储（清理 `RequestQueue` 和 `KeyValueStore`）。默认为 `true`。
+        * 设置 `purge: false` 并配合固定的 `id`，可以创建跨应用重启依然存在的持久会话。
+    * **`config`**：允许向底层 Crawlee 实例传递原生配置。
+        * **注意**：当 `persist` 为 true 时，在 config 中使用 `localDataDirectory` 指定存储路径（例如：`storage: { persist: true, config: { localDataDirectory: './my-data' } }`）。
 * **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。该状态会**自动包含在每个 `FetchResponse` 中**，方便进行持久化，并在以后初始化引擎时通过选项传回。
 * **`sessionPoolOptions`**: 允许对底层的 Crawlee `SessionPool` 进行高级配置（例如 `maxUsageCount`, `maxPoolSize`）。
-  > **注意**: 为了确保会话状态管理的正常运行，`persistenceOptions.enable` 会被强制设置为 `true`。
 * **`overrideSessionState`**: 如果设置为 `true`，则强制引擎使用提供的 `sessionState` 覆盖存储中的任何现有持久化状态。当你希望确保会话以确切提供的状态启动，忽略持久化层中的任何陈旧数据时，这非常有用。
 * **`cookies`**: 用于会话的显式 Cookie 数组。
 

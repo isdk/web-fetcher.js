@@ -142,11 +142,36 @@ fix(session): ensure cookies are persisted across redirects
 
 ## 🧩 Implementation Details & Gotchas
 
+### Session Isolation & Storage
+
+To support concurrent executions without side effects, the library implements flexible session isolation via the `storage` configuration:
+
+- **Independent Configuration**: Each engine instance creates its own Crawlee `Configuration`. By default, `persistStorage` is `false` (data kept in memory).
+- **Unique Store IDs**: Every session uses a `storeId`.
+    - **Isolation (Default)**: If `storage.id` is not provided, it uses the unique `context.id`.
+    - **Sharing**: Providing a fixed `storage.id` allows multiple sessions to share the same `RequestQueue` and `KeyValueStore` (e.g., for shared login states).
+- **Persistence Control**:
+    - `storage.persist`: (boolean) Controls whether data is written to disk.
+    - **Note**: When using disk persistence, Crawlee's default storage client (MemoryStorage) uses `localDataDirectory` to specify the root directory (defaults to `./storage`). Pass this through `storage.config`.
+
+### Cleanup & Resource Management
+
+The `cleanup()` (aliased as `dispose()`) method manages the lifecycle of storage:
+
+1.  **Action Termination**: Terminates the internal action loop and rejects pending requests.
+2.  **Crawler Teardown**: Gracefully shuts down the Crawlee instance.
+3.  **Conditional Purging**:
+    - `storage.purge`: (boolean, defaults to `true`).
+    - If `true`, it calls `.drop()` on the `RequestQueue` and `KeyValueStore`, physically deleting the data from memory/disk.
+    - If `false`, the data is preserved, allowing future sessions with the same `storage.id` to reuse it.
+4.  **Event Cleanup**: Removes all listeners to prevent memory leaks.
+
 ### Crawlee Session Persistence
 
 *   **State Restoration Timing**: Attempting to restore `SessionPool` state (like cookies) inside `preNavigationHooks` is too late because the session is already assigned.
-*   **Persistence Workaround**: Even with `persistStorage` set to `false` (default in our config), `SessionPool` persistence requires the data to exist in the `KeyValueStore`.
-    *   **Solution**: We manually inject the session state into the `KeyValueStore` (using `PERSIST_STATE_KEY`) *immediately after* creating the crawler instance but *before* running it. This ensures `SessionPool` initializes with the correct state.
+*   **Persistence Workaround**: Even with `persistStorage` set to `false`, `SessionPool` persistence requires the data to exist in the `KeyValueStore`.
+    - **Solution**: We manually inject the session state into the `KeyValueStore` (using `PERSIST_STATE_KEY`) *immediately after* creating the crawler instance but *before* running it. This ensures `SessionPool` initializes with the correct state.
+    - **ID Priority**: SessionPool persistence always follows the `storeId` (either user-provided or auto-generated), ensuring correct isolation or sharing of authentication states.
 
 ## 📄 License
 
