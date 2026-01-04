@@ -538,13 +538,23 @@ export abstract class FetchEngine<
     context.engine = this.mode;
     this.actionEmitter.setMaxListeners(100); // Set a higher limit to prevent memory leak warnings
 
-    const config = this.config = new Configuration({ persistStorage: false });
-    this.requestQueue = await RequestQueue.open(context.id, { config });
+    const storage = context.storage || {};
+    const persistStorage = storage.persist ?? false;
+    const config = this.config = new Configuration({
+      persistStorage,
+      storageClientOptions: {
+        persistStorage,
+        ...storage.config,
+      },
+      ...storage.config
+    });
+    const storeId = storage.id || context.id;
+    this.requestQueue = await RequestQueue.open(storeId, { config });
 
     const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
     const sessionPoolOptions: any = defaultsDeep({
-      persistenceOptions: { enable: true, storeId: context.id },
-      persistStateKeyValueStoreId: context.id
+      persistenceOptions: { enable: true, storeId: storeId },
+      persistStateKeyValueStoreId: storeId
     }, context.sessionPoolOptions, {
       maxPoolSize: 1,
       sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
@@ -591,7 +601,7 @@ export abstract class FetchEngine<
     });
 
     const crawler = this.crawler = this._createCrawler(finalCrawlerOptions as TOptions, config);
-    const kvStore = this.kvStore = await KeyValueStore.open(context.id, { config })
+    const kvStore = this.kvStore = await KeyValueStore.open(storeId, { config })
     const persistState = await kvStore.getValue(PERSIST_STATE_KEY);
     if (context.sessionState && (!persistState || context.overrideSessionState)) {
       await kvStore.setValue(PERSIST_STATE_KEY, context.sessionState);
@@ -766,13 +776,20 @@ export abstract class FetchEngine<
     this.crawlerRunPromise = undefined;
     this.isCrawlerReady = undefined;
 
+    const storage = this.opts?.storage || {};
+    const shouldPurge = storage.purge ?? true;
+
     if (this.requestQueue) {
-      await this.requestQueue.drop().catch(err => console.error('Error dropping requestQueue:', err));
+      if (shouldPurge) {
+        await this.requestQueue.drop().catch(err => console.error('Error dropping requestQueue:', err));
+      }
       this.requestQueue = undefined;
     }
 
     if (this.kvStore) {
-      await this.kvStore.drop().catch(err => console.error('Error dropping kvStore:', err));
+      if (shouldPurge) {
+        await this.kvStore.drop().catch(err => console.error('Error dropping kvStore:', err));
+      }
       this.kvStore = undefined;
     }
 

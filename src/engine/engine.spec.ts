@@ -1,12 +1,15 @@
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach, afterEach } from 'vitest';
+import path from 'path';
+import { rmSync } from 'fs';
+import { AddressInfo } from 'net';
+import fastify, { FastifyInstance } from 'fastify';
+import formbody from '@fastify/formbody';
+import { Configuration, KeyValueStore } from 'crawlee';
 import { FetchEngine } from './base';
 import { CheerioFetchEngine } from './cheerio';
 import { PlaywrightFetchEngine } from './playwright';
 import { FetchEngineContext } from '../core/context';
-import fastify, { FastifyInstance } from 'fastify';
-import { AddressInfo } from 'net';
-import formbody from '@fastify/formbody';
 
 const TEST_TIMEOUT = 3000; // 3s
 
@@ -179,7 +182,7 @@ const createTestServer = async (): Promise<FastifyInstance> => {
   return server;
 };
 
-
+const tmpDir = path.resolve(__dirname, '..', 'tmp');
 // 2. 可复用的测试套件
 const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEngine | typeof PlaywrightFetchEngine) => {
   describe.sequential(`FetchEngine Suite: ${engineName}`, () => {
@@ -197,6 +200,7 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
 
     afterAll(async () => {
       await server.close();
+      rmSync(tmpDir, { recursive: true, force: true });
     });
 
     // 每个测试前创建新引擎实例
@@ -569,3 +573,77 @@ const engineTestSuite = (engineName: string, EngineClass: typeof CheerioFetchEng
 // 3. 运行测试
 engineTestSuite('cheerio', CheerioFetchEngine);
 engineTestSuite('playwright', PlaywrightFetchEngine);
+
+describe('Flexible Storage', () => {
+  it('should persist storage when purge is false', async () => {
+    const storageId = `test-persist-${Date.now()}`;
+    const storageDir =  path.join(tmpDir, `storage-${storageId}`);
+    const context: any = {
+      id: 'some-session-id',
+      engine: 'http',
+      storage: {
+        id: storageId,
+        purge: false,
+        persist: true,
+        config: { localDataDirectory: storageDir }
+      }
+    };
+
+    const engine = await FetchEngine.create(context) as FetchEngine;
+    const kvStore = (engine as any).kvStore as KeyValueStore;
+    await kvStore.setValue('test-key', 'test-value');
+
+    await engine.dispose();
+
+    // Re-open the same store using the same config to check value
+    const reOpenedStoreWithConfig = await KeyValueStore.open(storageId, {
+      config: new Configuration({
+        persistStorage: true,
+        storageClientOptions: {
+          persistStorage: true,
+          localDataDirectory: storageDir,
+        }
+      })
+    });
+    const value = await reOpenedStoreWithConfig.getValue('test-key');
+    expect(value).toBe('test-value');
+
+    // Cleanup manually after test
+    console.log('🚀 ~ file: engine.spec.ts:609 ~ Cleanup:')
+    await reOpenedStoreWithConfig.drop();
+  });
+
+  it('should purge storage when purge is true', async () => {
+    const storageId = `test-purge-${Date.now()}`;
+    const storageDir = path.join(tmpDir, `./tmp/storage-${storageId}`);
+    const context: any = {
+      id: 'some-session-id',
+      engine: 'http',
+      storage: {
+        id: storageId,
+        purge: true,
+        persist: true,
+        config: { localDataDirectory: storageDir }
+      }
+    };
+
+    const engine = await FetchEngine.create(context) as FetchEngine;
+    const kvStore = (engine as any).kvStore as KeyValueStore;
+    await kvStore.setValue('test-key', 'test-value');
+
+    await engine.dispose();
+
+    // Re-open and check value - it should be empty since it was dropped
+    const reOpenedStoreWithConfig = await KeyValueStore.open(storageId, {
+      config: new Configuration({
+        persistStorage: true,
+        storageClientOptions: {
+          persistStorage: true,
+          localDataDirectory: storageDir,
+        }
+      })
+    });
+    const value = await reOpenedStoreWithConfig.getValue('test-key');
+    expect(value).toBeNull();
+  });
+});

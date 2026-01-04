@@ -1,0 +1,24 @@
+{
+  "title": "Should accept flexible storage configuration",
+  "options": {
+    "storage": {
+      "id": "test-storage-id",
+      "persist": false,
+      "purge": false
+    }
+  },
+  "actions": [
+    {
+      "id": "goto",
+      "params": { "url": "/" }
+    },
+    {
+      "id": "extract",
+      "params": { "selector": "h1" },
+      "storeAs": "title"
+    }
+  ],
+  "expected": {
+    "outputs": { "title": "Flexible Storage" }
+  }
+}

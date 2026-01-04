@@ -135,6 +135,11 @@ searchGoogle('gemini');
 * `headers` (Record<string, string>): 用于所有请求的头信息。
 * `cookies` (Cookie[]): 要使用的 Cookie 数组。
 * `sessionState` (any): 要恢复的 Crawlee 会话状态。
+* `storage` (StorageOptions): 控制会话隔离、持久化和清理。
+    * `id` (string): 共享存储 ID，用于跨会话重用数据。
+    * `persist` (boolean): 是否将数据保存到磁盘。
+    * `purge` (boolean): 是否在清理时删除数据（默认为 `true`）。
+    * `config` (object): 原生 Crawlee 配置（例如 `{ localDataDirectory: './data' }`）。
 * `sessionPoolOptions` (SessionPoolOptions): 底层 Crawlee SessionPool 的高级配置。
 * ...以及许多其他用于代理、重试等的选项。
 

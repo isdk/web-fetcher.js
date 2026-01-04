@@ -48,10 +48,17 @@ When the library determines which engine to use (via internal `maybeCreateEngine
 
 The engine supports persisting and restoring session state (primarily cookies) between executions.
 
-* **Strict Session Isolation**: Each engine instance now employs a private Crawlee `Configuration` instance. This ensures that `RequestQueue` and `KeyValueStore` are completely isolated by unique IDs, preventing data leakage or collisions between concurrent sessions.
+* **Flexible Session Isolation & Storage**: The library provides fine-grained control over how session data is stored and isolated via the `storage` configuration:
+    * **`id`**: A custom string to identify the storage.
+        * **Isolation (Default)**: If omitted, each session gets a unique ID, ensuring complete isolation of `RequestQueue`, `KeyValueStore`, and `SessionPool`.
+        * **Sharing**: Providing the same `id` across sessions allows them to share the same underlying storage, useful for persistent login sessions.
+    * **`persist`**: (boolean) Whether to enable disk persistence (Crawlee's `persistStorage`). Defaults to `false` (in-memory).
+    * **`purge`**: (boolean) Whether to delete the storage (drop `RequestQueue` and `KeyValueStore`) when the session is closed. Defaults to `true`.
+        * Set `purge: false` and provide a fixed `id` to create a truly persistent session that survives across application restarts.
+    * **`config`**: Allows passing raw configuration to the underlying Crawlee instance.
+        * **Note**: When `persist` is true, use `localDataDirectory` in the config to specify the storage path (e.g., `storage: { persist: true, config: { localDataDirectory: './my-data' } }`).
 * **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This state is **automatically included in every `FetchResponse`**, making it easy to persist and later provide back to the engine during initialization.
 * **`sessionPoolOptions`**: Allows advanced configuration of the underlying Crawlee `SessionPool` (e.g., `maxUsageCount`, `maxPoolSize`).
-  > **Note**: `persistenceOptions.enable` is forced to `true` to ensure proper session state management.
 * **`overrideSessionState`**: If set to `true`, it forces the engine to overwrite any existing persistent state in the storage with the provided `sessionState`. This is useful when you want to ensure the session starts with the exact state provided, ignoring any stale data in the persistence layer.
 * **`cookies`**: An array of explicit cookies to use for the session.
 
