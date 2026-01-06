@@ -112,6 +112,7 @@ interface FixtureExpected {
   outputs?: Record<string, any>;
   error?: string;
   cookies?: any;
+  metadata?: any;
 }
 
 
@@ -370,6 +371,9 @@ const engineTestSuite = (
       }
       if (fixture.expected.sessionState) {
         checkExpectations(content.sessionState, fixture.expected.sessionState);
+      }
+      if (fixture.expected.metadata) {
+        checkExpectations(content.metadata, fixture.expected.metadata);
       }
       if ('data' in fixture.expected) {
         if (isConditionObject(fixture.expected.data)) {

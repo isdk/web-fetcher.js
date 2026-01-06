@@ -66,6 +66,7 @@ export interface BaseFetcherProperties {
   enableSmart?: boolean  // 启用智能探测
   useSiteRegistry?: boolean  // 使用站点配置
   antibot?: boolean;
+  debug?: boolean;
 
   headers?: Record<string, string>;
   cookies?: Cookie[];
@@ -177,6 +178,7 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
   enableSmart: true,
   useSiteRegistry: true,
   antibot: false,
+  debug: false,
   headers: {},
   cookies: [],
   throwHttpErrors: undefined,

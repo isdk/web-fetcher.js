@@ -1,0 +1,24 @@
+{
+  "title": "should return metadata when debug is enabled",
+  "options": {
+    "debug": true
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "metadata": {
+      "and": [
+        { "contains": "mode" },
+        { "contains": "engine" },
+        { "contains": "timings" }
+      ]
+    }
+  }
+}

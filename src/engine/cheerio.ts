@@ -55,7 +55,7 @@ export class CheerioFetchEngine extends FetchEngine<
         }
     }
 
-    return {
+    const result: FetchResponse = {
       url: request.url,
       finalUrl: request.loadedUrl || request.url,
       statusCode: response?.statusCode ?? 200,
@@ -65,6 +65,22 @@ export class CheerioFetchEngine extends FetchEngine<
       html: text,
       text,
     };
+
+    if (this.opts?.debug && (response as any)?.timings) {
+      const t = (response as any).timings;
+      result.metadata = {
+        timings: {
+          start: t.start,
+          total: t.phases?.total,
+          ttfb: t.phases?.firstByte,
+          dns: t.phases?.dns,
+          tcp: t.phases?.tcp,
+          download: t.phases?.download,
+        }
+      } as any;
+    }
+
+    return result;
   }
 
   protected async _querySelectorAll(context: {$: CheerioAPI, el: CheerioNode}, selector: string): Promise<any[]> {

@@ -51,6 +51,24 @@ export class PlaywrightFetchEngine extends FetchEngine<
       html: body,
       text: text || '',
     };
+
+    if (this.opts?.debug && response) {
+      const request = typeof response.request === 'function' ? response.request() : (response as any).request;
+      if (request && typeof request.timing === 'function') {
+        const t = request.timing();
+        result.metadata = {
+          timings: {
+            start: t.startTime,
+            total: t.responseEnd - t.startTime,
+            ttfb: t.responseStart - t.requestStart,
+            dns: t.domainLookupEnd - t.domainLookupStart,
+            tcp: t.connectEnd - t.connectStart,
+            download: t.responseEnd - t.responseStart,
+          }
+        } as any;
+      }
+    }
+
     if (this.opts?.output?.cookies !== false) {
       result.cookies = cookies;
     }

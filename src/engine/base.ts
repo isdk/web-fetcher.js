@@ -341,6 +341,16 @@ export abstract class FetchEngine<
     } else {
       delete result.sessionState;
     }
+
+    if (this.opts?.debug) {
+      result.metadata = {
+        ...result.metadata,
+        mode: this.mode,
+        engine: this.id as any,
+        proxy: context.request.proxyUrl || (typeof this.opts.proxy === 'string' ? this.opts.proxy : Array.isArray(this.opts.proxy) ? this.opts.proxy[0] : undefined),
+      };
+    }
+
     return result;
   };
 
