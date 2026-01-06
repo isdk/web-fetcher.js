@@ -131,6 +131,7 @@ searchGoogle('gemini');
 
 * `url` (string): 要导航的初始 URL。
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
+* `proxy` (string | string[]): 用于请求的代理 URL。
 * `debug` (boolean): 在响应中启用详细的执行元数据（耗时、使用的引擎等）。
 * `actions` (FetchActionOptions[]): 要执行的动作对象数组。（支持 `action`/`name` 作为 `id` 的别名，`args` 作为 `params` 的别名）
 * `headers` (Record<string, string>): 用于所有请求的头信息。
