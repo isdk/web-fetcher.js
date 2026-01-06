@@ -6,7 +6,7 @@
 
 # Class: CheerioFetchEngine
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:20](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L20)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:20](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L20)
 
 ## Extends
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/engine/cheerio.ts:20](https://github.com/i
 
 > `protected` `optional` **\_initialCookies**: [`Cookie`](../interfaces/Cookie.md)[]
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:239](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L239)
+Defined in: [packages/web-fetcher/src/engine/base.ts:241](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L241)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:239](https://github.com/isd
 
 > `protected` **\_initializedSessions**: `Set`\<`string`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:240](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L240)
+Defined in: [packages/web-fetcher/src/engine/base.ts:242](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L242)
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:240](https://github.com/isd
 
 > `protected` **actionEmitter**: `EventEmitter`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:244](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L244)
+Defined in: [packages/web-fetcher/src/engine/base.ts:246](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L246)
 
 #### Inherited from
 
@@ -68,7 +68,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:244](https://github.com/isd
 
 > `protected` **blockedTypes**: `Set`\<`string`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:249](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L249)
+Defined in: [packages/web-fetcher/src/engine/base.ts:251](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L251)
 
 #### Inherited from
 
@@ -80,7 +80,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:249](https://github.com/isd
 
 > `protected` `optional` **config**: `Configuration`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:234](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L234)
+Defined in: [packages/web-fetcher/src/engine/base.ts:235](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L235)
 
 #### Inherited from
 
@@ -92,7 +92,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:234](https://github.com/isd
 
 > `protected` `optional` **crawler**: `CheerioCrawler`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:231](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L231)
+Defined in: [packages/web-fetcher/src/engine/base.ts:232](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L232)
 
 #### Inherited from
 
@@ -104,7 +104,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:231](https://github.com/isd
 
 > `protected` `optional` **crawlerRunPromise**: `Promise`\<`FinalStatistics`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:233](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L233)
+Defined in: [packages/web-fetcher/src/engine/base.ts:234](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L234)
 
 #### Inherited from
 
@@ -116,7 +116,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:233](https://github.com/isd
 
 > `protected` `optional` **ctx**: [`FetchEngineContext`](../interfaces/FetchEngineContext.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:229](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L229)
+Defined in: [packages/web-fetcher/src/engine/base.ts:230](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L230)
 
 #### Inherited from
 
@@ -128,7 +128,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:229](https://github.com/isd
 
 > `protected` `optional` **currentSession**: `Session`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:241](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L241)
+Defined in: [packages/web-fetcher/src/engine/base.ts:243](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L243)
 
 #### Inherited from
 
@@ -140,7 +140,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:241](https://github.com/isd
 
 > `protected` **hdrs**: `Record`\<`string`, `string`\> = `{}`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:238](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L238)
+Defined in: [packages/web-fetcher/src/engine/base.ts:240](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L240)
 
 #### Inherited from
 
@@ -152,7 +152,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:238](https://github.com/isd
 
 > `protected` `optional` **isCrawlerReady**: `boolean`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:232](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L232)
+Defined in: [packages/web-fetcher/src/engine/base.ts:233](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L233)
 
 #### Inherited from
 
@@ -164,7 +164,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:232](https://github.com/isd
 
 > `protected` **isEngineDisposed**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:246](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L246)
+Defined in: [packages/web-fetcher/src/engine/base.ts:248](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L248)
 
 #### Inherited from
 
@@ -176,7 +176,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:246](https://github.com/isd
 
 > `protected` **isPageActive**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:245](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L245)
+Defined in: [packages/web-fetcher/src/engine/base.ts:247](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L247)
 
 #### Inherited from
 
@@ -188,7 +188,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:245](https://github.com/isd
 
 > `protected` `optional` **kvStore**: `KeyValueStore`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:236](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L236)
+Defined in: [packages/web-fetcher/src/engine/base.ts:237](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L237)
 
 #### Inherited from
 
@@ -200,7 +200,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:236](https://github.com/isd
 
 > `protected` `optional` **lastResponse**: [`FetchResponse`](../interfaces/FetchResponse.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:248](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L248)
+Defined in: [packages/web-fetcher/src/engine/base.ts:250](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L250)
 
 #### Inherited from
 
@@ -212,7 +212,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:248](https://github.com/isd
 
 > `protected` **navigationLock**: `PromiseLock`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:247](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L247)
+Defined in: [packages/web-fetcher/src/engine/base.ts:249](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L249)
 
 #### Inherited from
 
@@ -224,7 +224,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:247](https://github.com/isd
 
 > `protected` `optional` **opts**: [`BaseFetcherProperties`](../interfaces/BaseFetcherProperties.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:230](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L230)
+Defined in: [packages/web-fetcher/src/engine/base.ts:231](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L231)
 
 #### Inherited from
 
@@ -236,7 +236,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:230](https://github.com/isd
 
 > `protected` **pendingRequests**: `Map`\<`string`, [`PendingEngineRequest`](../interfaces/PendingEngineRequest.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:242](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L242)
+Defined in: [packages/web-fetcher/src/engine/base.ts:244](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L244)
 
 #### Inherited from
 
@@ -244,11 +244,23 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:242](https://github.com/isd
 
 ***
 
+### proxyConfiguration?
+
+> `protected` `optional` **proxyConfiguration**: `ProxyConfiguration`
+
+Defined in: [packages/web-fetcher/src/engine/base.ts:238](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L238)
+
+#### Inherited from
+
+[`FetchEngine`](FetchEngine.md).[`proxyConfiguration`](FetchEngine.md#proxyconfiguration)
+
+***
+
 ### requestCounter
 
 > `protected` **requestCounter**: `number` = `0`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:243](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L243)
+Defined in: [packages/web-fetcher/src/engine/base.ts:245](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L245)
 
 #### Inherited from
 
@@ -260,7 +272,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:243](https://github.com/isd
 
 > `protected` `optional` **requestQueue**: `RequestQueue`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:235](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L235)
+Defined in: [packages/web-fetcher/src/engine/base.ts:236](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L236)
 
 #### Inherited from
 
@@ -272,7 +284,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:235](https://github.com/isd
 
 > `readonly` `static` **id**: `"cheerio"` = `'cheerio'`
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:25](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L25)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:25](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L25)
 
 Unique identifier for the engine implementation.
 
@@ -290,7 +302,7 @@ Must be defined by concrete implementations. Used for registration and lookup in
 
 > `readonly` `static` **mode**: `"http"` = `'http'`
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:26](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L26)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:26](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L26)
 
 Execution mode of the engine (`'http'` or `'browser'`).
 
@@ -310,7 +322,7 @@ Must be defined by concrete implementations. Indicates whether engine operates a
 
 > **get** **context**(): `undefined` \| [`FetchEngineContext`](../interfaces/FetchEngineContext.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:516](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L516)
+Defined in: [packages/web-fetcher/src/engine/base.ts:528](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L528)
 
 Gets the fetch engine context associated with this instance.
 
@@ -330,7 +342,7 @@ Gets the fetch engine context associated with this instance.
 
 > **get** **id**(): `string`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:491](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L491)
+Defined in: [packages/web-fetcher/src/engine/base.ts:503](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L503)
 
 Gets the unique identifier of this engine implementation.
 
@@ -350,7 +362,7 @@ Gets the unique identifier of this engine implementation.
 
 > **get** **mode**(): [`FetchEngineType`](../type-aliases/FetchEngineType.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:509](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L509)
+Defined in: [packages/web-fetcher/src/engine/base.ts:521](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L521)
 
 Gets the execution mode of this engine (`'http'` or `'browser'`).
 
@@ -368,7 +380,7 @@ Gets the execution mode of this engine (`'http'` or `'browser'`).
 
 > `protected` **\_buildResponse**(`context`): `Promise`\<[`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:39](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L39)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:39](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L39)
 
 **`Internal`**
 
@@ -402,7 +414,7 @@ Converts implementation-specific context (Playwright `page` or Cheerio `$`) to s
 
 > `protected` `optional` **\_cleanup**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:251](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L251)
+Defined in: [packages/web-fetcher/src/engine/base.ts:253](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L253)
 
 #### Returns
 
@@ -418,7 +430,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:251](https://github.com/isd
 
 > `protected` **\_commonCleanup**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:764](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L764)
+Defined in: [packages/web-fetcher/src/engine/base.ts:781](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L781)
 
 #### Returns
 
@@ -434,7 +446,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:764](https://github.com/isd
 
 > `protected` **\_createCrawler**(`options`, `config?`): `CheerioCrawler`
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:234](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L234)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:250](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L250)
 
 **`Internal`**
 
@@ -466,7 +478,7 @@ The final crawler options.
 
 > `protected` **\_executePendingActions**(`context`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:664](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L664)
+Defined in: [packages/web-fetcher/src/engine/base.ts:681](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L681)
 
 **`Internal`**
 
@@ -519,7 +531,7 @@ If called outside valid page context window (`!this.isPageActive`)
 
 > `protected` **\_extract**(`schema`, `context`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:256](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L256)
+Defined in: [packages/web-fetcher/src/engine/base.ts:258](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L258)
 
 #### Parameters
 
@@ -545,7 +557,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:256](https://github.com/isd
 
 > `protected` **\_extractValue**(`schema`, `context`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:75](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L75)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:91](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L91)
 
 #### Parameters
 
@@ -573,7 +585,7 @@ Defined in: [packages/web-fetcher/src/engine/cheerio.ts:75](https://github.com/i
 
 > `protected` **\_getSpecificCrawlerOptions**(`ctx`): `CheerioCrawlerOptions`
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:238](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L238)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:254](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L254)
 
 **`Internal`**
 
@@ -601,7 +613,7 @@ The fetch engine context.
 
 > `protected` **\_normalizeSchema**(`schema`): `ExtractSchema`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:447](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L447)
+Defined in: [packages/web-fetcher/src/engine/base.ts:459](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L459)
 
 #### Parameters
 
@@ -623,7 +635,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:447](https://github.com/isd
 
 > `protected` **\_querySelectorAll**(`context`, `selector`): `Promise`\<`any`[]\>
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:70](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L70)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:86](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L86)
 
 #### Parameters
 
@@ -655,7 +667,7 @@ Defined in: [packages/web-fetcher/src/engine/cheerio.ts:70](https://github.com/i
 
 > `protected` **\_sharedFailedRequestHandler**(`context`, `error?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:731](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L731)
+Defined in: [packages/web-fetcher/src/engine/base.ts:748](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L748)
 
 #### Parameters
 
@@ -681,7 +693,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:731](https://github.com/isd
 
 > `protected` **\_sharedRequestHandler**(`context`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:696](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L696)
+Defined in: [packages/web-fetcher/src/engine/base.ts:713](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L713)
 
 #### Parameters
 
@@ -703,7 +715,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:696](https://github.com/isd
 
 > **blockResources**(`types`, `overwrite?`): `Promise`\<`number`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:823](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L823)
+Defined in: [packages/web-fetcher/src/engine/base.ts:840](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L840)
 
 Blocks specified resource types from loading.
 
@@ -744,7 +756,7 @@ await engine.blockResources(['script'], true); // Replace existing
 
 > `protected` **buildResponse**(`context`): `Promise`\<[`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:325](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L325)
+Defined in: [packages/web-fetcher/src/engine/base.ts:327](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L327)
 
 #### Parameters
 
@@ -766,7 +778,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:325](https://github.com/isd
 
 > **cleanup**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:628](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L628)
+Defined in: [packages/web-fetcher/src/engine/base.ts:645](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L645)
 
 #### Returns
 
@@ -782,7 +794,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:628](https://github.com/isd
 
 > **click**(`selector`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:397](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L397)
+Defined in: [packages/web-fetcher/src/engine/base.ts:409](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L409)
 
 Clicks on element matching selector.
 
@@ -816,7 +828,7 @@ When no active page context exists
 
 > **cookies**(): `Promise`\<[`Cookie`](../interfaces/Cookie.md)[]\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:934](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L934)
+Defined in: [packages/web-fetcher/src/engine/base.ts:951](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L951)
 
 Manages cookies for current session with multiple overloads.
 
@@ -845,7 +857,7 @@ await engine.cookies([{ name: 'session', value: '123' }]);
 
 > **cookies**(`cookies`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:935](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L935)
+Defined in: [packages/web-fetcher/src/engine/base.ts:952](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L952)
 
 Manages cookies for current session with multiple overloads.
 
@@ -884,7 +896,7 @@ await engine.cookies([{ name: 'session', value: '123' }]);
 
 > `protected` **dispatchAction**\<`T`\>(`action`): `Promise`\<`T`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:747](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L747)
+Defined in: [packages/web-fetcher/src/engine/base.ts:764](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L764)
 
 #### Type Parameters
 
@@ -912,7 +924,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:747](https://github.com/isd
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:970](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L970)
+Defined in: [packages/web-fetcher/src/engine/base.ts:987](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L987)
 
 Disposes of engine, cleaning up all resources.
 
@@ -932,7 +944,7 @@ Promise resolving when disposal completes
 
 > `protected` **executeAction**(`context`, `action`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:103](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L103)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:119](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L119)
 
 **`Internal`**
 
@@ -972,7 +984,7 @@ Handles specific user interactions using underlying technology (Playwright/Cheer
 
 > **extract**\<`T`\>(`schema`): `Promise`\<`T`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:442](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L442)
+Defined in: [packages/web-fetcher/src/engine/base.ts:454](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L454)
 
 Extracts structured data from the current page content.
 
@@ -1006,7 +1018,7 @@ A promise that resolves to an object with the extracted data.
 
 > **fill**(`selector`, `value`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:409](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L409)
+Defined in: [packages/web-fetcher/src/engine/base.ts:421](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L421)
 
 Fills input element with specified value.
 
@@ -1044,7 +1056,7 @@ When no active page context exists
 
 > **getContent**(): `Promise`\<[`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:837](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L837)
+Defined in: [packages/web-fetcher/src/engine/base.ts:854](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L854)
 
 Gets content of current page.
 
@@ -1068,7 +1080,7 @@ When no content has been fetched yet
 
 > **getState**(): `Promise`\<\{ `cookies`: [`Cookie`](../interfaces/Cookie.md)[]; `sessionState?`: `any`; \}\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:499](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L499)
+Defined in: [packages/web-fetcher/src/engine/base.ts:511](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L511)
 
 Returns the current state of the engine (cookies)
 that can be used to restore the session later.
@@ -1087,7 +1099,7 @@ that can be used to restore the session later.
 
 > **goto**(`url`, `params?`): `Promise`\<`void` \| [`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/cheerio.ts:258](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/cheerio.ts#L258)
+Defined in: [packages/web-fetcher/src/engine/cheerio.ts:271](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/cheerio.ts#L271)
 
 Navigates to the specified URL.
 
@@ -1129,7 +1141,7 @@ await engine.goto('https://example.com');
 
 > **headers**(): `Promise`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:876](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L876)
+Defined in: [packages/web-fetcher/src/engine/base.ts:893](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L893)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -1160,7 +1172,7 @@ await engine.headers('auth', 'token');
 
 > **headers**(`name`): `Promise`\<`string`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:877](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L877)
+Defined in: [packages/web-fetcher/src/engine/base.ts:894](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L894)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -1199,7 +1211,7 @@ await engine.headers('auth', 'token');
 
 > **headers**(`headers`, `replaced?`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:878](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L878)
+Defined in: [packages/web-fetcher/src/engine/base.ts:895](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L895)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -1244,7 +1256,7 @@ await engine.headers('auth', 'token');
 
 > **headers**(`name`, `value`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:879](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L879)
+Defined in: [packages/web-fetcher/src/engine/base.ts:896](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L896)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -1291,7 +1303,7 @@ await engine.headers('auth', 'token');
 
 > **initialize**(`context`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:531](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L531)
+Defined in: [packages/web-fetcher/src/engine/base.ts:543](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L543)
 
 Initializes the fetch engine with provided context and options.
 
@@ -1330,7 +1342,7 @@ Automatically called when creating engine via `FetchEngine.create()`.
 
 > **pause**(`message?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:432](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L432)
+Defined in: [packages/web-fetcher/src/engine/base.ts:444](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L444)
 
 Pauses execution, allowing for manual intervention or inspection.
 
@@ -1362,7 +1374,7 @@ When no active page context exists
 
 > **submit**(`selector?`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:421](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L421)
+Defined in: [packages/web-fetcher/src/engine/base.ts:433](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L433)
 
 Submits a form.
 
@@ -1400,7 +1412,7 @@ When no active page context exists
 
 > **waitFor**(`params?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:386](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L386)
+Defined in: [packages/web-fetcher/src/engine/base.ts:398](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L398)
 
 Waits for specified condition before continuing.
 
@@ -1435,7 +1447,7 @@ await engine.waitFor({ selector: '#content' }); // Wait for element
 
 > `static` **create**(`ctx`, `options?`): `Promise`\<`undefined` \| `AnyFetchEngine`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:202](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L202)
+Defined in: [packages/web-fetcher/src/engine/base.ts:203](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L203)
 
 Factory method to create and initialize a fetch engine instance.
 
@@ -1477,7 +1489,7 @@ Primary entry point for engine creation. Selects appropriate implementation base
 
 > `static` **get**(`id`): `undefined` \| `AnyFetchEngineCtor`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:175](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L175)
+Defined in: [packages/web-fetcher/src/engine/base.ts:176](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L176)
 
 Retrieves a fetch engine implementation by its unique ID.
 
@@ -1505,7 +1517,7 @@ Engine class if found, otherwise `undefined`
 
 > `static` **getByMode**(`mode`): `undefined` \| `AnyFetchEngineCtor`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:185](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L185)
+Defined in: [packages/web-fetcher/src/engine/base.ts:186](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L186)
 
 Retrieves a fetch engine implementation by execution mode.
 
@@ -1533,7 +1545,7 @@ Engine class if found, otherwise `undefined`
 
 > `static` **register**(`engineClass`): `void`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:162](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L162)
+Defined in: [packages/web-fetcher/src/engine/base.ts:163](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L163)
 
 Registers a fetch engine implementation with the global registry.
 

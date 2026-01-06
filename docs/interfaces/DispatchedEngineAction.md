@@ -6,7 +6,7 @@
 
 # Interface: DispatchedEngineAction
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:100](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L100)
+Defined in: [packages/web-fetcher/src/engine/base.ts:101](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L101)
 
 Represents an action that has been dispatched and is awaiting execution in the active page context.
 
@@ -21,7 +21,7 @@ to handle promises while maintaining the page context validity window.
 
 > **action**: [`FetchEngineAction`](../type-aliases/FetchEngineAction.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:101](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L101)
+Defined in: [packages/web-fetcher/src/engine/base.ts:102](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L102)
 
 ***
 
@@ -29,7 +29,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:101](https://github.com/isd
 
 > **reject**: (`reason?`) => `void`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:103](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L103)
+Defined in: [packages/web-fetcher/src/engine/base.ts:104](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L104)
 
 #### Parameters
 
@@ -47,7 +47,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:103](https://github.com/isd
 
 > **resolve**: (`value?`) => `void`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:102](https://github.com/isdk/web-fetcher.js/blob/c6694f50698959edc7c0cdb928907e3e0ef9bb70/src/engine/base.ts#L102)
+Defined in: [packages/web-fetcher/src/engine/base.ts:103](https://github.com/isdk/web-fetcher.js/blob/1f3a81cc4fe8a2cf40fe3f3e8030d14a75c9d27c/src/engine/base.ts#L103)
 
 #### Parameters
 
