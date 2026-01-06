@@ -131,6 +131,7 @@ This is the main entry point for the library.
 
 * `url` (string): The initial URL to navigate to.
 * `engine` ('http' | 'browser' | 'auto'): The engine to use. Defaults to `auto`.
+* `proxy` (string | string[]): Proxy URL(s) to use for requests.
 * `debug` (boolean): Enable detailed execution metadata (timings, engine used, etc.) in response.
 * `actions` (FetchActionOptions[]): An array of action objects to execute. (Supports `action`/`name` as alias for `id`, and `args` as alias for `params`)
 * `headers` (Record<string, string>): Headers to use for all requests.
