@@ -244,6 +244,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const crawlerOptions: Partial<PlaywrightCrawlerOptions> = {
       maxRequestRetries: ctx.retries || 3,
       headless,
+      proxyConfiguration: this.proxyConfiguration,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       preNavigationHooks: [
         async ({ page, request }, gotOptions) => {

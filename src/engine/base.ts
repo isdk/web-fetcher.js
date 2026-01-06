@@ -7,6 +7,7 @@ import {
   PERSIST_STATE_KEY,
   RequestQueue,
   Session,
+  ProxyConfiguration,
 } from 'crawlee';
 import type { BasicCrawler, BasicCrawlerOptions, CrawlingContext, FinalStatistics, PlaywrightCrawlingContext, PlaywrightGotoOptions } from 'crawlee';
 
@@ -234,6 +235,7 @@ export abstract class FetchEngine<
   protected config?: Configuration;
   declare protected requestQueue?: RequestQueue;
   protected kvStore?: KeyValueStore;
+  protected proxyConfiguration?: ProxyConfiguration;
 
   protected hdrs: Record<string, string> = {};
   protected _initialCookies?: Cookie[];
@@ -347,7 +349,7 @@ export abstract class FetchEngine<
         ...result.metadata,
         mode: this.mode,
         engine: this.id as any,
-        proxy: context.request.proxyUrl || (typeof this.opts.proxy === 'string' ? this.opts.proxy : Array.isArray(this.opts.proxy) ? this.opts.proxy[0] : undefined),
+        proxy: (context as any).proxyInfo?.url || (typeof this.opts.proxy === 'string' ? this.opts.proxy : Array.isArray(this.opts.proxy) ? this.opts.proxy[0] : undefined),
       };
     }
 
@@ -569,6 +571,11 @@ export abstract class FetchEngine<
     });
     const storeId = storage.id || context.id;
     this.requestQueue = await RequestQueue.open(storeId, { config });
+
+    const proxyUrls = this.opts?.proxy ? (typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy) : undefined;
+    if (proxyUrls?.length) {
+      this.proxyConfiguration = new ProxyConfiguration({ proxyUrls });
+    }
 
     const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
     const sessionPoolOptions: any = defaultsDeep({

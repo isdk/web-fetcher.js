@@ -1,4 +1,4 @@
-import { CheerioCrawler, ProxyConfiguration, Configuration } from 'crawlee';
+import { CheerioCrawler, Configuration } from 'crawlee';
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee';
 import * as cheerio from 'cheerio';
 import {
@@ -252,14 +252,11 @@ export class CheerioFetchEngine extends FetchEngine<
   }
 
   protected _getSpecificCrawlerOptions(ctx: FetchEngineContext): CheerioCrawlerOptions {
-    const proxyUrls = this.opts?.proxy ? (typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy) : undefined;
-    const proxy = proxyUrls?.length ? new ProxyConfiguration({ proxyUrls }) : undefined;
-
     const crawlerOptions: CheerioCrawlerOptions = {
       additionalMimeTypes: ['text/plain'],
       maxRequestRetries: 1,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
-      proxyConfiguration: proxy,
+      proxyConfiguration: this.proxyConfiguration,
       preNavigationHooks: [
         ({ session, request }, gotOptions) => {
           // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
