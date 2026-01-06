@@ -2,6 +2,14 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.11](https://github.com/isdk/web-fetcher.js/compare/v0.2.10...v0.2.11) (2026-01-06)
+
+
+### Features
+
+* add debug parameter ([afe0a5e](https://github.com/isdk/web-fetcher.js/commit/afe0a5e13450a86fe4523dc20e5ca72d705505a0))
+* refactor proxy configuration and fix metadata reporting ([4a3d395](https://github.com/isdk/web-fetcher.js/commit/4a3d3954b48f882801c6631667860f6301e4d65e))
+
 ## [0.2.10](https://github.com/isdk/web-fetcher.js/compare/v0.2.9...v0.2.10) (2026-01-04)
 
 
