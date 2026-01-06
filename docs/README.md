@@ -135,18 +135,20 @@ This is the main entry point for the library.
 
 * `url` (string): The initial URL to navigate to.
 * `engine` ('http' | 'browser' | 'auto'): The engine to use. Defaults to `auto`.
+* `proxy` (string | string[]): Proxy URL(s) to use for requests.
+* `debug` (boolean): Enable detailed execution metadata (timings, engine used, etc.) in response.
 * `actions` (FetchActionOptions[]): An array of action objects to execute. (Supports `action`/`name` as alias for `id`, and `args` as alias for `params`)
 * `headers` (Record<string, string>): Headers to use for all requests.
 * `cookies` (Cookie[]): Array of cookies to use.
 * `sessionState` (any): Crawlee session state to restore.
 * `storage` (StorageOptions): Controls session isolation, persistence, and cleanup.
-    * `id` (string): Shared storage ID for cross-session data reuse.
-    * `persist` (boolean): Whether to save data to disk.
-    * `purge` (boolean): Whether to delete data on cleanup (defaults to `true`).
-    * `config` (object): Raw Crawlee configuration (e.g., `{ localDataDirectory: './data' }`).
+  * `id` (string): Shared storage ID for cross-session data reuse.
+  * `persist` (boolean): Whether to save data to disk.
+  * `purge` (boolean): Whether to delete data on cleanup (defaults to `true`).
+  * `config` (object): Raw Crawlee configuration (e.g., `{ localDataDirectory: './data' }`).
 * `output` (object): Controls the output fields in `FetchResponse`.
-    * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
-    * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
+  * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
+  * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
 * `sessionPoolOptions` (SessionPoolOptions): Advanced configuration for the underlying Crawlee SessionPool.
 * ...and many other options for proxy, retries, etc.
 
