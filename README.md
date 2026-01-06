@@ -136,13 +136,13 @@ This is the main entry point for the library.
 * `cookies` (Cookie[]): Array of cookies to use.
 * `sessionState` (any): Crawlee session state to restore.
 * `storage` (StorageOptions): Controls session isolation, persistence, and cleanup.
-    * `id` (string): Shared storage ID for cross-session data reuse.
-    * `persist` (boolean): Whether to save data to disk.
-    * `purge` (boolean): Whether to delete data on cleanup (defaults to `true`).
-    * `config` (object): Raw Crawlee configuration (e.g., `{ localDataDirectory: './data' }`).
+  * `id` (string): Shared storage ID for cross-session data reuse.
+  * `persist` (boolean): Whether to save data to disk.
+  * `purge` (boolean): Whether to delete data on cleanup (defaults to `true`).
+  * `config` (object): Raw Crawlee configuration (e.g., `{ localDataDirectory: './data' }`).
 * `output` (object): Controls the output fields in `FetchResponse`.
-    * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
-    * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
+  * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
+  * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
 * `sessionPoolOptions` (SessionPoolOptions): Advanced configuration for the underlying Crawlee SessionPool.
 * ...and many other options for proxy, retries, etc.
 
