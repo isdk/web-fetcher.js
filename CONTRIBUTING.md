@@ -101,6 +101,28 @@ export default async function(server) {
 ```
 The test runner will automatically load this module and pass the Fastify server instance to the default exported function before running the test case.
 
+### Debugging Tests
+
+You can enable debug mode in your test fixture to inspect detailed execution metadata, including:
+- **Mode**: The active engine mode (`http` vs `browser`).
+- **Engine**: The specific engine implementation used (e.g., `cheerio`, `playwright`).
+- **Timings**: Detailed request timing metrics (DNS, TCP, TTFB, Total) where available.
+- **Proxy**: The proxy URL used for the request.
+
+To enable it, add `"debug": true` to the `options` object in `fixture.json`:
+
+```json
+{
+  "title": "Debug test",
+  "options": {
+    "debug": true
+  },
+  "actions": [ ... ]
+}
+```
+
+The debug metadata will be available in `result.metadata`.
+
 *   **`params` vs `args`**: We prioritize using the named `params` object for action arguments to match the `FetchActionOptions` interface and improve readability.
 *   **Engine**: By default, tests run on both `cheerio` (http) and `playwright` (browser) engines. You can restrict a test to a specific engine by adding `"engine": "playwright"` to the root of the JSON.
 
