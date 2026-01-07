@@ -1,6 +1,7 @@
 {
   "name": "@isdk/web-fetcher",
   "version": "0.2.11",
+  "description": "A powerful and flexible web automation and data extraction library featuring a dual-engine architecture (HTTP/Cheerio and Browser/Playwright) with declarative JSON action scripts.",
   "license": "MIT",
   "author": "Riceball LEE <snowyu.lee@gmail.com>",
   "homepage": "https://github.com/isdk/web-fetcher.js",
@@ -79,7 +80,7 @@
     "web",
     "fetch",
     "crawler",
-    "spiler",
+    "spider",
     "structure",
     "data"
   ],
