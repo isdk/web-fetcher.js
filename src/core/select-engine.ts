@@ -1,6 +1,6 @@
 import { FetchEngine } from "../engine/base";
 import { FetchContext } from "./context";
-import { BaseFetcherProperties, FetchResponse, FetchSite } from "./types";
+import { FetchResponse, FetchSite } from "./types";
 
 export async function maybeCreateEngine(ctx: FetchContext, args?: { url?: string, engine?: string }) {
   let result: FetchEngine | undefined;
