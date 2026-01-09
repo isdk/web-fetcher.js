@@ -4,21 +4,33 @@ import { BaseFetcherProperties, FetchResponse, FetchSite } from "./types";
 
 export async function maybeCreateEngine(ctx: FetchContext, args?: { url?: string, engine?: string }) {
   let result: FetchEngine | undefined;
-  if (args?.engine) {
-    result = await FetchEngine.create(ctx, { engine: args.engine });
+
+  // 1. Get engine preference: prioritize args, then context
+  const enginePref = args?.engine || ctx.engine;
+
+  // 2. If a specific engine is requested (not 'auto')
+  if (enginePref && enginePref !== 'auto') {
+    result = await FetchEngine.create(ctx, { engine: enginePref });
     if (!result) {
-      throw new Error(`No engine available for ${args.engine}`);
+      throw new Error(`Engine "${enginePref}" is not available or failed to initialize.`);
     }
     return result;
   }
 
+  // 3. Handle 'auto' or unspecified engine
   const url = args?.url || ctx.url;
   const matched = pickSiteMatched(url, ctx.sites);
-  const enginePref = (ctx.engine || matched?.engine || 'auto') as BaseFetcherProperties['engine'];
 
-  result = await FetchEngine.create(ctx, { engine: enginePref });
+  // 3a. Try to match engine from site registry
+  if (matched?.engine && matched.engine !== 'auto') {
+    result = await FetchEngine.create(ctx, { engine: matched.engine });
+    if (result) return result;
+  }
+
+  // 3b. Final fallback to http for 'auto' mode
+  result = await FetchEngine.create(ctx, { engine: 'http' });
   if (!result) {
-    result = await FetchEngine.create(ctx, { engine: 'http' });
+    throw new Error('Failed to create default http engine');
   }
   return result;
 }

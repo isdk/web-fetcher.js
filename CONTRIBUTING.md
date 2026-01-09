@@ -142,7 +142,15 @@ While the Session configuration is fixed, the context for *action execution* is 
 
 ### Engine Selection
 
-The library uses a specific priority to determine which engine (`http` or `browser`) to use for a session. See the "Engine Selection Priority" section in [README.engine.md](./README.engine.md) for details.
+The library follows a strict priority to determine which engine (`http` or `browser`) to use. The engine is initialized on the first action and remains fixed for the session.
+
+1.  **Explicit Option**: Prioritizes `engine` from constructor or `executeAll` options.
+    *   **Fail-Fast**: If an explicit engine (not `'auto'`) is requested but unavailable, an error is thrown immediately.
+2.  **Site Registry**: If in `'auto'` mode, it matches the URL against the `sites` registry.
+3.  **Smart Upgrade**: If enabled, it may upgrade from `http` to `browser` based on the response.
+4.  **Default**: Falls back to `'http'`.
+
+For more details, see [README.engine.md](./README.engine.md).
 
 ### Action Execution & Error Handling
 
