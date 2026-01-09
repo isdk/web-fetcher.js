@@ -128,6 +128,18 @@ The debug metadata will be available in `result.metadata`.
 
 ## 📐 Architecture & Design Decisions
 
+### Session Architecture
+
+#### Immutable Session
+Once a `FetchSession` is initialized and its Engine is created, its core configuration (especially those affecting the Engine lifecycle like `engine` type, `proxy`, `storage`) is considered **immutable**. Modifying these properties on an active session is unsafe and not supported. If you need a different engine or proxy, you should create a new `FetchSession`.
+
+#### Mutable Action Context & Overrides
+While the Session configuration is fixed, the context for *action execution* is flexible.
+- **Temporary Overrides**: The `executeAll` method accepts an optional `options` object. This creates a **temporary context** for that specific batch of actions.
+- **Use Case**: This allows you to override parameters like `timeoutMs`, `headers`, or `waitUntil` for a specific sequence of actions without polluting the global Session state or affecting subsequent executions.
+
+**Developer Note**: When implementing new Actions or modifying core logic, **ALWAYS** use the `context` argument passed to the method (e.g., `execute(context, options)`) instead of accessing `this.context` directly. This ensures that any temporary overrides provided by the caller are correctly respected.
+
 ### Engine Selection
 
 The library uses a specific priority to determine which engine (`http` or `browser`) to use for a session. See the "Engine Selection Priority" section in [README.engine.md](./README.engine.md) for details.
