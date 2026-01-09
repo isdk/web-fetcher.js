@@ -41,9 +41,12 @@ const session = new FetchSession({ engine: 'browser' });
 
 #### 引擎选择优先级 (Engine Selection Priority)
 
-1. **显式选项**: 如果在 `FetchSession` 的 `options.engine` 中提供了引擎。
-2. **上下文配置**: 如果在上下文中设置了 `engine`（例如通过站点配置）。
-3. **自动检测**: 如果设置为 `'auto'`，系统会尝试根据 URL 或响应检测最佳引擎（例如，针对动态内容升级到浏览器）。
+引擎在执行第一个动作时延迟初始化，并在会话持续期间保持固定。选择遵循以下规则：
+
+1. **显式选项**: 如果在 `FetchSession` 的 `options.engine`（或 `executeAll` 的临时上下文覆盖）中提供了引擎且不为 `'auto'`。
+    * ⚠️ **快速失败 (Fail-Fast)**: 如果请求的引擎不可用（例如缺少依赖），将立即抛出错误。
+2. **站点注册表 (Site Registry)**: 如果设置为 `'auto'`（默认），系统会尝试根据目标 URL 匹配 `sites` 注册表。
+3. **智能升级 (Smart Upgrade)**: 如果启用，系统可能会根据响应特征（如机器人检测或大量 JS）动态从 `http` 升级到 `browser`。
 4. **默认**: 回退到 `'http'` (Cheerio)。
 
 #### 带有覆盖的批量执行 (Batch Execution with Overrides)

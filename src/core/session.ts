@@ -194,6 +194,7 @@ export class FetchSession {
       const url = actionOptions?.params?.url ?? context.url;
       const engine = await maybeCreateEngine(context, { url })
       if (!engine) {throw new Error('No engine found')}
+      context.internal.engine = engine
     }
 
   }

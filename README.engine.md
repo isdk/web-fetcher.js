@@ -41,9 +41,12 @@ const session = new FetchSession({ engine: 'browser' });
 
 #### Engine Selection Priority
 
-1. **Explicit Option**: If `options.engine` is provided in `FetchSession`.
-2. **Context Config**: If `engine` is set in the context (e.g., via site config).
-3. **Auto-Detection**: If set to `'auto'`, the system attempts to detect the best engine based on the URL or response (e.g., upgrading to browser for dynamic content).
+The engine is initialized lazily upon the first action execution and remains fixed for the duration of the session. The selection follows these rules:
+
+1. **Explicit Option**: If `options.engine` (or temporary context override in `executeAll`) is provided and NOT set to `'auto'`.
+    * ⚠️ **Fail-Fast**: If the requested engine is unavailable (e.g., missing dependencies), an error is thrown immediately.
+2. **Site Registry**: If set to `'auto'` (default), the system attempts to match the target URL against the `sites` registry.
+3. **Smart Upgrade**: If enabled, the engine may be dynamically upgraded from `http` to `browser` based on response characteristics (e.g., bot detection or heavy JS).
 4. **Default**: Falls back to `'http'` (Cheerio).
 
 #### Batch Execution with Overrides

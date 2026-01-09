@@ -421,3 +421,64 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
 // 3. 运行测试
 sessionTestSuite('cheerio');
 sessionTestSuite('playwright');
+
+describe('FetchSession Engine Selection and Persistence', () => {
+  it('should prioritize explicit engine in constructor', async () => {
+    const session = new FetchSession({ engine: 'http' });
+    await session.execute({ name: 'getContent' }).catch(() => {}); // trigger engine init, ignore 'no content' error
+    expect(session.context.internal.engine).toBeDefined();
+    expect(session.context.internal.engine!.mode).toBe('http');
+    await session.dispose();
+  });
+
+  it('should throw error if explicitly requested engine is not found', async () => {
+    const session = new FetchSession({ engine: 'non-existent-engine' });
+    await expect(session.execute({ name: 'getContent' }))
+      .rejects.toThrow('Engine "non-existent-engine" is not available');
+    await session.dispose();
+  });
+
+  it('should prioritize site-matched engine in auto mode', async () => {
+    const session = new FetchSession({
+      engine: 'auto',
+      sites: [
+        { domain: 'example.com', engine: 'http' }
+      ]
+    });
+    // Use a URL that matches the site. Note: we don't need a real connection to check engine selection
+    await session.execute({ name: 'goto', params: { url: 'http://example.com' } }).catch(() => {});
+    expect(session.context.internal.engine).toBeDefined();
+    expect(session.context.internal.engine!.mode).toBe('http');
+    await session.dispose();
+  });
+
+  it('should reuse the same engine instance across multiple actions', async () => {
+    const session = new FetchSession({ engine: 'http' });
+    await session.execute({ name: 'getContent' }).catch(() => {});
+    const firstEngine = session.context.internal.engine;
+    expect(firstEngine).toBeDefined();
+
+    await session.execute({ name: 'getContent' }).catch(() => {});
+    const secondEngine = session.context.internal.engine;
+    expect(secondEngine).toBe(firstEngine);
+
+    await session.dispose();
+  });
+
+  it('should allow engine override in executeAll via temporary context', async () => {
+    const session = new FetchSession({ engine: 'http' });
+    // First init with http
+    await session.execute({ name: 'getContent' }).catch(() => {});
+    expect(session.context.internal.engine!.mode).toBe('http');
+
+    // Currently, once engine is initialized, it's fixed in context.internal.engine.
+    // If we want to test that it respects 'engine' in context IF not yet initialized:
+    const session2 = new FetchSession({ engine: 'http' });
+    await session2.executeAll([
+      { name: 'getContent' }
+    ], { engine: 'playwright' }).catch(() => {});
+    expect(session2.context.internal.engine!.mode).toBe('browser');
+    await session2.dispose();
+    await session.dispose();
+  });
+});
