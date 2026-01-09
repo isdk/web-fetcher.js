@@ -289,7 +289,24 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
     > The example above will return an array of the `src` attributes from all `<img>` tags.
 
-###### 4. Precise Filtering: `has` and `exclude`
+###### 5. Implicit Object Extraction (Simplest Syntax)
+
+For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not reserved keywords (like `selector`, `attribute`, `type`, etc.), it is treated as an object schema where keys are property names.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "selector": ".author-bio",
+    "name": { "selector": ".author-name" },
+    "email": { "selector": "a.email", "attribute": "href" }
+  }
+}
+```
+
+> This is equivalent to Example 2 but more concise.
+
+###### 6. Precise Filtering: `has` and `exclude`
 
 You can use the `has` and `exclude` fields in any schema that includes a `selector` to precisely control element selection.
 
