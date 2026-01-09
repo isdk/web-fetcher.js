@@ -31,18 +31,35 @@
 
 此静态工厂方法是创建引擎实例的指定入口点。它会自动选择并初始化合适的引擎。
 
-### `FetchSession(options, engine)`
+### `FetchSession(options)`
 
-`FetchSession` 类管理抓取操作的生命周期。它现在在构造函数中支持一个可选的 `engine` 参数，用于为该会话强制指定引擎实现，从而绕过任何自动检测或基于注册表的选择。
+`FetchSession` 类管理抓取操作的生命周期。您可以在 `options` 中指定 `engine` 来为该会话强制指定特定的引擎实现。
 
-### 引擎选择优先级
+```typescript
+const session = new FetchSession({ engine: 'browser' });
+```
 
-当库决定使用哪个引擎时（通过内部的 `maybeCreateEngine`），它遵循以下优先级：
+#### 引擎选择优先级 (Engine Selection Priority)
 
-1. **显式强制引擎**：如果在会话或引擎创建期间显式传递了引擎 ID（例如 `FetchSession` 中的新 `engine` 参数）。
-2. **配置引擎**：在 `FetcherOptions` 中定义的 `engine` 属性。
-3. **站点注册表**：如果目标 URL 匹配已配置 `sites` 注册表中的域名，则使用该站点首选的引擎。
-4. **默认值**：默认为 `auto`。如果启用了 `enableSmart`，它会智能地在 `http` 和 `browser`之间切换，否则默认为 `http`。
+1. **显式选项**: 如果在 `FetchSession` 的 `options.engine` 中提供了引擎。
+2. **上下文配置**: 如果在上下文中设置了 `engine`（例如通过站点配置）。
+3. **自动检测**: 如果设置为 `'auto'`，系统会尝试根据 URL 或响应检测最佳引擎（例如，针对动态内容升级到浏览器）。
+4. **默认**: 回退到 `'http'` (Cheerio)。
+
+#### 带有覆盖的批量执行 (Batch Execution with Overrides)
+
+您可以执行一系列动作，并指定临时的配置覆盖（例如 headers、timeout）。这些覆盖仅应用于当前批次，不会修改会话的全局状态。
+
+```typescript
+// 使用临时的自定义 header 和超时执行动作
+await session.executeAll([
+  { name: 'goto', params: { url: '...' } },
+  { name: 'extract', params: { ... } }
+], {
+  headers: { 'x-custom-priority': 'high' },
+  timeoutMs: 30000
+});
+```
 
 ### 会话管理与状态持久化
 

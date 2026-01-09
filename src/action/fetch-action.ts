@@ -45,6 +45,7 @@ export interface BaseFetchActionProperties {
   id?: string
   name?: string // action id 的别名
   action?: string|FetchAction // action id 的别名
+  index?: number
   params?: any
   args?: any // params 的别名
   // 如果设置则将结果存储到上下文的outputs[storeAs]
@@ -294,6 +295,7 @@ export abstract class FetchAction {
       action: this,
       context,
       options,
+      index: options?.index,
       depth,
       stack: [...stack],
     };

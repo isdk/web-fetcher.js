@@ -279,6 +279,142 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
       await Promise.all(tasks);
     }, 20000); // Higher timeout for concurrency
 
+    it('should support temporary context override in executeAll', async () => {
+      createSession({ headers: { 'x-global': 'true' } });
+      const actionListener = vi.fn();
+      session.context.eventBus.on('action:start', actionListener);
+
+      // Execute with temporary override
+      await session.executeAll(
+        [{ name: 'goto', params: { url: baseUrl } }],
+        { headers: { 'x-global': 'false', 'x-temp': 'active' } }
+      );
+
+      // 1. Check if the action received the overridden context
+      expect(actionListener).toHaveBeenCalled();
+      const eventContext = actionListener.mock.calls[0][0].context;
+      expect(eventContext.headers).toEqual(expect.objectContaining({
+        'x-global': 'false',
+        'x-temp': 'active'
+      }));
+
+      // 2. Check if the original session context is untouched
+      expect(session.context.headers).toEqual(expect.objectContaining({
+        'x-global': 'true'
+      }));
+      expect(session.context.headers).not.toHaveProperty('x-temp');
+    });
+
+    it('should initialize engine based on temporary context override if not yet initialized', async () => {
+      // Create a session without specifying engine (defaults to auto/http logic)
+      const session = new FetchSession({});
+
+      // Execute with a context override that forces 'browser' (or checking a property that implies it)
+      // Since we can't easily check "browser" vs "cheerio" instance without imports,
+      // we check the context.internal.engine.mode if available, or just rely on the fact
+      // that maybeCreateEngine uses the context.
+      // A better way for this unit test is to pass a distinct 'engine' option if we had a mock engine,
+      // but here we are using real engines.
+
+      // Let's force 'cheerio' explicitly in override on a generic session
+      await session.execute(
+        { name: 'goto', params: { url: baseUrl } },
+        { ...session.context, engine: 'cheerio' } // Force cheerio via override
+      );
+
+      const engine = session.context.internal.engine;
+      expect(engine).toBeDefined();
+      expect(engine!.mode).toBe('http');
+
+      await session.dispose();
+    });
+
+    it('should respect temporary context in single execute', async () => {
+      createSession({ headers: { 'x-base': '1' } });
+      const actionListener = vi.fn();
+      session.context.eventBus.on('action:start', actionListener);
+
+      const overrideContext = { ...session.context, headers: { 'x-base': '2' } };
+      await session.execute({ name: 'goto', params: { url: baseUrl } }, overrideContext);
+
+      expect(actionListener).toHaveBeenCalled();
+      const eventContext = actionListener.mock.calls[0][0].context;
+      expect(eventContext.headers['x-base']).toBe('2');
+      // Original should be unchanged
+      expect(session.context.headers!['x-base']).toBe('1');
+    });
+
+    it('should track actionIndex correctly across multiple execute calls', async () => {
+      createSession();
+      const actionListener = vi.fn();
+      session.context.eventBus.on('action:start', actionListener);
+
+      // First call (automatic 0-based index)
+      await session.execute({ name: 'goto', params: { url: baseUrl } });
+      expect(actionListener).toHaveBeenCalledTimes(1);
+      expect(actionListener.mock.calls[0][0].index).toBe(0);
+
+      // Second call (automatic increment)
+      await session.execute({ name: 'getContent' });
+      expect(actionListener).toHaveBeenCalledTimes(2);
+      expect(actionListener.mock.calls[1][0].index).toBe(1);
+
+      // Third call (explicit override)
+      await session.execute({ name: 'getContent', index: 10 });
+      expect(actionListener).toHaveBeenCalledTimes(3);
+      expect(actionListener.mock.calls[2][0].index).toBe(10);
+
+      // Fourth call (increment from last override)
+      await session.execute({ name: 'getContent' });
+      expect(actionListener).toHaveBeenCalledTimes(4);
+      expect(actionListener.mock.calls[3][0].index).toBe(11);
+
+      // Verify context.internal.actionIndex matches
+      expect(session.context.internal.actionIndex).toBe(12);
+    });
+
+    it('should support starting index in executeAll', async () => {
+      createSession();
+      const actionListener = vi.fn();
+      session.context.eventBus.on('action:start', actionListener);
+
+      const actions = [
+        { name: 'getContent' }, // Index 0: would fail if executed first
+        { name: 'goto', params: { url: baseUrl } }, // Index 1
+        { name: 'getContent' }  // Index 2
+      ];
+
+      // Start from index 1 (the 'goto' action)
+      await session.executeAll(actions, { index: 1 });
+
+      // Should have executed: actions[1], actions[2], and the final auto-getContent (index 3)
+      expect(actionListener).toHaveBeenCalledTimes(3);
+      expect(actionListener.mock.calls[0][0].index).toBe(1);
+      expect(actionListener.mock.calls[0][0].action.id).toBe('goto');
+
+      expect(actionListener.mock.calls[1][0].index).toBe(2);
+      expect(actionListener.mock.calls[1][0].action.id).toBe('getContent');
+
+      expect(actionListener.mock.calls[2][0].index).toBe(3);
+      expect(actionListener.mock.calls[2][0].action.id).toBe('getContent');
+    });
+
+    it('should attach actionIndex to error even with temporary context', async () => {
+      createSession();
+      const actions = [
+        { name: 'goto', params: { url: baseUrl } },
+        { name: 'unknown-action-XYZ', params: {} } // Should fail with "Unknown action"
+      ];
+
+      try {
+        await session.executeAll(actions, { timeoutMs: 5000 });
+        expect.fail('Should have thrown an error');
+      } catch (error: any) {
+        expect(error.message).toContain('Unknown action');
+        expect(error.actionIndex).toBe(1);
+      }
+    });
+
   });
 }
 
