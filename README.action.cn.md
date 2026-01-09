@@ -304,7 +304,24 @@ await fetchWeb({
 
     > 上例将返回一个包含所有 `<img>` 标签 `src` 属性的数组。
 
-###### 4. 精确筛选: `has` 和 `exclude`
+###### 5. 隐式对象提取 (最简语法)
+
+为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非保留关键字（如 `selector`, `attribute`, `type` 等）的键，它将被视为对象 schema，其中的键作为属性名。
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "selector": ".author-bio",
+    "name": { "selector": ".author-name" },
+    "email": { "selector": "a.email", "attribute": "href" }
+  }
+}
+```
+
+> 这等同于示例 2，但更简洁。
+
+###### 6. 精确筛选: `has` 和 `exclude`
 
 您可以在任何包含 **`selector`** 的 Schema 中使用 **`has`** 和 **`exclude`** 字段来精确控制元素的选择。
 

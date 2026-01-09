@@ -255,6 +255,18 @@ export abstract class FetchEngine<
   protected abstract _querySelectorAll(context: any, selector: string): Promise<any[]>;
   protected abstract _extractValue(schema: ExtractValueSchema, context: any): Promise<any>;
 
+  protected _isImplicitObject(schema: any): boolean {
+    if (!schema || typeof schema !== 'object') return false;
+    const reservedKeys = new Set(['type', 'selector', 'attribute', 'has', 'exclude']);
+    const keys = Object.keys(schema);
+    if (keys.length === 0) return false; // Empty object -> default value extraction
+    if ('type' in schema) return false; // Explicit type -> not implicit
+    for (const key of keys) {
+      if (!reservedKeys.has(key)) return true;
+    }
+    return false;
+  }
+
   protected async _extract(schema: ExtractSchema, context: any): Promise<any> {
     const schemaType = (schema as any).type;
 
@@ -274,6 +286,15 @@ export abstract class FetchEngine<
       const result: Record<string, any> = {};
       for (const key in properties) {
         result[key] = await this._extract(properties[key], newContext);
+      }
+      return result;
+    }
+
+    if (!schemaType && this._isImplicitObject(schema)) {
+      const result: Record<string, any> = {};
+      const properties = schema as Record<string, ExtractSchema>;
+      for (const key in properties) {
+        result[key] = await this._extract(properties[key], context);
       }
       return result;
     }

@@ -33,6 +33,11 @@ const checkExpectations = (value: any, expectations: any) => {
     return;
   }
 
+  if (!isConditionObject(expectations)) {
+    expect(value).toEqual(expectations);
+    return;
+  }
+
   if (expectations.and) {
     expectations.and.forEach((c: any) => checkExpectations(value, c));
     return;
@@ -311,7 +316,19 @@ const engineTestSuite = (
           Object.keys(fixture.expected.outputs).forEach(key => {
             const expectedValue = fixture.expected.outputs[key];
             const actualValue = res.outputs[key];
-            checkExpectations(actualValue, expectedValue);
+            
+            let isCondition = isConditionObject(expectedValue);
+            if (!isCondition && Array.isArray(expectedValue) && expectedValue.length > 0) {
+              if (isConditionObject(expectedValue[0])) {
+                isCondition = true;
+              }
+            }
+
+            if (isCondition) {
+              checkExpectations(actualValue, expectedValue);
+            } else {
+              expect(actualValue).toEqual(expectedValue);
+            }
           });
         }
 
