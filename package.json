@@ -25,7 +25,7 @@
     "doc": "typedoc --plugin none --out web",
     "doc:md": "typedoc --plugin typedoc-plugin-markdown --out docs",
     "style": "pnpm run format:base -c && pnpm run lint",
-    "style:fix": "pnpm run format:fix && npm run lint:fix",
+    "style:fix": "pnpm run format:fix && pnpm run lint:fix",
     "format": "pnpm run format:base -c",
     "format:base": "prettier \"src/**/*.{ts,tsx,js,jsx,css,scss,sass,less,md}\"",
     "format:fix": "pnpm run format:base --write",
@@ -48,7 +48,9 @@
     "util-ex": "^2.4.0"
   },
   "devDependencies": {
-    "@antfu/eslint-config": "^4.10.1",
+    "@antfu/eslint-config": "^6.7.3",
+    "@eslint/eslintrc": "^3.3.3",
+    "@eslint/js": "^9.39.2",
     "@fastify/cookie": "^11.0.2",
     "@fastify/formbody": "^8.0.2",
     "@types/jest": "^29.5.14",
