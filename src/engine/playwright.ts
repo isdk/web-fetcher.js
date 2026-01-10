@@ -118,7 +118,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     schema: ExtractValueSchema,
     context: Locator
   ): Promise<any> {
-    const { attribute, type = 'string' } = schema
+    const { attribute, type = 'string', mode = 'text' } = schema
 
     if ((await context.count()) === 0) return null
 
@@ -127,6 +127,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
       value = await context.getAttribute(attribute)
     } else if (type === 'html') {
       value = await context.innerHTML()
+    } else if (mode === 'innerText') {
+      value = await context.innerText()
     } else {
       value = await context.textContent()
     }

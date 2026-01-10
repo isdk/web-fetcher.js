@@ -310,6 +310,7 @@ export abstract class FetchEngine<
       'properties',
       'items',
       'zip',
+      'mode',
     ])
     const keys = Object.keys(schema)
     if (keys.length === 0) return false // Empty object -> default value extraction

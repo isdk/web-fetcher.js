@@ -215,13 +215,27 @@ The `cleanup()` (aliased as `dispose()`) method manages the lifecycle of storage
     - **Solution**: We manually inject the session state into the `KeyValueStore` (using `PERSIST_STATE_KEY`) *immediately after* creating the crawler instance but *before* running it. This ensures `SessionPool` initializes with the correct state.
     - **ID Priority**: SessionPool persistence always follows the `storeId` (either user-provided or auto-generated), ensuring correct isolation or sharing of authentication states.
 
-### Engine Implementation: _buildResponse
+### Engine Implementation: innerText Simulation
 
-When implementing a new engine, the `_buildResponse(context)` method is responsible for constructing the `FetchResponse` object.
+When implementing `mode: 'innerText'` in extraction actions, we aim to match the behavior of a real browser (Playwright's `innerText`).
 
-*   **Contract**: It must return a valid `FetchResponse` object containing the current page state (url, html, etc.).
-*   **Output Control**: While `base.ts` handles the final filtering of `cookies` and `sessionState` based on `this.opts.output` (by explicitly deleting them if disabled), it is highly recommended that the engine implementation also respects `this.opts.output`.
-    *   **Performance**: If `this.opts.output.cookies` is `false`, the engine should avoid expensive operations (like IPC calls in browser automation) to retrieve cookies, unless they are needed for internal session synchronization.
+#### 1. Playwright Implementation
+In `PlaywrightFetchEngine`, we use the native `locator.innerText()` method. It is the gold standard as it respects CSS layout and visibility.
+
+#### 2. Cheerio Implementation (The Simulation)
+Since Cheerio is a static parser, we simulate `innerText` in `src/utils/cheerio-helpers.ts`.
+
+**The Algorithm**:
+1.  **Clone**: Clone the element to avoid side effects.
+2.  **Tag Marking**: Replace `<br>` with a `\n` placeholder, and wrap block elements (e.g., `<div>`, `<h1>`) and paragraphs (`<p>`) with their own respective placeholders (`BLOCK` and `P`).
+3.  **Whitespace Normalization**: Collapse all original HTML source whitespace (newlines, tabs, spaces) into a single space. This mimics how browsers treat non-rendered whitespace.
+4.  **Placeholder Collapsing**:
+    -   Remove any spaces that ended up around our placeholders.
+    -   Merge adjacent block/p placeholders. If a sequence contains a `<p>` placeholder, it results in a double newline (`\n\n`); otherwise, it results in a single newline (`\n`).
+5.  **Restoration**: Convert placeholders back to actual newlines.
+
+**Why this approach?**
+A naive `.text()` in Cheerio just concatenates all text nodes, losing all structural line breaks (e.g., `<div>A</div><div>B</div>` becomes `"AB"`). Our simulation ensures that structural breaks are preserved, making the output from the `http` engine consistent with the `browser` engine.
 
 ### Feature: Zip Strategy & Smart Inference
 

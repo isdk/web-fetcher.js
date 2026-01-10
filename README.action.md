@@ -224,19 +224,24 @@ The `params` object itself is a Schema that describes the data structure you wan
 
 ###### 1. Extracting a Single Value
 
-The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), and a `type` (string, number, boolean, html).
+The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), a `type` (string, number, boolean, html), and a `mode` (text, innerText).
 
 ```json
 {
   "id": "extract",
   "params": {
     "selector": "h1.main-title",
-    "type": "string"
+    "type": "string",
+    "mode": "innerText"
   }
 }
 ```
 
-> The example above will extract the text content of the `<h1>` tag with the class `main-title`.
+> **Extraction Modes:**
+> * **`text`** (default): Extracts the `textContent` of the element, which includes all text within the element and its descendants, but preserves the whitespace and newlines as they appear in the HTML source (unrendered).
+> * **`innerText`**: Extracts the rendered text of the element, which respects CSS styling and collapses multiple spaces, while preserving meaningful line breaks (e.g., from `<br>` or block-level elements). This mode is better for getting what a user actually sees on the page.
+
+> The example above will extract the text content of the `<h1>` tag with the class `main-title` using the `innerText` mode.
 
 ###### 2. Extracting an Object
 

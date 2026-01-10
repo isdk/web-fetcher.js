@@ -1,0 +1,34 @@
+{
+  "title": "Comprehensive innerText extraction testing",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "properties": {
+          "basic_br": { "selector": "#basic-br", "mode": "innerText" },
+          "multi_br": { "selector": "#multi-br", "mode": "innerText" },
+          "blocks": { "selector": "#blocks", "mode": "innerText" },
+          "paragraphs": { "selector": "#paragraphs", "mode": "innerText" },
+          "nested": { "selector": "#nested", "mode": "innerText" },
+          "mixed": { "selector": "#mixed", "mode": "innerText" },
+          "inline_tags": { "selector": "#inline-tags", "mode": "innerText" },
+          "whitespace": { "selector": "#whitespace", "mode": "innerText" }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "basic_br": "Line 1\nLine 2",
+      "multi_br": "Line 1\n\n\nLine 2",
+      "blocks": "Block 1\nBlock 2",
+      "paragraphs": "Para 1\n\nPara 2",
+      "nested": "Outer\n\nInner Para\n\nInline\nInner Block",
+      "mixed": "Text 1\n\nDiv 1\n\nPara 1\n\nText 2",
+      "inline_tags": "Bold Italic Span",
+      "whitespace": "Line 1 Line 2"
+    }
+  }
+}
