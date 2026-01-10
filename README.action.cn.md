@@ -222,19 +222,24 @@ await fetchWeb({
 
 ###### 1. 提取单个值
 
-最基础的提取，可以指定 **`selector`** (CSS 选择器), **`attribute`** (要提取的属性名), 以及 **`type`** (string, number, boolean, html)。
+最基础的提取，可以指定 **`selector`** (CSS 选择器), **`attribute`** (要提取的属性名), **`type`** (string, number, boolean, html), 以及 **`mode`** (text, innerText)。
 
 ```json
 {
   "id": "extract",
   "params": {
     "selector": "h1.main-title",
-    "type": "string"
+    "type": "string",
+    "mode": "innerText"
   }
 }
 ```
 
-> 上例将提取 class 为 `main-title` 的 `<h1>` 标签的文本内容。
+> **提取模式 (Extraction Modes):**
+> * **`text`** (默认): 提取元素的 `textContent`。它包含元素及其所有后代的文本，但保留 HTML 源码中的原始空格和换行（未渲染状态）。
+> * **`innerText`**: 提取元素的渲染文本。它遵循 CSS 样式，折叠多余空格，并保留具有语义的换行（例如来自 `<br>` 或块级元素的换行）。此模式更接近用户在页面上实际看到的内容。
+
+> 上例将使用 `innerText` 模式提取 class 为 `main-title` 的 `<h1>` 标签的文本内容。
 
 ###### 2. 提取对象
 

@@ -6,6 +6,7 @@ export type ExtractSchema =
 // 基础值提取
 export interface ExtractValueSchema {
   type?: 'string' | 'number' | 'boolean' | 'html' // 默认为 'string'
+  mode?: 'text' | 'innerText' // 提取模式: 'text' (textContent, 默认) 或 'innerText' (视觉文本, 处理换行)
   selector?: string // CSS 选择器
   attribute?: string // 要提取的属性, 如 'href'。如果指定,则提取属性值,否则提取文本内容(或 html,如果 type 为 'html')
   has?: string // 进一步筛选选定元素,仅包括那些包含与此 CSS 选择器匹配的后代的元素

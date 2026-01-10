@@ -311,7 +311,7 @@ const engineTestSuite = (
           result = res.result;
         }
 
-        console.log('🚀 ~ file: engine.fixtures.spec.ts:319 ~ res.outputs:', res.outputs)
+        // console.log('🚀 ~ file: engine.fixtures.spec.ts:319 ~ res.outputs:', JSON.stringify(res.outputs, null, 2))
         // Additional validation for outputs if specified in expected
         if (fixture.expected.outputs) {
           Object.keys(fixture.expected.outputs).forEach(key => {

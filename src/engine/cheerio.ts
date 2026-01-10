@@ -12,6 +12,8 @@ type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>
 type CheerioSelection = ReturnType<CheerioAPI>
 type CheerioNode = ReturnType<CheerioSelection['first']>
 
+import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
+
 export class CheerioFetchEngine extends FetchEngine<
   CheerioCrawlingContext,
   CheerioCrawler,
@@ -69,7 +71,7 @@ export class CheerioFetchEngine extends FetchEngine<
       statusText: response?.statusMessage,
       headers: headers || {}, // Use the newly constructed headers
       body,
-      html: text,
+      html: normalizeHtml(text),
       text,
     }
 
@@ -123,7 +125,7 @@ export class CheerioFetchEngine extends FetchEngine<
     context: { el: CheerioNode }
   ): Promise<any> {
     const { el } = context
-    const { attribute, type = 'string' } = schema
+    const { attribute, type = 'string', mode = 'text' } = schema
 
     if (el.length === 0) return null
 
@@ -131,7 +133,9 @@ export class CheerioFetchEngine extends FetchEngine<
     if (attribute) {
       value = el.attr(attribute) ?? null
     } else if (type === 'html') {
-      value = el.html()
+      value = normalizeHtml(el.html()!.trim())
+    } else if (mode === 'innerText') {
+      value = getInnerText(el)
     } else {
       value = el.text().trim()
     }
