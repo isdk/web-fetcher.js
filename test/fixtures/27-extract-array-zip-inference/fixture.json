@@ -1,0 +1,28 @@
+{
+  "title": "should infer item wrapper when zip alignment fails",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#list",
+        "zip": { "inference": true, "strict": true },
+        "items": {
+          "title": { "selector": "h3" },
+          "tag": { "selector": ".tag" }
+        }
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "data": [
+        { "title": "Title A", "tag": "Tag A" },
+        { "title": "Title B", "tag": null },
+        { "title": "Title C", "tag": "Tag C" }
+      ]
+    }
+  }
+}

@@ -289,6 +289,53 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
     > The example above will return an array of the `src` attributes from all `<img>` tags.
 
+*   **Zip Strategy (Container Extraction)**: When the `selector` points to a **container** (like a search results div) rather than individual items, and the `items` schema defines selectors for multiple fields, the engine can automatically "zip" these fields into objects.
+
+    ```json
+    {
+      "id": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#search-results",
+        "items": {
+          "title": { "selector": ".item-title" },
+          "link": { "selector": "a.item-link", "attribute": "href" }
+        }
+      }
+    }
+    ```
+
+    > In this mode, the engine finds all `.item-title` and all `a.item-link` within the `#search-results` container and pairs them up by index.
+
+###### 4. Zip Strategy Configuration
+
+The Zip strategy can be fine-tuned using the `zip` property:
+
+*   **`zip`** (boolean | object):
+    *   `true` (default if Container Pattern detected): Enables Zip strategy with strict alignment.
+    *   `false`: Disables Zip strategy, falling back to standard item-by-item extraction.
+    *   **`strict`** (boolean, default: `true`): If `true`, throws an error if fields have different match counts (to prevent data misalignment).
+    *   **`inference`** (boolean, default: `false`): If `true`, when field counts don't match, the engine tries to automatically identify the most likely "item wrapper" element (e.g., a `.result-card` div) by traversing up the DOM from the matched fields.
+
+**Example: Robust extraction with inference**
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#results-container",
+    "zip": { "inference": true },
+    "items": {
+      "title": { "selector": "h3" },
+      "price": { "selector": ".price-tag" }
+    }
+  }
+}
+```
+
+> If some items are missing a price tag, the `inference` mode will try to find the item boundaries to ensure titles and prices remain correctly paired, returning `null` for missing prices instead of misaligning the list.
+
 ###### 5. Implicit Object Extraction (Simplest Syntax)
 
 For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not reserved keywords (like `selector`, `attribute`, `type`, etc.), it is treated as an object schema where keys are property names.

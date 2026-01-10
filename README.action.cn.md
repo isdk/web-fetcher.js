@@ -304,6 +304,53 @@ await fetchWeb({
 
     > 上例将返回一个包含所有 `<img>` 标签 `src` 属性的数组。
 
+*   **Zip 策略 (容器提取)**: 当 **`selector`** 指向一个**容器** (如搜索结果的 div) 而不是单个列表项，且 **`items`** schema 为多个字段定义了选择器时，引擎可以自动将这些字段“拉链式”地合并为对象数组。
+
+    ```json
+    {
+      "id": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#search-results",
+        "items": {
+          "title": { "selector": ".item-title" },
+          "link": { "selector": "a.item-link", "attribute": "href" }
+        }
+      }
+    }
+    ```
+
+    > 在此模式下，引擎会在 `#search-results` 容器内找到所有的 `.item-title` 和所有的 `a.item-link`，并按索引顺序将它们配对。
+
+###### 4. Zip 策略配置
+
+Zip 策略可以通过 **`zip`** 属性进行微调：
+
+*   **`zip`** (boolean | object):
+    *   `true` (默认，当检测到容器模式时): 启用 Zip 策略并开启严格对齐。
+    *   `false`: 禁用 Zip 策略，回退到标准的逐项提取模式。
+    *   **`strict`** (boolean, 默认: `true`): 如果为 `true`，当不同字段匹配到的数量不一致时将抛出错误（防止数据错位）。
+    *   **`inference`** (boolean, 默认: `false`): 如果为 `true`，当字段数量不匹配时，引擎会尝试通过在 DOM 树中向上追溯，自动识别最可能的“列表项包裹元素” (例如某个 `.result-card` div)。
+
+**示例：开启智能推断的稳健提取**
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#results-container",
+    "zip": { "inference": true },
+    "items": {
+      "title": { "selector": "h3" },
+      "price": { "selector": ".price-tag" }
+    }
+  }
+}
+```
+
+> 如果某些商品缺少价格标签，`inference` 模式会尝试找到商品的边界，确保标题和价格依然正确配对，对于缺失的价格返回 `null`，而不会导致整个列表的数据错位。
+
 ###### 5. 隐式对象提取 (最简语法)
 
 为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非保留关键字（如 `selector`, `attribute`, `type` 等）的键，它将被视为对象 schema，其中的键作为属性名。

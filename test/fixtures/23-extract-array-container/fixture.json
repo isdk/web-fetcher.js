@@ -1,0 +1,40 @@
+{
+  "title": "should extract array data from a container using zip strategy",
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#main #search",
+        "items": {
+          "title": { "selector": ".result > h3" },
+          "url": { "selector": "a", "attribute": "href" },
+          "snippet": { "selector": "div[style*='-webkit-line-clamp']" }
+        }
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "data": [
+        {
+          "title": "Title 1",
+          "url": "/url1",
+          "snippet": "Snippet 1"
+        },
+        {
+          "title": "Title 2",
+          "url": "/url2",
+          "snippet": "Snippet 2"
+        }
+      ]
+    }
+  }
+}

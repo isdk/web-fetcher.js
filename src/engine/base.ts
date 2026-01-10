@@ -1,6 +1,6 @@
-import { defaultsDeep, merge } from 'lodash-es';
-import { EventEmitter } from 'events-ex';
-import { CommonError } from '@isdk/common-error';
+import { defaultsDeep, merge } from 'lodash-es'
+import { EventEmitter } from 'events-ex'
+import { CommonError } from '@isdk/common-error'
 import {
   Configuration,
   KeyValueStore,
@@ -8,11 +8,23 @@ import {
   RequestQueue,
   Session,
   ProxyConfiguration,
-} from 'crawlee';
-import type { BasicCrawler, BasicCrawlerOptions, CrawlingContext, FinalStatistics, PlaywrightCrawlingContext, PlaywrightGotoOptions } from 'crawlee';
+} from 'crawlee'
+import type {
+  BasicCrawler,
+  BasicCrawlerOptions,
+  CrawlingContext,
+  FinalStatistics,
+  PlaywrightCrawlingContext,
+  PlaywrightGotoOptions,
+} from 'crawlee'
 
-import { FetchEngineContext } from '../core/context';
-import { ExtractSchema, ExtractArraySchema, ExtractObjectSchema, ExtractValueSchema } from '../core/extract';
+import { FetchEngineContext } from '../core/context'
+import {
+  ExtractSchema,
+  ExtractArraySchema,
+  ExtractObjectSchema,
+  ExtractValueSchema,
+} from '../core/extract'
 import {
   BaseFetcherProperties,
   FetchEngineType,
@@ -20,11 +32,11 @@ import {
   FetchResponse,
   ResourceType,
   DefaultFetcherProperties,
-} from '../core/types';
-import { normalizeHeaders } from '../utils/headers';
-import { PromiseLock, createResolvedPromiseLock } from './promise-lock';
+} from '../core/types'
+import { normalizeHeaders } from '../utils/headers'
+import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
 
-Configuration.getGlobalConfig().set('persistStorage', false);
+Configuration.getGlobalConfig().set('persistStorage', false)
 
 /**
  * Options for the {@link FetchEngine.goto}, allowing configuration of HTTP method, payload, headers, and navigation behavior.
@@ -43,11 +55,20 @@ Configuration.getGlobalConfig().set('persistStorage', false);
  * ```
  */
 export interface GotoActionOptions {
-  method?: 'GET' | 'HEAD' | 'POST' | 'PUT' | 'DELETE' | 'TRACE' | 'OPTIONS' | 'CONNECT' | 'PATCH';
-  payload?: any; // POST
-  headers?: Record<string, string>;
-  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit';
-  timeoutMs?: number;
+  method?:
+    | 'GET'
+    | 'HEAD'
+    | 'POST'
+    | 'PUT'
+    | 'DELETE'
+    | 'TRACE'
+    | 'OPTIONS'
+    | 'CONNECT'
+    | 'PATCH'
+  payload?: any // POST
+  headers?: Record<string, string>
+  waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit'
+  timeoutMs?: number
 }
 
 /**
@@ -57,10 +78,10 @@ export interface GotoActionOptions {
  * Controls timing behavior for interactions, allowing waiting for elements, time intervals, or network conditions.
  */
 export interface WaitForActionOptions {
-  ms?: number;
-  selector?: string;
-  networkIdle?: boolean;
-  failOnTimeout?: boolean;
+  ms?: number
+  selector?: string
+  networkIdle?: boolean
+  failOnTimeout?: boolean
 }
 
 /**
@@ -70,7 +91,10 @@ export interface WaitForActionOptions {
  * Specifies encoding type for form submissions, particularly relevant for JSON-based APIs.
  */
 export interface SubmitActionOptions {
-  enctype?: 'application/x-www-form-urlencoded' | 'application/json' | 'multipart/form-data';
+  enctype?:
+    | 'application/x-www-form-urlencoded'
+    | 'application/json'
+    | 'multipart/form-data'
 }
 
 /**
@@ -89,7 +113,7 @@ export type FetchEngineAction =
   | { type: 'navigate'; url: string; opts?: GotoActionOptions }
   | { type: 'extract'; schema: ExtractSchema }
   | { type: 'pause'; message?: string }
-  | { type: 'dispose' };
+  | { type: 'dispose' }
 
 /**
  * Represents an action that has been dispatched and is awaiting execution in the active page context.
@@ -99,9 +123,9 @@ export type FetchEngineAction =
  * to handle promises while maintaining the page context validity window.
  */
 export interface DispatchedEngineAction {
-  action: FetchEngineAction;
-  resolve: (value?: any) => void;
-  reject: (reason?: any) => void;
+  action: FetchEngineAction
+  resolve: (value?: any) => void
+  reject: (reason?: any) => void
 }
 
 /**
@@ -111,8 +135,8 @@ export interface DispatchedEngineAction {
  * Tracks navigation requests that have been queued but not yet processed by the request handler.
  */
 export interface PendingEngineRequest {
-  resolve: (value: any) => void;
-  reject: (reason?: any) => void;
+  resolve: (value: any) => void
+  reject: (reason?: any) => void
 }
 
 /**
@@ -138,16 +162,16 @@ export interface PendingEngineRequest {
  * ```
  */
 
-type AnyFetchEngine = FetchEngine<any, any, any>;
-type AnyFetchEngineCtor = new (...args: any[]) => AnyFetchEngine;
+type AnyFetchEngine = FetchEngine<any, any, any>
+type AnyFetchEngineCtor = new (...args: any[]) => AnyFetchEngine
 
 export abstract class FetchEngine<
   TContext extends CrawlingContext = any,
   TCrawler extends BasicCrawler<TContext> = any,
-  TOptions extends BasicCrawlerOptions<TContext>  = any
+  TOptions extends BasicCrawlerOptions<TContext> = any,
 > {
   // ===== 静态成员：注册管理 =====
-  private static registry = new Map<string, AnyFetchEngineCtor>();
+  private static registry = new Map<string, AnyFetchEngineCtor>()
 
   /**
    * Registers a fetch engine implementation with the global registry.
@@ -161,10 +185,10 @@ export abstract class FetchEngine<
    * ```
    */
   static register(engineClass: AnyFetchEngineCtor): void {
-    const id = (engineClass as any).id;
-    if (!id) throw new Error('Engine must define static id');
-    if (this.registry.has(id)) throw new Error(`Engine id duplicated: ${id}`);
-    this.registry.set(id, engineClass);
+    const id = (engineClass as any).id
+    if (!id) throw new Error('Engine must define static id')
+    if (this.registry.has(id)) throw new Error(`Engine id duplicated: ${id}`)
+    this.registry.set(id, engineClass)
   }
 
   /**
@@ -174,7 +198,7 @@ export abstract class FetchEngine<
    * @returns Engine class if found, otherwise `undefined`
    */
   static get(id: string): AnyFetchEngineCtor | undefined {
-    return this.registry.get(id);
+    return this.registry.get(id)
   }
 
   /**
@@ -185,7 +209,7 @@ export abstract class FetchEngine<
    */
   static getByMode(mode: FetchEngineType): AnyFetchEngineCtor | undefined {
     for (const [_id, engineClass] of this.registry.entries()) {
-      if ((engineClass as any).mode === mode) return engineClass;
+      if ((engineClass as any).mode === mode) return engineClass
     }
   }
 
@@ -200,14 +224,23 @@ export abstract class FetchEngine<
    * @remarks
    * Primary entry point for engine creation. Selects appropriate implementation based on `engine` name of the option or context.
    */
-  static async create(ctx: FetchEngineContext, options?: BaseFetcherProperties) {
-    const finalOptions = defaultsDeep(options, ctx, DefaultFetcherProperties) as BaseFetcherProperties;
-    const engineName = (finalOptions.engine ?? ctx.engine) as FetchEngineType;
-    const Engine = engineName ? (this.get(engineName!) ?? this.getByMode(engineName)) : null;
+  static async create(
+    ctx: FetchEngineContext,
+    options?: BaseFetcherProperties
+  ) {
+    const finalOptions = defaultsDeep(
+      options,
+      ctx,
+      DefaultFetcherProperties
+    ) as BaseFetcherProperties
+    const engineName = (finalOptions.engine ?? ctx.engine) as FetchEngineType
+    const Engine = engineName
+      ? (this.get(engineName!) ?? this.getByMode(engineName))
+      : null
     if (Engine) {
-      const result = new Engine();
-      await result.initialize(ctx, finalOptions);
-      return result;
+      const result = new Engine()
+      await result.initialize(ctx, finalOptions)
+      return result
     }
   }
 
@@ -217,7 +250,7 @@ export abstract class FetchEngine<
    * @remarks
    * Must be defined by concrete implementations. Used for registration and lookup in engine registry.
    */
-  static readonly id: string;
+  static readonly id: string
 
   /**
    * Execution mode of the engine (`'http'` or `'browser'`).
@@ -225,100 +258,335 @@ export abstract class FetchEngine<
    * @remarks
    * Must be defined by concrete implementations. Indicates whether engine operates at HTTP level or uses full browser.
    */
-  static readonly mode: FetchEngineType;
+  static readonly mode: FetchEngineType
 
-  declare protected ctx?: FetchEngineContext;
-  declare protected opts?: BaseFetcherProperties;
-  declare protected crawler?: TCrawler;
-  declare protected isCrawlerReady?: boolean;
-  protected crawlerRunPromise?: Promise<FinalStatistics>;
-  protected config?: Configuration;
-  declare protected requestQueue?: RequestQueue;
-  protected kvStore?: KeyValueStore;
-  protected proxyConfiguration?: ProxyConfiguration;
+  declare protected ctx?: FetchEngineContext
+  declare protected opts?: BaseFetcherProperties
+  declare protected crawler?: TCrawler
+  declare protected isCrawlerReady?: boolean
+  protected crawlerRunPromise?: Promise<FinalStatistics>
+  protected config?: Configuration
+  declare protected requestQueue?: RequestQueue
+  protected kvStore?: KeyValueStore
+  protected proxyConfiguration?: ProxyConfiguration
 
-  protected hdrs: Record<string, string> = {};
-  protected _initialCookies?: Cookie[];
-  protected _initializedSessions = new Set<string>();
-  protected currentSession?: Session;
-  protected pendingRequests = new Map<string, PendingEngineRequest>();
-  protected requestCounter = 0;
-  protected actionEmitter = new EventEmitter();
-  protected isPageActive = false;
-  protected isEngineDisposed = false;
-  protected navigationLock: PromiseLock = createResolvedPromiseLock();
-  protected lastResponse?: FetchResponse;
-  protected blockedTypes = new Set<string>();
+  protected hdrs: Record<string, string> = {}
+  protected _initialCookies?: Cookie[]
+  protected _initializedSessions = new Set<string>()
+  protected currentSession?: Session
+  protected pendingRequests = new Map<string, PendingEngineRequest>()
+  protected requestCounter = 0
+  protected actionEmitter = new EventEmitter()
+  protected isPageActive = false
+  protected isEngineDisposed = false
+  protected navigationLock: PromiseLock = createResolvedPromiseLock()
+  protected lastResponse?: FetchResponse
+  protected blockedTypes = new Set<string>()
 
-  protected _cleanup?(): Promise<void>;
+  protected _cleanup?(): Promise<void>
 
-  protected abstract _querySelectorAll(context: any, selector: string): Promise<any[]>;
-  protected abstract _extractValue(schema: ExtractValueSchema, context: any): Promise<any>;
+  protected abstract _querySelectorAll(
+    context: any,
+    selector: string
+  ): Promise<any[]>
+  protected abstract _extractValue(
+    schema: ExtractValueSchema,
+    context: any
+  ): Promise<any>
+  protected abstract _parentElement(element: any): Promise<any | null>
+  protected abstract _isSameElement(
+    element1: any,
+    element2: any
+  ): Promise<boolean>
 
   protected _isImplicitObject(schema: any): boolean {
-    if (!schema || typeof schema !== 'object') return false;
-    const reservedKeys = new Set(['type', 'selector', 'attribute', 'has', 'exclude']);
-    const keys = Object.keys(schema);
-    if (keys.length === 0) return false; // Empty object -> default value extraction
-    if ('type' in schema) return false; // Explicit type -> not implicit
+    if (!schema || typeof schema !== 'object') return false
+    const reservedKeys = new Set([
+      'type',
+      'selector',
+      'attribute',
+      'has',
+      'exclude',
+    ])
+    const keys = Object.keys(schema)
+    if (keys.length === 0) return false // Empty object -> default value extraction
+    if ('type' in schema) return false // Explicit type -> not implicit
     for (const key of keys) {
-      if (!reservedKeys.has(key)) return true;
+      if (!reservedKeys.has(key)) return true
     }
-    return false;
+    return false
   }
 
   protected async _extract(schema: ExtractSchema, context: any): Promise<any> {
-    const schemaType = (schema as any).type;
+    const schemaType = (schema as any).type
 
     if (!context) {
-      return schemaType === 'array' ? [] : null;
+      return schemaType === 'array' ? [] : null
     }
 
     if (schemaType === 'object') {
-      const { selector, properties } = schema as ExtractObjectSchema;
-      let newContext = context;
+      const { selector, properties } = schema as ExtractObjectSchema
+      let newContext = context
       if (selector) {
-        const elements = await this._querySelectorAll(context, selector);
-        newContext = elements.length > 0 ? elements[0] : null;
+        const elements = await this._querySelectorAll(context, selector)
+        newContext = elements.length > 0 ? elements[0] : null
       }
-      if (!newContext) return null;
+      if (!newContext) return null
 
-      const result: Record<string, any> = {};
+      const result: Record<string, any> = {}
       for (const key in properties) {
-        result[key] = await this._extract(properties[key], newContext);
+        result[key] = await this._extract(properties[key], newContext)
       }
-      return result;
+      return result
     }
 
     if (!schemaType && this._isImplicitObject(schema)) {
-      const result: Record<string, any> = {};
-      const properties = schema as Record<string, ExtractSchema>;
+      const result: Record<string, any> = {}
+      const properties = schema as Record<string, ExtractSchema>
       for (const key in properties) {
-        result[key] = await this._extract(properties[key], context);
+        result[key] = await this._extract(properties[key], context)
       }
-      return result;
+      return result
     }
 
     if (schemaType === 'array') {
-      const { selector, items } = schema as ExtractArraySchema;
-      const elements = selector ? await this._querySelectorAll(context, selector) : [context];
-      const results: any[] = [];
-      for (const element of elements) {
-        results.push(await this._extract(items!, element));
+      const { selector, items, zip } = schema as ExtractArraySchema
+      const elements = selector
+        ? await this._querySelectorAll(context, selector)
+        : [context]
+
+      const zipOptions = zip === true ? { strict: true } : zip || undefined
+      const shouldTryZip = zip !== false
+
+      // Heuristic: If we found exactly one container, and the user wants an array,
+      // and Zip is not disabled, try to extract items from it using the 'items' schema as a pattern.
+      if (shouldTryZip && elements.length === 1 && items) {
+        const zippedResults = await this._tryExtractFromContainer(
+          items,
+          elements[0],
+          zipOptions
+        )
+        if (zippedResults) {
+          return zippedResults
+        }
       }
-      return results;
+
+      const results: any[] = []
+      for (const element of elements) {
+        results.push(await this._extract(items!, element))
+      }
+      return results
     }
 
-    const { selector } = schema as ExtractValueSchema;
-    let elementToExtract = context;
+    const { selector } = schema as ExtractValueSchema
+    let elementToExtract = context
     if (selector) {
-      const elements = await this._querySelectorAll(context, selector);
-      elementToExtract = elements.length > 0 ? elements[0] : null;
+      const elements = await this._querySelectorAll(context, selector)
+      elementToExtract = elements.length > 0 ? elements[0] : null
     }
 
-    if (!elementToExtract) return null;
+    if (!elementToExtract) return null
 
-    return this._extractValue(schema as ExtractValueSchema, elementToExtract);
+    return this._extractValue(schema as ExtractValueSchema, elementToExtract)
+  }
+
+  /**
+   * Tries to extract a list of items from a single container by checking if the 'items' schema
+   * matches multiple elements consistently (Zip strategy).
+   *
+   * @param schema - The schema for a single item (Object or Value).
+   * @param container - The container element.
+   * @param opts - Options for the zip strategy.
+   * @returns An array of extracted items if the heuristic passes, or null.
+   */
+  protected async _tryExtractFromContainer(
+    schema: ExtractSchema,
+    container: any,
+    opts?: { strict?: boolean; inference?: boolean }
+  ): Promise<any[] | null> {
+    const isObject =
+      schema.type === 'object' ||
+      (!schema.type && this._isImplicitObject(schema))
+    const strict = opts?.strict !== false // Default to true
+    const inference = opts?.inference === true
+
+    if (isObject) {
+      const properties =
+        schema.type === 'object'
+          ? (schema as ExtractObjectSchema).properties
+          : (schema as any)
+
+      const keys = Object.keys(properties)
+      if (keys.length === 0) return null
+
+      const collectedValues: Record<string, any[]> = {}
+      let commonCount: number | null = null
+      let maxCount = 0
+      let maxCountKey: string | null = null
+      let maxCountMatches: any[] = []
+
+      for (const key of keys) {
+        const propSchema = properties[key] as ExtractSchema
+        // Nested complex structures are not supported for simple Zip
+        if (
+          propSchema.type === 'array' ||
+          propSchema.type === 'object' ||
+          (!propSchema.type && this._isImplicitObject(propSchema))
+        ) {
+          return null
+        }
+
+        const valueSchema = propSchema as ExtractValueSchema
+        let matches: any[] = []
+
+        if (valueSchema.selector) {
+          matches = await this._querySelectorAll(
+            container,
+            valueSchema.selector
+          )
+        } else {
+          // If no selector, it's a "global" value (e.g. constant/attribute of container)
+          matches = [container]
+        }
+
+        const count = matches.length
+        if (count > maxCount) {
+          maxCount = count
+          maxCountKey = key
+          maxCountMatches = matches
+        }
+
+        if (valueSchema.selector) {
+          // Heuristic: If selector yields 0 or 1 item, it's ambiguous.
+          // Unless strict mode is OFF, we might want to reject.
+          // But let's stick to the core "Zip" logic: we need *some* indication of a list.
+          // If ALL fields match 1 item, we can't distinguish from a single object.
+
+          if (commonCount === null) {
+            commonCount = count
+          } else if (commonCount !== count) {
+            // Mismatch detected.
+            if (inference && maxCount > 1) {
+              // If inference is enabled, we don't fail yet. We will try inference logic later.
+              commonCount = -1 // Mark as mismatched
+            } else if (strict) {
+              throw new CommonError(
+                `Zip extraction mismatch: field "${key}" has ${count} matches, but expected ${commonCount}.`,
+                'extract'
+              )
+            }
+          }
+        }
+
+        const values = await Promise.all(
+          matches.map((m) => this._extractValue(valueSchema, m))
+        )
+        collectedValues[key] = values
+      }
+
+      // Try inference if enabled and mismatch occurred (commonCount === -1)
+      if (
+        inference &&
+        commonCount === -1 &&
+        maxCount > 1 &&
+        maxCountMatches.length > 0
+      ) {
+        const itemWrappers: any[] = []
+        for (const match of maxCountMatches) {
+          let current = match
+          let parent = await this._parentElement(current)
+          let childOfContainer = current
+
+          // Traverse up until we hit the container
+          let foundContainer = false
+          while (parent) {
+            if (await this._isSameElement(parent, container)) {
+              foundContainer = true
+              break
+            }
+            childOfContainer = parent
+            current = parent
+            parent = await this._parentElement(current)
+          }
+
+          if (foundContainer) {
+            itemWrappers.push(childOfContainer)
+          }
+        }
+
+        // Remove duplicates (if multiple fields point to same item wrapper)
+        // Actually, maxCountMatches are from a single field (the one with most matches).
+        // So duplicates are unlikely unless multiple elements inside one item match the same selector.
+        // But let's handle uniqueness just in case.
+        const uniqueWrappers: any[] = []
+        for (const w of itemWrappers) {
+          let isDuplicate = false
+          for (const u of uniqueWrappers) {
+            if (await this._isSameElement(w, u)) {
+              isDuplicate = true
+              break
+            }
+          }
+          if (!isDuplicate) uniqueWrappers.push(w)
+        }
+
+        if (uniqueWrappers.length > 1) {
+          const results: any[] = []
+          for (const wrapper of uniqueWrappers) {
+            results.push(await this._extract(schema, wrapper))
+          }
+          return results
+        }
+      }
+
+      if (maxCount <= 1) return null // No list detected
+      if (commonCount === -1 && strict) {
+        // Should have thrown earlier, but just in case
+        return null
+      }
+
+      // In non-strict mode, use maxCount (if inference failed or disabled)
+      const resultCount = strict && commonCount !== -1 ? commonCount! : maxCount
+
+      const results: any[] = []
+      for (let i = 0; i < resultCount; i++) {
+        const obj: Record<string, any> = {}
+        for (const key of keys) {
+          const vals = collectedValues[key]
+          // Strategy:
+          // 1. If vals has 1 item (and it's not a list selector case ideally, but simplified here): repeat it?
+          //    Actually, if it was a constant/container attribute, vals.length is 1.
+          // 2. If vals has index i, use it.
+          // 3. Otherwise null.
+
+          if (vals.length === 1 && resultCount > 1) {
+            // If it's a constant (no selector logic earlier matched [container]), repeat it.
+            // We can check if the schema had a selector.
+            const propSchema = properties[key] as ExtractValueSchema
+            if (!propSchema.selector) {
+              obj[key] = vals[0]
+              continue
+            }
+          }
+
+          obj[key] = vals[i] !== undefined ? vals[i] : null
+        }
+        results.push(obj)
+      }
+      return results
+    } else {
+      // Value Schema Zip (e.g. extract list of values directly)
+      const valueSchema = schema as ExtractValueSchema
+      if (!valueSchema.selector) return null
+
+      const matches = await this._querySelectorAll(
+        container,
+        valueSchema.selector
+      )
+      if (matches.length <= 1) return null
+
+      return Promise.all(matches.map((m) => this._extractValue(valueSchema, m)))
+    }
   }
 
   /**
@@ -326,14 +594,19 @@ export abstract class FetchEngine<
    * @param options - The final crawler options.
    * @internal
    */
-  protected abstract _createCrawler(options: TOptions, config?: Configuration): TCrawler;
+  protected abstract _createCrawler(
+    options: TOptions,
+    config?: Configuration
+  ): TCrawler
 
   /**
    * Gets the crawler-specific options from the subclass.
    * @param ctx - The fetch engine context.
    * @internal
    */
-  protected abstract _getSpecificCrawlerOptions(ctx: FetchEngineContext): Promise<Partial<TOptions>> | Partial<TOptions>;
+  protected abstract _getSpecificCrawlerOptions(
+    ctx: FetchEngineContext
+  ): Promise<Partial<TOptions>> | Partial<TOptions>
   /**
    * Abstract method for building standard [FetchResponse] from Crawlee context.
    *
@@ -344,25 +617,25 @@ export abstract class FetchEngine<
    * Converts implementation-specific context (Playwright `page` or Cheerio `$`) to standardized response.
    * @internal
    */
-  protected abstract _buildResponse(context: TContext): Promise<FetchResponse>;
+  protected abstract _buildResponse(context: TContext): Promise<FetchResponse>
   protected async buildResponse(context: TContext): Promise<FetchResponse> {
-    const result = await this._buildResponse(context);
-    const contentTypeHeader = result.headers['content-type'] || '';
-    result.contentType = contentTypeHeader.split(';')[0].trim();
+    const result = await this._buildResponse(context)
+    const contentTypeHeader = result.headers['content-type'] || ''
+    result.contentType = contentTypeHeader.split(';')[0].trim()
     if (this.opts?.output?.cookies !== false) {
       if (!result.cookies && context.session) {
-        result.cookies = context.session.getCookies(context.request.url);
+        result.cookies = context.session.getCookies(context.request.url)
       }
     } else {
-      delete result.cookies;
+      delete result.cookies
     }
 
     if (this.opts?.output?.sessionState !== false) {
       if (this.crawler?.sessionPool) {
-        result.sessionState = await this.crawler.sessionPool.getState();
+        result.sessionState = await this.crawler.sessionPool.getState()
       }
     } else {
-      delete result.sessionState;
+      delete result.sessionState
     }
 
     if (this.opts?.debug) {
@@ -370,12 +643,18 @@ export abstract class FetchEngine<
         ...result.metadata,
         mode: this.mode,
         engine: this.id as any,
-        proxy: (context as any).proxyInfo?.url || (typeof this.opts.proxy === 'string' ? this.opts.proxy : Array.isArray(this.opts.proxy) ? this.opts.proxy[0] : undefined),
-      };
+        proxy:
+          (context as any).proxyInfo?.url ||
+          (typeof this.opts.proxy === 'string'
+            ? this.opts.proxy
+            : Array.isArray(this.opts.proxy)
+              ? this.opts.proxy[0]
+              : undefined),
+      }
     }
 
-    return result;
-  };
+    return result
+  }
 
   /**
    * Abstract method for executing action within current page context.
@@ -388,7 +667,10 @@ export abstract class FetchEngine<
    * Handles specific user interactions using underlying technology (Playwright/Cheerio).
    * @internal
    */
-  protected abstract executeAction(context: TContext, action: FetchEngineAction): Promise<any>;
+  protected abstract executeAction(
+    context: TContext,
+    action: FetchEngineAction
+  ): Promise<any>
 
   /**
    * Navigates to the specified URL.
@@ -402,7 +684,10 @@ export abstract class FetchEngine<
    * await engine.goto('https://example.com');
    * ```
    */
-  abstract goto(url: string, params?: GotoActionOptions): Promise<void | FetchResponse>;
+  abstract goto(
+    url: string,
+    params?: GotoActionOptions
+  ): Promise<void | FetchResponse>
 
   /**
    * Waits for specified condition before continuing.
@@ -417,7 +702,7 @@ export abstract class FetchEngine<
    * ```
    */
   waitFor(params?: WaitForActionOptions): Promise<void> {
-    return this.dispatchAction({ type: 'waitFor', options: params });
+    return this.dispatchAction({ type: 'waitFor', options: params })
   }
 
   /**
@@ -428,7 +713,7 @@ export abstract class FetchEngine<
    * @throws {Error} When no active page context exists
    */
   click(selector: string): Promise<void> {
-    return this.dispatchAction({ type: 'click', selector });
+    return this.dispatchAction({ type: 'click', selector })
   }
 
   /**
@@ -440,7 +725,7 @@ export abstract class FetchEngine<
    * @throws {Error} When no active page context exists
    */
   fill(selector: string, value: string): Promise<void> {
-    return this.dispatchAction({ type: 'fill', selector, value });
+    return this.dispatchAction({ type: 'fill', selector, value })
   }
 
   /**
@@ -452,7 +737,7 @@ export abstract class FetchEngine<
    * @throws {Error} When no active page context exists
    */
   submit(selector?: any, options?: SubmitActionOptions): Promise<void> {
-    return this.dispatchAction({ type: 'submit', selector, options });
+    return this.dispatchAction({ type: 'submit', selector, options })
   }
 
   /**
@@ -463,7 +748,7 @@ export abstract class FetchEngine<
    * @throws {Error} When no active page context exists
    */
   pause(message?: string): Promise<void> {
-    return this.dispatchAction({ type: 'pause', message });
+    return this.dispatchAction({ type: 'pause', message })
   }
 
   /**
@@ -473,81 +758,83 @@ export abstract class FetchEngine<
    * @returns A promise that resolves to an object with the extracted data.
    */
   extract<T>(schema: ExtractSchema): Promise<T> {
-    const normalizedSchema = this._normalizeSchema(schema);
-    return this.dispatchAction({ type: 'extract', schema: normalizedSchema });
+    const normalizedSchema = this._normalizeSchema(schema)
+    return this.dispatchAction({ type: 'extract', schema: normalizedSchema })
   }
 
   protected _normalizeSchema(schema: ExtractSchema): ExtractSchema {
-    const newSchema = JSON.parse(JSON.stringify(schema)) as any;
+    const newSchema = JSON.parse(JSON.stringify(schema)) as any
 
     if (newSchema.properties) {
       for (const key in newSchema.properties) {
-        newSchema.properties[key] = this._normalizeSchema(newSchema.properties[key]);
+        newSchema.properties[key] = this._normalizeSchema(
+          newSchema.properties[key]
+        )
       }
     }
     if (newSchema.items) {
-      newSchema.items = this._normalizeSchema(newSchema.items);
+      newSchema.items = this._normalizeSchema(newSchema.items)
     }
 
     if (newSchema.type === 'array') {
       if (newSchema.attribute && !newSchema.items) {
-        newSchema.items = { attribute: newSchema.attribute };
-        delete newSchema.attribute;
+        newSchema.items = { attribute: newSchema.attribute }
+        delete newSchema.attribute
       }
       if (!newSchema.items) {
-        newSchema.items = { type: 'string' };
+        newSchema.items = { type: 'string' }
       }
     }
 
     if (newSchema.selector && (newSchema.has || newSchema.exclude)) {
-      const { selector, has, exclude } = newSchema;
+      const { selector, has, exclude } = newSchema
       const finalSelector = selector
         .split(',')
         .map((s: string) => {
-          let part = s.trim();
-          if (has) part = `${part}:has(${has})`;
-          if (exclude) part = `${part}:not(${exclude})`;
-          return part;
+          let part = s.trim()
+          if (has) part = `${part}:has(${has})`
+          if (exclude) part = `${part}:not(${exclude})`
+          return part
         })
-        .join(', ');
-      newSchema.selector = finalSelector;
-      delete newSchema.has;
-      delete newSchema.exclude;
+        .join(', ')
+      newSchema.selector = finalSelector
+      delete newSchema.has
+      delete newSchema.exclude
     }
 
-    return newSchema;
+    return newSchema
   }
 
   /**
    * Gets the unique identifier of this engine implementation.
    */
   get id() {
-    return (this.constructor as typeof FetchEngine).id;
+    return (this.constructor as typeof FetchEngine).id
   }
 
   /**
    * Returns the current state of the engine (cookies)
    * that can be used to restore the session later.
    */
-  async getState(): Promise<{ cookies: Cookie[], sessionState?: any }> {
+  async getState(): Promise<{ cookies: Cookie[]; sessionState?: any }> {
     return {
       cookies: await this.cookies(),
       sessionState: await this.crawler?.sessionPool?.getState(),
-    };
+    }
   }
 
   /**
    * Gets the execution mode of this engine (`'http'` or `'browser'`).
    */
   get mode() {
-    return (this.constructor as typeof FetchEngine).mode;
+    return (this.constructor as typeof FetchEngine).mode
   }
 
   /**
    * Gets the fetch engine context associated with this instance.
    */
   get context() {
-    return this.ctx;
+    return this.ctx
   }
 
   /**
@@ -561,54 +848,68 @@ export abstract class FetchEngine<
    * Sets up internal state and calls implementation-specific [_initialize](file:///home/riceball/Documents/mywork/public/@isdk/ai-tools/packages/web-fetcher/src/engine/cheerio.ts#L169-L204) method.
    * Automatically called when creating engine via `FetchEngine.create()`.
    */
-  async initialize(context: FetchEngineContext, options?: BaseFetcherProperties): Promise<void> {
+  async initialize(
+    context: FetchEngineContext,
+    options?: BaseFetcherProperties
+  ): Promise<void> {
     if (this.ctx) {
-      return;
+      return
     }
     // Deep merge the final resolved options back into the context,
     // so the context object always holds the most up-to-date data.
-    merge(context, options);
+    merge(context, options)
 
-    this.ctx = context;
-    this.opts = context; // Use the merged context
-    this.hdrs = normalizeHeaders(context.headers);
-    this._initialCookies = [...(context.cookies ?? [])];
+    this.ctx = context
+    this.opts = context // Use the merged context
+    this.hdrs = normalizeHeaders(context.headers)
+    this._initialCookies = [...(context.cookies ?? [])]
     if (!context.internal) {
-      context.internal = {};
+      context.internal = {}
     }
-    context.internal.engine = this;
-    context.engine = this.mode;
-    this.actionEmitter.setMaxListeners(100); // Set a higher limit to prevent memory leak warnings
+    context.internal.engine = this
+    context.engine = this.mode
+    this.actionEmitter.setMaxListeners(100) // Set a higher limit to prevent memory leak warnings
 
-    const storage = context.storage || {};
-    const persistStorage = storage.persist ?? false;
-    const config = this.config = new Configuration({
+    const storage = context.storage || {}
+    const persistStorage = storage.persist ?? false
+    const config = (this.config = new Configuration({
       persistStorage,
       storageClientOptions: {
         persistStorage,
         ...storage.config,
       },
-      ...storage.config
-    });
-    const storeId = storage.id || context.id;
-    this.requestQueue = await RequestQueue.open(storeId, { config });
+      ...storage.config,
+    }))
+    const storeId = storage.id || context.id
+    this.requestQueue = await RequestQueue.open(storeId, { config })
 
-    const proxyUrls = this.opts?.proxy ? (typeof this.opts.proxy === 'string' ? [this.opts.proxy] : this.opts.proxy) : undefined;
+    const proxyUrls = this.opts?.proxy
+      ? typeof this.opts.proxy === 'string'
+        ? [this.opts.proxy]
+        : this.opts.proxy
+      : undefined
     if (proxyUrls?.length) {
-      this.proxyConfiguration = new ProxyConfiguration({ proxyUrls });
+      this.proxyConfiguration = new ProxyConfiguration({ proxyUrls })
     }
 
-    const specificCrawlerOptions = await this._getSpecificCrawlerOptions(context);
-    const sessionPoolOptions: any = defaultsDeep({
-      persistenceOptions: { enable: true, storeId: storeId },
-      persistStateKeyValueStoreId: storeId
-    }, context.sessionPoolOptions, {
-      maxPoolSize: 1,
-      sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
-    });
+    const specificCrawlerOptions =
+      await this._getSpecificCrawlerOptions(context)
+    const sessionPoolOptions: any = defaultsDeep(
+      {
+        persistenceOptions: { enable: true, storeId: storeId },
+        persistStateKeyValueStoreId: storeId,
+      },
+      context.sessionPoolOptions,
+      {
+        maxPoolSize: 1,
+        sessionOptions: { maxUsageCount: 1000, maxErrorScore: 3 },
+      }
+    )
     if (context.sessionState) {
       if (context.cookies && context.cookies.length > 0) {
-        console.warn('[FetchEngine] Warning: Both "sessionState" and "cookies" are provided. Explicit "cookies" will override any conflicting cookies restored from "sessionState".');
+        console.warn(
+          '[FetchEngine] Warning: Both "sessionState" and "cookies" are provided. Explicit "cookies" will override any conflicting cookies restored from "sessionState".'
+        )
       }
     }
 
@@ -625,55 +926,70 @@ export abstract class FetchEngine<
       requestHandler: this._requestHandler.bind(this),
       errorHandler: this._failedRequestHandler.bind(this),
       failedRequestHandler: this._failedRequestHandler.bind(this),
-    };
+    }
 
     if (!finalCrawlerOptions.preNavigationHooks) {
-      finalCrawlerOptions.preNavigationHooks = [];
+      finalCrawlerOptions.preNavigationHooks = []
     }
-    finalCrawlerOptions.preNavigationHooks.unshift(({ crawler, session, request }: PlaywrightCrawlingContext, opts: PlaywrightGotoOptions) => {
-      this.currentSession = session;
-      if (session && !this._initializedSessions.has(session.id)) {
-        if (this._initialCookies && this._initialCookies.length > 0) {
-          const normalizedCookies = this._initialCookies.map((c) => {
-            const cookie = { ...c };
-            if ((cookie as any).sameSite === 'no_restriction') {
-              cookie.sameSite = 'None';
-            }
-            return cookie;
-          });
-          session.setCookies(normalizedCookies, request.url);
+    finalCrawlerOptions.preNavigationHooks.unshift(
+      (
+        { crawler, session, request }: PlaywrightCrawlingContext,
+        opts: PlaywrightGotoOptions
+      ) => {
+        this.currentSession = session
+        if (session && !this._initializedSessions.has(session.id)) {
+          if (this._initialCookies && this._initialCookies.length > 0) {
+            const normalizedCookies = this._initialCookies.map((c) => {
+              const cookie = { ...c }
+              if ((cookie as any).sameSite === 'no_restriction') {
+                cookie.sameSite = 'None'
+              }
+              return cookie
+            })
+            session.setCookies(normalizedCookies, request.url)
+          }
+          this._initializedSessions.add(session.id)
         }
-        this._initializedSessions.add(session.id);
       }
-    });
+    )
 
-    const crawler = this.crawler = this._createCrawler(finalCrawlerOptions as TOptions, config);
-    const kvStore = this.kvStore = await KeyValueStore.open(storeId, { config })
-    const persistState = await kvStore.getValue(PERSIST_STATE_KEY);
-    if (context.sessionState && (!persistState || context.overrideSessionState)) {
-      await kvStore.setValue(PERSIST_STATE_KEY, context.sessionState);
+    const crawler = (this.crawler = this._createCrawler(
+      finalCrawlerOptions as TOptions,
+      config
+    ))
+    const kvStore = (this.kvStore = await KeyValueStore.open(storeId, {
+      config,
+    }))
+    const persistState = await kvStore.getValue(PERSIST_STATE_KEY)
+    if (
+      context.sessionState &&
+      (!persistState || context.overrideSessionState)
+    ) {
+      await kvStore.setValue(PERSIST_STATE_KEY, context.sessionState)
     }
 
-    this.isCrawlerReady = true;
-    this.crawlerRunPromise = crawler.run();
-    this.crawlerRunPromise.finally(() => {
-      this.isCrawlerReady = false;
-    }).catch((error) => {
-      console.error('Crawler background error:', error);
-    });
+    this.isCrawlerReady = true
+    this.crawlerRunPromise = crawler.run()
+    this.crawlerRunPromise
+      .finally(() => {
+        this.isCrawlerReady = false
+      })
+      .catch((error) => {
+        console.error('Crawler background error:', error)
+      })
   }
 
   async cleanup(): Promise<void> {
-    await this._cleanup?.();
-    await this._commonCleanup();
-    const context = this.ctx;
+    await this._cleanup?.()
+    await this._commonCleanup()
+    const context = this.ctx
     if (context) {
       if (context.internal?.engine === this) {
-        context.internal.engine = undefined;
+        context.internal.engine = undefined
       }
     }
-    this.ctx = undefined;
-    this.opts = undefined;
+    this.ctx = undefined
+    this.opts = undefined
   }
 
   /**
@@ -700,149 +1016,172 @@ export abstract class FetchEngine<
    * @internal Engine infrastructure method - not for direct consumer use
    */
   protected async _executePendingActions(context: TContext) {
-    if (this.isEngineDisposed) return;
+    if (this.isEngineDisposed) return
     await new Promise<void>((resolveLoop) => {
-      const listener = async ({ action, resolve, reject }: DispatchedEngineAction) => {
+      const listener = async ({
+        action,
+        resolve,
+        reject,
+      }: DispatchedEngineAction) => {
         try {
           if (action.type === 'dispose') {
-            this.actionEmitter.emit('dispose');
-            resolve();
-            return;
+            this.actionEmitter.emit('dispose')
+            resolve()
+            return
           }
-          const result = await this.executeAction(context, action);
-          resolve(result);
+          const result = await this.executeAction(context, action)
+          resolve(result)
         } catch (error) {
-          reject(error);
+          reject(error)
         }
-      };
+      }
 
       const onDispose = () => {
-        this.actionEmitter.removeListener('dispatch', listener);
-        resolveLoop();
-      };
+        this.actionEmitter.removeListener('dispatch', listener)
+        resolveLoop()
+      }
 
-      this.actionEmitter.on('dispatch', listener);
-      this.actionEmitter.once('dispose', onDispose);
+      this.actionEmitter.on('dispatch', listener)
+      this.actionEmitter.once('dispose', onDispose)
 
       if (this.isEngineDisposed) {
-        onDispose();
-        this.actionEmitter.removeListener('dispose', onDispose);
+        onDispose()
+        this.actionEmitter.removeListener('dispose', onDispose)
       }
-    });
+    })
   }
 
   protected async _sharedRequestHandler(context: TContext): Promise<void> {
-    const { request } = context;
+    const { request } = context
     try {
-      this.currentSession = context.session;
-      this.isPageActive = true;
+      this.currentSession = context.session
+      this.isPageActive = true
 
-      const gotoPromise = this.pendingRequests.get(request.userData.requestId);
+      const gotoPromise = this.pendingRequests.get(request.userData.requestId)
       if (gotoPromise) {
-        const fetchResponse = await this.buildResponse(context);
+        const fetchResponse = await this.buildResponse(context)
 
         // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
-        const isError = !fetchResponse.statusCode || fetchResponse.statusCode >= 400;
+        const isError =
+          !fetchResponse.statusCode || fetchResponse.statusCode >= 400
         if (this.ctx?.throwHttpErrors && isError) {
-          const error = new CommonError(`Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`, 'request', fetchResponse.statusCode);
-          gotoPromise.reject(error);
+          const error = new CommonError(
+            `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`,
+            'request',
+            fetchResponse.statusCode
+          )
+          gotoPromise.reject(error)
         } else {
-          this.lastResponse = fetchResponse;
-          gotoPromise.resolve(fetchResponse);
+          this.lastResponse = fetchResponse
+          gotoPromise.resolve(fetchResponse)
         }
-        this.pendingRequests.delete(request.userData.requestId);
+        this.pendingRequests.delete(request.userData.requestId)
       }
 
-      await this._executePendingActions(context);
+      await this._executePendingActions(context)
     } finally {
       if (this.currentSession) {
-        const cookies = this.currentSession.getCookies(request.url);
+        const cookies = this.currentSession.getCookies(request.url)
         if (cookies) {
-          this._initialCookies = cookies;
+          this._initialCookies = cookies
         }
       }
-      this.isPageActive = false;
-      this.navigationLock.release();
+      this.isPageActive = false
+      this.navigationLock.release()
     }
   }
 
-  protected async _sharedFailedRequestHandler(context: TContext, error?: Error): Promise<void> {
-    const { request } = context;
-    const gotoPromise = this.pendingRequests.get(request.userData.requestId);
+  protected async _sharedFailedRequestHandler(
+    context: TContext,
+    error?: Error
+  ): Promise<void> {
+    const { request } = context
+    const gotoPromise = this.pendingRequests.get(request.userData.requestId)
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
-      this.pendingRequests.delete(request.userData.requestId);
-      const response = (error as any).response;
-      const statusCode = response?.statusCode || 500;
-      const url = response?.url ? response.url : request.url;
-      const finalError = new CommonError(`Request${url ? ' for '+url: ''} failed: ${error.message}`, 'request', statusCode);
-      gotoPromise.reject(finalError);
+      this.pendingRequests.delete(request.userData.requestId)
+      const response = (error as any).response
+      const statusCode = response?.statusCode || 500
+      const url = response?.url ? response.url : request.url
+      const finalError = new CommonError(
+        `Request${url ? ' for ' + url : ''} failed: ${error.message}`,
+        'request',
+        statusCode
+      )
+      gotoPromise.reject(finalError)
     }
     // By calling the original handler, we ensure cleanup (e.g. lock release) happens.
     // The original handler will not find the promise and that's OK.
-    return this._sharedRequestHandler(context);
+    return this._sharedRequestHandler(context)
   }
 
   protected async dispatchAction<T>(action: FetchEngineAction): Promise<T> {
     if (!this.isPageActive) {
-      throw new Error('No active page. Call goto() before performing actions.');
+      throw new Error('No active page. Call goto() before performing actions.')
     }
     return new Promise<T>((resolve, reject) => {
-      this.actionEmitter.emit('dispatch', { action, resolve, reject });
-    });
+      this.actionEmitter.emit('dispatch', { action, resolve, reject })
+    })
   }
 
   private async _requestHandler(context: TContext): Promise<void> {
-    await this._sharedRequestHandler(context);
+    await this._sharedRequestHandler(context)
   }
 
-  private async _failedRequestHandler(context: TContext, error: Error): Promise<void> {
-    await this._sharedFailedRequestHandler(context, error);
+  private async _failedRequestHandler(
+    context: TContext,
+    error: Error
+  ): Promise<void> {
+    await this._sharedFailedRequestHandler(context, error)
   }
 
   protected async _commonCleanup() {
-    this.isEngineDisposed = true;
-    this._initializedSessions.clear();
-    this.actionEmitter.emit('dispose');
-    this.navigationLock?.release();
+    this.isEngineDisposed = true
+    this._initializedSessions.clear()
+    this.actionEmitter.emit('dispose')
+    this.navigationLock?.release()
 
     if (this.pendingRequests.size > 0) {
       for (const [, pendingRequest] of this.pendingRequests) {
-        pendingRequest.reject(new Error('Cleanup:Request cancelled'));
+        pendingRequest.reject(new Error('Cleanup:Request cancelled'))
       }
-      this.pendingRequests.clear();
+      this.pendingRequests.clear()
     }
 
     if (this.crawler) {
       try {
-        await this.crawler.teardown?.();
+        await this.crawler.teardown?.()
       } catch (error) {
         console.error('crawler teardown error:', error)
       }
-      this.crawler = undefined;
+      this.crawler = undefined
     }
-    this.crawlerRunPromise = undefined;
-    this.isCrawlerReady = undefined;
+    this.crawlerRunPromise = undefined
+    this.isCrawlerReady = undefined
 
-    const storage = this.opts?.storage || {};
-    const shouldPurge = storage.purge ?? true;
+    const storage = this.opts?.storage || {}
+    const shouldPurge = storage.purge ?? true
 
     if (this.requestQueue) {
       if (shouldPurge) {
-        await this.requestQueue.drop().catch(err => console.error('Error dropping requestQueue:', err));
+        await this.requestQueue
+          .drop()
+          .catch((err) => console.error('Error dropping requestQueue:', err))
       }
-      this.requestQueue = undefined;
+      this.requestQueue = undefined
     }
 
     if (this.kvStore) {
       if (shouldPurge) {
-        await this.kvStore.drop().catch(err => console.error('Error dropping kvStore:', err));
+        await this.kvStore
+          .drop()
+          .catch((err) => console.error('Error dropping kvStore:', err))
       }
-      this.kvStore = undefined;
+      this.kvStore = undefined
     }
 
-    this.actionEmitter.removeAllListeners();
-    this.pendingRequests.clear();
-    this.config = undefined;
+    this.actionEmitter.removeAllListeners()
+    this.pendingRequests.clear()
+    this.config = undefined
   }
 
   /**
@@ -860,10 +1199,10 @@ export abstract class FetchEngine<
    */
   async blockResources(types: ResourceType[], overwrite?: boolean) {
     if (overwrite) {
-      this.blockedTypes.clear();
+      this.blockedTypes.clear()
     }
-    types.forEach((t) => this.blockedTypes.add(t));
-    return types.length;
+    types.forEach((t) => this.blockedTypes.add(t))
+    return types.length
   }
 
   /**
@@ -874,9 +1213,11 @@ export abstract class FetchEngine<
    */
   getContent(): Promise<FetchResponse> {
     if (!this.lastResponse) {
-      return Promise.reject(new Error('No content fetched yet. Call goto() first.'));
+      return Promise.reject(
+        new Error('No content fetched yet. Call goto() first.')
+      )
     }
-    return Promise.resolve(this.lastResponse);
+    return Promise.resolve(this.lastResponse)
   }
 
   /**
@@ -911,44 +1252,47 @@ export abstract class FetchEngine<
    * await engine.headers('auth', 'token');
    * ```
    */
-  async headers(): Promise<Record<string, string>>;
-  async headers(name: string): Promise<string>;
-  async headers(headers: Record<string, string>, replaced?: boolean): Promise<boolean>;
-  async headers(name: string, value: string | null): Promise<boolean>;
+  async headers(): Promise<Record<string, string>>
+  async headers(name: string): Promise<string>
+  async headers(
+    headers: Record<string, string>,
+    replaced?: boolean
+  ): Promise<boolean>
+  async headers(name: string, value: string | null): Promise<boolean>
   async headers(
     nameOrHeaders?: string | Record<string, string>,
-    value?: string | boolean | null,
+    value?: string | boolean | null
   ): Promise<Record<string, string> | string | boolean> {
     if (nameOrHeaders === undefined) {
-      return { ...this.hdrs };
+      return { ...this.hdrs }
     }
 
     if (typeof nameOrHeaders === 'string' && value === undefined) {
-      return this.hdrs[nameOrHeaders.toLowerCase()] || '';
+      return this.hdrs[nameOrHeaders.toLowerCase()] || ''
     }
 
     if (nameOrHeaders !== null && typeof nameOrHeaders === 'object') {
-      const normalized: Record<string, string> = {};
+      const normalized: Record<string, string> = {}
       for (const [k, v] of Object.entries(nameOrHeaders)) {
-        normalized[k.toLowerCase()] = String(v);
+        normalized[k.toLowerCase()] = String(v)
       }
       if (value === true) {
-        this.hdrs = normalized;
+        this.hdrs = normalized
       } else {
-        this.hdrs = { ...this.hdrs, ...normalized };
+        this.hdrs = { ...this.hdrs, ...normalized }
       }
-      return true;
+      return true
     }
 
     if (typeof nameOrHeaders === 'string') {
       if (typeof value === 'string') {
-        this.hdrs[nameOrHeaders.toLowerCase()] = value;
+        this.hdrs[nameOrHeaders.toLowerCase()] = value
       } else if (value === null) {
-        delete this.hdrs[nameOrHeaders.toLowerCase()];
+        delete this.hdrs[nameOrHeaders.toLowerCase()]
       }
-      return true;
+      return true
     }
-    return false;
+    return false
   }
 
   /**
@@ -969,17 +1313,17 @@ export abstract class FetchEngine<
    * await engine.cookies([{ name: 'session', value: '123' }]);
    * ```
    */
-  async cookies(): Promise<Cookie[]>;
-  async cookies(cookies: Cookie[]): Promise<boolean>;
+  async cookies(): Promise<Cookie[]>
+  async cookies(cookies: Cookie[]): Promise<boolean>
   async cookies(a?: any): Promise<any> {
-    const url = this.lastResponse?.url || '';
+    const url = this.lastResponse?.url || ''
     if (Array.isArray(a)) {
       if (this.currentSession) {
-        this.currentSession.setCookies(a, url);
+        this.currentSession.setCookies(a, url)
       } else {
-        this._initialCookies = [...a];
+        this._initialCookies = [...a]
       }
-      return true;
+      return true
     } else if (a === null) {
       if (this.currentSession) {
         // Not straightforward to clear cookies in Session,
@@ -990,14 +1334,14 @@ export abstract class FetchEngine<
         // For now, let's just reset our initial cookies buffer or warn.
         // Implementing 'clear' fully via Session might require accessing internal jar.
       }
-      this._initialCookies = [];
-      return true;
+      this._initialCookies = []
+      return true
     }
     if (this.currentSession) {
-      const cookies = this.currentSession.getCookies(url);
-      return cookies;
+      const cookies = this.currentSession.getCookies(url)
+      return cookies
     }
-    return [...(this._initialCookies || [])];
+    return [...(this._initialCookies || [])]
   }
 
   /**
