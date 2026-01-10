@@ -1,21 +1,27 @@
-import { BaseFetchActionProperties, FetchAction } from "../fetch-action";
-import { FetchContext } from "../../core/context";
+import { BaseFetchActionProperties, FetchAction } from '../fetch-action'
+import { FetchContext } from '../../core/context'
 
 export class PauseAction extends FetchAction {
-  static override id = 'pause';
+  static override id = 'pause'
 
-  static override capabilities = { http: 'native' as const, browser: 'native' as const };
+  static override capabilities = {
+    http: 'native' as const,
+    browser: 'native' as const,
+  }
 
-  static override returnType = 'none' as const;
+  static override returnType = 'none' as const
 
-  async onExecute(context: FetchContext, options?: BaseFetchActionProperties): Promise<void> {
-    const { selector, message, attribute } = options?.params || {};
-    const engine = context.internal.engine;
+  async onExecute(
+    context: FetchContext,
+    options?: BaseFetchActionProperties
+  ): Promise<void> {
+    const { selector, message, attribute } = options?.params || {}
+    const engine = context.internal.engine
 
     // 1. Only execute in browser engine
     if (engine?.mode !== 'browser') {
-      console.warn('[PauseAction] can only run in browser engine. Skipped.');
-      return;
+      console.warn('[PauseAction] can only run in browser engine. Skipped.')
+      return
     }
 
     // 2. (Optional) If a selector is provided, only pause if the element exists
@@ -25,21 +31,23 @@ export class PauseAction extends FetchAction {
       const tagName = await engine?.extract<string>({
         selector,
         attribute,
-      });
+      })
 
       if (!tagName) {
-        return; // Element not found, so we don't pause.
+        return // Element not found, so we don't pause.
       }
     }
 
     // 3. Call engine's pause method
     if (engine && 'pause' in engine) {
-      await (engine as any).pause(message);
+      await (engine as any).pause(message)
     } else {
-      console.warn('[PauseAction] was called, but the current engine does not support `pause`. Skipped.');
+      console.warn(
+        '[PauseAction] was called, but the current engine does not support `pause`. Skipped.'
+      )
     }
   }
 }
 
 // Register the Action to make it available
-FetchAction.register(PauseAction);
+FetchAction.register(PauseAction)

@@ -1,5 +1,9 @@
 import type { FetchContext } from './context'
-import { FetchAction, FetchActionOptions, FetchActionResult } from '../action/fetch-action'
+import {
+  FetchAction,
+  FetchActionOptions,
+  FetchActionResult,
+} from '../action/fetch-action'
 import { Cookie, DefaultFetcherProperties, FetcherOptions } from './types'
 import { FetchReturnType } from './fetch-return-type'
 import { createEvent } from '../event/create-event'
@@ -40,7 +44,6 @@ export class FetchSession {
     this.context = this.createContext(options)
   }
 
-
   /**
    * Executes a single action within the session.
    *
@@ -58,37 +61,39 @@ export class FetchSession {
     actionOptions: FetchActionOptions,
     context: FetchContext = this.context
   ): Promise<FetchActionResult<R>> {
-    const index = actionOptions.index ?? (context.internal.actionIndex || 0);
-    context.internal.actionIndex = index + 1;
+    const index = actionOptions.index ?? (context.internal.actionIndex || 0)
+    context.internal.actionIndex = index + 1
 
     await this.ensureEngine(actionOptions, context)
 
     const action = FetchAction.create(actionOptions)
     if (!action) {
-      throw new Error(`Unknown action: ${actionOptions.id || actionOptions.name}`)
+      throw new Error(
+        `Unknown action: ${actionOptions.id || actionOptions.name}`
+      )
     }
     // const actionId = actionOptions.id || actionOptions.name || 'unknown'
     // const eventBus = this.context.eventBus;
 
     // Use a copy of actionOptions to avoid mutating the original, and inject the index
-    const effectiveActionOptions = { ...actionOptions, index };
+    const effectiveActionOptions = { ...actionOptions, index }
 
     // 更新当前动作状态
     context.currentAction = {
       ...effectiveActionOptions,
-      startedAt: Date.now()
+      startedAt: Date.now(),
     }
 
-    let result: FetchActionResult<R>|undefined;
-    let error: Error|undefined;
+    let result: FetchActionResult<R> | undefined
+    let error: Error | undefined
 
     try {
       result = await action.execute<R>(context, effectiveActionOptions)
 
       return result
     } catch (e: any) {
-      error = e;
-      throw error;
+      error = e
+      throw error
     } finally {
       // 清除当前动作状态
       context.currentAction = undefined
@@ -111,21 +116,24 @@ export class FetchSession {
    * ], { timeoutMs: 30000 });
    * ```
    */
-  async executeAll(actions: FetchActionOptions[], options?: Partial<FetcherOptions> & { index?: number }) {
+  async executeAll(
+    actions: FetchActionOptions[],
+    options?: Partial<FetcherOptions> & { index?: number }
+  ) {
     const runContext: FetchContext = options
       ? {
-        ...this.context,
-        ...options,
-        // Preserve critical session state
-        id: this.context.id,
-        eventBus: this.context.eventBus,
-        outputs: this.context.outputs,
-        execute: this.context.execute,
-        action: this.context.action,
-      }
-      : this.context;
+          ...this.context,
+          ...options,
+          // Preserve critical session state
+          id: this.context.id,
+          eventBus: this.context.eventBus,
+          outputs: this.context.outputs,
+          execute: this.context.execute,
+          action: this.context.action,
+        }
+      : this.context
 
-    let i = options?.index ?? 0;
+    let i = options?.index ?? 0
     try {
       while (i < actions.length) {
         const actionOptions = actions[i]
@@ -133,10 +141,13 @@ export class FetchSession {
         i++
       }
 
-      const response = await this.execute({
-        id: 'getContent',
-        index: i
-      }, runContext)
+      const response = await this.execute(
+        {
+          id: 'getContent',
+          index: i,
+        },
+        runContext
+      )
       return {
         result: response?.result,
         outputs: this.getOutputs(),
@@ -161,7 +172,9 @@ export class FetchSession {
    *
    * @returns A promise resolving to the session state, or undefined if no engine is initialized.
    */
-  async getState(): Promise<{ cookies: Cookie[], sessionState?: any } | undefined> {
+  async getState(): Promise<
+    { cookies: Cookie[]; sessionState?: any } | undefined
+  > {
     return this.context.internal.engine?.getState()
   }
 
@@ -186,43 +199,50 @@ export class FetchSession {
     eventBus.emit('session:closed', { sessionId: this.id })
   }
 
-  private async ensureEngine(actionOptions: FetchActionOptions | undefined, context: FetchContext) {
+  private async ensureEngine(
+    actionOptions: FetchActionOptions | undefined,
+    context: FetchContext
+  ) {
     if (this.closed) {
       throw new Error('Session is closed')
     }
     if (!context.internal.engine) {
-      const url = actionOptions?.params?.url ?? context.url;
+      const url = actionOptions?.params?.url ?? context.url
       const engine = await maybeCreateEngine(context, { url })
-      if (!engine) {throw new Error('No engine found')}
+      if (!engine) {
+        throw new Error('No engine found')
+      }
       context.internal.engine = engine
     }
-
   }
 
   protected createContext(options = this.options): FetchContext {
-    const eventBus = createEvent();
-    const result: FetchContext = defaultsDeep({
-      ...options,
-      id: this.id,
-      eventBus,
-      outputs: {},
-      internal: {},
-      execute: async <R extends FetchReturnType = 'any'>(
-        actionOptions: FetchActionOptions
-      ) => this.execute<R>(actionOptions),
-      action: async function<R extends FetchReturnType = 'any'>(
-        this: FetchContext,
-        name: string,
-        params?: any,
-        options?: FetchActionOptions
-      ) {
-        return this.execute<R>({
-          name,
-          params,
-          ...options,
-        } as FetchActionOptions)
+    const eventBus = createEvent()
+    const result: FetchContext = defaultsDeep(
+      {
+        ...options,
+        id: this.id,
+        eventBus,
+        outputs: {},
+        internal: {},
+        execute: async <R extends FetchReturnType = 'any'>(
+          actionOptions: FetchActionOptions
+        ) => this.execute<R>(actionOptions),
+        action: async function <R extends FetchReturnType = 'any'>(
+          this: FetchContext,
+          name: string,
+          params?: any,
+          options?: FetchActionOptions
+        ) {
+          return this.execute<R>({
+            name,
+            params,
+            ...options,
+          } as FetchActionOptions)
+        },
       },
-    }, DefaultFetcherProperties)
+      DefaultFetcherProperties
+    )
     return result
   }
 }

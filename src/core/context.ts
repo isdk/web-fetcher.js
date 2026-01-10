@@ -1,8 +1,12 @@
 import { EventEmitter } from 'events-ex'
-import { FetchEngine } from "../engine/base";
-import { FetchActionOptions, FetchActionProperties, FetchActionResult } from "../action/fetch-action";
-import { FetchReturnType } from "./fetch-return-type";
-import { BaseFetcherProperties, FetchResponse } from "./types";
+import { FetchEngine } from '../engine/base'
+import {
+  FetchActionOptions,
+  FetchActionProperties,
+  FetchActionResult,
+} from '../action/fetch-action'
+import { FetchReturnType } from './fetch-return-type'
+import { BaseFetcherProperties, FetchResponse } from './types'
 
 /**
  * Represents the state of an action being executed within a context.
@@ -15,15 +19,15 @@ export interface FetchActionInContext extends FetchActionProperties {
   /**
    * The 0-based index of the action in the execution sequence.
    */
-  index?: number;
+  index?: number
   /**
    * Error encountered during action execution, if any.
    */
-  error?: Error;
+  error?: Error
   /**
    * The nesting depth of the action. Top-level actions (executed directly by the session) have a depth of 0.
    */
-  depth?: number;
+  depth?: number
 }
 
 /**
@@ -52,11 +56,11 @@ interface FetchContextInteralState extends BaseFetchContextInteralState {
   /**
    * Stack of actions currently being executed, used to manage nested action calls.
    */
-  actionStack?: FetchActionInContext[];
+  actionStack?: FetchActionInContext[]
   /**
    * Global counter for actions executed within the session, used to assign auto-incrementing indices.
    */
-  actionIndex?: number;
+  actionIndex?: number
 }
 
 /**
@@ -70,29 +74,29 @@ export interface FetchEngineContext extends BaseFetcherProperties {
   /**
    * Unique identifier for the session or request batch.
    */
-  id: string;
+  id: string
   /**
    * The target URL for the next navigation, if specified.
    */
-  url?: string;
+  url?: string
   /**
    * The final URL after all redirects have been followed.
    */
-  finalUrl?: string;
+  finalUrl?: string
 
   /**
    * The standardized response object from the most recent navigation.
    */
-  lastResponse?: FetchResponse;
+  lastResponse?: FetchResponse
   /**
    * The result object from the most recent action execution.
    */
-  lastResult?: FetchActionResult;
+  lastResult?: FetchActionResult
 
   /**
    * Engine-specific internal state.
    */
-  internal: BaseFetchContextInteralState;
+  internal: BaseFetchContextInteralState
 }
 
 /**
@@ -107,13 +111,13 @@ export interface FetchContext extends FetchEngineContext {
   /**
    * Metadata about the action currently being executed.
    */
-  currentAction?: FetchActionInContext;
+  currentAction?: FetchActionInContext
 
   /**
    * A shared key-value store for storing data extracted from pages or
    * metadata generated during action execution.
    */
-  outputs: Record<string, any>;
+  outputs: Record<string, any>
 
   /**
    * Executes a FetchAction within the current context.
@@ -121,7 +125,9 @@ export interface FetchContext extends FetchEngineContext {
    * @param actionOptions - Configuration for the action to be executed.
    * @returns A promise that resolves to the action's result.
    */
-  execute<R extends FetchReturnType = 'any'>(actionOptions: FetchActionOptions): Promise<FetchActionResult<R>>
+  execute<R extends FetchReturnType = 'any'>(
+    actionOptions: FetchActionOptions
+  ): Promise<FetchActionResult<R>>
 
   /**
    * Convenience method to execute an action by its registered name or ID.
@@ -131,16 +137,19 @@ export interface FetchContext extends FetchEngineContext {
    * @param options - Additional execution options (e.g., storeAs, failOnError).
    * @returns A promise that resolves to the action's result.
    */
-  action<R extends FetchReturnType = 'any'>(name: string, params?: any, options?: Partial<FetchActionOptions>): Promise<FetchActionResult<R>>
+  action<R extends FetchReturnType = 'any'>(
+    name: string,
+    params?: any,
+    options?: Partial<FetchActionOptions>
+  ): Promise<FetchActionResult<R>>
 
   /**
    * Internal state for engine and lifecycle management.
    */
-  internal: FetchContextInteralState;
+  internal: FetchContextInteralState
 
   /**
    * The central event bus for publishing and subscribing to session and action events.
    */
-  eventBus: EventEmitter;
+  eventBus: EventEmitter
 }
-
