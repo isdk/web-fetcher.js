@@ -13,7 +13,7 @@
         "items": {
           "title": { "selector": ".result > h3" },
           "url": { "selector": "a", "attribute": "href" },
-          "snippet": { "selector": "div[style*='-webkit-line-clamp']" }
+          "snippet": { "selector": "div[style*='-webkit-line-clamp']", "type": "html" }
         }
       },
       "storeAs": "data"
@@ -30,7 +30,7 @@
         {
           "title": "Title 2",
           "url": "/url2",
-          "snippet": "Snippet 2"
+          "snippet": "<em>Snippet</em> 2"
         }
       ]
     }
