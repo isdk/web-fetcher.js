@@ -9,9 +9,9 @@
       "action": "extract",
       "params": {
         "type": "array",
-        "selector": "#main #search .result",
+        "selector": "#main #search",
         "items": {
-          "title": { "selector": "h3" },
+          "title": { "selector": ".result > h3" },
           "url": { "selector": "a", "attribute": "href" },
           "snippet": { "selector": "div[style*='-webkit-line-clamp']" }
         }
