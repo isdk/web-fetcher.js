@@ -223,6 +223,38 @@ When implementing a new engine, the `_buildResponse(context)` method is responsi
 *   **Output Control**: While `base.ts` handles the final filtering of `cookies` and `sessionState` based on `this.opts.output` (by explicitly deleting them if disabled), it is highly recommended that the engine implementation also respects `this.opts.output`.
     *   **Performance**: If `this.opts.output.cookies` is `false`, the engine should avoid expensive operations (like IPC calls in browser automation) to retrieve cookies, unless they are needed for internal session synchronization.
 
+### Feature: Zip Strategy & Smart Inference
+
+We implemented a "Zip Strategy" in the `extract` action to simplify scraping list data, especially when users think in terms of "Container + Columns" rather than "Item Wrapper + Child Fields".
+
+#### 1. The "Zip" Logic
+Standard extraction iterates over elements found by `selector` (Item Wrapper) and then extracts fields from each.
+The **Zip Strategy** activates when:
+1.  The array `selector` matches exactly **one** element (The Container).
+2.  The `items` schema defines multiple fields with their own selectors.
+3.  `zip` option is not `false`.
+
+In this mode, the engine:
+1.  Finds all matches for *each field* within the container.
+2.  Checks if the counts align (e.g., found 10 titles and 10 prices).
+3.  If aligned, it "zips" them together by index into objects.
+4.  **Strict Mode**: By default (`strict: true`), any count mismatch throws an error to prevent data misalignment.
+
+#### 2. Smart Inference Algorithm
+When `zip: { inference: true }` is enabled, the engine attempts to fix misalignment (e.g., missing fields in some items).
+
+**Algorithm**:
+1.  **Pivot Selection**: Identify the field with the most matches (e.g., "title" has 10 matches, "price" has 9).
+2.  **Ancestry Traversal**: For each match of the pivot field:
+    -   Traverse up the DOM tree until reaching the **Container**.
+    -   Identify the direct child of the Container as the **Implied Item Wrapper**.
+3.  **Wrapper Collection**: Collect and deduplicate these implied wrappers.
+4.  **Fallback**: If valid wrappers are found (count > 1), the engine switches back to standard "Item Extraction" mode using these inferred wrappers, which naturally handles missing fields (returning `null` for them).
+
+**Future Extensions**:
+-   **Nested Zip**: Currently, Zip strategy only works for flat structures (Value Schemas). It could be extended to support nested Objects or Arrays.
+-   **Better Scoring**: The current inference uses "max count" to pick the pivot. A better heuristic might be "deepest common ancestor frequency" or handling cases where even the pivot field is missing items.
+
 ## 📄 License
 
 By contributing, you agree that your contributions will be licensed under its MIT License.

@@ -1,27 +1,32 @@
-import { PlaywrightCrawler, Configuration } from 'crawlee';
-import type { PlaywrightCrawlingContext, PlaywrightCrawlerOptions } from 'crawlee';
-import { firefox } from 'playwright';
-import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base';
-import { FetchResponse, type OnFetchPauseCallback } from '../core/types';
-import { FetchEngineContext } from '../core/context';
-import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error';
-import { ExtractValueSchema } from '../core/extract';
+import { PlaywrightCrawler, Configuration } from 'crawlee'
+import type {
+  PlaywrightCrawlingContext,
+  PlaywrightCrawlerOptions,
+} from 'crawlee'
+import { firefox } from 'playwright'
+import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base'
+import { FetchResponse, type OnFetchPauseCallback } from '../core/types'
+import { FetchEngineContext } from '../core/context'
+import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
+import { ExtractValueSchema } from '../core/extract'
 
-const DefaultTimeoutMs = 30_000;
+const DefaultTimeoutMs = 30_000
 
-type Page = NonNullable<PlaywrightCrawlingContext['page']>;
-type Locator = ReturnType<Page['locator']>;
+type Page = NonNullable<PlaywrightCrawlingContext['page']>
+type Locator = ReturnType<Page['locator']>
 
 export class PlaywrightFetchEngine extends FetchEngine<
   PlaywrightCrawlingContext,
   PlaywrightCrawler,
   PlaywrightCrawlerOptions
 > {
-  static readonly id = 'playwright';
-  static readonly mode = 'browser';
+  static readonly id = 'playwright'
+  static readonly mode = 'browser'
 
-  protected async _buildResponse(context: PlaywrightCrawlingContext): Promise<FetchResponse> {
-    const { page, response, request, session } = context;
+  protected async _buildResponse(
+    context: PlaywrightCrawlingContext
+  ): Promise<FetchResponse> {
+    const { page, response, request, session } = context
     // In case of failed request, page might be closed.
     if (!page || page.isClosed()) {
       return {
@@ -33,13 +38,13 @@ export class PlaywrightFetchEngine extends FetchEngine<
         body: '',
         html: '',
         text: '',
-      };
+      }
     }
-    const body = await page.content();
-    const text = await page.textContent('body');
-    const cookies = await page.context().cookies();
+    const body = await page.content()
+    const text = await page.textContent('body')
+    const cookies = await page.context().cookies()
     if (session) {
-      session.setCookies(cookies, request.url);
+      session.setCookies(cookies, request.url)
     }
     const result: FetchResponse = {
       url: page.url(),
@@ -50,12 +55,15 @@ export class PlaywrightFetchEngine extends FetchEngine<
       body,
       html: body,
       text: text || '',
-    };
+    }
 
     if (this.opts?.debug && response) {
-      const request = typeof response.request === 'function' ? response.request() : (response as any).request;
+      const request =
+        typeof response.request === 'function'
+          ? response.request()
+          : (response as any).request
       if (request && typeof request.timing === 'function') {
-        const t = request.timing();
+        const t = request.timing()
         result.metadata = {
           timings: {
             start: t.startTime,
@@ -64,182 +72,242 @@ export class PlaywrightFetchEngine extends FetchEngine<
             dns: t.domainLookupEnd - t.domainLookupStart,
             tcp: t.connectEnd - t.connectStart,
             download: t.responseEnd - t.responseStart,
-          }
-        } as any;
+          },
+        } as any
       }
     }
 
     if (this.opts?.output?.cookies !== false) {
-      result.cookies = cookies;
+      result.cookies = cookies
     }
-    return result;
+    return result
   }
 
-  protected async _querySelectorAll(context: Locator, selector: string): Promise<any[]> {
-    return context.locator(selector).all();
+  protected async _querySelectorAll(
+    context: Locator,
+    selector: string
+  ): Promise<any[]> {
+    return context.locator(selector).all()
   }
 
-  protected async _extractValue(schema: ExtractValueSchema, context: Locator): Promise<any> {
-    const { attribute, type = 'string' } = schema;
+  protected async _parentElement(context: Locator): Promise<any | null> {
+    // In Playwright, xpath '..' gets parent
+    const parent = context.locator('xpath=..')
+    if ((await parent.count()) === 0) return null
+    return parent.first()
+  }
 
-    if (await context.count() === 0) return null;
+  protected async _isSameElement(
+    context1: Locator,
+    context2: Locator
+  ): Promise<boolean> {
+    const h1 = await context1.elementHandle()
+    const h2 = await context2.elementHandle()
+    if (!h1 || !h2) return false
+    const result = await h1.evaluate((node1, node2) => node1 === node2, h2)
+    // Handles should be disposed?
+    // In this flow, we might be creating many handles.
+    // Ideally we should manage disposal, but Locators manage their own lifecycle mostly.
+    // ElementHandles obtained manually should be disposed.
+    await h1.dispose()
+    await h2.dispose()
+    return result
+  }
 
-    let value: string | null = '';
+  protected async _extractValue(
+    schema: ExtractValueSchema,
+    context: Locator
+  ): Promise<any> {
+    const { attribute, type = 'string' } = schema
+
+    if ((await context.count()) === 0) return null
+
+    let value: string | null = ''
     if (attribute) {
-      value = await context.getAttribute(attribute);
+      value = await context.getAttribute(attribute)
     } else if (type === 'html') {
-      value = await context.innerHTML();
+      value = await context.innerHTML()
     } else {
-      value = await context.textContent();
+      value = await context.textContent()
     }
 
-    if (value === null) return null;
-    value = value.trim();
+    if (value === null) return null
+    value = value.trim()
 
     switch (type) {
       case 'number':
-        return parseFloat(value.replace(/[^0-9.-]+/g, '')) || null;
+        return parseFloat(value.replace(/[^0-9.-]+/g, '')) || null
       case 'boolean':
-        const lowerValue = value.toLowerCase();
-        return lowerValue === 'true' || lowerValue === '1';
+        const lowerValue = value.toLowerCase()
+        return lowerValue === 'true' || lowerValue === '1'
       default:
-        return value;
+        return value
     }
   }
 
-  protected async executeAction(context: PlaywrightCrawlingContext, action: FetchEngineAction): Promise<any> {
-    const { page } = context;
-    const defaultTimeout = this.opts?.timeoutMs || DefaultTimeoutMs;
+  protected async executeAction(
+    context: PlaywrightCrawlingContext,
+    action: FetchEngineAction
+  ): Promise<any> {
+    const { page } = context
+    const defaultTimeout = this.opts?.timeoutMs || DefaultTimeoutMs
     switch (action.type) {
       case 'navigate': {
         const response = await page.goto(action.url, {
           waitUntil: action.opts?.waitUntil || 'domcontentloaded',
           timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
-        });
-        if (response) context = { ...context, response };
-        const fetchResponse = await this.buildResponse(context);
-        this.lastResponse = fetchResponse;
-        return fetchResponse;
+        })
+        if (response) context = { ...context, response }
+        const fetchResponse = await this.buildResponse(context)
+        this.lastResponse = fetchResponse
+        return fetchResponse
       }
       case 'extract': {
-        const result = await this._extract(action.schema, page.locator('body'));
-        this.lastResponse = await this.buildResponse(context);
-        return result;
+        const result = await this._extract(action.schema, page.locator('body'))
+        this.lastResponse = await this.buildResponse(context)
+        return result
       }
       case 'click': {
         // const beforePageId = page.mainFrame().url();
-        await page.click(action.selector, { timeout: defaultTimeout });
-        await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
+        await page.click(action.selector, { timeout: defaultTimeout })
+        await page.waitForLoadState('networkidle', { timeout: defaultTimeout })
         // if (beforePageId !== page.mainFrame().url()) {
-        const navResponse = await this.buildResponse(context);
-        this.lastResponse = navResponse;
+        const navResponse = await this.buildResponse(context)
+        this.lastResponse = navResponse
         // }
-        return;
+        return
       }
       case 'fill':
-        await page.fill(action.selector, action.value, { timeout: defaultTimeout });
-        const navResponse = await this.buildResponse(context);
-        this.lastResponse = navResponse;
-        return;
+        await page.fill(action.selector, action.value, {
+          timeout: defaultTimeout,
+        })
+        const navResponse = await this.buildResponse(context)
+        this.lastResponse = navResponse
+        return
       case 'waitFor':
         try {
           if (action.options?.selector) {
-            await page.waitForSelector(action.options.selector, { timeout: defaultTimeout });
+            await page.waitForSelector(action.options.selector, {
+              timeout: defaultTimeout,
+            })
           }
           if (action.options?.networkIdle) {
-            await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
+            await page.waitForLoadState('networkidle', {
+              timeout: defaultTimeout,
+            })
           }
         } catch (e) {
           if (action.options?.failOnTimeout === false) {
-             // ignore error
+            // ignore error
           } else {
-            throw e;
+            throw e
           }
         }
         if (action.options?.ms) {
-          await page.waitForTimeout(action.options.ms);
+          await page.waitForTimeout(action.options.ms)
         }
-        return;
+        return
       case 'submit': {
-        const formSelector = action.selector || 'form';
-        const el = page.locator(formSelector).first();
+        const formSelector = action.selector || 'form'
+        const el = page.locator(formSelector).first()
         if ((await el.count()) === 0) {
-          throw new NotFoundError(formSelector, 'submit');
+          throw new NotFoundError(formSelector, 'submit')
         }
 
-        const enctype = action.options?.enctype || 'application/x-www-form-urlencoded';
+        const enctype =
+          action.options?.enctype || 'application/x-www-form-urlencoded'
 
         if (enctype === 'application/json') {
-          const formHandle = await el.elementHandle();
+          const formHandle = await el.elementHandle()
           if (!formHandle) {
-            throw new CommonError(`submit: could not get form handle for ${formSelector}`, 'submit');
+            throw new CommonError(
+              `submit: could not get form handle for ${formSelector}`,
+              'submit'
+            )
           }
 
-          const result = await formHandle.evaluate(async (form: HTMLFormElement) => {
-            const formData = new FormData(form);
-            const data: Record<string, string> = {};
-            formData.forEach((value, key) => {
-              data[key] = value.toString();
-            });
+          const result = await formHandle.evaluate(
+            async (form: HTMLFormElement) => {
+              const formData = new FormData(form)
+              const data: Record<string, string> = {}
+              formData.forEach((value, key) => {
+                data[key] = value.toString()
+              })
 
-            const response = await fetch(form.action, {
-              method: form.method,
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(data),
-            });
+              const response = await fetch(form.action, {
+                method: form.method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data),
+              })
 
-            const html = await response.text();
-            return {
-              status: response.status,
-              statusText: response.statusText,
-              headers: Object.fromEntries(response.headers.entries()),
-              body: html,
-              html,
-              text: html,
-              url: form.action,
-              finalUrl: response.url,
-            };
-          });
+              const html = await response.text()
+              return {
+                status: response.status,
+                statusText: response.statusText,
+                headers: Object.fromEntries(response.headers.entries()),
+                body: html,
+                html,
+                text: html,
+                url: form.action,
+                finalUrl: response.url,
+              }
+            }
+          )
 
-          await formHandle.dispose();
-          await page.setContent(result.html);
+          await formHandle.dispose()
+          await page.setContent(result.html)
 
-          this.lastResponse = result;
-          return;
+          this.lastResponse = result
+          return
         } else {
-          await el.evaluate((form: HTMLFormElement) => form.submit());
-          await page.waitForLoadState('networkidle', { timeout: defaultTimeout });
-          this.lastResponse = await this.buildResponse(context);
-          return;
+          await el.evaluate((form: HTMLFormElement) => form.submit())
+          await page.waitForLoadState('networkidle', {
+            timeout: defaultTimeout,
+          })
+          this.lastResponse = await this.buildResponse(context)
+          return
         }
       }
       case 'pause': {
-        const onPauseHandler = (this.ctx as any)?.onPause as OnFetchPauseCallback | undefined;
+        const onPauseHandler = (this.ctx as any)?.onPause as
+          | OnFetchPauseCallback
+          | undefined
         if (onPauseHandler) {
-          console.info(action.message || 'Execution paused for manual intervention.');
-          await onPauseHandler({ message: action.message });
-          console.info('Resuming execution...');
+          console.info(
+            action.message || 'Execution paused for manual intervention.'
+          )
+          await onPauseHandler({ message: action.message })
+          console.info('Resuming execution...')
         } else {
           console.warn(
-            '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.',
-          );
+            '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.'
+          )
         }
-        return;
+        return
       }
       case 'getContent': {
-        return this.buildResponse(context);
+        return this.buildResponse(context)
       }
       default:
-        throw new CommonError(`Unknown action type: ${(action as any).type}`, 'PlaywrightFetchEngine.executeAction', ErrorCode.NotSupported);
+        throw new CommonError(
+          `Unknown action type: ${(action as any).type}`,
+          'PlaywrightFetchEngine.executeAction',
+          ErrorCode.NotSupported
+        )
     }
   }
 
-  protected _createCrawler(options: PlaywrightCrawlerOptions, config?: Configuration): PlaywrightCrawler {
-    return new PlaywrightCrawler(options, config);
+  protected _createCrawler(
+    options: PlaywrightCrawlerOptions,
+    config?: Configuration
+  ): PlaywrightCrawler {
+    return new PlaywrightCrawler(options, config)
   }
 
-  protected async _getSpecificCrawlerOptions(ctx: FetchEngineContext): Promise<Partial<PlaywrightCrawlerOptions>> {
-    const headless = ctx.browser?.headless ?? true;
+  protected async _getSpecificCrawlerOptions(
+    ctx: FetchEngineContext
+  ): Promise<Partial<PlaywrightCrawlerOptions>> {
+    const headless = ctx.browser?.headless ?? true
 
     const crawlerOptions: Partial<PlaywrightCrawlerOptions> = {
       maxRequestRetries: ctx.retries || 3,
@@ -249,61 +317,61 @@ export class PlaywrightFetchEngine extends FetchEngine<
       preNavigationHooks: [
         async ({ page, request }, gotOptions) => {
           // await page.setExtraHTTPHeaders(this.hdrs);
-          gotOptions.throwHttpErrors = ctx.throwHttpErrors;
+          gotOptions.throwHttpErrors = ctx.throwHttpErrors
 
-          const blockedTypes = this.blockedTypes;
+          const blockedTypes = this.blockedTypes
           if (blockedTypes.size > 0) {
             await page.route('**/*', (route) => {
               if (blockedTypes.has(route.request().resourceType())) {
-                route.abort();
+                route.abort()
               } else {
-                route.continue();
+                route.continue()
               }
-            });
+            })
           }
         },
       ],
-    };
+    }
 
     if (this.opts?.antibot) {
       crawlerOptions.browserPoolOptions = {
         // Disable the default fingerprint spoofing to avoid conflicts with Camoufox.
         useFingerprints: false,
-      };
+      }
 
-      const { launchOptions } = await import('camoufox-js');
+      const { launchOptions } = await import('camoufox-js')
       const lo = await launchOptions({
-          headless,
-      });
+        headless,
+      })
 
       crawlerOptions.launchContext = {
         launcher: firefox,
         launchOptions: lo,
-      };
+      }
 
       crawlerOptions.postNavigationHooks = [
         async ({ page, handleCloudflareChallenge }) => {
-            await handleCloudflareChallenge();
+          await handleCloudflareChallenge()
         },
-      ];
+      ]
     }
 
-    return crawlerOptions;
+    return crawlerOptions
   }
 
   async goto(url: string, opts?: GotoActionOptions): Promise<FetchResponse> {
     if (this.isPageActive) {
-      return this.dispatchAction({ type: 'navigate', url, opts });
+      return this.dispatchAction({ type: 'navigate', url, opts })
     }
 
     if (!this.requestQueue) {
-      throw new CommonError('RequestQueue not initialized', 'goto');
+      throw new CommonError('RequestQueue not initialized', 'goto')
     }
 
-    const requestId = `req-${++this.requestCounter}`;
+    const requestId = `req-${++this.requestCounter}`
     const promise = new Promise<FetchResponse>((resolve, reject) => {
-      this.pendingRequests.set(requestId, { resolve, reject });
-    });
+      this.pendingRequests.set(requestId, { resolve, reject })
+    })
 
     await this.requestQueue.addRequest({
       url,
@@ -313,11 +381,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
         waitUntil: opts?.waitUntil || 'domcontentloaded',
       },
       uniqueKey: `${url}-${requestId}`,
-    });
+    })
 
-    return promise;
+    return promise
   }
-
 }
 
-FetchEngine.register(PlaywrightFetchEngine);
+FetchEngine.register(PlaywrightFetchEngine)

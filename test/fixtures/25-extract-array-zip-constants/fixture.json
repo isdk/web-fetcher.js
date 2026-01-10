@@ -1,0 +1,27 @@
+{
+  "title": "should repeat container attributes/constants for each item in zip strategy",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "items": {
+          "category": { "attribute": "data-category" },
+          "title": { "selector": ".item" }
+        }
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "data": [
+        { "category": "Books", "title": "Refactoring" },
+        { "category": "Books", "title": "Clean Code" },
+        { "category": "Books", "title": "Domain Driven Design" }
+      ]
+    }
+  }
+}

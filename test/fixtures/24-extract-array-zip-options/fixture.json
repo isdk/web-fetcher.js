@@ -1,0 +1,54 @@
+{
+  "title": "should handle zip strategy options (disable, strict, loose)",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#good-container",
+        "items": { "title": { "selector": "h1" }, "tag": { "selector": ".tag" } }
+      },
+      "storeAs": "good_zip_default"
+    },
+
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#good-container",
+        "zip": false,
+        "items": { "title": { "selector": "h1" }, "tag": { "selector": ".tag" } }
+      },
+      "storeAs": "good_zip_disabled"
+    },
+
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#bad-container",
+        "zip": { "strict": false },
+        "items": { "title": { "selector": "h1" }, "tag": { "selector": ".tag" } }
+      },
+      "storeAs": "bad_zip_loose"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "good_zip_default": [
+        { "title": "Title 1", "tag": "Tag 1" },
+        { "title": "Title 2", "tag": "Tag 2" }
+      ],
+      "good_zip_disabled": [
+        { "title": "Title 1", "tag": "Tag 1" }
+      ],
+      "bad_zip_loose": [
+        { "title": "Title A", "tag": "Tag A" },
+        { "title": "Title B", "tag": "Tag C" },
+        { "title": "Title C", "tag": null }
+      ]
+    }
+  }
+}

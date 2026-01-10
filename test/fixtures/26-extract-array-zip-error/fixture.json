@@ -1,0 +1,23 @@
+{
+  "title": "should throw error when zip alignment fails in strict mode",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "zip": { "strict": true },
+        "items": {
+          "title": { "selector": ".title" },
+          "tag": { "selector": ".tag" }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "error": {
+      "message": "Zip extraction mismatch: field \"tag\" has 1 matches, but expected 2."
+    }
+  }
+}
