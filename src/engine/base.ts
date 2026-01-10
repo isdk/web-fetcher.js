@@ -307,6 +307,9 @@ export abstract class FetchEngine<
       'attribute',
       'has',
       'exclude',
+      'properties',
+      'items',
+      'zip',
     ])
     const keys = Object.keys(schema)
     if (keys.length === 0) return false // Empty object -> default value extraction
@@ -422,7 +425,6 @@ export abstract class FetchEngine<
       const collectedValues: Record<string, any[]> = {}
       let commonCount: number | null = null
       let maxCount = 0
-      let maxCountKey: string | null = null
       let maxCountMatches: any[] = []
 
       for (const key of keys) {
@@ -452,7 +454,6 @@ export abstract class FetchEngine<
         const count = matches.length
         if (count > maxCount) {
           maxCount = count
-          maxCountKey = key
           maxCountMatches = matches
         }
 
