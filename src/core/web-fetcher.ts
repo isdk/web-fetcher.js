@@ -1,5 +1,5 @@
-import { FetchSession } from "./session";
-import { FetcherOptions, FetchResponse } from "./types";
+import { FetchSession } from './session'
+import { FetcherOptions, FetchResponse } from './types'
 
 /**
  * High-level entry point for the Web Fetcher library.
@@ -29,8 +29,8 @@ export class WebFetcher {
    * @returns A promise resolving to a new FetchSession instance.
    */
   async createSession(options?: FetcherOptions): Promise<FetchSession> {
-    const merged: FetcherOptions = { ...this.defaults, ...(options || {}) };
-    return new FetchSession(merged);
+    const merged: FetcherOptions = { ...this.defaults, ...(options || {}) }
+    return new FetchSession(merged)
   }
 
   /**
@@ -44,24 +44,44 @@ export class WebFetcher {
    * @param options - Additional options when the first parameter is a URL string.
    * @returns A promise resolving to the final response and any extracted outputs.
    */
-  async fetch(url: string, options?: FetcherOptions): Promise<{ result: FetchResponse | undefined, outputs: Record<string, any> }>
-  async fetch(options: FetcherOptions): Promise<{ result: FetchResponse | undefined, outputs: Record<string, any> }>
-  async fetch(url: string|FetcherOptions, options?: FetcherOptions): Promise<{ result: FetchResponse | undefined, outputs: Record<string, any> }> {
+  async fetch(
+    url: string,
+    options?: FetcherOptions
+  ): Promise<{
+    result: FetchResponse | undefined
+    outputs: Record<string, any>
+  }>
+  async fetch(options: FetcherOptions): Promise<{
+    result: FetchResponse | undefined
+    outputs: Record<string, any>
+  }>
+  async fetch(
+    url: string | FetcherOptions,
+    options?: FetcherOptions
+  ): Promise<{
+    result: FetchResponse | undefined
+    outputs: Record<string, any>
+  }> {
     if (typeof url !== 'string') {
-      options = url;
-      url = options.url!;
+      options = url
+      url = options.url!
     }
-    const session = await this.createSession(options);
+    const session = await this.createSession(options)
     try {
-      const actions = options?.actions || [];
+      const actions = options?.actions || []
       // Auto-insert 'goto' if url is provided and not already the first action
-      if (url && actions.findIndex(a => (a.id === 'goto' || a.name === 'goto') && a.params?.url === url) !== 0) {
-        actions.unshift({ id: 'goto', params: { url } });
+      if (
+        url &&
+        actions.findIndex(
+          (a) => (a.id === 'goto' || a.name === 'goto') && a.params?.url === url
+        ) !== 0
+      ) {
+        actions.unshift({ id: 'goto', params: { url } })
       }
-      const response = await session.executeAll(actions);
-      return response;
+      const response = await session.executeAll(actions)
+      return response
     } finally {
-      await session.dispose();
+      await session.dispose()
     }
   }
 }

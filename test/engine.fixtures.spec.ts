@@ -311,12 +311,13 @@ const engineTestSuite = (
           result = res.result;
         }
 
+        console.log('🚀 ~ file: engine.fixtures.spec.ts:319 ~ res.outputs:', res.outputs)
         // Additional validation for outputs if specified in expected
         if (fixture.expected.outputs) {
           Object.keys(fixture.expected.outputs).forEach(key => {
             const expectedValue = fixture.expected.outputs[key];
             const actualValue = res.outputs[key];
-            
+
             let isCondition = isConditionObject(expectedValue);
             if (!isCondition && Array.isArray(expectedValue) && expectedValue.length > 0) {
               if (isConditionObject(expectedValue[0])) {

@@ -1,35 +1,38 @@
-import { GotoActionOptions } from "../../engine/base";
-import { FetchContext } from "../../core/context";
-import { FetchResponse } from "../../core/types";
-import { BaseFetchActionProperties, FetchAction } from "../fetch-action";
+import { GotoActionOptions } from '../../engine/base'
+import { FetchContext } from '../../core/context'
+import { FetchResponse } from '../../core/types'
+import { BaseFetchActionProperties, FetchAction } from '../fetch-action'
 
 interface GotoParams extends GotoActionOptions {
-  url?: string;
+  url?: string
 }
 
 export class GotoAction extends FetchAction {
-  static override id = 'goto';
-  static override returnType = 'response' as const;
+  static override id = 'goto'
+  static override returnType = 'response' as const
   static override capabilities = {
     http: 'native' as const,
     browser: 'native' as const,
-  };
+  }
 
-  async onExecute(context: FetchContext, options?: BaseFetchActionProperties, eventPayload?: any): Promise<FetchResponse|void> {
-    const params = options?.params as GotoParams | undefined;
-    const url = params?.url || context.url;
+  async onExecute(
+    context: FetchContext,
+    options?: BaseFetchActionProperties,
+    eventPayload?: any
+  ): Promise<FetchResponse | void> {
+    const params = options?.params as GotoParams | undefined
+    const url = params?.url || context.url
 
-    if (!url) throw new Error('URL is required for goto action');
+    if (!url) throw new Error('URL is required for goto action')
 
-    const engine = context.internal.engine;
-    if (!engine) throw new Error('No engine available'); // TODO:  惰性创建引擎
+    const engine = context.internal.engine
+    if (!engine) throw new Error('No engine available') // TODO:  惰性创建引擎
 
-    context.url = url;
-    const response = await engine.goto(url, params);
+    context.url = url
+    const response = await engine.goto(url, params)
 
-
-    return response;
+    return response
   }
 }
 
-FetchAction.register(GotoAction);
+FetchAction.register(GotoAction)
