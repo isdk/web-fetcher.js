@@ -1,5 +1,3 @@
-import * as cheerio from 'cheerio'
-
 const BR_PLACEHOLDER = '___BR___'
 const BLOCK_PLACEHOLDER = '___BLOCK___'
 const P_PLACEHOLDER = '___P___'
