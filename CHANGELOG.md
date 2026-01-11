@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.2.12](https://github.com/isdk/web-fetcher.js/compare/v0.2.11...v0.2.12) (2026-01-11)
+
+
+### Features
+
+* **extract:** add innerText mode support and normalize HTML entities in Cheerio engine ([de44c5f](https://github.com/isdk/web-fetcher.js/commit/de44c5f4abd8737caeaf294a12c3dc82f6dabde1))
+* **extract:** implement Zip Strategy and Smart Inference for array extraction ([8d8eb6f](https://github.com/isdk/web-fetcher.js/commit/8d8eb6ff0de42ed899065571e7c70c0492f75020))
+* **extract:** introduce advanced array extraction modes (columnar, segmented) ([57ebff8](https://github.com/isdk/web-fetcher.js/commit/57ebff8ee207781b4e62532da3b837f872173fa6))
+* **extract:** support implicit object extraction schema ([0e33c8a](https://github.com/isdk/web-fetcher.js/commit/0e33c8a65664d32a45b4d73821d9cc9e030e27e9))
+* **test:** fixture can use server.mjs now ([3cfe2ec](https://github.com/isdk/web-fetcher.js/commit/3cfe2ec5d896898f948baccddeff80d815324ad8))
+
+
+### Bug Fixes
+
+* **normalizeHtml:** return common space instead of a0 ([a5a9b87](https://github.com/isdk/web-fetcher.js/commit/a5a9b870ae9f4ba16fa0e46f7dbe9f82207344e4))
+* **playwright:** normalizeHtml for innerHTML ([3055f32](https://github.com/isdk/web-fetcher.js/commit/3055f3223f58815b1533784c442fbdf7cb0157b0))
+
+
+### Refactor
+
+* **core:** refine engine selection priority and session persistence ([d4c3f2d](https://github.com/isdk/web-fetcher.js/commit/d4c3f2d0bbef0ec6c61129d21b5abed08c560ca2))
+* **engine:** cleanup unused variables and refine implicit object detection ([168e273](https://github.com/isdk/web-fetcher.js/commit/168e273063eafbae2ecf2372c60aacafaac8b33d))
+* **session:** unify action indexing and support temporary context overrides ([c5010f0](https://github.com/isdk/web-fetcher.js/commit/c5010f032187c86edfa8310a81c108e26e6de8a7))
+
 ## [0.2.11](https://github.com/isdk/web-fetcher.js/compare/v0.2.10...v0.2.11) (2026-01-06)
 
 
