@@ -166,27 +166,37 @@ const createTestServer = async (fixtureDir: string, fixtureConfig?: Fixture): Pr
   };
 
   // 动态提供 fixture.html
-  server.get('/', async (req, reply) => {
-    setHeaders(reply);
-    try {
-      const html = await readFile(join(fixtureDir, 'fixture.html'), 'utf-8');
-      reply.type('text/html').send(html);
-    } catch (e) {
-      reply.status(404).send('fixture.html not found');
-    }
-  });
+  try {
+    server.get('/', async (req, reply) => {
+      setHeaders(reply);
+      try {
+        const buffer = await readFile(join(fixtureDir, 'fixture.html'));
+        reply.raw.setHeader('Content-Type', 'text/html');
+        reply.raw.end(buffer);
+      } catch (e) {
+        reply.raw.statusCode = 404;
+        reply.raw.end('fixture.html not found');
+      }
+    });
+  } catch (e) {
+    // Already defined in server.mjs, ignore
+  }
 
   // 动态提供其他 HTML 文件
-  server.get('/:page', async (req, reply) => {
-    setHeaders(reply);
-    const { page } = req.params as any;
-    try {
-      const html = await readFile(join(fixtureDir, `${page}.html`), 'utf-8');
-      reply.type('text/html').send(html);
-    } catch (e) {
-      reply.status(404).send(`${page}.html not found`);
-    }
-  });
+  try {
+    server.get('/:page', async (req, reply) => {
+      setHeaders(reply);
+      const { page } = req.params as any;
+      try {
+        const html = await readFile(join(fixtureDir, `${page}.html`), 'utf-8');
+        reply.type('text/html').send(html);
+      } catch (e) {
+        reply.status(404).send(`${page}.html not found`);
+      }
+    });
+  } catch (e) {
+    // Already defined in server.mjs, ignore
+  }
 
   return server;
 };
