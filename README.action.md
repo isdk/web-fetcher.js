@@ -294,7 +294,7 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
     > The example above will return an array of the `src` attributes from all `<img>` tags.
 
-*   **Zip Strategy (Container Extraction)**: When the `selector` points to a **container** (like a search results div) rather than individual items, and the `items` schema defines selectors for multiple fields, the engine can automatically "zip" these fields into objects.
+*   **Zip Strategy (Column Alignment / Container Extraction)**: When the `selector` points to a **container** (like a search results div) rather than individual items, and the `items` schema defines selectors for multiple fields, the engine can automatically "zip" these fields into objects. This is also known as **Column Alignment Mode**, where separate columns of data are stitched together by index.
 
     ```json
     {
