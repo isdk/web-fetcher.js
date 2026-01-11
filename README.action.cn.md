@@ -268,21 +268,13 @@ await fetchWeb({
 * **提取文本数组 (默认行为)**: 当您想提取一个文本列表时,只需提供选择器,省略 `items` 即可。这是最常见的用法。
 
     ```json
-
     {
-
       "id": "extract",
-
       "params": {
-
         "type": "array",
-
         "selector": ".tags li"
-
       }
-
     }
-
     ```
 
     > 上例将返回一个包含所有 `<li>` 标签文本的数组, 如 `["tech", "news"]`。
@@ -292,21 +284,13 @@ await fetchWeb({
     ```json
 
     {
-
       "id": "extract",
-
       "params": {
-
         "type": "array",
-
         "selector": ".gallery img",
-
         "attribute": "src"
-
       }
-
     }
-
     ```
 
     > 上例将返回一个包含所有 `<img>` 标签 `src` 属性的数组。
