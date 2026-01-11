@@ -9,6 +9,7 @@ import { FetchResponse, type OnFetchPauseCallback } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema } from '../core/extract'
+import { normalizeHtml } from '../utils/cheerio-helpers'
 
 const DefaultTimeoutMs = 30_000
 
@@ -126,7 +127,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     if (attribute) {
       value = await context.getAttribute(attribute)
     } else if (type === 'html') {
-      value = await context.innerHTML()
+      value = normalizeHtml(await context.innerHTML())
     } else if (mode === 'innerText') {
       value = await context.innerText()
     } else {
