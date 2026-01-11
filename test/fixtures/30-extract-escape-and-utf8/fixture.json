@@ -1,0 +1,21 @@
+{
+  "title": "Check escaping of special characters and utf8 characters",
+  "actions": [
+    {
+      "action": "goto",
+      "params": { "url": "/" }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "selector": "div[style*='-webkit-line-clamp']", "type": "html"
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "data": "<span>遇见 <em>Gemini</em>, Google's AI\n          assistant. Get help with writing,\n          planning, brainstorming, and more.\n          Experience the generative\n          AI's power .</span>"
+    }
+  }
+}
