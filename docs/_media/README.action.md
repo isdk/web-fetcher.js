@@ -224,19 +224,26 @@ The `params` object itself is a Schema that describes the data structure you wan
 
 ###### 1. Extracting a Single Value
 
-The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), and a `type` (string, number, boolean, html).
+The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), a `type` (string, number, boolean, html), and a `mode` (text, innerText).
 
 ```json
 {
   "id": "extract",
   "params": {
     "selector": "h1.main-title",
-    "type": "string"
+    "type": "string",
+    "mode": "innerText"
   }
 }
 ```
 
-> The example above will extract the text content of the `<h1>` tag with the class `main-title`.
+> **Extraction Modes:**
+>
+> * **`text`** (default): Extracts the `textContent` of the element.
+> * **`innerText`**: Extracts the rendered text, respecting CSS styling and line breaks.
+> * **`html`**: Returns the `innerHTML` of the element.
+> * **`outerHTML`**: Returns the HTML including the tag itself. Useful for preserving the full element structure.
+> The example above will extract the text content of the `<h1>` tag with the class `main-title` using the `innerText` mode.
 
 ###### 2. Extracting an Object
 
@@ -289,7 +296,77 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
     > The example above will return an array of the `src` attributes from all `<img>` tags.
 
-###### 4. Precise Filtering: `has` and `exclude`
+* **Array Extraction Modes**: When extracting an array, the engine supports different modes to handle various DOM structures.
+
+  * **`nested`** (Default): The `selector` matches individual item wrappers.
+  * **`columnar`** (formerly Zip): The `selector` matches a **container**, and fields in `items` are parallel columns stitched together by index.
+  * **`segmented`**: The `selector` matches a **container**, and items are segmented by an "anchor" field.
+
+###### 4. Columnar Mode (formerly Zip Strategy)
+
+This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#search-results",
+    "mode": "columnar",
+    "items": {
+      "title": { "selector": ".item-title" },
+      "link": { "selector": "a.item-link", "attribute": "href" }
+    }
+  }
+}
+```
+
+> **Heuristic Detection:** If `mode` is omitted and the `selector` matches exactly one element while `items` contains nested selectors, the engine automatically uses **columnar** mode.
+
+**Columnar Configuration:**
+
+* **`strict`** (boolean, default: `true`): If `true`, throws an error if fields have different match counts.
+* **`inference`** (boolean, default: `false`): If `true`, tries to automatically find the "item wrapper" elements to fix misaligned lists.
+
+###### 5. Segmented Mode (Anchor-based Scanning)
+
+This mode is ideal for "flat" structures where there are no item wrappers. It uses the first field (or a specified `anchor`) to segment the container's content.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#flat-container",
+    "mode": { "type": "segmented", "anchor": "title" },
+    "items": {
+      "title": { "selector": "h3" },
+      "desc": { "selector": "p" }
+    }
+  }
+}
+```
+
+> In this mode, every time the engine finds an `h3`, it starts a new item. Any `<p>` found after that `h3` (and before the next one) is assigned to that item.
+
+###### 6. Implicit Object Extraction (Simplest Syntax)
+
+For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not reserved keywords (like `selector`, `attribute`, `type`, etc.), it is treated as an object schema where keys are property names.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "selector": ".author-bio",
+    "name": { "selector": ".author-name" },
+    "email": { "selector": "a.email", "attribute": "href" }
+  }
+}
+```
+
+> This is equivalent to Example 2 but more concise.
+
+###### 6. Precise Filtering: `has` and `exclude`
 
 You can use the `has` and `exclude` fields in any schema that includes a `selector` to precisely control element selection.
 
