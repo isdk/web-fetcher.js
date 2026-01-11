@@ -31,18 +31,38 @@ This is the abstract base class that defines the contract for all fetch engines.
 
 This static factory method is the designated entry point for creating an engine instance. It automatically selects and initializes the appropriate engine.
 
-### `FetchSession(options, engine)`
+### `FetchSession(options)`
 
-The `FetchSession` class manages the lifecycle of a fetch operation. It now supports an optional `engine` parameter in its constructor to force a specific engine implementation for that session, bypassing any auto-detection or registry-based selection.
+The `FetchSession` class manages the lifecycle of a fetch operation. You can specify the `engine` in the `options` to force a specific engine implementation for that session.
 
-### Engine Selection Priority
+```typescript
+const session = new FetchSession({ engine: 'browser' });
+```
 
-When the library determines which engine to use (via internal `maybeCreateEngine`), it follows this priority:
+#### Engine Selection Priority
 
-1. **Explicit Forced Engine**: If an engine ID is explicitly passed during session or engine creation (e.g., the new `engine` parameter in `FetchSession`).
-2. **Configuration Engine**: The `engine` property defined in `FetcherOptions`.
-3. **Site Registry**: If the target URL matches a domain in the configured `sites` registry, it uses the engine preferred for that site.
-4. **Default**: Defaults to `auto`, which intelligently switches between `http` and `browser` if `enableSmart` is enabled, or defaults to `http` otherwise.
+The engine is initialized lazily upon the first action execution and remains fixed for the duration of the session. The selection follows these rules:
+
+1. **Explicit Option**: If `options.engine` (or temporary context override in `executeAll`) is provided and NOT set to `'auto'`.
+    * ⚠️ **Fail-Fast**: If the requested engine is unavailable (e.g., missing dependencies), an error is thrown immediately.
+2. **Site Registry**: If set to `'auto'` (default), the system attempts to match the target URL against the `sites` registry.
+3. **Smart Upgrade**: If enabled, the engine may be dynamically upgraded from `http` to `browser` based on response characteristics (e.g., bot detection or heavy JS).
+4. **Default**: Falls back to `'http'` (Cheerio).
+
+#### Batch Execution with Overrides
+
+You can execute a sequence of actions with temporary configuration overrides (e.g., headers, timeout) that apply only to that specific batch, without modifying the session's global state.
+
+```typescript
+// Execute actions with a temporary custom header and timeout
+await session.executeAll([
+  { name: 'goto', params: { url: '...' } },
+  { name: 'extract', params: { ... } }
+], {
+  headers: { 'x-custom-priority': 'high' },
+  timeoutMs: 30000
+});
+```
 
 ### Session Management & State Persistence
 
