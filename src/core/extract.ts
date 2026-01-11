@@ -21,11 +21,34 @@ export interface ExtractArraySchema {
   exclude?: string // 从选区中排除与此 CSS 选择器匹配的元素
   items?: ExtractSchema // 对每个列表项递归应用此 schema. 如果省略,默认为提取文本.
   attribute?: string // 'items'的简写形式,用于提取属性. e.g. 'href'
+  /**
+   * Zip extraction strategy (Column Alignment Mode).
+   *
+   * Used when the page structure is "flat" (i.e., item properties are scattered under a common 
+   * container rather than being nested within each item's own wrapper element).
+   * It extracts fields defined in `items` in parallel and "sews" them into an array of 
+   * objects based on their indices.
+   *
+   * @example
+   * // Structure: <h3>Title1</h3><p>Desc1</p><h3>Title2</h3><p>Desc2</p>
+   * // Using zip: true, items: { title: 'h3', desc: 'p' }
+   * // Result: [{title: 'Title1', desc: 'Desc1'}, {title: 'Title2', desc: 'Desc2'}]
+   */
   zip?:
     | boolean
     | {
-        strict?: boolean // Default: true. If true, requires all fields to have the same number of matches.
-        inference?: boolean // Default: false. If true, tries to infer item wrapper from fields.
+        /**
+         * Whether to enable strict mode.
+         * Default is true. If true, requires all fields in `items` to have the exact 
+         * same number of matches, otherwise throws an error.
+         */
+        strict?: boolean
+        /**
+         * Whether to enable heuristic inference.
+         * Default is false. If true, when match counts differ, it tries to find a common 
+         * parent node to infer the item wrapper container.
+         */
+        inference?: boolean
       }
 }
 

@@ -395,8 +395,11 @@ export abstract class FetchEngine<
   }
 
   /**
-   * Tries to extract a list of items from a single container by checking if the 'items' schema
-   * matches multiple elements consistently (Zip strategy).
+   * Tries to extract a list of items from a single container using the Zip (Column Alignment) strategy.
+   *
+   * This method checks if multiple fields in the 'items' schema match multiple elements 
+   * consistently. If they do, it aligns these parallel lists of elements to compose 
+   * an array of objects.
    *
    * @param schema - The schema for a single item (Object or Value).
    * @param container - The container element.
