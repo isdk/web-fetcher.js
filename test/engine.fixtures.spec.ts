@@ -172,11 +172,9 @@ const createTestServer = async (fixtureDir: string, fixtureConfig?: Fixture): Pr
       setHeaders(reply);
       try {
         const buffer = await readFile(join(fixtureDir, 'fixture.html'));
-        reply.raw.setHeader('Content-Type', 'text/html;charset=utf-8');
-        reply.raw.end(buffer);
+        reply.type('text/html;charset=utf-8').send(buffer);
       } catch (e) {
-        reply.raw.statusCode = 404;
-        reply.raw.end('fixture.html not found');
+        reply.status(404).send('fixture.html not found');
       }
     });
   } catch (e) {
@@ -190,7 +188,7 @@ const createTestServer = async (fixtureDir: string, fixtureConfig?: Fixture): Pr
       const { page } = req.params as any;
       try {
         const html = await readFile(join(fixtureDir, `${page}.html`), 'utf-8');
-        reply.type('text/html').send(html);
+        reply.type('text/html;charset=utf-8').send(html);
       } catch (e) {
         reply.status(404).send(`${page}.html not found`);
       }
@@ -275,7 +273,7 @@ const engineTestSuite = (
 
     beforeAll(async () => {
       server = await createTestServer(caseDir, fixture);
-      await server.listen({ port: 0 });
+      await server.listen({ port: 0, host: 'localhost' });
       const address = server.server.address() as AddressInfo;
       baseUrl = `http://localhost:${address.port}`;
     }, TEST_TIMEOUT);
@@ -289,6 +287,7 @@ const engineTestSuite = (
       const session = await fetcher.createSession({
         engine: engineName,
         retries: 0,
+        // debug: fixture.options?.debug,
         ...(fixture.options || {})
       });
 
