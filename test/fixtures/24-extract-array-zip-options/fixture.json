@@ -18,7 +18,7 @@
       "params": {
         "type": "array",
         "selector": "#good-container",
-        "zip": false,
+        "mode": "nested",
         "items": { "title": { "selector": "h1" }, "tag": { "selector": ".tag" } }
       },
       "storeAs": "good_zip_disabled"
@@ -29,7 +29,7 @@
       "params": {
         "type": "array",
         "selector": "#bad-container",
-        "zip": { "strict": false },
+        "mode": { "type": "columnar", "strict": false },
         "items": { "title": { "selector": "h1" }, "tag": { "selector": ".tag" } }
       },
       "storeAs": "bad_zip_loose"

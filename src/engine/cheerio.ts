@@ -93,14 +93,37 @@ export class CheerioFetchEngine extends FetchEngine<
   }
 
   protected async _querySelectorAll(
-    context: { $: CheerioAPI; el: CheerioNode },
+    context: { $: CheerioAPI; el: any } | any[],
     selector: string
   ): Promise<any[]> {
+    if (Array.isArray(context)) {
+      if (context.length === 0) return []
+      const { $ } = context[0]
+      // Use the underlying DOM elements [0] for Cheerio collection
+      const nodes = context.map((c) => c.el[0]).filter(Boolean)
+      const $els = $(nodes)
+      return $els
+        .find(selector)
+        .add($els.filter(selector))
+        .toArray()
+        .map((e: any) => ({ $, el: $(e) }))
+    }
     const { $, el } = context
     return el
       .find(selector)
       .toArray()
-      .map((e) => ({ $, el: $(e) }))
+      .map((e: any) => ({ $, el: $(e) }))
+  }
+
+  protected async _nextSiblingsUntil(
+    context: { $: CheerioAPI; el: CheerioNode },
+    untilSelector?: string
+  ): Promise<any[]> {
+    const { $, el } = context
+    const nextSiblings = untilSelector
+      ? el.nextUntil(untilSelector)
+      : el.nextAll()
+    return nextSiblings.toArray().map((e) => ({ $, el: $(e) }))
   }
 
   protected async _parentElement(context: {
@@ -122,9 +145,9 @@ export class CheerioFetchEngine extends FetchEngine<
 
   protected async _extractValue(
     schema: ExtractValueSchema,
-    context: { el: CheerioNode }
+    context: { $: CheerioAPI; el: CheerioNode }
   ): Promise<any> {
-    const { el } = context
+    const { $, el } = context
     const { attribute, type = 'string', mode = 'text' } = schema
 
     if (el.length === 0) return null
@@ -132,8 +155,12 @@ export class CheerioFetchEngine extends FetchEngine<
     let value: string | null = ''
     if (attribute) {
       value = el.attr(attribute) ?? null
-    } else if (type === 'html') {
-      value = normalizeHtml(el.html()!.trim())
+    } else if (type === 'html' || mode === 'html' || mode === 'outerHTML') {
+      value =
+        mode === 'outerHTML'
+          ? $.html(el)
+          : (el.html() ?? (type === 'html' ? '' : null))
+      if (value) value = normalizeHtml(value.trim())
     } else if (mode === 'innerText') {
       value = getInnerText(el)
     } else {

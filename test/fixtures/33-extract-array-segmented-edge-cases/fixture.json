@@ -1,0 +1,55 @@
+{
+  "title": "should handle edge cases in segmented mode",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#empty-container",
+        "mode": "segmented",
+        "items": { "title": { "selector": ".anchor" } }
+      },
+      "storeAs": "empty"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#single-item",
+        "mode": "segmented",
+        "items": {
+          "title": { "selector": ".anchor" },
+          "data": { "selector": ".data" }
+        }
+      },
+      "storeAs": "single"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#mixed-content",
+        "mode": "segmented",
+        "items": {
+          "section": { "selector": ".anchor" },
+          "info": { "selector": ".info" },
+          "self_tag": { "type": "html", "mode": "outerHTML" } 
+        }
+      },
+      "storeAs": "mixed"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "empty": [],
+      "single": [
+        { "title": "Only One", "data": "Some data" }
+      ],
+      "mixed": [
+        { "section": "Section 1", "info": "Info 1", "self_tag": "<h3 class=\"anchor\">Section 1</h3>" },
+        { "section": "Section 2", "info": "Info 2", "self_tag": "<h3 class=\"anchor\">Section 2</h3>" }
+      ]
+    }
+  }
+}

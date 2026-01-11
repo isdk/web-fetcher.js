@@ -236,9 +236,11 @@ await fetchWeb({
 ```
 
 > **提取模式 (Extraction Modes):**
-> * **`text`** (默认): 提取元素的 `textContent`。它包含元素及其所有后代的文本，但保留 HTML 源码中的原始空格和换行（未渲染状态）。
-> * **`innerText`**: 提取元素的渲染文本。它遵循 CSS 样式，折叠多余空格，并保留具有语义的换行（例如来自 `<br>` 或块级元素的换行）。此模式更接近用户在页面上实际看到的内容。
-
+>
+> * **`text`** (默认): 提取元素的 `textContent`。
+> * **`innerText`**: 提取渲染后的文本，尊重 CSS 样式并处理换行。
+> * **`html`**: 返回元素的 `innerHTML`。
+> * **`outerHTML`**: 返回包含标签自身的完整 HTML。对于保留元素结构非常有用。
 > 上例将使用 `innerText` 模式提取 class 为 `main-title` 的 `<h1>` 标签的文本内容。
 
 ###### 2. 提取对象
@@ -309,54 +311,60 @@ await fetchWeb({
 
     > 上例将返回一个包含所有 `<img>` 标签 `src` 属性的数组。
 
-*   **Zip 策略 (列对齐模式 / 容器提取)**: 当 **`selector`** 指向一个**容器** (如搜索结果的 div) 而不是单个列表项，且 **`items`** schema 为多个字段定义了选择器时，引擎可以自动将这些字段“拉链式”地合并为对象数组。这也被称为**列对齐模式**，即将分散的各列数据按索引缝合在一起。
+* **数组提取模式**: 在提取数组时，引擎支持不同的模式来处理各种 DOM 结构。
 
-    ```json
-    {
-      "id": "extract",
-      "params": {
-        "type": "array",
-        "selector": "#search-results",
-        "items": {
-          "title": { "selector": ".item-title" },
-          "link": { "selector": "a.item-link", "attribute": "href" }
-        }
-      }
-    }
-    ```
+  * **`nested`** (默认): `selector` 匹配每个项目的包裹元素。
+  * **`columnar`** (原 Zip 策略): `selector` 指向**容器**，`items` 中的字段是平行的列，按索引缝合在一起。
+  * **`segmented`**: `selector` 指向**容器**，项目通过“锚点”字段进行分段提取。
 
-    > 在此模式下，引擎会在 `#search-results` 容器内找到所有的 `.item-title` 和所有的 `a.item-link`，并按索引顺序将它们配对。
+###### 4. 列对齐模式 (Columnar Mode，原 Zip 策略)
 
-###### 4. Zip 策略配置
-
-Zip 策略可以通过 **`zip`** 属性进行微调：
-
-*   **`zip`** (boolean | object):
-    *   `true` (默认，当检测到容器模式时): 启用 Zip 策略并开启严格对齐。
-    *   `false`: 禁用 Zip 策略，回退到标准的逐项提取模式。
-    *   **`strict`** (boolean, 默认: `true`): 如果为 `true`，当不同字段匹配到的数量不一致时将抛出错误（防止数据错位）。
-    *   **`inference`** (boolean, 默认: `false`): 如果为 `true`，当字段数量不匹配时，引擎会尝试通过在 DOM 树中向上追溯，自动识别最可能的“列表项包裹元素” (例如某个 `.result-card` div)。
-
-**示例：开启智能推断的稳健提取**
+当 `selector` 指向一个**容器**（如结果列表）且项目数据以平行的独立列散落在其中时使用。
 
 ```json
 {
   "id": "extract",
   "params": {
     "type": "array",
-    "selector": "#results-container",
-    "zip": { "inference": true },
+    "selector": "#search-results",
+    "mode": "columnar",
     "items": {
-      "title": { "selector": "h3" },
-      "price": { "selector": ".price-tag" }
+      "title": { "selector": ".item-title" },
+      "link": { "selector": "a.item-link", "attribute": "href" }
     }
   }
 }
 ```
 
-> 如果某些商品缺少价格标签，`inference` 模式会尝试找到商品的边界，确保标题和价格依然正确配对，对于缺失的价格返回 `null`，而不会导致整个列表的数据错位。
+> **启发式自动检测:** 如果省略了 `mode`，且 `selector` 恰好只匹配到一个元素，同时 `items` 中包含选择器，引擎会自动使用 **columnar** 模式。
 
-###### 5. 隐式对象提取 (最简语法)
+**Columnar 配置参数:**
+
+* **`strict`** (boolean, 默认: `true`): 如果为 `true`，当不同字段匹配到的数量不一致时将抛出错误。
+* **`inference`** (boolean, 默认: `false`): 如果为 `true`，当字段数量不匹配时，尝试通过 DOM 树自动寻找“包裹元素”来修复错位的列表。
+
+###### 5. 分段扫描模式 (Segmented Mode)
+
+适用于完全“平铺”且没有包裹元素的结构。它使用第一个字段（或指定的 `anchor`）作为锚点来对容器内容进行分段。
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#flat-container",
+    "mode": { "type": "segmented", "anchor": "title" },
+    "items": {
+      "title": { "selector": "h3" },
+      "desc": { "selector": "p" }
+    }
+  }
+}
+```
+
+> 在此模式下，每当引擎发现一个 `h3`，就会开启一个新项目。随后找到的 `p` 标签（直到下一个 `h3` 出现前）都归属于该项目。
+
+###### 6. 隐式对象提取 (最简语法)
 
 为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非保留关键字（如 `selector`, `attribute`, `type` 等）的键，它将被视为对象 schema，其中的键作为属性名。
 
