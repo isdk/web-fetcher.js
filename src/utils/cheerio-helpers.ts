@@ -81,6 +81,11 @@ export function normalizeHtml(html: string): string {
         ? parseInt(match.slice(3, -1), 16)
         : parseInt(match.slice(2, -1), 10)
       if (!isNaN(code)) {
+        // 特别处理不间断空格 (U+00A0 = 160)
+        if (code === 160) {  // 160 is decimal for 0xA0
+          return ' '  // 返回普通空格而不是不间断空格
+        }
+
         return String.fromCharCode(code)
       }
     }
