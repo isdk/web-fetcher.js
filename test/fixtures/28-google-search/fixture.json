@@ -1,0 +1,63 @@
+{
+  "title": "Google Search Result",
+  "actions": [
+    {
+      "action": "goto",
+      "params": { "url": "/" }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#main #search",
+        "items": {
+          "title": { "selector": "a > h3", "mode": "innerText" },
+          "url": { "selector": "a:has(h3)", "attribute": "href" },
+          "snippet": { "selector": "div[style*='-webkit-line-clamp']", "type": "html" }
+        }
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "data": [
+        {
+          "title": "Google Gemini",
+          "url": "https://gemini.google.com/",
+          "snippet": "<span>Meet <em>Gemini</em>, Google's AI\n                                        assistant. Get help with writing,\n                                        planning, brainstorming, and more.\n                                        Experience the power of generative\n                                        AI.</span>"
+        },
+        {
+          "title": "Gemini",
+          "url": "https://deepmind.google/models/gemini/",
+          "snippet": "<span><em>Gemini</em> 2.5 models are capable of\n                                  reasoning through their thoughts before\n                                  responding, resulting in enhanced\n                                  performance and improved accuracy.</span>"
+        },
+        {
+          "title": "Gemini",
+          "url": "https://www.gemini.com/",
+          "snippet": "<span><em>Gemini</em> makes crypto simple. Find,\n                                  Trade and Buy over 70 coins including\n                                  bitcoin and Solana on the best\n                                  cryptocurrency platform. Start trading\n                                  crypto here.</span>"
+        },
+        {
+          "title": "Google Gemini - Apps on Google Play",
+          "url": "https://play.google.com/store/apps/details?id=com.google.android.apps.bard",
+          "snippet": "<span class=\"YrbPuc\"><span>2025年8月19日</span> — </span><span>Supercharge your creativity and\n                                  productivity with <em>Gemini</em>, your AI\n                                  assistant from Google. <em>Gemini</em> gives\n                                  you direct access to Google's best family of\n                                  AI models on&nbsp;...</span>"
+        },
+        {
+          "title": "Gemini for Students — your AI study buddy from Google",
+          "url": "https://gemini.google/students/",
+          "snippet": "<span>Unlock <em>Gemini's</em> power for school\n                                  &amp; beyond, from homework help to video\n                                  creation. Get more <em>Gemini</em> with\n                                  Google AI Pro and start your free trial\n                                  now!</span>"
+        },
+        {
+          "title": "Google AI for Developers: Gemini Developer API | Gemma ...",
+          "url": "https://ai.google.dev/",
+          "snippet": "<span><em>Gemini</em> empowers you to be more\n                                  productive by acting as your coding agent.\n                                  It can plan and execute tasks, freeing you\n                                  to focus on what matters most.</span>"
+        },
+        {
+          "title": "Introducing Gemini: our largest and most capable AI model",
+          "url": "https://blog.google/technology/ai/google-gemini-ai/",
+          "snippet": "<span class=\"YrbPuc\"><span>2023年12月6日</span> — </span><span><em>Gemini</em> is our most capable and\n                                  general model, built to be multimodal and\n                                  optimized for three different sizes: Ultra,\n                                  Pro and Nano.</span>"
+        }
+      ]
+    }
+  }
+}

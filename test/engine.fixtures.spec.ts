@@ -123,6 +123,7 @@ interface FixtureExpected {
 
 interface Fixture {
   name: string;
+  dirName: string;
   caseDir: string;
   title: string;
   actions: FixtureAction[];
@@ -171,7 +172,7 @@ const createTestServer = async (fixtureDir: string, fixtureConfig?: Fixture): Pr
       setHeaders(reply);
       try {
         const buffer = await readFile(join(fixtureDir, 'fixture.html'));
-        reply.raw.setHeader('Content-Type', 'text/html');
+        reply.raw.setHeader('Content-Type', 'text/html;charset=utf-8');
         reply.raw.end(buffer);
       } catch (e) {
         reply.raw.statusCode = 404;
@@ -215,6 +216,7 @@ async function getTestcases() {
     try {
       const jsonContent = await readFile(fixtureJsonPath, 'utf-8');
       const fixture = JSON.parse(jsonContent);
+      fixture.dirName = testCase.name;
       if (fixture.skip) continue;
       if (!fixture.name) fixture.name = testCase.name;
       if (fixture.only) hasOnly = true;
@@ -250,7 +252,7 @@ const runDynamicTests = async () => {
   const testCases = await getTestcases();
 
   for (const testCase of testCases) {
-    describe(testCase.name, () => {
+    describe(testCase.dirName, () => {
       if (testCase.engine) {
         engineTestSuite(testCase, testCase.caseDir, testCase.engine);
       } else {
