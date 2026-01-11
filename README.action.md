@@ -238,9 +238,11 @@ The most basic extraction. You can specify a `selector` (CSS selector), an `attr
 ```
 
 > **Extraction Modes:**
-> * **`text`** (default): Extracts the `textContent` of the element, which includes all text within the element and its descendants, but preserves the whitespace and newlines as they appear in the HTML source (unrendered).
-> * **`innerText`**: Extracts the rendered text of the element, which respects CSS styling and collapses multiple spaces, while preserving meaningful line breaks (e.g., from `<br>` or block-level elements). This mode is better for getting what a user actually sees on the page.
-
+>
+> * **`text`** (default): Extracts the `textContent` of the element.
+> * **`innerText`**: Extracts the rendered text, respecting CSS styling and line breaks.
+> * **`html`**: Returns the `innerHTML` of the element.
+> * **`outerHTML`**: Returns the HTML including the tag itself. Useful for preserving the full element structure.
 > The example above will extract the text content of the `<h1>` tag with the class `main-title` using the `innerText` mode.
 
 ###### 2. Extracting an Object
@@ -294,54 +296,60 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
     > The example above will return an array of the `src` attributes from all `<img>` tags.
 
-*   **Zip Strategy (Column Alignment / Container Extraction)**: When the `selector` points to a **container** (like a search results div) rather than individual items, and the `items` schema defines selectors for multiple fields, the engine can automatically "zip" these fields into objects. This is also known as **Column Alignment Mode**, where separate columns of data are stitched together by index.
+* **Array Extraction Modes**: When extracting an array, the engine supports different modes to handle various DOM structures.
 
-    ```json
-    {
-      "id": "extract",
-      "params": {
-        "type": "array",
-        "selector": "#search-results",
-        "items": {
-          "title": { "selector": ".item-title" },
-          "link": { "selector": "a.item-link", "attribute": "href" }
-        }
-      }
-    }
-    ```
+  * **`nested`** (Default): The `selector` matches individual item wrappers.
+  * **`columnar`** (formerly Zip): The `selector` matches a **container**, and fields in `items` are parallel columns stitched together by index.
+  * **`segmented`**: The `selector` matches a **container**, and items are segmented by an "anchor" field.
 
-    > In this mode, the engine finds all `.item-title` and all `a.item-link` within the `#search-results` container and pairs them up by index.
+###### 4. Columnar Mode (formerly Zip Strategy)
 
-###### 4. Zip Strategy Configuration
-
-The Zip strategy can be fine-tuned using the `zip` property:
-
-*   **`zip`** (boolean | object):
-    *   `true` (default if Container Pattern detected): Enables Zip strategy with strict alignment.
-    *   `false`: Disables Zip strategy, falling back to standard item-by-item extraction.
-    *   **`strict`** (boolean, default: `true`): If `true`, throws an error if fields have different match counts (to prevent data misalignment).
-    *   **`inference`** (boolean, default: `false`): If `true`, when field counts don't match, the engine tries to automatically identify the most likely "item wrapper" element (e.g., a `.result-card` div) by traversing up the DOM from the matched fields.
-
-**Example: Robust extraction with inference**
+This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns.
 
 ```json
 {
   "id": "extract",
   "params": {
     "type": "array",
-    "selector": "#results-container",
-    "zip": { "inference": true },
+    "selector": "#search-results",
+    "mode": "columnar",
     "items": {
-      "title": { "selector": "h3" },
-      "price": { "selector": ".price-tag" }
+      "title": { "selector": ".item-title" },
+      "link": { "selector": "a.item-link", "attribute": "href" }
     }
   }
 }
 ```
 
-> If some items are missing a price tag, the `inference` mode will try to find the item boundaries to ensure titles and prices remain correctly paired, returning `null` for missing prices instead of misaligning the list.
+> **Heuristic Detection:** If `mode` is omitted and the `selector` matches exactly one element while `items` contains nested selectors, the engine automatically uses **columnar** mode.
 
-###### 5. Implicit Object Extraction (Simplest Syntax)
+**Columnar Configuration:**
+
+* **`strict`** (boolean, default: `true`): If `true`, throws an error if fields have different match counts.
+* **`inference`** (boolean, default: `false`): If `true`, tries to automatically find the "item wrapper" elements to fix misaligned lists.
+
+###### 5. Segmented Mode (Anchor-based Scanning)
+
+This mode is ideal for "flat" structures where there are no item wrappers. It uses the first field (or a specified `anchor`) to segment the container's content.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#flat-container",
+    "mode": { "type": "segmented", "anchor": "title" },
+    "items": {
+      "title": { "selector": "h3" },
+      "desc": { "selector": "p" }
+    }
+  }
+}
+```
+
+> In this mode, every time the engine finds an `h3`, it starts a new item. Any `<p>` found after that `h3` (and before the next one) is assigned to that item.
+
+###### 6. Implicit Object Extraction (Simplest Syntax)
 
 For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not reserved keywords (like `selector`, `attribute`, `type`, etc.), it is treated as an object schema where keys are property names.
 

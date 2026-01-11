@@ -7,7 +7,7 @@
       "params": {
         "type": "array",
         "selector": "#list",
-        "zip": { "inference": true, "strict": true },
+        "mode": { "type": "columnar", "inference": true, "strict": true },
         "items": {
           "title": { "selector": "h3" },
           "tag": { "selector": ".tag" }

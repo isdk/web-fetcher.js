@@ -85,10 +85,41 @@ export class PlaywrightFetchEngine extends FetchEngine<
   }
 
   protected async _querySelectorAll(
-    context: Locator,
+    context: Locator | Locator[],
     selector: string
   ): Promise<any[]> {
+    if (Array.isArray(context)) {
+      const results: Locator[] = []
+      for (const loc of context) {
+        // find in children
+        const matches = await loc.locator(selector).all()
+        results.push(...matches)
+        // check if current element matches
+        const isMatch = await loc.evaluate((el, sel) => el.matches(sel), selector)
+        if (isMatch) results.push(loc)
+      }
+      return results
+    }
     return context.locator(selector).all()
+  }
+
+  protected async _nextSiblingsUntil(
+    context: Locator,
+    untilSelector?: string
+  ): Promise<any[]> {
+    const allFollowing = await context
+      .locator('xpath=following-sibling::*')
+      .all()
+    if (!untilSelector) return allFollowing
+
+    const results = []
+    for (const loc of allFollowing) {
+      if (await loc.evaluate((el, sel) => el.matches(sel), untilSelector)) {
+        break
+      }
+      results.push(loc)
+    }
+    return results
   }
 
   protected async _parentElement(context: Locator): Promise<any | null> {
@@ -126,8 +157,13 @@ export class PlaywrightFetchEngine extends FetchEngine<
     let value: string | null = ''
     if (attribute) {
       value = await context.getAttribute(attribute)
-    } else if (type === 'html') {
-      value = normalizeHtml(await context.innerHTML())
+    } else if (type === 'html' || mode === 'html' || mode === 'outerHTML') {
+      if (mode === 'outerHTML') {
+        value = await context.evaluate((el) => el.outerHTML)
+      } else {
+        value = await context.innerHTML()
+      }
+      if (value) value = normalizeHtml(value)
     } else if (mode === 'innerText') {
       value = await context.innerText()
     } else {

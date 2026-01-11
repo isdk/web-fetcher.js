@@ -7,7 +7,7 @@
       "params": {
         "type": "array",
         "selector": "#container",
-        "zip": { "strict": true },
+        "mode": { "type": "columnar", "strict": true },
         "items": {
           "title": { "selector": ".title" },
           "tag": { "selector": ".tag" }
@@ -17,7 +17,7 @@
   ],
   "expected": {
     "error": {
-      "message": "Zip extraction mismatch: field \"tag\" has 1 matches, but expected 2."
+      "message": "Columnar extraction mismatch: field \"tag\" has 1 matches, but expected 2."
     }
   }
 }

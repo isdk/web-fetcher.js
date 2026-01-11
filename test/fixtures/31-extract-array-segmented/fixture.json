@@ -1,0 +1,47 @@
+{
+  "title": "should extract array data using segmented mode with anchor",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": "name" },
+        "items": {
+          "name": { "selector": ".title" },
+          "description": { "selector": ".desc" },
+          "price": { "selector": ".price", "type": "number" }
+        }
+      },
+      "storeAs": "segmented_data"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": "segmented",
+        "items": {
+          "name": { "selector": ".title" },
+          "description": { "selector": ".desc" }
+        }
+      },
+      "storeAs": "segmented_default_anchor"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "segmented_data": [
+        { "name": "Item 1", "description": "Desc 1", "price": 10 },
+        { "name": "Item 2", "description": null, "price": 20 },
+        { "name": "Item 3", "description": "Desc 3", "price": null }
+      ],
+      "segmented_default_anchor": [
+        { "name": "Item 1", "description": "Desc 1" },
+        { "name": "Item 2", "description": null },
+        { "name": "Item 3", "description": "Desc 3" }
+      ]
+    }
+  }
+}

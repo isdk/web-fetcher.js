@@ -1,0 +1,25 @@
+{
+  "title": "should fallback to nested mode when selector matches multiple elements",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": ".item",
+        "items": {
+          "title": { "selector": ".title" }
+        }
+      },
+      "storeAs": "auto_nested"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "auto_nested": [
+        { "title": "Title A" },
+        { "title": "Title B" }
+      ]
+    }
+  }
+}

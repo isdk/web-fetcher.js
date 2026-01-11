@@ -258,43 +258,42 @@ Since Cheerio is a static parser, we simulate `innerText` in `src/utils/cheerio-
 **Why this approach?**
 A naive `.text()` in Cheerio just concatenates all text nodes, losing all structural line breaks (e.g., `<div>A</div><div>B</div>` becomes `"AB"`). Our simulation ensures that structural breaks are preserved, making the output from the `http` engine consistent with the `browser` engine.
 
-### Feature: Zip Strategy & Smart Inference
+### Feature: Array Extraction Modes (Columnar & Segmented)
 
-We implemented a "Zip Strategy" in the `extract` action to simplify scraping list data, especially when users think in terms of "Container + Columns" rather than "Item Wrapper + Child Fields".
+To handle complex and non-standard HTML structures, we implemented multiple extraction strategies in the `extract` action. This allows users to scrape data based on how it is visually organized rather than just how it is DOM-nested.
 
-#### 1. The "Zip" Logic
+#### 1. Columnar Mode (formerly Zip Strategy)
 
-Standard extraction iterates over elements found by `selector` (Item Wrapper) and then extracts fields from each.
-The **Zip Strategy** activates when:
+This mode is used for "Container + Columns" structures where item fields are separate lists under a common parent.
 
-1. The array `selector` matches exactly **one** element (The Container).
-2. The `items` schema defines multiple fields with their own selectors.
-3. `zip` option is not `false`.
+- **Implementation**: The engine extracts each field in `items` as a full list (column) within the container.
+- **Alignment**: It then "zips" these columns together by index.
+- **Smart Inference**: If `inference: true` is enabled and counts mismatch, the engine identifies the field with the most matches, finds its parent node that is a direct child of the container, and treats those nodes as inferred "item wrappers" to restart extraction in `nested` mode.
 
-In this mode, the engine:
+#### 2. Segmented Mode (Anchor-based Scanning)
 
-1. Finds all matches for *each field* within the container.
-2. Checks if the counts align (e.g., found 10 titles and 10 prices).
-3. If aligned, it "zips" them together by index into objects.
-4. **Strict Mode**: By default (`strict: true`), any count mismatch throws an error to prevent data misalignment.
+Ideal for "Flat" structures where items are simply a sequence of siblings without any wrapping element.
 
-#### 2. Smart Inference Algorithm
+- **The Anchor Logic**: It identifies the first field (or a specified `anchor`) as the project delimiter.
+- **Segmentation**: For each anchor found, the engine calls `_nextSiblingsUntil(anchor, anchorSelector)` to collect all subsequent sibling nodes until the next anchor.
+- **Context Injection**: These nodes (Anchor + Siblings) are passed as an array-based `context` to the recursive `_extract` call.
+- **Abstraction**: Base class `FetchEngine` manages the segmentation flow, while concrete engines implement `_nextSiblingsUntil`:
+    - **Cheerio**: Uses `el.nextUntil(selector).addBack()`.
+    - **Playwright**: Uses XPath `following-sibling::*` combined with browser-side `el.matches(selector)` checks.
 
-When `zip: { inference: true }` is enabled, the engine attempts to fix misalignment (e.g., missing fields in some items).
+#### 3. Heuristic Mode Selection
 
-**Algorithm**:
+When `mode` is omitted, the engine follows these rules:
+1. If the array `selector` matches **multiple** elements -> **Nested Mode**.
+2. If it matches **exactly one** element AND `items` has child selectors -> **Columnar Mode**.
+3. If Columnar extraction yields no results -> Fallback to **Nested Mode**.
 
-1. **Pivot Selection**: Identify the field with the most matches (e.g., "title" has 10 matches, "price" has 9).
-2. **Ancestry Traversal**: For each match of the pivot field:
-    - Traverse up the DOM tree until reaching the **Container**.
-    - Identify the direct child of the Container as the **Implied Item Wrapper**.
-3. **Wrapper Collection**: Collect and deduplicate these implied wrappers.
-4. **Fallback**: If valid wrappers are found (count > 1), the engine switches back to standard "Item Extraction" mode using these inferred wrappers, which naturally handles missing fields (returning `null` for them).
+### Current Limitations & Future Directions
 
-**Future Extensions**:
-
-- **Nested Zip**: Currently, Zip strategy only works for flat structures (Value Schemas). It could be extended to support nested Objects or Arrays.
-- **Better Scoring**: The current inference uses "max count" to pick the pivot. A better heuristic might be "deepest common ancestor frequency" or handling cases where even the pivot field is missing items.
+- **Nested Segmentation**: Currently, `segmented` mode only supports one level of flat structures. Future versions could support recursive segmentation for complex document structures.
+- **Performance**: Scanning thousands of siblings in `segmented` mode (especially in Playwright) can be expensive. We may need to implement a more efficient "one-pass" scanner that categorizes all nodes in a single traversal.
+- **Visual Inference**: In `browser` mode, we could potentially use element coordinates (bounding boxes) to infer item boundaries when DOM structure is completely chaotic.
+- **HTML Extraction**: We added `mode: 'html' | 'outerHTML'`. The current default is `innerHTML`. Future extension could include sanitization options for HTML extraction.
 
 ### Encoding Detection Challenges (Post-Mortem)
 

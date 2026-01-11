@@ -24,6 +24,10 @@ import {
   ExtractArraySchema,
   ExtractObjectSchema,
   ExtractValueSchema,
+  ExtractArrayMode,
+  ExtractArrayModeName,
+  ColumnarOptions,
+  SegmentedOptions,
 } from '../core/extract'
 import {
   BaseFetcherProperties,
@@ -285,19 +289,57 @@ export abstract class FetchEngine<
 
   protected _cleanup?(): Promise<void>
 
+  /**
+   * Finds all elements matching the selector within the given context.
+   * @param context - The context to search in (Engine-specific element/node or array of nodes).
+   * @param selector - CSS selector.
+   * @internal
+   */
   protected abstract _querySelectorAll(
     context: any,
     selector: string
   ): Promise<any[]>
+
+  /**
+   * Extracts a primitive value from the element based on schema.
+   * @param schema - Value extraction schema.
+   * @param context - The element context.
+   * @internal
+   */
   protected abstract _extractValue(
     schema: ExtractValueSchema,
     context: any
   ): Promise<any>
+
+  /**
+   * Gets the parent element of the given element.
+   * @param element - The element.
+   * @internal
+   */
   protected abstract _parentElement(element: any): Promise<any | null>
+
+  /**
+   * Checks if two elements are the same.
+   * @param element1 - First element.
+   * @param element2 - Second element.
+   * @internal
+   */
   protected abstract _isSameElement(
     element1: any,
     element2: any
   ): Promise<boolean>
+
+  /**
+   * Gets all subsequent siblings of an element until a sibling matches the selector.
+   * Used in 'segmented' extraction mode.
+   * @param element - The anchor element.
+   * @param untilSelector - Optional selector that marks the end of the segment.
+   * @internal
+   */
+  protected abstract _nextSiblingsUntil(
+    element: any,
+    untilSelector?: string
+  ): Promise<any[]>
 
   protected _isImplicitObject(schema: any): boolean {
     if (!schema || typeof schema !== 'object') return false
@@ -309,7 +351,6 @@ export abstract class FetchEngine<
       'exclude',
       'properties',
       'items',
-      'zip',
       'mode',
     ])
     const keys = Object.keys(schema)
@@ -354,32 +395,42 @@ export abstract class FetchEngine<
     }
 
     if (schemaType === 'array') {
-      const { selector, items, zip } = schema as ExtractArraySchema
+      const { selector, items, mode } = schema as ExtractArraySchema
       const elements = selector
         ? await this._querySelectorAll(context, selector)
         : [context]
 
-      const zipOptions = zip === true ? { strict: true } : zip || undefined
-      const shouldTryZip = zip !== false
+      const normalizedMode = this._normalizeArrayMode(mode)
+      const isAuto = !mode
 
-      // Heuristic: If we found exactly one container, and the user wants an array,
-      // and Zip is not disabled, try to extract items from it using the 'items' schema as a pattern.
-      if (shouldTryZip && elements.length === 1 && items) {
-        const zippedResults = await this._tryExtractFromContainer(
+      if (
+        (isAuto || normalizedMode.type === 'columnar') &&
+        elements.length === 1 &&
+        items
+      ) {
+        const results = await this._extractColumnar(
           items,
           elements[0],
-          zipOptions
+          normalizedMode
         )
-        if (zippedResults) {
-          return zippedResults
-        }
+        if (results) return results
       }
 
-      const results: any[] = []
-      for (const element of elements) {
-        results.push(await this._extract(items!, element))
+      if (
+        normalizedMode.type === 'segmented' &&
+        elements.length === 1 &&
+        items
+      ) {
+        const results = await this._extractSegmented(
+          items,
+          elements[0],
+          normalizedMode
+        )
+        if (results) return results
       }
-      return results
+
+      // Default fallback or explicit nested
+      return this._extractNested(items!, elements)
     }
 
     const { selector } = schema as ExtractValueSchema
@@ -387,6 +438,8 @@ export abstract class FetchEngine<
     if (selector) {
       const elements = await this._querySelectorAll(context, selector)
       elementToExtract = elements.length > 0 ? elements[0] : null
+    } else if (Array.isArray(context)) {
+      elementToExtract = context.length > 0 ? context[0] : null
     }
 
     if (!elementToExtract) return null
@@ -395,21 +448,48 @@ export abstract class FetchEngine<
   }
 
   /**
-   * Tries to extract a list of items from a single container using the Zip (Column Alignment) strategy.
-   *
-   * This method checks if multiple fields in the 'items' schema match multiple elements 
-   * consistently. If they do, it aligns these parallel lists of elements to compose 
-   * an array of objects.
-   *
-   * @param schema - The schema for a single item (Object or Value).
-   * @param container - The container element.
-   * @param opts - Options for the zip strategy.
-   * @returns An array of extracted items if the heuristic passes, or null.
+   * Normalizes the array extraction mode into an options object.
+   * @param mode - The mode string or options object.
+   * @internal
    */
-  protected async _tryExtractFromContainer(
+  protected _normalizeArrayMode(
+    mode?: ExtractArrayMode
+  ): { type: ExtractArrayModeName } & any {
+    if (!mode) return { type: 'nested' }
+    if (typeof mode === 'string') return { type: mode }
+    return mode
+  }
+
+  /**
+   * Performs standard nested array extraction.
+   * @param items - The schema for each item.
+   * @param elements - The list of item elements.
+   * @internal
+   */
+  protected async _extractNested(
+    items: ExtractSchema,
+    elements: any[]
+  ): Promise<any[]> {
+    const results: any[] = []
+    for (const element of elements) {
+      results.push(await this._extract(items, element))
+    }
+    return results
+  }
+
+  /**
+   * Performs columnar extraction (Column Alignment Mode).
+   *
+   * @param schema - The schema for a single item (must be an object or implicit object).
+   * @param container - The container element to search within.
+   * @param opts - Columnar extraction options (strict, inference).
+   * @returns An array of extracted items, or null if requirements aren't met.
+   * @internal
+   */
+  protected async _extractColumnar(
     schema: ExtractSchema,
     container: any,
-    opts?: { strict?: boolean; inference?: boolean }
+    opts?: ColumnarOptions
   ): Promise<any[] | null> {
     const isObject =
       schema.type === 'object' ||
@@ -433,7 +513,7 @@ export abstract class FetchEngine<
 
       for (const key of keys) {
         const propSchema = properties[key] as ExtractSchema
-        // Nested complex structures are not supported for simple Zip
+        // Nested complex structures are not supported for simple Columnar alignment
         if (
           propSchema.type === 'array' ||
           propSchema.type === 'object' ||
@@ -462,21 +542,14 @@ export abstract class FetchEngine<
         }
 
         if (valueSchema.selector) {
-          // Heuristic: If selector yields 0 or 1 item, it's ambiguous.
-          // Unless strict mode is OFF, we might want to reject.
-          // But let's stick to the core "Zip" logic: we need *some* indication of a list.
-          // If ALL fields match 1 item, we can't distinguish from a single object.
-
           if (commonCount === null) {
             commonCount = count
           } else if (commonCount !== count) {
-            // Mismatch detected.
             if (inference && maxCount > 1) {
-              // If inference is enabled, we don't fail yet. We will try inference logic later.
               commonCount = -1 // Mark as mismatched
             } else if (strict) {
               throw new CommonError(
-                `Zip extraction mismatch: field "${key}" has ${count} matches, but expected ${commonCount}.`,
+                `Columnar extraction mismatch: field "${key}" has ${count} matches, but expected ${commonCount}.`,
                 'extract'
               )
             }
@@ -489,7 +562,7 @@ export abstract class FetchEngine<
         collectedValues[key] = values
       }
 
-      // Try inference if enabled and mismatch occurred (commonCount === -1)
+      // Try inference if enabled and mismatch occurred
       if (
         inference &&
         commonCount === -1 &&
@@ -502,27 +575,17 @@ export abstract class FetchEngine<
           let parent = await this._parentElement(current)
           let childOfContainer = current
 
-          // Traverse up until we hit the container
-          let foundContainer = false
           while (parent) {
             if (await this._isSameElement(parent, container)) {
-              foundContainer = true
+              itemWrappers.push(childOfContainer)
               break
             }
             childOfContainer = parent
             current = parent
             parent = await this._parentElement(current)
           }
-
-          if (foundContainer) {
-            itemWrappers.push(childOfContainer)
-          }
         }
 
-        // Remove duplicates (if multiple fields point to same item wrapper)
-        // Actually, maxCountMatches are from a single field (the one with most matches).
-        // So duplicates are unlikely unless multiple elements inside one item match the same selector.
-        // But let's handle uniqueness just in case.
         const uniqueWrappers: any[] = []
         for (const w of itemWrappers) {
           let isDuplicate = false
@@ -536,21 +599,13 @@ export abstract class FetchEngine<
         }
 
         if (uniqueWrappers.length > 1) {
-          const results: any[] = []
-          for (const wrapper of uniqueWrappers) {
-            results.push(await this._extract(schema, wrapper))
-          }
-          return results
+          return this._extractNested(schema, uniqueWrappers)
         }
       }
 
-      if (maxCount <= 1) return null // No list detected
-      if (commonCount === -1 && strict) {
-        // Should have thrown earlier, but just in case
-        return null
-      }
+      if (maxCount <= 1) return null
+      if (commonCount === -1 && strict) return null
 
-      // In non-strict mode, use maxCount (if inference failed or disabled)
       const resultCount = strict && commonCount !== -1 ? commonCount! : maxCount
 
       const results: any[] = []
@@ -558,29 +613,19 @@ export abstract class FetchEngine<
         const obj: Record<string, any> = {}
         for (const key of keys) {
           const vals = collectedValues[key]
-          // Strategy:
-          // 1. If vals has 1 item (and it's not a list selector case ideally, but simplified here): repeat it?
-          //    Actually, if it was a constant/container attribute, vals.length is 1.
-          // 2. If vals has index i, use it.
-          // 3. Otherwise null.
-
           if (vals.length === 1 && resultCount > 1) {
-            // If it's a constant (no selector logic earlier matched [container]), repeat it.
-            // We can check if the schema had a selector.
             const propSchema = properties[key] as ExtractValueSchema
             if (!propSchema.selector) {
               obj[key] = vals[0]
               continue
             }
           }
-
           obj[key] = vals[i] !== undefined ? vals[i] : null
         }
         results.push(obj)
       }
       return results
     } else {
-      // Value Schema Zip (e.g. extract list of values directly)
       const valueSchema = schema as ExtractValueSchema
       if (!valueSchema.selector) return null
 
@@ -592,6 +637,58 @@ export abstract class FetchEngine<
 
       return Promise.all(matches.map((m) => this._extractValue(valueSchema, m)))
     }
+  }
+
+  /**
+   * Performs segmented extraction (Anchor-based Scanning).
+   *
+   * @param schema - The schema for a single item (must be an object).
+   * @param container - The container element to scan.
+   * @param opts - Segmented extraction options (anchor).
+   * @returns An array of extracted items.
+   * @internal
+   */
+  protected async _extractSegmented(
+    schema: ExtractSchema,
+    container: any,
+    opts?: SegmentedOptions
+  ): Promise<any[] | null> {
+    const isObject =
+      schema.type === 'object' ||
+      (!schema.type && this._isImplicitObject(schema))
+    if (!isObject) return null
+
+    const properties =
+      schema.type === 'object'
+        ? (schema as ExtractObjectSchema).properties
+        : (schema as any)
+
+    const keys = Object.keys(properties)
+    if (keys.length === 0) return null
+
+    const anchorKey = opts?.anchor || keys[0]
+    const anchorSchema = properties[anchorKey] as ExtractValueSchema
+    if (!anchorSchema.selector) return null
+
+    const anchorElements = await this._querySelectorAll(
+      container,
+      anchorSchema.selector
+    )
+    if (anchorElements.length === 0) return []
+
+    const results: any[] = []
+    for (let i = 0; i < anchorElements.length; i++) {
+      const anchor = anchorElements[i]
+      const segment = await this._nextSiblingsUntil(
+        anchor,
+        anchorSchema.selector
+      )
+      // The segment context includes the anchor itself + following siblings until next anchor
+      const segmentContext = [anchor, ...segment]
+      results.push(await this._extract(schema, segmentContext))
+    }
+
+    return results
   }
 
   /**
