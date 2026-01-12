@@ -271,6 +271,25 @@ export class CheerioFetchEngine extends FetchEngine<
         }
         return
       }
+      case 'trim': {
+        if (!$)
+          throw new CommonError(
+            `Cheerio context not available for action: ${action.type}`,
+            'trim'
+          )
+        const { selectors, removeComments } = this._getTrimInfo(action.options)
+
+        selectors.forEach((s) => $(s).remove())
+
+        if (removeComments) {
+          $('*')
+            .contents()
+            .filter((_, el: any) => el.type === 'comment')
+            .remove()
+        }
+        this.lastResponse = await this.buildResponse(context)
+        return
+      }
       case 'waitFor':
         if (action.options?.ms) {
           await new Promise((resolve) =>

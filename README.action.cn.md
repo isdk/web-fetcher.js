@@ -123,6 +123,41 @@ export class FillAction extends FetchAction {
   * **`selector`** (string, optional): 表单元素的选择器。
 * **`returns`**: `none`
 
+#### `trim`
+
+从 DOM 中移除特定元素以在提取前清理页面。这会对当前会话的页面状态进行持久修改。
+
+* **`id`**: `trim`
+* **`params`**:
+  * **`selectors`** (string | string[], optional): 一个或多个要移除元素的 CSS 选择器。
+  * **`presets`** (string | string[], optional): 预定义的移除元素组。支持的预设：
+    * `scripts`: 移除所有 `<script>` 标签。
+    * `styles`: 移除所有 `<style>` 和 `<link rel="stylesheet">` 标签。
+    * `svgs`: 移除所有 `<svg>` 元素。
+    * `images`: 移除 `<img>`, `<picture>` 和 `<canvas>` 元素。
+    * `comments`: 移除 HTML 注释。
+    * `hidden`: 移除带有 `hidden` 属性或内联 `display:none` 的元素。在 **browser** 模式下，它还会检测并移除通过外部 CSS（如样式表中的 `display: none` 或 `visibility: hidden`）隐藏的元素。
+    * `all`: 包含上述所有预设。
+* **`returns`**: `none`
+
+**示例：在提取前清理页面**
+
+```json
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "https://example.com" } },
+    { 
+      "action": "trim", 
+      "params": { 
+        "selectors": ["#ad-banner", ".popup"], 
+        "presets": ["scripts", "styles", "comments"] 
+      } 
+    },
+    { "action": "extract", "params": { "schema": { "content": "#main-content" } } }
+  ]
+}
+```
+
 #### `waitFor`
 
 暂停执行，以等待一个或多个条件的满足。

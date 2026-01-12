@@ -1,0 +1,27 @@
+{
+  "name": "Trim Browser-only CSS Detection",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "presets": "hidden" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "ad": "#ad",
+          "overlay": "#overlay",
+          "transparent": "#transparent",
+          "content": "#content"
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "ad": null,
+      "overlay": null,
+      "transparent": "Transparent but present",
+      "content": "Actual Content"
+    }
+  }
+}

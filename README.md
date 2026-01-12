@@ -156,6 +156,7 @@ Here are the essential built-in actions:
 * `click`: Clicks on an element specified by a selector.
 * `fill`: Fills an input field with a specified value.
 * `submit`: Submits a form.
+* `trim`: Removes elements from the DOM to clean up the page (e.g., scripts, ads, hidden content).
 * `waitFor`: Pauses execution to wait for a specific condition (e.g., a timeout, a selector to appear, or network to be idle).
 * `pause`: Pauses execution for manual intervention (e.g., solving a CAPTCHA).
 * `getContent`: Retrieves the full content (HTML, text, etc.) of the current page state.

@@ -123,6 +123,41 @@ Submits a form.
   * `selector` (string, optional): A selector for the form element.
 * **`returns`**: `none`
 
+#### `trim`
+
+Removes specific elements from the DOM to clean up the page before extraction. This is a persistent modification to the current session's page state.
+
+* **`id`**: `trim`
+* **`params`**:
+  * **`selectors`** (string | string[], optional): One or more CSS selectors of elements to remove.
+  * **`presets`** (string | string[], optional): Predefined groups of elements to remove. Supported presets:
+    * `scripts`: Removes all `<script>` tags.
+    * `styles`: Removes all `<style>` and `<link rel="stylesheet">` tags.
+    * `svgs`: Removes all `<svg>` elements.
+    * `images`: Removes `<img>`, `<picture>`, and `<canvas>` elements.
+    * `comments`: Removes HTML comments.
+    * `hidden`: Removes elements with `hidden` attribute or inline `display:none`. In **browser** mode, it also detects and removes elements hidden via external CSS (e.g., `display: none` or `visibility: hidden` in stylesheets).
+    * `all`: Includes all of the above.
+* **`returns`**: `none`
+
+**Example: Cleaning up a page before extraction**
+
+```json
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "https://example.com" } },
+    { 
+      "action": "trim", 
+      "params": { 
+        "selectors": ["#ad-banner", ".popup"], 
+        "presets": ["scripts", "styles", "comments"] 
+      } 
+    },
+    { "action": "extract", "params": { "schema": { "content": "#main-content" } } }
+  ]
+}
+```
+
 #### `waitFor`
 
 Pauses execution to wait for one or more conditions to be met.

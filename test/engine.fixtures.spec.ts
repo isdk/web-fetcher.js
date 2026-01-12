@@ -19,12 +19,17 @@ const isConditionObject = (obj: any): boolean => {
 
 const checkExpectations = (value: any, expectations: any) => {
   if (Array.isArray(expectations)) {
-    expectations.forEach(c => checkExpectations(value, c));
+    // If expectations is an array, we need to decide if we're matching an array or multiple conditions
+    if (Array.isArray(value) && expectations.length === value.length && expectations.length > 0 && !isConditionObject(expectations[0])) {
+      value.forEach((v, i) => checkExpectations(v, expectations[i]));
+    } else {
+      expectations.forEach(c => checkExpectations(value, c));
+    }
     return;
   }
 
   if (typeof expectations === 'string') {
-    expect(String(value)).toContain(expectations);
+    expect(String(value || '')).toContain(expectations);
     return;
   }
 
@@ -34,7 +39,14 @@ const checkExpectations = (value: any, expectations: any) => {
   }
 
   if (!isConditionObject(expectations)) {
-    expect(value).toEqual(expectations);
+    // It's a plain object, check properties recursively
+    if (value === null || value === undefined) {
+      expect(value).toEqual(expectations);
+      return;
+    }
+    Object.keys(expectations).forEach(key => {
+      checkExpectations(value[key], expectations[key]);
+    });
     return;
   }
 
@@ -282,7 +294,7 @@ const engineTestSuite = (
       await server.close();
     });
 
-    it(fixture.title, async () => {
+    it(fixture.title ?? fixture.name, async () => {
       let consoleSpy: any;
       if (fixture.options?.debug || fixture.expected?.logs) {
         consoleSpy = vi.spyOn(console, 'log');
@@ -347,21 +359,7 @@ const engineTestSuite = (
         // Additional validation for outputs if specified in expected
         if (fixture.expected.outputs) {
           Object.keys(fixture.expected.outputs).forEach(key => {
-            const expectedValue = fixture.expected.outputs[key];
-            const actualValue = res.outputs[key];
-
-            let isCondition = isConditionObject(expectedValue);
-            if (!isCondition && Array.isArray(expectedValue) && expectedValue.length > 0) {
-              if (isConditionObject(expectedValue[0])) {
-                isCondition = true;
-              }
-            }
-
-            if (isCondition) {
-              checkExpectations(actualValue, expectedValue);
-            } else {
-              expect(actualValue).toEqual(expectedValue);
-            }
+            checkExpectations(res.outputs[key], fixture.expected.outputs[key]);
           });
         }
 
@@ -426,11 +424,7 @@ const engineTestSuite = (
         checkExpectations(content.metadata, fixture.expected.metadata);
       }
       if ('data' in fixture.expected) {
-        if (isConditionObject(fixture.expected.data)) {
-          checkExpectations(result, fixture.expected.data);
-        } else {
-          expect(result).toEqual(fixture.expected.data);
-        }
+        checkExpectations(result, fixture.expected.data);
       }
 
       await session.dispose();

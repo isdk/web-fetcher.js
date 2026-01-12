@@ -1,0 +1,42 @@
+{
+  "name": "Trim Action Test",
+  "actions": [
+                { "action": "goto", "params": { "url": "/" } },
+                {
+                  "action": "trim",
+                  "params": {
+                    "selectors": "#ad",
+                    "presets": "all"
+                  }
+                },
+                {
+                  "action": "extract",
+                      "params": {
+            "schema": {
+              "title": "h1",
+              "ad": "#ad",
+              "script": "#s1",
+              "style": "#st1",
+              "hidden_text": "#h1",
+              "hidden_attr": "#h2",
+              "image": "#i1",
+              "full_html": { "selector": "body", "mode": "html" }
+            }
+          }
+        }
+      ],
+    
+            "expected": {
+              "data": {
+                "title": "Main Title",
+                "ad": null,
+                "script": null,
+                "style": null,
+                "hidden_text": null,
+                "hidden_attr": null,
+                "image": null,
+                "full_html": { "not": "secret comment" }
+              }
+            }
+          }
+          
