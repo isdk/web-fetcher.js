@@ -1,0 +1,62 @@
+{
+  "title": "segmented mode edge cases: flat structures and strict item requirements",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#flat-container",
+        "mode": { "type": "segmented", "anchor": ".anchor" },
+        "items": {
+          "id": { "selector": ".anchor" },
+          "val": { "selector": ".data" }
+        }
+      },
+      "storeAs": "flat_segmented"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#flat-container",
+        "mode": { "type": "segmented", "anchor": ".anchor", "strict": true },
+        "items": {
+          "id": { "selector": ".anchor" },
+          "val": { "selector": ".data", "required": true }
+        }
+      },
+      "storeAs": "strict_item_error"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#adjacent-anchors",
+        "mode": { "type": "segmented", "anchor": ".anchor" },
+        "items": {
+          "name": { "selector": ".anchor" },
+          "val": { "selector": ".data" }
+        }
+      },
+      "storeAs": "adjacent_anchors"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "flat_segmented": [
+        { "id": "A1", "val": "D1" },
+        { "id": "A2", "val": null },
+        { "id": "A3", "val": "D3" }
+      ],
+      "adjacent_anchors": [
+        { "name": "Anchor 1", "val": null },
+        { "name": "Anchor 2", "val": "Data 2" }
+      ]
+    },
+    "error": {
+      "actionIndex": 2,
+      "message": "/Required implicit property \"val\" is null, skipping object|Required property \"val\" is missing|Required item is missing in array/"
+    }
+  }
+}

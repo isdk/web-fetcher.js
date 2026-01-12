@@ -346,12 +346,18 @@ This mode is used for "Container + Columns" structures where item fields are sep
 
 Ideal for "Flat" structures where items are simply a sequence of siblings without any wrapping element.
 
-- **The Anchor Logic**: It identifies the first field (or a specified `anchor`) as the project delimiter.
+- **The Anchor Logic**: It identifies a delimiter to split segments.
+- **Flexible Anchor**: The `anchor` option in `SegmentedOptions` can be either a field name defined in `items` or a direct CSS selector.
 - **Segmentation**: For each anchor found, the engine calls `_nextSiblingsUntil(anchor, anchorSelector)` to collect all subsequent sibling nodes until the next anchor.
+- **Strict Mode**: When `strict: true` is set in the mode options, it ensures that:
+    - At least one anchor element must be found.
+    - Each segment must satisfy all `required` fields in `items`.
 - **Context Injection**: These nodes (Anchor + Siblings) are passed as an array-based `context` to the recursive `_extract` call.
-- **Abstraction**: Base class `FetchEngine` manages the segmentation flow, while concrete engines implement `_nextSiblingsUntil`:
-    - **Cheerio**: Uses `el.nextUntil(selector).addBack()`.
-    - **Playwright**: Uses XPath `following-sibling::*` combined with browser-side `el.matches(selector)` checks.
+- **The `_nextSiblingsUntil` Internal**: This abstract method is the engine-specific core of segmentation. It is responsible for scanning the DOM from a given anchor point.
+    - **Responsibility**: Returns an array of sibling elements starting *after* the current anchor and stopping *before* the next element that matches the `untilSelector`.
+    - **Cheerio Implementation**: Leverages Cheerio's efficient `.nextUntil(selector)` or `.nextAll()`.
+    - **Playwright Implementation**: Since Playwright Locators don't have a native `nextUntil`, it uses the XPath `following-sibling::*` to fetch all subsequent siblings and then iterates through them, performing a browser-side `el.matches(selector)` check to find the segment boundary.
+- **Abstraction**: Base class `FetchEngine` manages the segmentation flow and strictness propagation, while concrete engines implement the low-level scanning.
 
 #### 3. Heuristic Mode Selection
 
@@ -367,8 +373,9 @@ To provide an "AI-friendly" and developer-friendly experience, the `extract` act
 #### 1. Shorthand Types
 
 - **String Shorthand**: `'h1'` is automatically converted to `{ selector: 'h1' }`.
-- **Implicit Object Shorthand**: If a schema object lacks a `type` property but contains other keys, it is treated as an `object` type where those keys are the properties to extract.
+- **Implicit Object Shorthand**: If a schema object lacks a `type` property (or `type` is not one of the reserved schema types like `string`, `object`, `array`, etc.) but contains other keys, it is treated as an `object` type where those keys are the properties to extract.
   - *Example*: `{ "title": "h1" }` -> `{ "type": "object", "properties": { "title": { "selector": "h1" } } }`.
+  - *Example (Collision handling)*: `{ "type": { "selector": ".tag" } }` is correctly identified as an implicit object extracting a field named `type`.
 
 #### 2. The Keyword Collision Fix (Context vs. Data)
 

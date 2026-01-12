@@ -1,0 +1,60 @@
+{
+  "title": "implicit object edge cases: reserved keywords, nesting, and strict mode",
+  "skip": true,
+  "options": {"debug": true},
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": ".user",
+        "items": {
+          "name": ".username",
+          "type": ".user-type",
+          "stats": {
+            "count": { "selector": ".login-count", "type": "number" },
+            "seen": ".last-seen"
+          }
+        }
+      },
+      "storeAs": "implicit_nested_with_type"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": ".user",
+        "mode": { "type": "nested", "strict": true },
+        "items": {
+          "name": ".username",
+          "stats": {
+            "required": true,
+            "count": ".login-count"
+          }
+        }
+      },
+      "storeAs": "strict_implicit_error"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "implicit_nested_with_type": [
+        {
+          "name": "Alice",
+          "type": "Admin",
+          "stats": { "count": 42, "seen": "2024-05-20" }
+        },
+        {
+          "name": "Bob",
+          "type": "Editor",
+          "stats": null
+        }
+      ]
+    },
+    "error": {
+      "actionIndex": 2,
+      "message": "/Required implicit property \"stats\" is missing|Required property \"stats\" is missing/"
+    }
+  }
+}

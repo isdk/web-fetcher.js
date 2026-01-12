@@ -1,0 +1,46 @@
+{
+  "title": "segmented mode advanced anchors: pseudo-classes, multi-selectors, and exclusions",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": "h3.title:not(.skip)" },
+        "items": {
+          "name": { "selector": "h3" },
+          "val": { "selector": ".desc" }
+        }
+      },
+      "storeAs": "pseudo_anchor"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#mixed-container",
+        "mode": { "type": "segmented", "anchor": ".header, .footer" },
+        "items": {
+          "type": { "selector": ".header, .footer" },
+          "val": { "selector": ".content" }
+        }
+      },
+      "storeAs": "multi_selector_anchor"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "pseudo_anchor": [
+        { "name": "Main Title 1", "val": "Desc 1" },
+        { "name": "Sub Title 2", "val": "Desc 2" },
+        { "name": "Main Title 4", "val": "Desc 4" }
+      ],
+      "multi_selector_anchor": [
+        { "type": "Type A", "val": "Content A" },
+        { "type": "Type B", "val": "Content B" },
+        { "type": "Footer", "val": null }
+      ]
+    }
+  }
+}

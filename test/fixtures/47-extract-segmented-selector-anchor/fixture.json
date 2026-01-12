@@ -1,0 +1,82 @@
+{
+  "title": "comprehensive segmented mode tests",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": ".header" },
+        "items": {
+          "title": { "selector": ".header" },
+          "body": { "selector": ".content" },
+          "more": { "selector": ".extra" }
+        }
+      },
+      "storeAs": "selector_anchor_with_extras"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": ".header" },
+        "items": {
+          "body": { "selector": ".content" }
+        }
+      },
+      "storeAs": "anchor_not_in_items"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#nested-container",
+        "mode": { "type": "segmented", "anchor": ".section" },
+        "items": {
+          "section": { "selector": ".section" },
+          "items": {
+            "type": "array",
+            "selector": ".list li"
+          }
+        }
+      },
+      "storeAs": "nested_segmented"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#empty-container",
+        "mode": { "type": "segmented", "anchor": ".non-existent", "strict": true },
+        "items": {
+          "title": { "selector": ".header" }
+        }
+      },
+      "storeAs": "strict_error"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "selector_anchor_with_extras": [
+        { "title": "Header 1", "body": "Content 1", "more": "Extra 1" },
+        { "title": "Header 2", "body": "Content 2", "more": null },
+        { "title": "Header 3", "body": null, "more": "Extra 3" }
+      ],
+      "anchor_not_in_items": [
+        { "body": "Content 1" },
+        { "body": "Content 2" },
+        { "body": null }
+      ],
+      "nested_segmented": [
+        { "section": "Section A", "items": ["Item A1", "Item A2"] },
+        { "section": "Section B", "items": ["Item B1"] }
+      ]
+    },
+    "error": {
+      "actionIndex": 4,
+      "message": "/Segmented extraction failed: no elements found for anchor selector \".non-existent\"./"
+    }
+  }
+}

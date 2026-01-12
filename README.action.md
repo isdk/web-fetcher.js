@@ -365,7 +365,7 @@ This mode is used when the `selector` points to a **container** (like a results 
 
 ###### 5. Segmented Mode (Anchor-based Scanning)
 
-This mode is ideal for "flat" structures where there are no item wrappers. It uses the first field (or a specified `anchor`) to segment the container's content.
+This mode is ideal for "flat" structures where there are no item wrappers. It uses a specified `anchor` to segment the container's content.
 
 ```json
 {
@@ -373,7 +373,7 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
   "params": {
     "type": "array",
     "selector": "#flat-container",
-    "mode": { "type": "segmented", "anchor": "title" },
+    "mode": { "type": "segmented", "anchor": "h3.item-title" },
     "items": {
       "title": { "selector": "h3" },
       "desc": { "selector": "p" }
@@ -382,7 +382,13 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
 }
 ```
 
-> In this mode, every time the engine finds an `h3`, it starts a new item. Any `<p>` found after that `h3` (and before the next one) is assigned to that item.
+**Segmented Configuration:**
+
+* **`anchor`** (string): 
+    * Can be a **field name** defined in `items` (e.g., `"title"`).
+    * Can be a **direct CSS selector** (e.g., `"h3.item-title"`).
+    * Defaults to the selector of the first field in `items`.
+* **`strict`** (boolean, default: `false`): If `true`, throws an error if no anchor elements are found or if any item violates its own `required` constraints.
 
 ###### 6. Quality Control: `required` and `strict`
 
@@ -394,6 +400,7 @@ To ensure data integrity and handle messy HTML, you can use `required` and `stri
 * **`strict`**: Controls how failures are handled.
   * `false` (Default): Missing required fields are silently ignored/skipped.
   * `true`: Any missing required field or alignment mismatch will throw an error.
+  * **Propagation**: Setting `strict: true` at the array level (e.g., in `mode`) automatically enables strict checking for all nested items.
 
 **Example: Ignoring items with missing mandatory fields**
 
@@ -419,15 +426,19 @@ To ensure data integrity and handle messy HTML, you can use `required` and `stri
 
 For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`), it is treated as an object schema where keys are property names.
 
+> **Keyword Collision Handling:** You can safely extract a data field named `type` as long as its value is not a reserved schema type (like `"string"`, `"object"`, `"array"`, etc.).
+
 ```json
 {
   "id": "extract",
   "params": {
     "selector": ".author-bio",
-    "name": { "selector": ".author-name" },
-    "items": { "type": "array", "selector": "li" },
-    "email": "a.email"
+    "name": ".author-name",
+    "type": ".author-rank",
+    "items": { "type": "array", "selector": "li" }
   }
+}
+```
 }
 ```
 

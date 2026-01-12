@@ -364,7 +364,7 @@ await fetchWeb({
 
 ###### 5. 分段扫描模式 (Segmented Mode)
 
-适用于完全“平铺”且没有包裹元素的结构。它使用第一个字段（或指定的 `anchor`）作为锚点来对容器内容进行分段。
+适用于完全“平铺”且没有包裹元素的结构。它使用指定的 `anchor` 锚点来对容器内容进行分段。
 
 ```json
 {
@@ -372,7 +372,7 @@ await fetchWeb({
   "params": {
     "type": "array",
     "selector": "#flat-container",
-    "mode": { "type": "segmented", "anchor": "title" },
+    "mode": { "type": "segmented", "anchor": "h3.item-title" },
     "items": {
       "title": { "selector": "h3" },
       "desc": { "selector": "p" }
@@ -381,7 +381,13 @@ await fetchWeb({
 }
 ```
 
-> 在此模式下，每当引擎发现一个 `h3`，就会开启一个新项目。随后找到的 `p` 标签（直到下一个 `h3` 出现前）都归属于该项目。
+**Segmented 配置参数:**
+
+* **`anchor`** (string): 
+    * 可以是 `items` 中定义的**字段名**（如 `"title"`）。
+    * 也可以是直接的 **CSS 选择器**（如 `"h3.item-title"`）。
+    * 默认使用 `items` 中第一个字段的选择器。
+* **`strict`** (boolean, 默认: `false`): 如果为 `true`，若未找到任何锚点元素，或任何项目违反了自身的 `required` 约束，将抛出错误。
 
 ###### 6. 数据质量控制: `required` 和 `strict`
 
@@ -393,6 +399,7 @@ await fetchWeb({
 * **`strict`**: 控制错误处理方式。
   * `false` (默认): 静默忽略/跳过缺失必填字段的项目。
   * `true`: 任何必填字段缺失或列对齐失败都会抛出异常。
+  * **自动传递**: 在数组级别（如 `mode` 中）设置 `strict: true` 会自动为所有嵌套子项开启严格检查。
 
 **示例：忽略缺少关键信息的项目**
 
@@ -418,16 +425,19 @@ await fetchWeb({
 
 为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非上下文定义关键字（如 `selector`, `has`, `exclude`）的键，它将被视为对象 schema，其中的键作为属性名。
 
+> **关键字冲突处理：** 您可以安全地抓取名为 `type` 的数据字段，只要它的值不是保留的 Schema 类型（如 `"string"`, `"object"`, `"array"` 等）。
+
 ```json
 {
   "id": "extract",
   "params": {
     "selector": ".author-bio",
-    "name": { "selector": ".author-name" },
-    "items": { "type": "array", "selector": "li" },
-    "email": "a.email"
+    "name": ".author-name",
+    "type": ".author-rank",
+    "items": { "type": "array", "selector": "li" }
   }
 }
+```
 ```
 
 > **隐式对象的核心特性：**
