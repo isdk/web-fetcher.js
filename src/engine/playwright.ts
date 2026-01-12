@@ -202,7 +202,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
         return fetchResponse
       }
       case 'extract': {
-        const result = await this._extract(action.schema, page.locator('body'))
+        const normalizedSchema = this._normalizeSchema(action.schema)
+        const result = await this._extract(normalizedSchema, page.locator('body'))
         this.lastResponse = await this.buildResponse(context)
         return result
       }

@@ -287,6 +287,12 @@ export abstract class FetchEngine<
   protected lastResponse?: FetchResponse
   protected blockedTypes = new Set<string>()
 
+  protected _logDebug(...args: any[]) {
+    if (this.opts?.debug) {
+      console.log(`[FetchEngine:${this.id}]`, ...args)
+    }
+  }
+
   protected _cleanup?(): Promise<void>
 
   /**
@@ -341,10 +347,26 @@ export abstract class FetchEngine<
     untilSelector?: string
   ): Promise<any[]>
 
+  /**
+   * Determines if a schema is an "Implicit Object Schema".
+   *
+   * An implicit object is a shorthand where you define properties directly
+   * without specifying `type: 'object'` or `properties: { ... }`.
+   *
+   * @example
+   * { title: 'h1', author: '.name' } => implicit object
+   * { type: 'object', properties: { ... } } => explicit object
+   *
+   * @param schema - The schema to check.
+   * @returns True if it's an implicit object.
+   */
   protected _isImplicitObject(schema: any): boolean {
     if (!schema || typeof schema !== 'object') return false
+
+    // If 'type' is explicitly set, it's NOT an implicit shorthand.
+    if ('type' in schema) return false
+
     const reservedKeys = new Set([
-      'type',
       'selector',
       'attribute',
       'has',
@@ -353,19 +375,30 @@ export abstract class FetchEngine<
       'items',
       'mode',
     ])
+
     const keys = Object.keys(schema)
-    if (keys.length === 0) return false // Empty object -> default value extraction
-    if ('type' in schema) return false // Explicit type -> not implicit
+    if (keys.length === 0) return false
+
+    // If it contains any key that is NOT a reserved configuration keyword,
+    // we treat it as an implicit object where keys are property names.
     for (const key of keys) {
       if (!reservedKeys.has(key)) return true
     }
+
+    // Special Case: Handling reserved keywords as property names.
+    // If a schema has 'items' but NO 'type: array', it's likely an implicit object
+    // intending to extract a field named 'items'.
+    if (keys.includes('items')) return true
+
     return false
   }
 
   protected async _extract(schema: ExtractSchema, context: any): Promise<any> {
     const schemaType = (schema as any).type
+    const schemaSelector = (schema as any).selector
 
     if (!context) {
+      this._logDebug(`_extract: No context for selector "${schemaSelector || ''}", type "${schemaType || 'value'}"`)
       return schemaType === 'array' ? [] : null
     }
 
@@ -375,20 +408,27 @@ export abstract class FetchEngine<
       if (selector) {
         const elements = await this._querySelectorAll(context, selector)
         newContext = elements.length > 0 ? elements[0] : null
+        this._logDebug(`_extract: object selector "${selector}" found ${elements.length} elements`)
       }
-      if (!newContext) return null
+      if (!newContext) {
+        this._logDebug(`_extract: object context not found for selector "${selector}"`)
+        return null
+      }
 
       const result: Record<string, any> = {}
       for (const key in properties) {
+        this._logDebug(`_extract: extracting property "${key}"`)
         result[key] = await this._extract(properties[key], newContext)
       }
       return result
     }
 
     if (!schemaType && this._isImplicitObject(schema)) {
+      this._logDebug('_extract: implicit object')
       const result: Record<string, any> = {}
-      const properties = schema as Record<string, ExtractSchema>
+      const properties = (schema as any).properties || {}
       for (const key in properties) {
+        this._logDebug(`_extract: extracting implicit property "${key}"`)
         result[key] = await this._extract(properties[key], context)
       }
       return result
@@ -400,6 +440,8 @@ export abstract class FetchEngine<
         ? await this._querySelectorAll(context, selector)
         : [context]
 
+      this._logDebug(`_extract: array selector "${selector || ''}" found ${elements.length} elements`)
+
       const normalizedMode = this._normalizeArrayMode(mode)
       const isAuto = !mode
 
@@ -408,12 +450,16 @@ export abstract class FetchEngine<
         elements.length === 1 &&
         items
       ) {
+        this._logDebug('_extract: trying columnar extraction')
         const results = await this._extractColumnar(
           items,
           elements[0],
           normalizedMode
         )
-        if (results) return results
+        if (results) {
+          this._logDebug(`_extract: columnar extraction successful, found ${results.length} items`)
+          return results
+        }
       }
 
       if (
@@ -421,15 +467,20 @@ export abstract class FetchEngine<
         elements.length === 1 &&
         items
       ) {
+        this._logDebug('_extract: trying segmented extraction')
         const results = await this._extractSegmented(
           items,
           elements[0],
           normalizedMode
         )
-        if (results) return results
+        if (results) {
+          this._logDebug(`_extract: segmented extraction successful, found ${results.length} items`)
+          return results
+        }
       }
 
       // Default fallback or explicit nested
+      this._logDebug(`_extract: using nested extraction for ${elements.length} elements`)
       return this._extractNested(items!, elements)
     }
 
@@ -438,13 +489,19 @@ export abstract class FetchEngine<
     if (selector) {
       const elements = await this._querySelectorAll(context, selector)
       elementToExtract = elements.length > 0 ? elements[0] : null
+      this._logDebug(`_extract: value selector "${selector}" found ${elements.length} elements`)
     } else if (Array.isArray(context)) {
       elementToExtract = context.length > 0 ? context[0] : null
     }
 
-    if (!elementToExtract) return null
+    if (!elementToExtract) {
+      this._logDebug(`_extract: value element not found for selector "${selector || ''}"`)
+      return null
+    }
 
-    return this._extractValue(schema as ExtractValueSchema, elementToExtract)
+    const result = await this._extractValue(schema as ExtractValueSchema, elementToExtract)
+    this._logDebug(`_extract: value extracted for selector "${selector || ''}":`, result)
+    return result
   }
 
   /**
@@ -519,6 +576,7 @@ export abstract class FetchEngine<
           propSchema.type === 'object' ||
           (!propSchema.type && this._isImplicitObject(propSchema))
         ) {
+          this._logDebug(`_extractColumnar: field "${key}" has nested structure, columnar not supported`)
           return null
         }
 
@@ -536,6 +594,8 @@ export abstract class FetchEngine<
         }
 
         const count = matches.length
+        this._logDebug(`_extractColumnar: field "${key}" with selector "${valueSchema.selector || ''}" found ${count} matches`)
+
         if (count > maxCount) {
           maxCount = count
           maxCountMatches = matches
@@ -544,9 +604,12 @@ export abstract class FetchEngine<
         if (valueSchema.selector) {
           if (commonCount === null) {
             commonCount = count
+            this._logDebug(`_extractColumnar: set commonCount to ${commonCount}`)
           } else if (commonCount !== count) {
+            this._logDebug(`_extractColumnar: count mismatch for field "${key}": ${count} vs ${commonCount}`)
             if (inference && maxCount > 1) {
               commonCount = -1 // Mark as mismatched
+              this._logDebug('_extractColumnar: mismatch marked for inference')
             } else if (strict) {
               throw new CommonError(
                 `Columnar extraction mismatch: field "${key}" has ${count} matches, but expected ${commonCount}.`,
@@ -674,6 +737,7 @@ export abstract class FetchEngine<
       container,
       anchorSchema.selector
     )
+    this._logDebug(`_extractSegmented: anchor selector "${anchorSchema.selector}" found ${anchorElements.length} elements`)
     if (anchorElements.length === 0) return []
 
     const results: any[] = []
@@ -685,6 +749,7 @@ export abstract class FetchEngine<
       )
       // The segment context includes the anchor itself + following siblings until next anchor
       const segmentContext = [anchor, ...segment]
+      this._logDebug(`_extractSegmented: segment ${i} has ${segmentContext.length} elements (including anchor)`)
       results.push(await this._extract(schema, segmentContext))
     }
 
@@ -864,30 +929,73 @@ export abstract class FetchEngine<
     return this.dispatchAction({ type: 'extract', schema: normalizedSchema })
   }
 
+  /**
+   * Normalizes the extraction schema into a standard internal format.
+   *
+   * Handles shorthands:
+   * 1. String: 'h1' => { selector: 'h1' }
+   * 2. Implicit Object: { title: 'h1' } => { type: 'object', properties: { title: { selector: 'h1' } } }
+   * 3. Array shorthands: { type: 'array', selector: 'li', attribute: 'href' } => { type: 'array', selector: 'li', items: { attribute: 'href' } }
+   * 4. Filter shorthands: { selector: 'a', has: 'img' } => { selector: 'a:has(img)' }
+   *
+   * @param schema - The user-provided schema.
+   * @returns A normalized ExtractSchema.
+   */
   protected _normalizeSchema(schema: ExtractSchema): ExtractSchema {
-    const newSchema = JSON.parse(JSON.stringify(schema)) as any
+    // 1. Handle String shorthand: 'h1' -> { selector: 'h1' }
+    if (typeof schema === 'string') {
+      return { selector: schema } as any
+    }
 
-    if (newSchema.properties) {
-      for (const key in newSchema.properties) {
-        newSchema.properties[key] = this._normalizeSchema(
-          newSchema.properties[key]
-        )
+    const newSchema = { ...(schema as any) }
+
+    // 2. Handle Implicit Object shorthand:
+    // If it's an object but doesn't have a 'type', and contains properties,
+    // we convert it to an explicit 'object' type.
+    if (this._isImplicitObject(newSchema)) {
+      const properties: any = {}
+      const contextKeys = new Set(['selector', 'has', 'exclude'])
+
+      // We separate context-defining keys from data-defining keys.
+      for (const key of Object.keys(newSchema)) {
+        if (!contextKeys.has(key)) {
+          // All other keys are treated as properties to be extracted.
+          properties[key] = this._normalizeSchema(newSchema[key])
+          delete newSchema[key]
+        }
+      }
+      newSchema.type = 'object'
+      newSchema.properties = properties
+    } else {
+      // 3. Recursively normalize explicit objects and arrays.
+      if (newSchema.properties) {
+        newSchema.properties = { ...newSchema.properties }
+        for (const key in newSchema.properties) {
+          newSchema.properties[key] = this._normalizeSchema(
+            newSchema.properties[key]
+          )
+        }
+      }
+      if (newSchema.items) {
+        newSchema.items = this._normalizeSchema(newSchema.items)
       }
     }
-    if (newSchema.items) {
-      newSchema.items = this._normalizeSchema(newSchema.items)
-    }
 
+    // 4. Normalize Array shorthands:
     if (newSchema.type === 'array') {
+      // If 'attribute' is provided on an array without 'items', it's a shorthand for extracting that attribute from each element.
       if (newSchema.attribute && !newSchema.items) {
         newSchema.items = { attribute: newSchema.attribute }
         delete newSchema.attribute
       }
+      // Default array item extraction is 'string' (textContent).
       if (!newSchema.items) {
         newSchema.items = { type: 'string' }
       }
     }
 
+    // 5. Normalize Filter shorthands (has/exclude):
+    // Combines selector with :has() and :not() pseudo-classes for CSS engines that support them (or our internal emulation).
     if (newSchema.selector && (newSchema.has || newSchema.exclude)) {
       const { selector, has, exclude } = newSchema
       const finalSelector = selector
@@ -1155,6 +1263,7 @@ export abstract class FetchEngine<
 
   protected async _sharedRequestHandler(context: TContext): Promise<void> {
     const { request } = context
+    this._logDebug(`Processing request: ${request.url}`)
     try {
       this.currentSession = context.session
       this.isPageActive = true

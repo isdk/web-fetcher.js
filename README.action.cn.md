@@ -350,7 +350,7 @@ await fetchWeb({
 
 ###### 6. 隐式对象提取 (最简语法)
 
-为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非保留关键字（如 `selector`, `attribute`, `type` 等）的键，它将被视为对象 schema，其中的键作为属性名。
+为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非上下文定义关键字（如 `selector`, `has`, `exclude`）的键，它将被视为对象 schema，其中的键作为属性名。
 
 ```json
 {
@@ -358,12 +358,16 @@ await fetchWeb({
   "params": {
     "selector": ".author-bio",
     "name": { "selector": ".author-name" },
-    "email": { "selector": "a.email", "attribute": "href" }
+    "items": { "type": "array", "selector": "li" },
+    "email": "a.email"
   }
 }
 ```
 
-> 这等同于示例 2，但更简洁。
+> **隐式对象的核心特性：**
+> 1. **关键字处理**：常用的配置关键字如 `items`、`attribute` 或 `mode` **可以作为属性名**在隐式对象中使用。只有当显式存在 `type`（如 `array`）时，它们才会被视为配置项。
+> 2. **字符串简写**：你可以直接使用字符串作为属性值（例如 `"email": "a.email"`），它会自动扩展为 `{ "selector": "a.email" }`。
+> 3. **上下文分离**：只有 `selector`、`has` 和 `exclude` 用于定义隐式对象的 DOM 上下文；所有其他键都被视为要提取的数据。
 
 ###### 6. 精确筛选: `has` 和 `exclude`
 

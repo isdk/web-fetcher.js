@@ -12,6 +12,14 @@ The `engine` directory contains the core logic for the web fetcher. Its primary 
 
 > ℹ️ The system is built on top of the [Crawlee](https://crawlee.dev/) library, using its powerful crawler abstractions.
 
+### Debug Mode & Tracing
+
+When the `debug: true` option is enabled, the engine provides detailed tracing of its internal operations:
+
+1. **Detailed Tracing**: Every major step (request processing, element selection, data extraction) is logged to the console with a `[FetchEngine:id]` prefix.
+2. **Extraction Insights**: During `extract()`, the engine logs how many elements were matched for each selector and the specific values being extracted, making it easier to debug complex or misaligned schemas.
+3. **Metadata**: The `FetchResponse` will include an enriched `metadata` object containing engine details, timing metrics (where available), and proxy information.
+
 ---
 
 ## 🧩 2. Core Concepts
@@ -169,6 +177,11 @@ The `extract()` method provides a powerful, declarative way to pull structured d
 ### Core Design: Schema Normalization
 
 To enhance usability and flexibility, the `extract` method internally implements a **"Normalization"** layer. This means you can provide semantically clear shorthands, and the engine will automatically convert them into a standard, more verbose internal format before execution. This makes writing complex extraction rules simple and intuitive.
+
+**Key normalization features:**
+- **String Shorthand**: `'h1'` is automatically expanded to `{ selector: 'h1' }`.
+- **Implicit Object Shorthand**: If you provide an object without `type: 'object'`, it's treated as a data object. Keywords like `items`, `attribute`, or `mode` are allowed as property names in this context.
+- **Filter Shorthand**: `has` and `exclude` options are merged into the selector using CSS pseudo-classes.
 
 ### Schema Structure
 
