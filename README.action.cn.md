@@ -423,7 +423,7 @@ await fetchWeb({
 
 ###### 7. 隐式对象提取 (最简语法)
 
-为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非上下文定义关键字（如 `selector`, `has`, `exclude`）的键，它将被视为对象 schema，其中的键作为属性名。
+为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非上下文定义关键字（如 `selector`, `has`, `exclude`, `required`, `strict`）的键，它将被视为对象 schema，其中的键作为属性名。
 
 > **关键字冲突处理：** 您可以安全地抓取名为 `type` 的数据字段，只要它的值不是保留的 Schema 类型（如 `"string"`, `"object"`, `"array"` 等）。
 
@@ -442,9 +442,10 @@ await fetchWeb({
 
 > **隐式对象的核心特性：**
 >
-> 1. **关键字处理**：常用的配置关键字如 `items`、`attribute` 或 `mode` **可以作为属性名**在隐式对象中使用。只有当显式存在 `type`（如 `array`）时，它们才会被视为配置项。
+> 1. **关键字处理**：常用的配置关键字如 `items`、`attribute` 或 `mode` **可以作为属性名**在隐式对象中使用。只有当显式存在 `type`（如 `array`）时，它们才会被视为配置项。同时，`required` 和 `strict` 也会被当作上下文定义关键字处理。
 > 2. **字符串简写**：你可以直接使用字符串作为属性值（例如 `"email": "a.email"`），它会自动扩展为 `{ "selector": "a.email" }`。
-> 3. **上下文分离**：只有 `selector`、`has` 和 `exclude` 用于定义隐式对象的 DOM 上下文；所有其他键都被视为要提取的数据。
+> 3. **上下文分离**：只有 `selector`、`has`、`exclude`、`required` 和 `strict` 用于定义隐式对象的上下文及校验逻辑；所有其他键都被视为要提取的数据。
+> 4. **空值传递 (Null Propagation)**: 如果一个隐式对象没有 `selector`，且其所有的子属性提取结果均为 `null`，则该对象本身返回 `null`。这对于父对象的 `required` 校验或数组中的跳过逻辑至关重要。
 
 ###### 8. 精确筛选: `has` 和 `exclude`
 

@@ -1,6 +1,5 @@
 {
   "title": "implicit object edge cases: reserved keywords, nesting, and strict mode",
-  "skip": true,
   "options": {"debug": true},
   "actions": [
     { "action": "goto", "params": { "url": "/" } },
@@ -13,7 +12,7 @@
           "name": ".username",
           "type": ".user-type",
           "stats": {
-            "count": { "selector": ".login-count", "type": "number" },
+            "count": { "selector": ".login-count", "type": "number", "required": true },
             "seen": ".last-seen"
           }
         }

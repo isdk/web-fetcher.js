@@ -208,7 +208,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
         const normalizedSchema = this._normalizeSchema(action.schema)
         const result = await this._extract(
           normalizedSchema,
-          page.locator('body')
+          page.locator(':root')
         )
         this.lastResponse = await this.buildResponse(context)
         return result
