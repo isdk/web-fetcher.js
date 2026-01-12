@@ -424,6 +424,7 @@ export abstract class FetchEngine<
       'properties',
       'items',
       'mode',
+      'required',
     ])
 
     const keys = Object.keys(schema)
@@ -455,7 +456,7 @@ export abstract class FetchEngine<
     }
 
     if (schemaType === 'object') {
-      const { selector, properties } = schema as ExtractObjectSchema
+      const { selector, properties, strict } = schema as ExtractObjectSchema
       let newContext = context
       if (selector) {
         const elements = await this._querySelectorAll(context, selector)
@@ -468,13 +469,30 @@ export abstract class FetchEngine<
         this._logDebug(
           `_extract: object context not found for selector "${selector}"`
         )
+        if (strict && (schema as any).required) {
+          throw new CommonError(
+            `Required object "${selector || ''}" is missing.`,
+            'extract'
+          )
+        }
         return null
       }
 
       const result: Record<string, any> = {}
       for (const key in properties) {
         this._logDebug(`_extract: extracting property "${key}"`)
-        result[key] = await this._extract(properties[key], newContext)
+        const value = await this._extract(properties[key], newContext)
+        if (value === null && (properties[key] as any).required) {
+          this._logDebug(`_extract: required property "${key}" is null`)
+          if (strict) {
+            throw new CommonError(
+              `Required property "${key}" is missing.`,
+              'extract'
+            )
+          }
+          return null
+        }
+        result[key] = value
       }
       return result
     }
@@ -482,16 +500,35 @@ export abstract class FetchEngine<
     if (!schemaType && this._isImplicitObject(schema)) {
       this._logDebug('_extract: implicit object')
       const result: Record<string, any> = {}
-      const properties = (schema as any).properties || {}
+      const properties = (schema as any).properties || schema
+      const reservedKeys = new Set([
+        'selector',
+        'attribute',
+        'has',
+        'exclude',
+        'properties',
+        'items',
+        'mode',
+        'required',
+      ])
+
       for (const key in properties) {
+        if (reservedKeys.has(key)) continue
         this._logDebug(`_extract: extracting implicit property "${key}"`)
-        result[key] = await this._extract(properties[key], context)
+        const value = await this._extract(properties[key], context)
+        if (value === null && (properties[key] as any).required) {
+          this._logDebug(
+            `_extract: required implicit property "${key}" is null, skipping object`
+          )
+          return null
+        }
+        result[key] = value
       }
       return result
     }
 
     if (schemaType === 'array') {
-      const { selector, items, mode } = schema as ExtractArraySchema
+      const { selector, items, mode, strict } = schema as ExtractArraySchema
       const elements = selector
         ? await this._querySelectorAll(context, selector)
         : [context]
@@ -501,6 +538,9 @@ export abstract class FetchEngine<
       )
 
       const normalizedMode = this._normalizeArrayMode(mode)
+      if (strict !== undefined && normalizedMode.strict === undefined) {
+        normalizedMode.strict = strict
+      }
       const isAuto = !mode
 
       if (
@@ -545,7 +585,9 @@ export abstract class FetchEngine<
       this._logDebug(
         `_extract: using nested extraction for ${elements.length} elements`
       )
-      return this._extractNested(items!, elements)
+      return this._extractNested(items!, elements, {
+        strict: normalizedMode.strict,
+      })
     }
 
     const { selector } = schema as ExtractValueSchema
@@ -599,11 +641,26 @@ export abstract class FetchEngine<
    */
   protected async _extractNested(
     items: ExtractSchema,
-    elements: any[]
+    elements: any[],
+    opts?: { strict?: boolean }
   ): Promise<any[]> {
     const results: any[] = []
+    const isRequired = (items as any).required
+    const strict = opts?.strict === true
+    const isComplex =
+      (items as any).type === 'object' ||
+      (items as any).type === 'array' ||
+      this._isImplicitObject(items)
+
     for (const element of elements) {
-      results.push(await this._extract(items, element))
+      const result = await this._extract(items, element)
+      if (result !== null) {
+        results.push(result)
+      } else if (isRequired && strict) {
+        throw new CommonError('Required item is missing in array.', 'extract')
+      } else if (!isRequired && !isComplex) {
+        results.push(null)
+      }
     }
     return results
   }
@@ -625,7 +682,7 @@ export abstract class FetchEngine<
     const isObject =
       schema.type === 'object' ||
       (!schema.type && this._isImplicitObject(schema))
-    const strict = opts?.strict !== false // Default to true
+    const strict = opts?.strict === true // Default to false
     const inference = opts?.inference === true
 
     if (isObject) {
@@ -693,6 +750,12 @@ export abstract class FetchEngine<
               commonCount = -1 // Mark as mismatched
               this._logDebug('_extractColumnar: mismatch marked for inference')
             } else if (strict) {
+              if (propSchema.required && count < commonCount!) {
+                throw new CommonError(
+                  `Required field "${key}" is missing at index ${count}.`,
+                  'extract'
+                )
+              }
               throw new CommonError(
                 `Columnar extraction mismatch: field "${key}" has ${count} matches, but expected ${commonCount}.`,
                 'extract'
@@ -756,18 +819,32 @@ export abstract class FetchEngine<
       const results: any[] = []
       for (let i = 0; i < resultCount; i++) {
         const obj: Record<string, any> = {}
+        let skipRow = false
         for (const key of keys) {
           const vals = collectedValues[key]
-          if (vals.length === 1 && resultCount > 1) {
-            const propSchema = properties[key] as ExtractValueSchema
-            if (!propSchema.selector) {
-              obj[key] = vals[0]
-              continue
-            }
+          const propSchema = properties[key] as any
+          let val = vals[i]
+          if (vals.length === 1 && resultCount > 1 && !propSchema.selector) {
+            val = vals[0]
+          } else if (val === undefined) {
+            val = null
           }
-          obj[key] = vals[i] !== undefined ? vals[i] : null
+
+          if (val === null && propSchema.required) {
+            if (strict) {
+              throw new CommonError(
+                `Required field "${key}" is missing at index ${i}.`,
+                'extract'
+              )
+            }
+            skipRow = true
+            break
+          }
+          obj[key] = val
         }
-        results.push(obj)
+        if (!skipRow) {
+          results.push(obj)
+        }
       }
       return results
     } else {
@@ -780,7 +857,10 @@ export abstract class FetchEngine<
       )
       if (matches.length <= 1) return null
 
-      return Promise.all(matches.map((m) => this._extractValue(valueSchema, m)))
+      const results = await Promise.all(
+        matches.map((m) => this._extractValue(valueSchema, m))
+      )
+      return valueSchema.required ? results.filter((r) => r !== null) : results
     }
   }
 
@@ -836,7 +916,18 @@ export abstract class FetchEngine<
       this._logDebug(
         `_extractSegmented: segment ${i} has ${segmentContext.length} elements (including anchor)`
       )
-      results.push(await this._extract(schema, segmentContext))
+      const result = await this._extract(schema, segmentContext)
+      const isRequired = (schema as any).required
+      const isComplex =
+        (schema as any).type === 'object' ||
+        (schema as any).type === 'array' ||
+        this._isImplicitObject(schema)
+
+      if (result !== null) {
+        results.push(result)
+      } else if (!isRequired && !isComplex) {
+        results.push(null)
+      }
     }
 
     return results

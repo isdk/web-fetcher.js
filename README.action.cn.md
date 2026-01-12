@@ -146,12 +146,12 @@ export class FillAction extends FetchAction {
 {
   "actions": [
     { "action": "goto", "params": { "url": "https://example.com" } },
-    { 
-      "action": "trim", 
-      "params": { 
-        "selectors": ["#ad-banner", ".popup"], 
-        "presets": ["scripts", "styles", "comments"] 
-      } 
+    {
+      "action": "trim",
+      "params": {
+        "selectors": ["#ad-banner", ".popup"],
+        "presets": ["scripts", "styles", "comments"]
+      }
     },
     { "action": "extract", "params": { "schema": { "content": "#main-content" } } }
   ]
@@ -383,7 +383,38 @@ await fetchWeb({
 
 > 在此模式下，每当引擎发现一个 `h3`，就会开启一个新项目。随后找到的 `p` 标签（直到下一个 `h3` 出现前）都归属于该项目。
 
-###### 6. 隐式对象提取 (最简语法)
+###### 6. 数据质量控制: `required` 和 `strict`
+
+为了确保数据的完整性并处理不规范的 HTML 结构，您可以使用 `required` 和 `strict` 字段。
+
+* **`required`**: 将字段标记为必填。
+  * 如果 `required` 字段缺失，**对象 (Object)** 提取结果将返回 `null`。
+  * 在**数组 (Array)** 中，缺失必填字段的整行/整项将被**跳过**（忽略）。
+* **`strict`**: 控制错误处理方式。
+  * `false` (默认): 静默忽略/跳过缺失必填字段的项目。
+  * `true`: 任何必填字段缺失或列对齐失败都会抛出异常。
+
+**示例：忽略缺少关键信息的项目**
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": ".product-list",
+    "mode": "columnar",
+    "items": {
+      "name": { "selector": ".title", "required": true },
+      "price": { "selector": ".price", "required": true },
+      "discount": ".promo"
+    }
+  }
+}
+```
+
+> 在此示例中，如果某个产品缺少 `name` 或 `price`，它将从结果数组中完全剔除。可选的 `discount` 字段缺失不会影响该项的保留。
+
+###### 7. 隐式对象提取 (最简语法)
 
 为了让对象提取更简单，你可以省略 `type: 'object'` 和 `properties`。如果 schema 对象包含非上下文定义关键字（如 `selector`, `has`, `exclude`）的键，它将被视为对象 schema，其中的键作为属性名。
 
@@ -400,11 +431,12 @@ await fetchWeb({
 ```
 
 > **隐式对象的核心特性：**
+>
 > 1. **关键字处理**：常用的配置关键字如 `items`、`attribute` 或 `mode` **可以作为属性名**在隐式对象中使用。只有当显式存在 `type`（如 `array`）时，它们才会被视为配置项。
 > 2. **字符串简写**：你可以直接使用字符串作为属性值（例如 `"email": "a.email"`），它会自动扩展为 `{ "selector": "a.email" }`。
 > 3. **上下文分离**：只有 `selector`、`has` 和 `exclude` 用于定义隐式对象的 DOM 上下文；所有其他键都被视为要提取的数据。
 
-###### 6. 精确筛选: `has` 和 `exclude`
+###### 8. 精确筛选: `has` 和 `exclude`
 
 您可以在任何包含 **`selector`** 的 Schema 中使用 **`has`** 和 **`exclude`** 字段来精确控制元素的选择。
 

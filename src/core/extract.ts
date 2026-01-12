@@ -1,4 +1,20 @@
 /**
+ * Base configuration for all extraction schemas.
+ */
+export interface BaseExtractSchema {
+  /**
+   * Whether this field is required. If true and the value is null,
+   * the containing object or array item will be skipped (or throw error in strict mode).
+   */
+  required?: boolean
+  /**
+   * Whether to enable strict mode for this extraction.
+   * If true, missing required fields will throw an error instead of being skipped.
+   */
+  strict?: boolean
+}
+
+/**
  * Extraction schema types.
  */
 export type ExtractSchema =
@@ -9,7 +25,7 @@ export type ExtractSchema =
 /**
  * Configuration for extracting a single value.
  */
-export interface ExtractValueSchema {
+export interface ExtractValueSchema extends BaseExtractSchema {
   /**
    * The data type to cast the extracted value to.
    * @default 'string'
@@ -48,16 +64,22 @@ export interface ExtractValueSchema {
 export type ExtractArrayModeName = 'nested' | 'columnar' | 'segmented'
 
 /**
- * Options for columnar (column-alignment) extraction.
+ * Base options for array extraction modes.
  */
-export interface ColumnarOptions {
-  type: 'columnar'
+export interface BaseModeOptions {
+  type: ExtractArrayModeName
   /**
-   * Whether to enable strict mode.
-   * If true, throws an error if fields in `items` have different match counts.
-   * @default true
+   * Whether to enable strict mode for this specific array mode.
+   * @default false
    */
   strict?: boolean
+}
+
+/**
+ * Options for columnar (column-alignment) extraction.
+ */
+export interface ColumnarOptions extends BaseModeOptions {
+  type: 'columnar'
   /**
    * Whether to enable heuristic inference.
    * If true, tries to find a common parent to infer item wrappers when counts mismatch.
@@ -69,7 +91,7 @@ export interface ColumnarOptions {
 /**
  * Options for segmented (anchor-based) extraction.
  */
-export interface SegmentedOptions {
+export interface SegmentedOptions extends BaseModeOptions {
   type: 'segmented'
   /**
    * The name of the field in `items` to use as a segment anchor.
@@ -89,7 +111,7 @@ export type ExtractArrayMode =
 /**
  * Configuration for extracting an array of items.
  */
-export interface ExtractArraySchema {
+export interface ExtractArraySchema extends BaseExtractSchema {
   type: 'array'
   /**
    * CSS selector for items (in 'nested' mode) or the container (in 'columnar'/'segmented' modes).
@@ -124,7 +146,7 @@ export interface ExtractArraySchema {
 /**
  * Configuration for extracting an object with multiple properties.
  */
-export interface ExtractObjectSchema {
+export interface ExtractObjectSchema extends BaseExtractSchema {
   type: 'object'
   /**
    * Root selector for the object. If provided, sub-properties are searched within this element.

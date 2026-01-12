@@ -1,0 +1,28 @@
+{
+  "title": "should ignore items with missing required fields in columnar extraction",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#main #search",
+        "mode": { "type": "columnar", "strict": false },
+        "items": {
+          "title": { "selector": ".result > h3", "required": true },
+          "url": { "selector": "a", "attribute": "href", "required": true },
+          "snippet": { "selector": "div[style*='-webkit-line-clamp']" }
+        }
+      },
+      "storeAs": "results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "results": [
+        { "title": "Title 1", "url": "/url1", "snippet": "Snippet 1" },
+        { "title": "Title 2", "url": "/url2", "snippet": "Snippet 2" }
+      ]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "title": "should throw specific missing error for required field in strict columnar mode",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#main",
+        "mode": { "type": "columnar", "strict": true },
+        "items": {
+          "title": { "selector": ".title" },
+          "tag": { "selector": ".tag", "required": true }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "error": {
+      "message": "Required field \"tag\" is missing at index 1."
+    }
+  }
+}

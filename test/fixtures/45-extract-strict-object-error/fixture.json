@@ -1,0 +1,22 @@
+{
+  "title": "should throw error for top-level object when required property is missing and strict: true",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "strict": true,
+        "properties": {
+          "title": "h1",
+          "date": { "selector": ".date", "required": true }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "error": {
+      "message": "Required property \"date\" is missing."
+    }
+  }
+}

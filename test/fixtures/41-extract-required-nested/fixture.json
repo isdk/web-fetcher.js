@@ -1,0 +1,26 @@
+{
+  "title": "should skip items with missing required fields in nested extraction",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": ".item",
+        "items": {
+          "title": ".title",
+          "price": { "selector": ".price", "required": true }
+        }
+      },
+      "storeAs": "results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "results": [
+        { "title": "Item 1", "price": "$10" },
+        { "title": "Item 3", "price": "$30" }
+      ]
+    }
+  }
+}

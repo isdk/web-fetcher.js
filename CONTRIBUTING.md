@@ -305,6 +305,31 @@ Since Cheerio is a static parser, we simulate `innerText` in `src/utils/cheerio-
 **Why this approach?**
 A naive `.text()` in Cheerio just concatenates all text nodes, losing all structural line breaks (e.g., `<div>A</div><div>B</div>` becomes `"AB"`). Our simulation ensures that structural breaks are preserved, making the output from the `http` engine consistent with the `browser` engine.
 
+### Feature: Data Extraction Quality Control (`required` & `strict`)
+
+To ensure data quality and handle messy HTML structures, the `extract` action supports field-level validation and global/local strictness.
+
+#### 1. The `required` Property
+- **Purpose**: Marks a field as mandatory.
+- **Behavior**:
+  - If a `required` field extracts to `null`:
+    - In an **Object**, the entire object returns `null`.
+    - In an **Array**, the current item/row is **skipped** (ignored).
+  - This is the primary mechanism for filtering "noise" or incomplete data (e.g., ignoring search results that lack a title or price).
+
+#### 2. The `strict` Property
+- **Default**: `false` (Fail-soft/Ignore mode).
+- **Scope**: Can be applied to a `mode` (e.g., `columnar`) or an `object` schema.
+- **Behavior**:
+  - **`strict: false` (Default)**: Missing `required` fields result in the item being skipped or the object returning `null`. Extraction continues for other items.
+  - **`strict: true`**: Missing `required` fields or alignment mismatches (in `columnar` mode) will throw a `CommonError`.
+- **Inheritance**: If `strict` is defined at the `array` schema level, it is automatically propagated to its extraction `mode` and `items`.
+
+#### 3. Best Practices for Developers
+- **Consistency**: Always use `this._isImplicitObject(schema)` to identify implicit objects and treat their properties with the same `required`/`strict` logic as explicit objects.
+- **Filtering**: When implementing new array modes, ensure they call `_extract` recursively for items and handle the `null` return by skipping the entry if it's considered an "extraction failure".
+- **Error Messages**: When `strict: true` is enabled, provide descriptive error messages indicating which field is missing and at what index (if applicable).
+
 ### Feature: Array Extraction Modes (Columnar & Segmented)
 
 To handle complex and non-standard HTML structures, we implemented multiple extraction strategies in the `extract` action. This allows users to scrape data based on how it is visually organized rather than just how it is DOM-nested.
