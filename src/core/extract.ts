@@ -94,8 +94,8 @@ export interface ColumnarOptions extends BaseModeOptions {
 export interface SegmentedOptions extends BaseModeOptions {
   type: 'segmented'
   /**
-   * The name of the field in `items` to use as a segment anchor.
-   * Defaults to the first property key defined in `items`.
+   * The name of the field in `items` to use as a segment anchor, or a direct CSS selector.
+   * Defaults to the first property key's selector defined in `items`.
    */
   anchor?: string
 }

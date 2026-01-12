@@ -413,8 +413,16 @@ export abstract class FetchEngine<
   protected _isImplicitObject(schema: any): boolean {
     if (!schema || typeof schema !== 'object') return false
 
-    // If 'type' is explicitly set, it's NOT an implicit shorthand.
-    if ('type' in schema) return false
+    // If 'type' is one of the valid schema types, it's NOT an implicit shorthand.
+    if (
+      'type' in schema &&
+      typeof schema.type === 'string' &&
+      ['object', 'array', 'string', 'number', 'boolean', 'html'].includes(
+        schema.type
+      )
+    ) {
+      return false
+    }
 
     const reservedKeys = new Set([
       'selector',
@@ -444,9 +452,14 @@ export abstract class FetchEngine<
     return false
   }
 
-  protected async _extract(schema: ExtractSchema, context: any): Promise<any> {
+  protected async _extract(
+    schema: ExtractSchema,
+    context: any,
+    parentStrict?: boolean
+  ): Promise<any> {
     const schemaType = (schema as any).type
     const schemaSelector = (schema as any).selector
+    const strict = (schema as any).strict ?? parentStrict
 
     if (!context) {
       this._logDebug(
@@ -456,7 +469,8 @@ export abstract class FetchEngine<
     }
 
     if (schemaType === 'object') {
-      const { selector, properties, strict } = schema as ExtractObjectSchema
+      const { selector, properties, strict: objectStrict } = schema as ExtractObjectSchema
+      const finalStrict = objectStrict ?? strict
       let newContext = context
       if (selector) {
         const elements = await this._querySelectorAll(context, selector)
@@ -469,7 +483,7 @@ export abstract class FetchEngine<
         this._logDebug(
           `_extract: object context not found for selector "${selector}"`
         )
-        if (strict && (schema as any).required) {
+        if (finalStrict && (schema as any).required) {
           throw new CommonError(
             `Required object "${selector || ''}" is missing.`,
             'extract'
@@ -481,10 +495,10 @@ export abstract class FetchEngine<
       const result: Record<string, any> = {}
       for (const key in properties) {
         this._logDebug(`_extract: extracting property "${key}"`)
-        const value = await this._extract(properties[key], newContext)
+        const value = await this._extract(properties[key], newContext, finalStrict)
         if (value === null && (properties[key] as any).required) {
           this._logDebug(`_extract: required property "${key}" is null`)
-          if (strict) {
+          if (finalStrict) {
             throw new CommonError(
               `Required property "${key}" is missing.`,
               'extract'
@@ -501,6 +515,7 @@ export abstract class FetchEngine<
       this._logDebug('_extract: implicit object')
       const result: Record<string, any> = {}
       const properties = (schema as any).properties || schema
+      const keys = Object.keys(properties)
       const reservedKeys = new Set([
         'selector',
         'attribute',
@@ -510,16 +525,23 @@ export abstract class FetchEngine<
         'items',
         'mode',
         'required',
+        'strict',
       ])
 
-      for (const key in properties) {
+      for (const key of keys) {
         if (reservedKeys.has(key)) continue
         this._logDebug(`_extract: extracting implicit property "${key}"`)
-        const value = await this._extract(properties[key], context)
+        const value = await this._extract(properties[key], context, strict)
         if (value === null && (properties[key] as any).required) {
           this._logDebug(
             `_extract: required implicit property "${key}" is null, skipping object`
           )
+          if (strict) {
+            throw new CommonError(
+              `Required implicit property "${key}" is missing.`,
+              'extract'
+            )
+          }
           return null
         }
         result[key] = value
@@ -528,7 +550,8 @@ export abstract class FetchEngine<
     }
 
     if (schemaType === 'array') {
-      const { selector, items, mode, strict } = schema as ExtractArraySchema
+      const { selector, items, mode, strict: arrayStrict } = schema as ExtractArraySchema
+      const finalStrict = arrayStrict ?? strict
       const elements = selector
         ? await this._querySelectorAll(context, selector)
         : [context]
@@ -538,8 +561,8 @@ export abstract class FetchEngine<
       )
 
       const normalizedMode = this._normalizeArrayMode(mode)
-      if (strict !== undefined && normalizedMode.strict === undefined) {
-        normalizedMode.strict = strict
+      if (finalStrict !== undefined && normalizedMode.strict === undefined) {
+        normalizedMode.strict = finalStrict
       }
       const isAuto = !mode
 
@@ -807,7 +830,7 @@ export abstract class FetchEngine<
         }
 
         if (uniqueWrappers.length > 1) {
-          return this._extractNested(schema, uniqueWrappers)
+          return this._extractNested(schema, uniqueWrappers, { strict })
         }
       }
 
@@ -891,32 +914,42 @@ export abstract class FetchEngine<
     const keys = Object.keys(properties)
     if (keys.length === 0) return null
 
-    const anchorKey = opts?.anchor || keys[0]
-    const anchorSchema = properties[anchorKey] as ExtractValueSchema
-    if (!anchorSchema.selector) return null
+    let anchorSelector: string | undefined
+    if (opts?.anchor) {
+      anchorSelector = properties[opts.anchor]?.selector || opts.anchor
+    } else {
+      anchorSelector = properties[keys[0]]?.selector
+    }
+
+    if (!anchorSelector) return null
 
     const anchorElements = await this._querySelectorAll(
       container,
-      anchorSchema.selector
+      anchorSelector
     )
     this._logDebug(
-      `_extractSegmented: anchor selector "${anchorSchema.selector}" found ${anchorElements.length} elements`
+      `_extractSegmented: anchor selector "${anchorSelector}" found ${anchorElements.length} elements`
     )
-    if (anchorElements.length === 0) return []
+    if (anchorElements.length === 0) {
+      if (opts?.strict) {
+        throw new CommonError(
+          `Segmented extraction failed: no elements found for anchor selector "${anchorSelector}".`,
+          'extract'
+        )
+      }
+      return []
+    }
 
     const results: any[] = []
     for (let i = 0; i < anchorElements.length; i++) {
       const anchor = anchorElements[i]
-      const segment = await this._nextSiblingsUntil(
-        anchor,
-        anchorSchema.selector
-      )
+      const segment = await this._nextSiblingsUntil(anchor, anchorSelector)
       // The segment context includes the anchor itself + following siblings until next anchor
       const segmentContext = [anchor, ...segment]
       this._logDebug(
-        `_extractSegmented: segment ${i} has ${segmentContext.length} elements (including anchor)`
+        `_extractSegmented: segment ${i} created with ${segmentContext.length} elements using anchorSelector "${anchorSelector}"`
       )
-      const result = await this._extract(schema, segmentContext)
+      const result = await this._extract(schema, segmentContext, opts?.strict)
       const isRequired = (schema as any).required
       const isComplex =
         (schema as any).type === 'object' ||
@@ -925,6 +958,8 @@ export abstract class FetchEngine<
 
       if (result !== null) {
         results.push(result)
+      } else if (isRequired && opts?.strict) {
+        throw new CommonError('Required item is missing in array.', 'extract')
       } else if (!isRequired && !isComplex) {
         results.push(null)
       }
