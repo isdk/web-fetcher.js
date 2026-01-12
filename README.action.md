@@ -424,7 +424,7 @@ To ensure data integrity and handle messy HTML, you can use `required` and `stri
 
 ###### 7. Implicit Object Extraction (Simplest Syntax)
 
-For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`), it is treated as an object schema where keys are property names.
+For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`, `required`, `strict`), it is treated as an object schema where keys are property names.
 
 > **Keyword Collision Handling:** You can safely extract a data field named `type` as long as its value is not a reserved schema type (like `"string"`, `"object"`, `"array"`, etc.).
 
@@ -439,6 +439,13 @@ For simpler object extraction, you can omit `type: 'object'` and `properties`. I
   }
 }
 ```
+
+> **Key features of implicit objects:**
+>
+> 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present. Configuration keywords like `required` and `strict` are also handled as context defining keys.
+> 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
+> 3. **Context Separation**: Only `selector`, `has`, `exclude`, `required`, and `strict` are used to define the context and validation for the implicit object; all other keys are treated as data to be extracted.
+> 4. **Null Propagation**: If an implicit object has no `selector` and ALL of its sub-properties extract to `null`, the object itself returns `null`. This is crucial for `required` validation on the parent object or for skipping items in an array.
 }
 ```
 

@@ -16,9 +16,7 @@
   ],
   "expected": {
     "outputs": {
-      "results": {
-        "user": null
-      }
+      "results": null
     }
   }
 }

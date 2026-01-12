@@ -35,7 +35,7 @@
       "res_styles": { "st": null, "l": null, "s": "console.log(1)" },
       "res_media": { "img": null, "pic": null, "can": null, "cnt": "Visible Content" },
       "res_svg": { "svg": null, "cnt": "Visible Content" },
-      "res_comments": { "html": { "not": "comment_to_remove" } },
+      "res_comments": { "html": { "not": { "contains": "comment_to_remove" } } },
       "res_hidden": { "h_attr": null, "h_style": null, "cnt": "Visible Content" },
       "res_selectors": { "sel1": null, "sel2": null, "cnt": "Visible Content" }
     }

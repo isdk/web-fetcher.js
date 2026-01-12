@@ -493,6 +493,7 @@ export abstract class FetchEngine<
       }
 
       const result: Record<string, any> = {}
+      let hasValue = false
       for (const key in properties) {
         this._logDebug(`_extract: extracting property "${key}"`)
         const value = await this._extract(properties[key], newContext, finalStrict)
@@ -506,45 +507,13 @@ export abstract class FetchEngine<
           }
           return null
         }
-        result[key] = value
-      }
-      return result
-    }
-
-    if (!schemaType && this._isImplicitObject(schema)) {
-      this._logDebug('_extract: implicit object')
-      const result: Record<string, any> = {}
-      const properties = (schema as any).properties || schema
-      const keys = Object.keys(properties)
-      const reservedKeys = new Set([
-        'selector',
-        'attribute',
-        'has',
-        'exclude',
-        'properties',
-        'items',
-        'mode',
-        'required',
-        'strict',
-      ])
-
-      for (const key of keys) {
-        if (reservedKeys.has(key)) continue
-        this._logDebug(`_extract: extracting implicit property "${key}"`)
-        const value = await this._extract(properties[key], context, strict)
-        if (value === null && (properties[key] as any).required) {
-          this._logDebug(
-            `_extract: required implicit property "${key}" is null, skipping object`
-          )
-          if (strict) {
-            throw new CommonError(
-              `Required implicit property "${key}" is missing.`,
-              'extract'
-            )
-          }
-          return null
+        if (value !== null) {
+          hasValue = true
         }
         result[key] = value
+      }
+      if (!selector && !hasValue && Object.keys(properties).length > 0) {
+        return null
       }
       return result
     }
@@ -672,11 +641,10 @@ export abstract class FetchEngine<
     const strict = opts?.strict === true
     const isComplex =
       (items as any).type === 'object' ||
-      (items as any).type === 'array' ||
-      this._isImplicitObject(items)
+      (items as any).type === 'array'
 
     for (const element of elements) {
-      const result = await this._extract(items, element)
+      const result = await this._extract(items, element, strict)
       if (result !== null) {
         results.push(result)
       } else if (isRequired && strict) {
@@ -702,17 +670,12 @@ export abstract class FetchEngine<
     container: any,
     opts?: ColumnarOptions
   ): Promise<any[] | null> {
-    const isObject =
-      schema.type === 'object' ||
-      (!schema.type && this._isImplicitObject(schema))
+    const isObject = schema.type === 'object'
     const strict = opts?.strict === true // Default to false
     const inference = opts?.inference === true
 
     if (isObject) {
-      const properties =
-        schema.type === 'object'
-          ? (schema as ExtractObjectSchema).properties
-          : (schema as any)
+      const properties = (schema as ExtractObjectSchema).properties
 
       const keys = Object.keys(properties)
       if (keys.length === 0) return null
@@ -727,8 +690,7 @@ export abstract class FetchEngine<
         // Nested complex structures are not supported for simple Columnar alignment
         if (
           propSchema.type === 'array' ||
-          propSchema.type === 'object' ||
-          (!propSchema.type && this._isImplicitObject(propSchema))
+          propSchema.type === 'object'
         ) {
           this._logDebug(
             `_extractColumnar: field "${key}" has nested structure, columnar not supported`
@@ -901,15 +863,10 @@ export abstract class FetchEngine<
     container: any,
     opts?: SegmentedOptions
   ): Promise<any[] | null> {
-    const isObject =
-      schema.type === 'object' ||
-      (!schema.type && this._isImplicitObject(schema))
+    const isObject = schema.type === 'object'
     if (!isObject) return null
 
-    const properties =
-      schema.type === 'object'
-        ? (schema as ExtractObjectSchema).properties
-        : (schema as any)
+    const properties = (schema as ExtractObjectSchema).properties
 
     const keys = Object.keys(properties)
     if (keys.length === 0) return null
@@ -953,8 +910,7 @@ export abstract class FetchEngine<
       const isRequired = (schema as any).required
       const isComplex =
         (schema as any).type === 'object' ||
-        (schema as any).type === 'array' ||
-        this._isImplicitObject(schema)
+        (schema as any).type === 'array'
 
       if (result !== null) {
         results.push(result)
@@ -1180,7 +1136,13 @@ export abstract class FetchEngine<
     // we convert it to an explicit 'object' type.
     if (this._isImplicitObject(newSchema)) {
       const properties: any = {}
-      const contextKeys = new Set(['selector', 'has', 'exclude'])
+      const contextKeys = new Set([
+        'selector',
+        'has',
+        'exclude',
+        'required',
+        'strict',
+      ])
 
       // We separate context-defining keys from data-defining keys.
       for (const key of Object.keys(newSchema)) {

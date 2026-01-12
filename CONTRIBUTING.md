@@ -315,6 +315,7 @@ To ensure data quality and handle messy HTML structures, the `extract` action su
   - If a `required` field extracts to `null`:
     - In an **Object**, the entire object returns `null`.
     - In an **Array**, the current item/row is **skipped** (ignored).
+  - **Implicit Objects**: If an object has no `selector` (common in nested shorthands) and ALL of its properties return `null`, the object itself returns `null`. This ensures that a `required` check on the parent object or a skip-logic in an array will correctly trigger even for implicit objects.
   - This is the primary mechanism for filtering "noise" or incomplete data (e.g., ignoring search results that lack a title or price).
 
 #### 2. The `strict` Property
@@ -323,10 +324,10 @@ To ensure data quality and handle messy HTML structures, the `extract` action su
 - **Behavior**:
   - **`strict: false` (Default)**: Missing `required` fields result in the item being skipped or the object returning `null`. Extraction continues for other items.
   - **`strict: true`**: Missing `required` fields or alignment mismatches (in `columnar` mode) will throw a `CommonError`.
-- **Inheritance**: If `strict` is defined at the `array` schema level, it is automatically propagated to its extraction `mode` and `items`.
+- **Inheritance**: If `strict` is defined at the `array` schema level, it is automatically propagated to its extraction `mode` and `items`. It is also passed down to nested `_extract` calls to ensure consistent strictness across the entire schema tree.
 
 #### 3. Best Practices for Developers
-- **Consistency**: Always use `this._isImplicitObject(schema)` to identify implicit objects and treat their properties with the same `required`/`strict` logic as explicit objects.
+- **Consistency**: Always use `this._isImplicitObject(schema)` (during extraction) or the normalization layer (during initialization) to handle shorthand structures uniformly.
 - **Filtering**: When implementing new array modes, ensure they call `_extract` recursively for items and handle the `null` return by skipping the entry if it's considered an "extraction failure".
 - **Error Messages**: When `strict: true` is enabled, provide descriptive error messages indicating which field is missing and at what index (if applicable).
 
@@ -382,9 +383,9 @@ To provide an "AI-friendly" and developer-friendly experience, the `extract` act
 A critical challenge in implicit objects is distinguishing between **extraction configuration** (like `selector`, `has`) and **data properties** (like `items`, `mode`).
 
 - **The Logic**: In the context of an implicit object, we divide keys into two categories:
-  1. **Context Keys**: `selector`, `has`, `exclude`. These define *where* to look.
+  1. **Context Keys**: `selector`, `has`, `exclude`, `required`, `strict`. These define *how* and *where* to look.
   2. **Data Keys**: Everything else (including `items`, `attribute`, `mode`). These define *what* to extract.
-- **Why?**: This allows users to extract a field named `items` (e.g., in a JSON-like HTML structure) without it being misidentified as the `items` configuration for an array.
+- **Why?**: This allows users to extract a field named `items` (e.g., in a JSON-like HTML structure) without it being misidentified as the `items` configuration for an array. Similarly, `required` or `strict` can be property names if they are not explicitly part of the schema definition.
 - **Implementation**: The `_normalizeSchema` method recursively peels off context keys and moves all other keys into a generated `properties` object, ensuring the core engine always receives a standardized, unambiguous `ExtractObjectSchema`.
 
 #### 3. Cross-Engine Consistency
