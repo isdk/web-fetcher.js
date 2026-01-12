@@ -95,7 +95,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
         const matches = await loc.locator(selector).all()
         results.push(...matches)
         // check if current element matches
-        const isMatch = await loc.evaluate((el, sel) => el.matches(sel), selector)
+        const isMatch = await loc.evaluate(
+          (el, sel) => el.matches(sel),
+          selector
+        )
         if (isMatch) results.push(loc)
       }
       return results
@@ -203,7 +206,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
       }
       case 'extract': {
         const normalizedSchema = this._normalizeSchema(action.schema)
-        const result = await this._extract(normalizedSchema, page.locator('body'))
+        const result = await this._extract(
+          normalizedSchema,
+          page.locator('body')
+        )
         this.lastResponse = await this.buildResponse(context)
         return result
       }
@@ -224,6 +230,43 @@ export class PlaywrightFetchEngine extends FetchEngine<
         const navResponse = await this.buildResponse(context)
         this.lastResponse = navResponse
         return
+      case 'trim': {
+        const trimInfo = this._getTrimInfo(action.options)
+        await page.evaluate((info) => {
+          const { selectors, removeComments, removeHidden } = info
+
+          selectors.forEach((s) => {
+            document.querySelectorAll(s).forEach((el) => el.remove())
+          })
+
+          if (removeHidden) {
+            const toRemove: Element[] = []
+            document.querySelectorAll('*').forEach((el) => {
+              const style = window.getComputedStyle(el)
+              if (style.display === 'none' || style.visibility === 'hidden') {
+                toRemove.push(el)
+              }
+            })
+            toRemove.forEach((el) => el.remove())
+          }
+
+          if (removeComments) {
+            const iterator = document.createNodeIterator(
+              document,
+              NodeFilter.SHOW_COMMENT
+            )
+            const comments: Node[] = []
+            let node
+            // eslint-disable-next-line no-cond-assign
+            while ((node = iterator.nextNode())) {
+              comments.push(node)
+            }
+            comments.forEach((c) => c.parentElement?.removeChild(c))
+          }
+        }, trimInfo)
+        this.lastResponse = await this.buildResponse(context)
+        return
+      }
       case 'waitFor':
         try {
           if (action.options?.selector) {

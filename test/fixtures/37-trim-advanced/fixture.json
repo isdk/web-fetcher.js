@@ -1,0 +1,55 @@
+{
+  "name": "Trim Advanced Test",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "selectors": "#area1", "presets": ["images"] } },
+    {
+      "action": "extract",
+      "storeAs": "step1",
+      "params": {
+        "schema": {
+          "area1": "#area1",
+          "img": "#area2 img",
+          "text2": "#area2 p"
+        }
+      }
+    },
+    { "action": "trim", "params": { "selectors": "#area2" } },
+    {
+      "action": "extract",
+      "storeAs": "step2",
+      "params": {
+        "schema": {
+          "area2": "#area2",
+          "area3": "#area3"
+        }
+      }
+    },
+    { "action": "trim", "params": {} },
+    {
+      "action": "extract",
+      "storeAs": "step3",
+      "params": {
+        "schema": {
+          "area3": "#area3"
+        }
+      }
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "step1": {
+        "area1": null,
+        "img": null,
+        "text2": "Text 2"
+      },
+      "step2": {
+        "area2": null,
+        "area3": "Final Text"
+      },
+      "step3": {
+        "area3": "Final Text"
+      }
+    }
+  }
+}

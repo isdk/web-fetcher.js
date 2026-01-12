@@ -102,6 +102,34 @@ export interface SubmitActionOptions {
 }
 
 /**
+ * Predefined cleanup groups for the {@link FetchEngine.trim} action.
+ */
+export type TrimPreset =
+  | 'scripts'
+  | 'styles'
+  | 'svgs'
+  | 'images'
+  | 'comments'
+  | 'hidden'
+  | 'all'
+
+/**
+ * Options for the {@link FetchEngine.trim} action, specifying which elements to remove from the DOM.
+ */
+export interface TrimActionOptions {
+  selectors?: string | string[]
+  presets?: TrimPreset | TrimPreset[]
+}
+
+export const TRIM_PRESETS: Record<string, string[]> = {
+  scripts: ['script'],
+  styles: ['style', 'link[rel="stylesheet"]'],
+  svgs: ['svg'],
+  images: ['img', 'picture', 'canvas'],
+  hidden: ['[hidden]', '[style*="display:none"]', '[style*="display: none"]'],
+}
+
+/**
  * Union type representing all possible engine actions that can be dispatched.
  *
  * @remarks
@@ -117,6 +145,7 @@ export type FetchEngineAction =
   | { type: 'navigate'; url: string; opts?: GotoActionOptions }
   | { type: 'extract'; schema: ExtractSchema }
   | { type: 'pause'; message?: string }
+  | { type: 'trim'; options: TrimActionOptions }
   | { type: 'dispose' }
 
 /**
@@ -295,6 +324,27 @@ export abstract class FetchEngine<
 
   protected _cleanup?(): Promise<void>
 
+  protected _getTrimInfo(options: TrimActionOptions) {
+    let { selectors = [], presets = [] } = options
+    if (typeof selectors === 'string') selectors = [selectors]
+    if (typeof presets === 'string') presets = [presets]
+
+    const isAll = presets.includes('all')
+    const allSelectors = [...selectors]
+
+    for (const [preset, sels] of Object.entries(TRIM_PRESETS)) {
+      if (isAll || presets.includes(preset as any)) {
+        allSelectors.push(...sels)
+      }
+    }
+
+    return {
+      selectors: allSelectors,
+      removeComments: isAll || presets.includes('comments'),
+      removeHidden: isAll || presets.includes('hidden'),
+    }
+  }
+
   /**
    * Finds all elements matching the selector within the given context.
    * @param context - The context to search in (Engine-specific element/node or array of nodes).
@@ -398,7 +448,9 @@ export abstract class FetchEngine<
     const schemaSelector = (schema as any).selector
 
     if (!context) {
-      this._logDebug(`_extract: No context for selector "${schemaSelector || ''}", type "${schemaType || 'value'}"`)
+      this._logDebug(
+        `_extract: No context for selector "${schemaSelector || ''}", type "${schemaType || 'value'}"`
+      )
       return schemaType === 'array' ? [] : null
     }
 
@@ -408,10 +460,14 @@ export abstract class FetchEngine<
       if (selector) {
         const elements = await this._querySelectorAll(context, selector)
         newContext = elements.length > 0 ? elements[0] : null
-        this._logDebug(`_extract: object selector "${selector}" found ${elements.length} elements`)
+        this._logDebug(
+          `_extract: object selector "${selector}" found ${elements.length} elements`
+        )
       }
       if (!newContext) {
-        this._logDebug(`_extract: object context not found for selector "${selector}"`)
+        this._logDebug(
+          `_extract: object context not found for selector "${selector}"`
+        )
         return null
       }
 
@@ -440,7 +496,9 @@ export abstract class FetchEngine<
         ? await this._querySelectorAll(context, selector)
         : [context]
 
-      this._logDebug(`_extract: array selector "${selector || ''}" found ${elements.length} elements`)
+      this._logDebug(
+        `_extract: array selector "${selector || ''}" found ${elements.length} elements`
+      )
 
       const normalizedMode = this._normalizeArrayMode(mode)
       const isAuto = !mode
@@ -457,7 +515,9 @@ export abstract class FetchEngine<
           normalizedMode
         )
         if (results) {
-          this._logDebug(`_extract: columnar extraction successful, found ${results.length} items`)
+          this._logDebug(
+            `_extract: columnar extraction successful, found ${results.length} items`
+          )
           return results
         }
       }
@@ -474,13 +534,17 @@ export abstract class FetchEngine<
           normalizedMode
         )
         if (results) {
-          this._logDebug(`_extract: segmented extraction successful, found ${results.length} items`)
+          this._logDebug(
+            `_extract: segmented extraction successful, found ${results.length} items`
+          )
           return results
         }
       }
 
       // Default fallback or explicit nested
-      this._logDebug(`_extract: using nested extraction for ${elements.length} elements`)
+      this._logDebug(
+        `_extract: using nested extraction for ${elements.length} elements`
+      )
       return this._extractNested(items!, elements)
     }
 
@@ -489,18 +553,28 @@ export abstract class FetchEngine<
     if (selector) {
       const elements = await this._querySelectorAll(context, selector)
       elementToExtract = elements.length > 0 ? elements[0] : null
-      this._logDebug(`_extract: value selector "${selector}" found ${elements.length} elements`)
+      this._logDebug(
+        `_extract: value selector "${selector}" found ${elements.length} elements`
+      )
     } else if (Array.isArray(context)) {
       elementToExtract = context.length > 0 ? context[0] : null
     }
 
     if (!elementToExtract) {
-      this._logDebug(`_extract: value element not found for selector "${selector || ''}"`)
+      this._logDebug(
+        `_extract: value element not found for selector "${selector || ''}"`
+      )
       return null
     }
 
-    const result = await this._extractValue(schema as ExtractValueSchema, elementToExtract)
-    this._logDebug(`_extract: value extracted for selector "${selector || ''}":`, result)
+    const result = await this._extractValue(
+      schema as ExtractValueSchema,
+      elementToExtract
+    )
+    this._logDebug(
+      `_extract: value extracted for selector "${selector || ''}":`,
+      result
+    )
     return result
   }
 
@@ -576,7 +650,9 @@ export abstract class FetchEngine<
           propSchema.type === 'object' ||
           (!propSchema.type && this._isImplicitObject(propSchema))
         ) {
-          this._logDebug(`_extractColumnar: field "${key}" has nested structure, columnar not supported`)
+          this._logDebug(
+            `_extractColumnar: field "${key}" has nested structure, columnar not supported`
+          )
           return null
         }
 
@@ -594,7 +670,9 @@ export abstract class FetchEngine<
         }
 
         const count = matches.length
-        this._logDebug(`_extractColumnar: field "${key}" with selector "${valueSchema.selector || ''}" found ${count} matches`)
+        this._logDebug(
+          `_extractColumnar: field "${key}" with selector "${valueSchema.selector || ''}" found ${count} matches`
+        )
 
         if (count > maxCount) {
           maxCount = count
@@ -604,9 +682,13 @@ export abstract class FetchEngine<
         if (valueSchema.selector) {
           if (commonCount === null) {
             commonCount = count
-            this._logDebug(`_extractColumnar: set commonCount to ${commonCount}`)
+            this._logDebug(
+              `_extractColumnar: set commonCount to ${commonCount}`
+            )
           } else if (commonCount !== count) {
-            this._logDebug(`_extractColumnar: count mismatch for field "${key}": ${count} vs ${commonCount}`)
+            this._logDebug(
+              `_extractColumnar: count mismatch for field "${key}": ${count} vs ${commonCount}`
+            )
             if (inference && maxCount > 1) {
               commonCount = -1 // Mark as mismatched
               this._logDebug('_extractColumnar: mismatch marked for inference')
@@ -737,7 +819,9 @@ export abstract class FetchEngine<
       container,
       anchorSchema.selector
     )
-    this._logDebug(`_extractSegmented: anchor selector "${anchorSchema.selector}" found ${anchorElements.length} elements`)
+    this._logDebug(
+      `_extractSegmented: anchor selector "${anchorSchema.selector}" found ${anchorElements.length} elements`
+    )
     if (anchorElements.length === 0) return []
 
     const results: any[] = []
@@ -749,7 +833,9 @@ export abstract class FetchEngine<
       )
       // The segment context includes the anchor itself + following siblings until next anchor
       const segmentContext = [anchor, ...segment]
-      this._logDebug(`_extractSegmented: segment ${i} has ${segmentContext.length} elements (including anchor)`)
+      this._logDebug(
+        `_extractSegmented: segment ${i} has ${segmentContext.length} elements (including anchor)`
+      )
       results.push(await this._extract(schema, segmentContext))
     }
 
@@ -908,6 +994,17 @@ export abstract class FetchEngine<
   }
 
   /**
+   * Removes elements from the DOM based on selectors and presets.
+   *
+   * @param options - Trim options specifying selectors and presets
+   * @returns Promise resolving when trim operation completes
+   * @throws {Error} When no active page context exists
+   */
+  trim(options: TrimActionOptions): Promise<void> {
+    return this.dispatchAction({ type: 'trim', options })
+  }
+
+  /**
    * Pauses execution, allowing for manual intervention or inspection.
    *
    * @param message - Optional message to display during pause
@@ -925,6 +1022,9 @@ export abstract class FetchEngine<
    * @returns A promise that resolves to an object with the extracted data.
    */
   extract<T>(schema: ExtractSchema): Promise<T> {
+    if (schema && typeof schema === 'object' && (schema as any).schema) {
+      schema = (schema as any).schema
+    }
     const normalizedSchema = this._normalizeSchema(schema)
     return this.dispatchAction({ type: 'extract', schema: normalizedSchema })
   }

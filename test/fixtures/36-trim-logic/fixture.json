@@ -1,0 +1,43 @@
+{
+  "name": "Trim Logic Detailed Test",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "presets": "scripts" } },
+    { "action": "extract", "storeAs": "res_scripts", "params": { "schema": { "s": "#s", "st": "#st" } } },
+
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "presets": "styles" } },
+    { "action": "extract", "storeAs": "res_styles", "params": { "schema": { "st": "#st", "l": "#l", "s": "#s" } } },
+
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "presets": "images" } },
+    { "action": "extract", "storeAs": "res_media", "params": { "schema": { "img": "#img", "pic": "#pic", "can": "#can", "cnt": "#content" } } },
+
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "presets": "svgs" } },
+    { "action": "extract", "storeAs": "res_svg", "params": { "schema": { "svg": "#svg", "cnt": "#content" } } },
+
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "presets": "comments" } },
+    { "action": "extract", "storeAs": "res_comments", "params": { "schema": { "html": { "selector": "body", "mode": "html" } } } },
+
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "presets": "hidden" } },
+    { "action": "extract", "storeAs": "res_hidden", "params": { "schema": { "h_attr": "#h-attr", "h_style": "#h-style", "cnt": "#content" } } },
+
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "trim", "params": { "selectors": ["#sel1", "#sel2"] } },
+    { "action": "extract", "storeAs": "res_selectors", "params": { "schema": { "sel1": "#sel1", "sel2": "#sel2", "cnt": "#content" } } }
+  ],
+  "expected": {
+    "outputs": {
+      "res_scripts": { "s": null, "st": "body{color:red}" },
+      "res_styles": { "st": null, "l": null, "s": "console.log(1)" },
+      "res_media": { "img": null, "pic": null, "can": null, "cnt": "Visible Content" },
+      "res_svg": { "svg": null, "cnt": "Visible Content" },
+      "res_comments": { "html": { "not": "comment_to_remove" } },
+      "res_hidden": { "h_attr": null, "h_style": null, "cnt": "Visible Content" },
+      "res_selectors": { "sel1": null, "sel2": null, "cnt": "Visible Content" }
+    }
+  }
+}

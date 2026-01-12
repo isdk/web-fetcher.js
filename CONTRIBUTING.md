@@ -63,28 +63,58 @@ The project employs a two-tier testing strategy:
 
 ```json
 {
-  "title": "Should do something amazing",
+  "name": "Should do something amazing",
+  "engine": "playwright", // Optional: restrict to a specific engine
   "options": {
     "debug": true
   },
   "actions": [
     {
-      "id": "goto",
+      "action": "goto",
       "params": { "url": "/" }
     },
     {
-      "id": "extract",
-      "params": { "selector": "h1" },
-      "storeAs": "title"
+      "action": "trim",
+      "params": { "presets": "scripts", "selectors": "#ads" }
+    },
+    {
+      "action": "extract",
+      "params": { "schema": { "title": "h1" } },
+      "storeAs": "main_data"
     }
   ],
   "expected": {
     "statusCode": 200,
-    "data": { "title": "Hello" }, // Checks against the result or outputs
-    "logs": [
-      { "contains": "extracting property" },
-      { "contains": "Hello", "caseInsensitive": true }
-    ]
+    "data": { "title": "Hello" }, // Checks the result of the LAST action
+    "outputs": {
+      "main_data": {
+        "title": "Hello",
+        "ad": null // Verify #ads was removed by trim
+      }
+    }
+  }
+}
+```
+
+### Advanced Assertions (Condition Objects)
+
+The test runner supports powerful recursive assertions using "Condition Objects". You can use these anywhere in `expected.data` or `expected.outputs`.
+
+- **`contains`**: Checks if a string contains a substring.
+  - `{ "contains": "text", "caseInsensitive": true }`
+- **`not`**: Negates a condition.
+  - `{ "not": "secret comment" }`
+  - `{ "not": { "contains": "ads" } }`
+- **`and` / `or`**: Combines multiple conditions.
+  - `{ "and": [{ "contains": "A" }, { "contains": "B" }] }`
+- **`equals`**: Strict equality check.
+  - `{ "equals": 123 }`
+
+Example of checking that a comment was removed:
+```json
+"expected": {
+  "outputs": {
+    "full_page": { "html": { "not": "<!-- secret -->" } }
   }
 }
 ```
@@ -183,7 +213,15 @@ For more details, see [README.engine.md](./README.engine.md).
 * **`failOnError`**:
   * Defaults to `true`. If an action fails, it throws an error. `FetchSession.executeAll` catches this error, attaches the `actionIndex`, and re-throws it, stopping the execution flow.
   * If set to `false`, the action catches its own error, logs it internally (in the result object), and returns a "success" status. `FetchSession.executeAll` sees this as a successful step and **continues to the next action**.
-* **Known Limitation**: Currently, if `failOnError: false` is used, the error details are returned in that specific action's result, but `executeAll` returns the final result of the *last* action (usually `getContent`). The intermediate errors are not currently aggregated into a history log in the session output. This is a known trade-off; we may introduce a Session History feature in the future if needed.
+
+### Implementing New Actions
+
+When adding a new action (e.g., `src/action/definitions/my-action.ts`):
+
+1. **Normalize in Base**: Use `_normalizeSchema` or similar methods in `FetchEngine` (base.ts) to handle shorthands (like converting a string to a `{ selector: '...' }` object) and single-string-to-array conversions. This ensures consistent behavior across engines.
+2. **Abstract Business Logic**: If an action has complex logic for presets or parameter resolution (like `trim`), implement a protected helper method in `FetchEngine` (e.g., `_getTrimInfo`) so that both `CheerioFetchEngine` and `PlaywrightFetchEngine` can share the same logic.
+3. **Engine Delegation**: Keep the `onExecute` method in the `FetchAction` class thin. Its main job is to extract parameters and call `this.delegateToEngine(context, 'methodName', params)`.
+4. **Persistent State**: Actions like `trim` or `fill` should update `this.lastResponse` in the engine after modifying the DOM, so that subsequent `extract` or `getContent` calls work on the updated state.
 
 ### Fixture Params
 
