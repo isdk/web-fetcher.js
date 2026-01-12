@@ -88,6 +88,25 @@ const createTestServer = async (): Promise<FastifyInstance> => {
     `)
   })
 
+  // Trim test page
+  server.get('/trim-test', (req, reply) => {
+    reply.type('text/html').send(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>Trim Test Page</title>
+        <style>.ads { color: red; }</style>
+        <script>console.log("hello");</script>
+      </head>
+      <body>
+        <div id="content">Main Content</div>
+        <div class="ads">Ad Content</div>
+        <!-- Secret Comment -->
+      </body>
+      </html>
+    `)
+  })
+
   // 第二页
   server.get('/page2', (req, reply) => {
     reply.type('text/html').send('<h2>Page 2</h2>')
@@ -315,6 +334,32 @@ const actionTestSuite = (
           },
           tags: ['tech', 'news', 'web'],
         })
+      },
+      TEST_TIMEOUT
+    )
+
+    it(
+      'should execute trim action',
+      async () => {
+        await engine.goto(`${baseUrl}/trim-test`)
+
+        const trimAction = FetchAction.create('trim')
+        expect(trimAction).toBeInstanceOf(FetchAction)
+
+        // Trim ads, scripts and styles
+        await trimAction!.execute(context, {
+          params: {
+            selectors: '.ads',
+            presets: ['scripts', 'styles', 'comments'],
+          },
+        })
+
+        const content = await engine.getContent()
+        expect(content.html).toContain('Main Content')
+        expect(content.html).not.toContain('Ad Content')
+        expect(content.html).not.toContain('<script>')
+        expect(content.html).not.toContain('<style>')
+        expect(content.html).not.toContain('Secret Comment')
       },
       TEST_TIMEOUT
     )
