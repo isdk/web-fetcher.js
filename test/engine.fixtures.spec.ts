@@ -19,6 +19,9 @@ const isConditionObject = (obj: any): boolean => {
 
 const checkExpectations = (value: any, expectations: any) => {
   if (Array.isArray(expectations)) {
+    if (Array.isArray(value)) {
+      expect(value).toHaveLength(expectations.length);
+    }
     // If expectations is an array, we need to decide if we're matching an array or multiple conditions
     if (Array.isArray(value) && expectations.length === value.length && expectations.length > 0 && !isConditionObject(expectations[0])) {
       value.forEach((v, i) => checkExpectations(v, expectations[i]));
@@ -338,6 +341,7 @@ const engineTestSuite = (
         } else {
           result = res.result;
         }
+        console.log('🚀 ~ file: engine.fixtures.spec.ts:340 ~ result:', res.outputs)
 
         if (consoleSpy) {
           if (fixture.expected?.logs) {

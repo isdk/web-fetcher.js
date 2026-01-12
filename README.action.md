@@ -146,12 +146,12 @@ Removes specific elements from the DOM to clean up the page before extraction. T
 {
   "actions": [
     { "action": "goto", "params": { "url": "https://example.com" } },
-    { 
-      "action": "trim", 
-      "params": { 
-        "selectors": ["#ad-banner", ".popup"], 
-        "presets": ["scripts", "styles", "comments"] 
-      } 
+    {
+      "action": "trim",
+      "params": {
+        "selectors": ["#ad-banner", ".popup"],
+        "presets": ["scripts", "styles", "comments"]
+      }
     },
     { "action": "extract", "params": { "schema": { "content": "#main-content" } } }
   ]
@@ -384,7 +384,38 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
 
 > In this mode, every time the engine finds an `h3`, it starts a new item. Any `<p>` found after that `h3` (and before the next one) is assigned to that item.
 
-###### 6. Implicit Object Extraction (Simplest Syntax)
+###### 6. Quality Control: `required` and `strict`
+
+To ensure data integrity and handle messy HTML, you can use `required` and `strict` fields.
+
+* **`required`**: Marks a field as mandatory.
+  * If a `required` field is missing, an **Object** will return `null`.
+  * In an **Array**, the entire row/item will be **skipped** (ignored).
+* **`strict`**: Controls how failures are handled.
+  * `false` (Default): Missing required fields are silently ignored/skipped.
+  * `true`: Any missing required field or alignment mismatch will throw an error.
+
+**Example: Ignoring items with missing mandatory fields**
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": ".product-list",
+    "mode": "columnar",
+    "items": {
+      "name": { "selector": ".title", "required": true },
+      "price": { "selector": ".price", "required": true },
+      "discount": ".promo"
+    }
+  }
+}
+```
+
+> In this example, if a product lacks either a `name` or a `price`, it will be completely omitted from the result array. The optional `discount` field doesn't affect the item's inclusion.
+
+###### 7. Implicit Object Extraction (Simplest Syntax)
 
 For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`), it is treated as an object schema where keys are property names.
 
@@ -401,11 +432,12 @@ For simpler object extraction, you can omit `type: 'object'` and `properties`. I
 ```
 
 > **Key features of implicit objects:**
+>
 > 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present.
 > 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
 > 3. **Context Separation**: Only `selector`, `has`, and `exclude` are used to define the DOM context for the implicit object; all other keys are treated as data to be extracted.
 
-###### 6. Precise Filtering: `has` and `exclude`
+###### 8. Advanced Filtering: `has` and `exclude`
 
 You can use the `has` and `exclude` fields in any schema that includes a `selector` to precisely control element selection.
 

@@ -160,7 +160,7 @@ Here are the essential built-in actions:
 * `waitFor`: Pauses execution to wait for a specific condition (e.g., a timeout, a selector to appear, or network to be idle).
 * `pause`: Pauses execution for manual intervention (e.g., solving a CAPTCHA).
 * `getContent`: Retrieves the full content (HTML, text, etc.) of the current page state.
-* `extract`: Extracts any structured data from the page with ease using an expressive, declarative schema.
+* `extract`: Extracts any structured data from the page with ease using an expressive, declarative schema. Supports `required` fields and `strict` validation for high-quality data collection.
 
 ### Response Structure
 

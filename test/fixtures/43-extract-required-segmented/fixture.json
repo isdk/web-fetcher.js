@@ -1,0 +1,27 @@
+{
+  "title": "should skip segments with missing required fields in segmented extraction",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": "title" },
+        "items": {
+          "title": { "selector": ".anchor" },
+          "desc": { "selector": ".content", "required": true }
+        }
+      },
+      "storeAs": "results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "results": [
+        { "title": "Header 1", "desc": "Content 1" },
+        { "title": "Header 3", "desc": "Content 3" }
+      ]
+    }
+  }
+}

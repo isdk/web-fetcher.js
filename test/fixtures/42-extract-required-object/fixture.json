@@ -1,0 +1,24 @@
+{
+  "title": "should return null for object when a required property is missing",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "user": {
+          "selector": "#user-profile",
+          "name": ".name",
+          "email": { "selector": ".email", "required": true }
+        }
+      },
+      "storeAs": "results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "results": {
+        "user": null
+      }
+    }
+  }
+}

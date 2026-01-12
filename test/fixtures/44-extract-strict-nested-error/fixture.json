@@ -1,0 +1,26 @@
+{
+  "title": "should throw error when a required field is missing in nested items with strict: true",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": ".item",
+        "items": {
+          "type": "object",
+          "strict": true,
+          "properties": {
+            "name": ".name",
+            "price": { "selector": ".price", "required": true }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "error": {
+      "message": "Required property \"price\" is missing."
+    }
+  }
+}
