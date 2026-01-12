@@ -19,6 +19,7 @@
         { "contains": "engine" },
         { "contains": "timings" }
       ]
-    }
+    },
+    "logs": { "contains": "Processing request: http://localhost" }
   }
 }

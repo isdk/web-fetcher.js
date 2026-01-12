@@ -195,7 +195,8 @@ export class CheerioFetchEngine extends FetchEngine<
             `Cheerio context not available for action: ${action.type}`,
             'extract'
           )
-        return this._extract(action.schema, { $, el: $.root() })
+        const normalizedSchema = this._normalizeSchema(action.schema)
+        return this._extract(normalizedSchema, { $, el: $.root() })
       }
       case 'click': {
         if (!$)

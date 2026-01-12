@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest';
 import { AddressInfo } from 'net';
 import { readdir, readFile, stat } from 'fs/promises';
 import { resolve, join } from 'path';
@@ -283,6 +283,11 @@ const engineTestSuite = (
     });
 
     it(fixture.title, async () => {
+      let consoleSpy: any;
+      if (fixture.options?.debug || fixture.expected?.logs) {
+        consoleSpy = vi.spyOn(console, 'log');
+      }
+
       const fetcher = new WebFetcher();
       const session = await fetcher.createSession({
         engine: engineName,
@@ -320,6 +325,22 @@ const engineTestSuite = (
           result = res.outputs.__test_result__;
         } else {
           result = res.result;
+        }
+
+        if (consoleSpy) {
+          if (fixture.expected?.logs) {
+            const allLogs = consoleSpy.mock.calls.map((call: any[]) =>
+              call.map(arg => (typeof arg === 'object' ? JSON.stringify(arg) : String(arg))).join(' ')
+            ).join('\n');
+            checkExpectations(allLogs, fixture.expected.logs);
+          } else if (fixture.options?.debug) {
+            // Default check if debug is on but no specific logs expected
+            const debugLogs = consoleSpy.mock.calls.filter((call: any[]) =>
+              String(call[0]).includes(`[FetchEngine:${engineName}]`)
+            );
+            expect(debugLogs.length).toBeGreaterThan(0);
+          }
+          consoleSpy.mockRestore();
         }
 
         // console.log('🚀 ~ file: engine.fixtures.spec.ts:319 ~ res.outputs:', JSON.stringify(res.outputs, null, 2))

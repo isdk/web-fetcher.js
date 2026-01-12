@@ -351,7 +351,7 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
 
 ###### 6. Implicit Object Extraction (Simplest Syntax)
 
-For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not reserved keywords (like `selector`, `attribute`, `type`, etc.), it is treated as an object schema where keys are property names.
+For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`), it is treated as an object schema where keys are property names.
 
 ```json
 {
@@ -359,12 +359,16 @@ For simpler object extraction, you can omit `type: 'object'` and `properties`. I
   "params": {
     "selector": ".author-bio",
     "name": { "selector": ".author-name" },
-    "email": { "selector": "a.email", "attribute": "href" }
+    "items": { "type": "array", "selector": "li" },
+    "email": "a.email"
   }
 }
 ```
 
-> This is equivalent to Example 2 but more concise.
+> **Key features of implicit objects:**
+> 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present.
+> 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
+> 3. **Context Separation**: Only `selector`, `has`, and `exclude` are used to define the DOM context for the implicit object; all other keys are treated as data to be extracted.
 
 ###### 6. Precise Filtering: `has` and `exclude`
 

@@ -64,6 +64,9 @@ The project employs a two-tier testing strategy:
 ```json
 {
   "title": "Should do something amazing",
+  "options": {
+    "debug": true
+  },
   "actions": [
     {
       "id": "goto",
@@ -77,7 +80,11 @@ The project employs a two-tier testing strategy:
   ],
   "expected": {
     "statusCode": 200,
-    "data": { "title": "Hello" } // Checks against the result or outputs
+    "data": { "title": "Hello" }, // Checks against the result or outputs
+    "logs": [
+      { "contains": "extracting property" },
+      { "contains": "Hello", "caseInsensitive": true }
+    ]
   }
 }
 ```
@@ -116,26 +123,28 @@ The test runner will automatically load this module and pass the Fastify server 
 
 ### Debugging Tests
 
-You can enable debug mode in your test fixture to inspect detailed execution metadata, including:
+You can enable debug mode in your test fixture to inspect detailed execution metadata and trace logs.
 
+#### 1. Metadata Verification
+
+Debug metadata includes:
 - **Mode**: The active engine mode (`http` vs `browser`).
 - **Engine**: The specific engine implementation used (e.g., `cheerio`, `playwright`).
 - **Timings**: Detailed request timing metrics (DNS, TCP, TTFB, Total) where available.
 - **Proxy**: The proxy URL used for the request.
 
-To enable it, add `"debug": true` to the `options` object in `fixture.json`:
+#### 2. Log Verification (`expected.logs`)
 
-```json
-{
-  "title": "Debug test",
-  "options": {
-    "debug": true
-  },
-  "actions": [ ... ]
-}
-```
+When `options.debug` is enabled, the engine outputs detailed tracing information to the console. You can verify these logs using the `expected.logs` field.
 
-The debug metadata will be available in `result.metadata`.
+The `logs` field supports the same flexible condition objects as other expectation fields:
+- **String**: Simple substring match.
+- **Condition Object**: `{ "contains": "...", "caseInsensitive": true }`.
+- **Logic Operators**: `{ "and": [...], "or": [...], "not": [...] }`.
+
+The test runner automatically captures all `console.log` calls during the test and joins them into a single string for verification.
+
+To enable debug mode, add `"debug": true` to the `options` object in `fixture.json`.
 
 * **`params` vs `args`**: We prioritize using the named `params` object for action arguments to match the `FetchActionOptions` interface and improve readability.
 * **Engine**: By default, tests run on both `cheerio` (http) and `playwright` (browser) engines. You can restrict a test to a specific engine by adding `"engine": "playwright"` to the root of the JSON.
@@ -287,6 +296,30 @@ When `mode` is omitted, the engine follows these rules:
 1. If the array `selector` matches **multiple** elements -> **Nested Mode**.
 2. If it matches **exactly one** element AND `items` has child selectors -> **Columnar Mode**.
 3. If Columnar extraction yields no results -> Fallback to **Nested Mode**.
+
+### Extraction Schema Normalization & Implicit Objects
+
+To provide an "AI-friendly" and developer-friendly experience, the `extract` action supports highly flexible shorthand syntaxes. These are handled by a dedicated normalization layer in the base `FetchEngine`.
+
+#### 1. Shorthand Types
+
+- **String Shorthand**: `'h1'` is automatically converted to `{ selector: 'h1' }`.
+- **Implicit Object Shorthand**: If a schema object lacks a `type` property but contains other keys, it is treated as an `object` type where those keys are the properties to extract.
+  - *Example*: `{ "title": "h1" }` -> `{ "type": "object", "properties": { "title": { "selector": "h1" } } }`.
+
+#### 2. The Keyword Collision Fix (Context vs. Data)
+
+A critical challenge in implicit objects is distinguishing between **extraction configuration** (like `selector`, `has`) and **data properties** (like `items`, `mode`).
+
+- **The Logic**: In the context of an implicit object, we divide keys into two categories:
+  1. **Context Keys**: `selector`, `has`, `exclude`. These define *where* to look.
+  2. **Data Keys**: Everything else (including `items`, `attribute`, `mode`). These define *what* to extract.
+- **Why?**: This allows users to extract a field named `items` (e.g., in a JSON-like HTML structure) without it being misidentified as the `items` configuration for an array.
+- **Implementation**: The `_normalizeSchema` method recursively peels off context keys and moves all other keys into a generated `properties` object, ensuring the core engine always receives a standardized, unambiguous `ExtractObjectSchema`.
+
+#### 3. Cross-Engine Consistency
+
+Both `CheerioFetchEngine` and `PlaywrightFetchEngine` must call `this._normalizeSchema(action.schema)` at the entry point of their `extract` action implementation. This ensures that regardless of the engine used, the complex shorthand logic behaves identically.
 
 ### Current Limitations & Future Directions
 

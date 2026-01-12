@@ -1,0 +1,40 @@
+{
+  "title": "should output debug logs during extraction when debug is enabled",
+  "options": {
+    "debug": true
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "title": "h1",
+        "items": {
+          "type": "array",
+          "selector": "li",
+          "items": {
+            "name": ".name"
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "title": "Test Page",
+      "items": [
+        { "name": "Item 1" },
+        { "name": "Item 2" }
+      ]
+    },
+    "logs": [
+      { "contains": "_extract: extracting property \"title\"" },
+      { "contains": "_extract: value extracted for selector \"h1\": Test Page" }
+    ]
+  }
+}
