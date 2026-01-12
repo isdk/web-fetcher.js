@@ -3,7 +3,7 @@ const BLOCK_PLACEHOLDER = '___BLOCK___'
 const P_PLACEHOLDER = '___P___'
 
 const BLOCK_TAGS =
-  'div, h1, h2, h3, h4, h5, h6, li, ul, ol, tr, dl, dt, dd, blockquote, pre, form, table, article, section, header, footer, nav, main, aside'
+  'div, h1, h2, h3, h4, h5, h6, li, ul, ol, tr, dl, dt, dd, blockquote, pre, form, table, article, section, header, footer, nav, main, aside, hr, address, fieldset, figure, figcaption, details, summary'
 
 const WHITESPACE_REGEX = /\s+/g
 const ALL_PLACEHOLDERS_REGEX = new RegExp(
@@ -20,6 +20,12 @@ const ADJACENT_BLOCK_REGEX = new RegExp(
  */
 export function getInnerText(el: any): string {
   const clone = el.clone()
+
+  // 1. Remove invisible tags
+  clone.find('script, style, noscript, template').remove()
+
+  // 2. Remove explicitly hidden elements
+  clone.find('[hidden]').remove()
 
   clone.find('br').replaceWith(BR_PLACEHOLDER)
   clone.find('p').before(P_PLACEHOLDER).after(P_PLACEHOLDER)
@@ -51,15 +57,58 @@ const STRUCTURAL_ENTITIES: Record<string, string> = {
   '&amp;': '&amp;',
   '&lt;': '&lt;',
   '&gt;': '&gt;',
-  '&quot;': '&quot;',
 }
 
 const COMMON_ENTITIES: Record<string, string> = {
+  '&quot;': '"',
   '&apos;': "'",
   '&nbsp;': ' ',
   '&copy;': '©',
   '&reg;': '®',
   '&trade;': '™',
+  '&sect;': '§',
+  '&para;': '¶',
+  '&bull;': '•',
+  '&hellip;': '…',
+  '&euro;': '€',
+  '&pound;': '£',
+  '&yen;': '¥',
+  '&cent;': '¢',
+  '&curren;': '¤',
+  '&brvbar;': '¦',
+  '&uml;': '¨',
+  '&ordf;': 'ª',
+  '&laquo;': '«',
+  '&raquo;': '»',
+  '&not;': '¬',
+  '&shy;': '',
+  '&macr;': '¯',
+  '&deg;': '°',
+  '&plusmn;': '±',
+  '&sup2;': '²',
+  '&sup3;': '³',
+  '&acute;': '´',
+  '&micro;': 'µ',
+  '&middot;': '·',
+  '&cedil;': '¸',
+  '&sup1;': '¹',
+  '&ordm;': 'º',
+  '&iquest;': '¿',
+  '&times;': '×',
+  '&divide;': '÷',
+  '&ndash;': '–',
+  '&mdash;': '—',
+  '&lsquo;': '‘',
+  '&rsquo;': '’',
+  '&sbquo;': '‚',
+  '&ldquo;': '“',
+  '&rdquo;': '”',
+  '&bdquo;': '„',
+  '&dagger;': '†',
+  '&Dagger;': '‡',
+  '&permil;': '‰',
+  '&lsaquo;': '‹',
+  '&rsaquo;': '›',
 }
 
 /**
@@ -87,7 +136,11 @@ export function normalizeHtml(html: string): string {
           return ' ' // 返回普通空格而不是不间断空格
         }
 
-        return String.fromCharCode(code)
+        try {
+          return String.fromCodePoint(code)
+        } catch (e) {
+          return match
+        }
       }
     }
     return match

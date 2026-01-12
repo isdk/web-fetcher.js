@@ -341,7 +341,7 @@ const engineTestSuite = (
         } else {
           result = res.result;
         }
-        console.log('🚀 ~ file: engine.fixtures.spec.ts:340 ~ result:', res.outputs)
+        // console.log('🚀 ~ file: engine.fixtures.spec.ts:340 ~ result:', JSON.stringify(res.outputs, null, 2))
 
         if (consoleSpy) {
           if (fixture.expected?.logs) {
