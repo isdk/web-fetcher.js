@@ -13,6 +13,7 @@ type CheerioSelection = ReturnType<CheerioAPI>
 type CheerioNode = ReturnType<CheerioSelection['first']>
 
 import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
+import { normalizeExtractSchema } from './schema-normalization'
 
 export class CheerioFetchEngine extends FetchEngine<
   CheerioCrawlingContext,
@@ -195,7 +196,7 @@ export class CheerioFetchEngine extends FetchEngine<
             `Cheerio context not available for action: ${action.type}`,
             'extract'
           )
-        const normalizedSchema = this._normalizeSchema(action.schema)
+        const normalizedSchema = normalizeExtractSchema(action.schema)
         return this._extract(normalizedSchema, { $, el: $.root() })
       }
       case 'click': {
