@@ -10,6 +10,7 @@ import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema } from '../core/extract'
 import { normalizeHtml } from '../utils/cheerio-helpers'
+import { normalizeExtractSchema } from './schema-normalization'
 
 const DefaultTimeoutMs = 30_000
 
@@ -205,7 +206,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
         return fetchResponse
       }
       case 'extract': {
-        const normalizedSchema = this._normalizeSchema(action.schema)
+        const normalizedSchema = normalizeExtractSchema(action.schema)
         const result = await this._extract(
           normalizedSchema,
           page.locator(':root')

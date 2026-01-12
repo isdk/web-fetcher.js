@@ -1,57 +1,10 @@
 import { describe, it, expect } from 'vitest'
-import { FetchEngine, FetchEngineAction } from './base'
-import { ExtractSchema } from '../core/extract'
-import { FetchEngineContext } from '../core/context'
-
-// Test subclass to expose protected method
-class TestFetchEngine extends FetchEngine {
-  // Required abstract implementations
-  static id = 'test'
-  static mode = 'http' as const
-  
-  protected _querySelectorAll(context: any, selector: string): Promise<any[]> {
-    throw new Error('Method not implemented.')
-  }
-  protected _extractValue(schema: any, context: any): Promise<any> {
-    throw new Error('Method not implemented.')
-  }
-  protected _parentElement(element: any): Promise<any> {
-    throw new Error('Method not implemented.')
-  }
-  protected _isSameElement(element1: any, element2: any): Promise<boolean> {
-    throw new Error('Method not implemented.')
-  }
-  protected _nextSiblingsUntil(element: any, untilSelector?: string | undefined): Promise<any[]> {
-    throw new Error('Method not implemented.')
-  }
-  protected _createCrawler(options: any, config?: any): any {
-    return {} as any
-  }
-  protected _getSpecificCrawlerOptions(ctx: FetchEngineContext): any {
-    return {}
-  }
-  protected _buildResponse(context: any): Promise<any> {
-    throw new Error('Method not implemented.')
-  }
-  protected executeAction(context: any, action: FetchEngineAction): Promise<any> {
-    throw new Error('Method not implemented.')
-  }
-  public goto(url: string, params?: any): Promise<void | any> {
-    throw new Error('Method not implemented.')
-  }
-
-  // Helper to access protected method
-  public normalize(schema: ExtractSchema): ExtractSchema {
-    return this._normalizeSchema(schema)
-  }
-}
+import { normalizeExtractSchema } from './schema-normalization'
 
 describe('FetchEngine Schema Normalization', () => {
-  const engine = new TestFetchEngine()
-
   it('should normalize string shorthand', () => {
     const schema = 'h1'
-    expect(engine.normalize(schema)).toEqual({ selector: 'h1' })
+    expect(normalizeExtractSchema(schema)).toEqual({ selector: 'h1' })
   })
 
   it('should normalize implicit object shorthand', () => {
@@ -59,7 +12,7 @@ describe('FetchEngine Schema Normalization', () => {
       title: 'h1',
       link: { selector: 'a', attribute: 'href' }
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       type: 'object',
       properties: {
@@ -74,7 +27,7 @@ describe('FetchEngine Schema Normalization', () => {
       selector: '.container',
       title: 'h1'
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       type: 'object',
       selector: '.container',
@@ -93,7 +46,7 @@ describe('FetchEngine Schema Normalization', () => {
         }
       }
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       type: 'object',
       properties: {
@@ -122,7 +75,7 @@ describe('FetchEngine Schema Normalization', () => {
         age: '.age'
       }
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       type: 'array',
       selector: 'li',
@@ -145,7 +98,7 @@ describe('FetchEngine Schema Normalization', () => {
         }
       }
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       type: 'object',
       properties: {
@@ -165,7 +118,7 @@ describe('FetchEngine Schema Normalization', () => {
       selector: 'a',
       attribute: 'href'
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       type: 'array',
       selector: 'a',
@@ -180,7 +133,7 @@ describe('FetchEngine Schema Normalization', () => {
       type: 'array',
       selector: 'li'
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       type: 'array',
       selector: 'li',
@@ -194,7 +147,7 @@ describe('FetchEngine Schema Normalization', () => {
       has: '.active',
       exclude: '.disabled'
     }
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     expect(normalized).toEqual({
       selector: 'div:has(.active):not(.disabled)'
     })
@@ -219,7 +172,7 @@ describe('FetchEngine Schema Normalization', () => {
       }
     }
     
-    const normalized = engine.normalize(schema as any)
+    const normalized = normalizeExtractSchema(schema as any)
     
     expect(normalized).toMatchObject({
       type: 'object',
