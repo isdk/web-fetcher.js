@@ -39,7 +39,7 @@ import {
 } from '../core/types'
 import { normalizeHeaders } from '../utils/headers'
 import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
-import { normalizeExtractSchema } from './schema-normalization'
+import { normalizeExtractSchema } from '../core/schema-normalization'
 
 Configuration.getGlobalConfig().set('persistStorage', false)
 
