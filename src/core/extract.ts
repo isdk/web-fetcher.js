@@ -1,13 +1,6 @@
 import { CommonError } from '@isdk/common-error'
 
 /**
- * Base configuration for all extraction schemas.
- */
-export interface BaseExtractSchema {
-// ... (rest of interfaces)
-}
-
-/**
  * Interface representing the minimal engine capabilities required for extraction.
  */
 export interface IExtractEngine {
