@@ -174,16 +174,40 @@ To combat sophisticated anti-bot measures, the `PlaywrightFetchEngine` offers an
 
 The `extract()` method provides a powerful, declarative way to pull structured data from a web page. It uses a **Schema** to define the structure of your desired JSON output, and the engine automatically handles DOM traversal and data extraction.
 
-### Core Design: Schema Normalization
+### Core Design: The Three-Layer Architecture
 
-To enhance usability and flexibility, the `extract` method internally implements a **"Normalization"** layer. This means you can provide semantically clear shorthands, and the engine will automatically convert them into a standard, more verbose internal format before execution. This makes writing complex extraction rules simple and intuitive.
+To ensure consistency across engines and maintain high quality, the extraction system is divided into three layers:
 
-**Key normalization features:**
-- **String Shorthand**: `'h1'` is automatically expanded to `{ selector: 'h1' }`.
-- **Implicit Object Shorthand**: If you provide an object without `type: 'object'`, it's treated as a data object. Keywords like `items`, `attribute`, or `mode` are allowed as property names in this context.
-- **Filter Shorthand**: `has` and `exclude` options are merged into the selector using CSS pseudo-classes.
+1.  **Normalization Layer (`src/core/normalize-extract-schema.ts`)**: Pre-processes user-provided schemas into a canonical internal format. This handles shorthands and merges CSS filters.
+2.  **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer that manages the "workflow" of extraction, including recursion, array mode switching (Nested, Columnar, Segmented), and strict mode/required field validation.
+3.  **Engine Interface (`IExtractEngine`)**: Defined in the core layer and implemented by each engine (in `base.ts` and its subclasses), providing atomic DOM operations like `querySelectorAll` and `extractValue`.
 
-### Schema Structure
+This decoupling ensures that complex features like **Columnar Alignment** or **Segmented Scanning** behave identically whether you are using the fast Cheerio engine or the full Playwright browser.
+
+### Schema Normalization
+
+To enhance usability and flexibility, the `extract` method internally implements a **"Normalization"** layer. This allows you to provide semantically clear shorthands, which are automatically converted into a standardized internal format.
+
+#### 1. Shorthand Rules
+
+- **String Shorthand**: A simple string like `'h1'` is automatically expanded to `{ selector: 'h1', type: 'string', mode: 'text' }`.
+- **Implicit Object Shorthand**: If you provide an object without an explicit `type: 'object'`, it is automatically treated as an `object` schema where the keys are the property names.
+  - *Example*: `{ "title": "h1" }` becomes `{ "type": "object", "properties": { "title": { "selector": "h1" } } }`.
+- **Filter Shorthand**: If you provide `has` or `exclude` alongside a `selector`, they are automatically merged into the CSS selector using `:has()` and `:not()` pseudo-classes.
+- **Array Shorthand**: Providing `attribute` directly on an `array` schema acts as a shorthand for its `items`.
+  - *Example*: `{ "type": "array", "attribute": "href" }` becomes `{ "type": "array", "items": { "type": "string", "attribute": "href" } }`.
+
+#### 2. Context vs. Data (Keyword Separation)
+
+In **Implicit Objects**, the engine must distinguish between *configuration* (where to look) and *data* (what to extract).
+
+- **Context Keys**: The keys `selector`, `has`, `exclude`, `required`, and `strict` are reserved for defining the extraction context and validation. They stay at the root of the schema.
+- **Data Keys**: All other keys (including `items`, `attribute`, `mode`, or even a field named `type`) are moved into the `properties` object as data fields to be extracted.
+- **Collision Handling**: You can safely extract a field named `type` as long as its value is not one of the reserved schema type keywords (`string`, `number`, `boolean`, `html`, `object`, `array`).
+
+#### 3. Cross-Engine Consistency
+
+This normalization layer ensures that regardless of whether you are using the `cheerio` (http) or `playwright` (browser) engine, the complex shorthand logic behaves identically, providing a consistent "AI-friendly" interface.
 
 A schema can be one of three types:
 

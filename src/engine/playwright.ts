@@ -10,7 +10,7 @@ import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema } from '../core/extract'
 import { normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeExtractSchema } from '../core/schema-normalization'
+import { normalizeExtractSchema } from '../core/normalize-extract-schema'
 
 const DefaultTimeoutMs = 30_000
 
@@ -85,7 +85,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return result
   }
 
-  protected async _querySelectorAll(
+  async _querySelectorAll(
     context: Locator | Locator[],
     selector: string
   ): Promise<any[]> {
@@ -107,7 +107,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return context.locator(selector).all()
   }
 
-  protected async _nextSiblingsUntil(
+  async _nextSiblingsUntil(
     context: Locator,
     untilSelector?: string
   ): Promise<any[]> {
@@ -126,14 +126,14 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return results
   }
 
-  protected async _parentElement(context: Locator): Promise<any | null> {
+  async _parentElement(context: Locator): Promise<any | null> {
     // In Playwright, xpath '..' gets parent
     const parent = context.locator('xpath=..')
     if ((await parent.count()) === 0) return null
     return parent.first()
   }
 
-  protected async _isSameElement(
+  async _isSameElement(
     context1: Locator,
     context2: Locator
   ): Promise<boolean> {
@@ -150,7 +150,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return result
   }
 
-  protected async _extractValue(
+  async _extractValue(
     schema: ExtractValueSchema,
     context: Locator
   ): Promise<any> {

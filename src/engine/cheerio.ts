@@ -13,7 +13,7 @@ type CheerioSelection = ReturnType<CheerioAPI>
 type CheerioNode = ReturnType<CheerioSelection['first']>
 
 import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeExtractSchema } from '../core/schema-normalization'
+import { normalizeExtractSchema } from '../core/normalize-extract-schema'
 
 export class CheerioFetchEngine extends FetchEngine<
   CheerioCrawlingContext,
@@ -93,7 +93,7 @@ export class CheerioFetchEngine extends FetchEngine<
     return result
   }
 
-  protected async _querySelectorAll(
+  async _querySelectorAll(
     context: { $: CheerioAPI; el: any } | any[],
     selector: string
   ): Promise<any[]> {
@@ -116,7 +116,7 @@ export class CheerioFetchEngine extends FetchEngine<
       .map((e: any) => ({ $, el: $(e) }))
   }
 
-  protected async _nextSiblingsUntil(
+  async _nextSiblingsUntil(
     context: { $: CheerioAPI; el: CheerioNode },
     untilSelector?: string
   ): Promise<any[]> {
@@ -127,7 +127,7 @@ export class CheerioFetchEngine extends FetchEngine<
     return nextSiblings.toArray().map((e) => ({ $, el: $(e) }))
   }
 
-  protected async _parentElement(context: {
+  async _parentElement(context: {
     $: CheerioAPI
     el: CheerioNode
   }): Promise<any | null> {
@@ -137,14 +137,14 @@ export class CheerioFetchEngine extends FetchEngine<
     return { $, el: parent }
   }
 
-  protected async _isSameElement(
+  async _isSameElement(
     context1: { el: CheerioNode },
     context2: { el: CheerioNode }
   ): Promise<boolean> {
     return context1.el[0] === context2.el[0]
   }
 
-  protected async _extractValue(
+  async _extractValue(
     schema: ExtractValueSchema,
     context: { $: CheerioAPI; el: CheerioNode }
   ): Promise<any> {
