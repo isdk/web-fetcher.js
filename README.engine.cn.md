@@ -174,16 +174,41 @@ await session.executeAll([
 
 `extract()` 方法提供了一种强大的声明式方式来从网页中提取结构化数据。它通过一个 **Schema (模式)** 来定义您期望的 JSON 输出结构,引擎会自动处理 DOM 遍历和数据提取。
 
-### 核心设计: Schema 规范化
+### 核心设计: 三层提取架构
 
-为了提升易用性和灵活性,`extract` 方法在内部实现了一个**“规范化 (Normalization)”**层。这意味着您可以提供语义清晰的简写形式,在执行前,引擎会自动将其转换为标准的、更详细的内部格式。这使得编写复杂的提取规则变得简单直观。
+为了确保不同引擎之间的一致性并保持高质量,提取系统分为三个层次:
 
-**关键规范化特性：**
-- **字符串简写**: `'h1'` 会自动扩展为 `{ selector: 'h1' }`。
-- **隐式对象简写**: 如果你提供一个没有 `type: 'object'` 的对象，它会被视为数据对象。在此上下文中，允许将 `items`、`attribute` 或 `mode` 等关键字用作属性名。
-- **筛选器简写**: `has` 和 `exclude` 选项会使用 CSS 伪类合并到选择器中。
+1.  **规范化层 (`src/core/normalize-extract-schema.ts`)**: 将用户提供的各种简写模式预处理为统一的内部格式,处理 CSS 筛选器的合并。
+2.  **核心提取逻辑 (`src/core/extract.ts`)**: 引擎无关层,管理提取的“工作流”,包括递归、数组模式切换（Nested, Columnar, Segmented）以及严格模式/必填字段验证。
+3.  **引擎接口层 (`IExtractEngine`)**: 在核心层定义,由各引擎在 `base.ts` 及其子类中实现,提供底层的 DOM 原子操作（如 `querySelectorAll` 和 `extractValue`）。
 
-### Schema 结构
+这种解耦确保了诸如 **列对齐 (Columnar Alignment)** 或 **锚点扫描 (Segmented Scanning)** 等复杂功能,无论是在快速的 Cheerio 引擎还是完整的 Playwright 浏览器中,其行为都完全一致。
+
+### Schema 规范化
+
+为了提升易用性和灵活性,`extract` 方法在内部实现了一个**“规范化 (Normalization)”**层。这意味着您可以提供语义清晰的简写形式,在执行前,引擎会自动将其转换为标准的内部格式。
+
+#### 1. 简写规则
+
+- **字符串简写**: 一个简单的字符串（如 `'h1'`）会自动扩展为 `{ selector: 'h1', type: 'string', mode: 'text' }`。
+- **隐式对象简写**: 如果你提供一个没有显式 `type: 'object'` 的对象，它会被视为一个 `object` 模式，其中对象的键即为要提取的属性名。
+  - *示例*: `{ "title": "h1" }` 变为 `{ "type": "object", "properties": { "title": { "selector": "h1" } } }`。
+- **筛选器简写**: 如果在提供 `selector` 的同时提供了 `has` 或 `exclude`，它们会自动使用 `:has()` 和 `:not()` 伪类合并到 CSS 选择器中。
+  - *示例*: `{ "selector": "div", "has": "p" }` 变为 `{ "selector": "div:has(p)" }`。
+- **数组简写**: 在 `array` 模式下直接提供 `attribute` 会作为其 `items` 的简写。
+  - *示例*: `{ "type": "array", "attribute": "href" }` 变为 `{ "type": "array", "items": { "type": "string", "attribute": "href" } }`。
+
+#### 2. 上下文 vs. 数据 (关键字分离)
+
+在**隐式对象**中，引擎必须区分*配置*（在哪里找）和*数据*（提取什么）。
+
+- **上下文关键字**: `selector`、`has`、`exclude`、`required` 和 `strict` 被保留用于定义提取上下文和验证。它们保留在 Schema 的根部。
+- **数据关键字**: 所有其他键（包括 `items`、`attribute`、`mode`，甚至名为 `type` 的字段）都会被移动到 `properties` 对象中，作为要提取的数据字段。
+- **冲突处理**: 只要字段值不是保留的 Schema 类型关键字（`string`、`number`、`boolean`、`html`、`object`、`array`），你就可以安全地提取名为 `type` 的字段。
+
+#### 3. 跨引擎一致性
+
+规范化层确保了无论你使用的是 `cheerio` (http) 还是 `playwright` (browser) 引擎，复杂的简写逻辑行为都完全一致，提供了一个统一的“AI 友好”接口。
 
 一个 Schema 可以是以下三种类型之一:
 

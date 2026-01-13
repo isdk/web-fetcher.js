@@ -367,9 +367,25 @@ When `mode` is omitted, the engine follows these rules:
 2. If it matches **exactly one** element AND `items` has child selectors -> **Columnar Mode**.
 3. If Columnar extraction yields no results -> Fallback to **Nested Mode**.
 
+### The Three-Layer Extraction Architecture
+
+To ensure consistency across different engines and maintain high testability, the data extraction logic is split into three distinct layers:
+
+1.  **Normalization Layer (`src/core/normalize-extract-schema.ts`)**:
+    *   **Responsibility**: Converts flexible, shorthand user schemas (like strings or implicit objects) into a strict, canonical `ExtractSchema` format.
+    *   **Key Logic**: Handles CSS filter merging (`selector` + `has`/`exclude` -> `:has()`/`:not()`), defaults assignment, and recursive normalization of nested structures.
+2.  **Core Extraction Engine (`src/core/extract.ts`)**:
+    *   **Responsibility**: The engine-agnostic business logic of extraction. It handles the "how" of the process.
+    *   **Key Logic**: Manages recursion, array mode dispatching (Nested vs. Columnar vs. Segmented), strict mode inheritance, and `required` field validation/skipping logic.
+    *   **Abstraction**: Uses the `IExtractEngine` interface to perform low-level DOM operations without knowing if it's running in Cheerio or Playwright.
+3.  **Engine Shim Layer (`src/engine/base.ts` & implementations)**:
+    *   **Responsibility**: Provides the "primitive" operations required by the Core Engine.
+    *   **Key Logic**: Implements `_querySelectorAll`, `_extractValue`, `_parentElement`, and `_nextSiblingsUntil`.
+    *   **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
+
 ### Extraction Schema Normalization & Implicit Objects
 
-To provide an "AI-friendly" and developer-friendly experience, the `extract` action supports highly flexible shorthand syntaxes. These are handled by a dedicated normalization layer in the base `FetchEngine`.
+To provide an "AI-friendly" and developer-friendly experience, the `extract` action supports highly flexible shorthand syntaxes. These are handled by a dedicated normalization layer in `src/core/normalize-extract-schema.ts`.
 
 #### 1. Shorthand Types
 

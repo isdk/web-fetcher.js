@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { normalizeExtractSchema } from './schema-normalization'
+import { normalizeExtractSchema } from './normalize-extract-schema'
 
 describe('FetchEngine Schema Normalization', () => {
   it('should normalize string shorthand', () => {
