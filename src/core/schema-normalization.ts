@@ -92,7 +92,7 @@ export function isImplicitObject(schema: any): boolean {
  *    - Value mode defaults to 'text' (if string).
  *    - Array mode defaults to { type: 'nested' }.
  */
-export function normalizeExtractSchema(schema: ExtractSchema): ExtractSchema {
+export function normalizeExtractSchema(schema: ExtractSchema | string): ExtractSchema {
   // 1. Handle String Shorthand
   if (typeof schema === 'string') {
     return {
