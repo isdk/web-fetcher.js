@@ -13,7 +13,7 @@ type CheerioSelection = ReturnType<CheerioAPI>
 type CheerioNode = ReturnType<CheerioSelection['first']>
 
 import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeExtractSchema } from './schema-normalization'
+import { normalizeExtractSchema } from '../core/schema-normalization'
 
 export class CheerioFetchEngine extends FetchEngine<
   CheerioCrawlingContext,

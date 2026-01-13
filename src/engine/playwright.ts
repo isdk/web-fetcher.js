@@ -10,7 +10,7 @@ import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema } from '../core/extract'
 import { normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeExtractSchema } from './schema-normalization'
+import { normalizeExtractSchema } from '../core/schema-normalization'
 
 const DefaultTimeoutMs = 30_000
 
