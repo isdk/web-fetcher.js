@@ -33,8 +33,8 @@
       ]
     },
     "logs": [
-      { "contains": "_extract: extracting property \"title\"" },
-      { "contains": "_extract: value extracted for selector \"h1\": Test Page" }
+      { "contains": "extract: extracting property \"title\"" },
+      { "contains": "extract: value extracted for selector \"h1\": Test Page" }
     ]
   }
 }
