@@ -1,0 +1,33 @@
+{
+  "title": "duplicate selectors consumption test",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": ".entry", "relativeTo": "previous" },
+        "items": {
+          "type": "object",
+          "order": ["name", "p1", "p2", "p3"],
+          "properties": {
+            "name": { "selector": "h3" },
+            "p1": { "selector": "p" },
+            "p2": { "selector": "p" },
+            "p3": { "selector": "p", "required": false }
+          }
+        }
+      },
+      "storeAs": "duplicate_results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "duplicate_results": [
+        { "name": "Entry A", "p1": "A-1", "p2": "A-2", "p3": "A-3" },
+        { "name": "Entry B", "p1": "B-1", "p2": "B-2", "p3": null }
+      ]
+    }
+  }
+}

@@ -179,7 +179,9 @@ export class CheerioFetchEngine extends FetchEngine<
     }
   }
 
-  protected _getInitialElementScope(context: CheerioCrawlingContext): FetchElementScope {
+  protected _getInitialElementScope(
+    context: CheerioCrawlingContext
+  ): FetchElementScope {
     const { $ } = context
     if (!$) return null
     return { $, el: $.root() }

@@ -1,0 +1,53 @@
+{
+  "title": "advanced segmented relativeTo tests",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { 
+          "type": "segmented", 
+          "anchor": ".header",
+          "relativeTo": "previous"
+        },
+        "items": {
+          "type": "object",
+          "order": ["id", "label", "val", "txt"],
+          "properties": {
+            "id": { "selector": ".header" },
+            "label": { "selector": "span" },
+            "val": { "selector": "span", "required": false },
+            "txt": { "selector": "p" }
+          }
+        }
+      },
+      "storeAs": "advanced_results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "advanced_results": [
+        { 
+          "id": "Item 1", 
+          "label": "Label 1", 
+          "val": "Value 1", 
+          "txt": "Text 1" 
+        },
+        { 
+          "id": "Item 2", 
+          "label": "Label 2", 
+          "val": null, 
+          "txt": "Text 2" 
+        },
+        { 
+          "id": "Item 3", 
+          "label": "Label 3", 
+          "val": "Value 3", 
+          "txt": "Text 3" 
+        }
+      ]
+    }
+  }
+}

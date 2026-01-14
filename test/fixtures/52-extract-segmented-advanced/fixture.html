@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html>
+<body>
+    <div id="container">
+        <!-- Item 1: Normal sequence -->
+        <div class="header">Item 1</div>
+        <span class="label">Label 1</span>
+        <span class="value">Value 1</span>
+        <p>Text 1</p>
+
+        <!-- Item 2: Missing optional in middle, multiple same tags -->
+        <div class="header">Item 2</div>
+        <span class="label">Label 2</span>
+        <!-- Missing value span here -->
+        <p>Text 2</p>
+
+        <!-- Item 3: Deeply nested match and relative jumping -->
+        <div class="header">Item 3</div>
+        <div class="wrapper">
+            <span class="label">Label 3</span>
+        </div>
+        <span class="value">Value 3</span>
+        <p>Text 3</p>
+    </div>
+</body>
+</html>

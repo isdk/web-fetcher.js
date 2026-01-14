@@ -110,9 +110,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     scope: Locator,
     untilSelector?: string
   ): Promise<FetchElementScope[]> {
-    const allFollowing = await scope
-      .locator('xpath=following-sibling::*')
-      .all()
+    const allFollowing = await scope.locator('xpath=following-sibling::*').all()
     if (!untilSelector) return allFollowing
 
     const results = []
@@ -132,10 +130,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return parent.first()
   }
 
-  async _isSameElement(
-    scope1: Locator,
-    scope2: Locator
-  ): Promise<boolean> {
+  async _isSameElement(scope1: Locator, scope2: Locator): Promise<boolean> {
     const h1 = await scope1.elementHandle()
     const h2 = await scope2.elementHandle()
     if (!h1 || !h2) return false
@@ -187,7 +182,9 @@ export class PlaywrightFetchEngine extends FetchEngine<
     }
   }
 
-  protected _getInitialElementScope(context: PlaywrightCrawlingContext): FetchElementScope {
+  protected _getInitialElementScope(
+    context: PlaywrightCrawlingContext
+  ): FetchElementScope {
     const { page } = context
     if (!page) return null
     return page.locator(':root')

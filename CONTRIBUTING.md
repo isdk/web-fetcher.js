@@ -108,6 +108,7 @@ The test runner supports powerful recursive assertions using "Condition Objects"
 When testing for errors in `expected.error`, you can use strings (for substring matches) or **Regex strings** (e.g., `"/invalid selector/i"`). If the expectation is an object, you can check specific error properties (like `name` or `message`).
 
 Example:
+
 ```json
 "expected": {
   "error": {
@@ -118,6 +119,7 @@ Example:
 ```
 
 Example of checking that a comment was removed:
+
 ```json
 "expected": {
   "outputs": {
@@ -165,6 +167,7 @@ You can enable debug mode in your test fixture to inspect detailed execution met
 #### 1. Metadata Verification
 
 Debug metadata includes:
+
 - **Mode**: The active engine mode (`http` vs `browser`).
 - **Engine**: The specific engine implementation used (e.g., `cheerio`, `playwright`).
 - **Timings**: Detailed request timing metrics (DNS, TCP, TTFB, Total) where available.
@@ -175,6 +178,7 @@ Debug metadata includes:
 When `options.debug` is enabled, the engine outputs detailed tracing information to the console. You can verify these logs using the `expected.logs` field.
 
 The `logs` field supports the same flexible condition objects as other expectation fields:
+
 - **String**: Simple substring match.
 - **Condition Object**: `{ "contains": "...", "caseInsensitive": true }`.
 - **Logic Operators**: `{ "and": [...], "or": [...], "not": [...] }`.
@@ -187,6 +191,7 @@ To enable debug mode, add `"debug": true` to the `options` object in `fixture.js
 * **Engine**: By default, tests run on both `cheerio` (http) and `playwright` (browser) engines. You can restrict a test to a specific engine by adding `"engine": "playwright"` to the root of the JSON.
 
 **Built-in Actions (Reference):**
+
 - `goto`: Navigates to a URL.
 - `click`: Clicks on an element.
 - `fill`: Fills an input field.
@@ -246,7 +251,7 @@ When adding a new action (e.g., `src/action/definitions/my-action.ts`):
     * **`_processAction` (Base)**: Handles engine-agnostic actions like `extract`, `pause`, and `getContent`. It also includes optimizations like short-circuiting for simple `waitFor` (sleep).
     * **`executeAction` (Subclass)**: Concrete engines only need to implement technology-specific interactions (e.g., actual `click`, `fill`, or complex `waitFor` conditions) in their `executeAction` implementation. This maximizes code reuse in the base class.
 5. **Persistent State**: Actions like `trim`, `fill`, or `pause` should ensure the internal engine state remains consistent. Some actions like `fill` update `this.lastResponse` so that subsequent `extract` or `getContent` calls work on the updated state.
-5. **Antibot Awareness**: When implementing features that affect browser behavior, consider how they interact with `antibot: true`. This mode uses `camoufox-js` to enhance stealth, which might affect certain browser primitives.
+6. **Antibot Awareness**: When implementing features that affect browser behavior, consider how they interact with `antibot: true`. This mode uses `camoufox-js` to enhance stealth, which might affect certain browser primitives.
 
 ### Fixture Params
 
@@ -341,6 +346,7 @@ A naive `.text()` in Cheerio just concatenates all text nodes, losing all struct
 #### 3. HTML Extraction (`html` & `outerHTML`)
 
 We support extracting raw HTML:
+
 - **`mode: 'html'`**: Extracts the `innerHTML` of the element.
 - **`mode: 'outerHTML'`**: Extracts the `outerHTML` (including the element's own tag).
 - **Engine Consistency**: Both engines use their respective underlying libraries (Cheerio's `.html()` and Playwright's `locator.evaluate(el => el.outerHTML)`) to ensure accurate results.
@@ -350,6 +356,7 @@ We support extracting raw HTML:
 To ensure data quality and handle messy HTML structures, the `extract` action supports field-level validation and global/local strictness.
 
 #### 1. The `required` Property
+
 - **Purpose**: Marks a field as mandatory.
 - **Behavior**:
   - If a `required` field extracts to `null`:
@@ -359,6 +366,7 @@ To ensure data quality and handle messy HTML structures, the `extract` action su
   - This is the primary mechanism for filtering "noise" or incomplete data (e.g., ignoring search results that lack a title or price).
 
 #### 2. The `strict` Property
+
 - **Default**: `false` (Fail-soft/Ignore mode).
 - **Scope**: Can be applied to a `mode` (e.g., `columnar`) or an `object` schema.
 - **Behavior**:
@@ -367,6 +375,7 @@ To ensure data quality and handle messy HTML structures, the `extract` action su
 - **Inheritance**: If `strict` is defined at the `array` schema level, it is automatically propagated to its extraction `mode` and `items`. It is also passed down to nested `_extract` calls to ensure consistent strictness across the entire schema tree.
 
 #### 3. Best Practices for Developers
+
 - **Consistency**: Always use `this._isImplicitObject(schema)` (during extraction) or the normalization layer (during initialization) to handle shorthand structures uniformly.
 - **Filtering**: When implementing new array modes, ensure they call `_extract` recursively for items and handle the `null` return by skipping the entry if it's considered an "extraction failure".
 - **Error Messages**: When `strict: true` is enabled, provide descriptive error messages indicating which field is missing and at what index (if applicable).
@@ -390,19 +399,32 @@ Ideal for "Flat" structures where items are simply a sequence of siblings withou
 - **The Anchor Logic**: It identifies a delimiter to split segments.
 - **Flexible Anchor**: The `anchor` option in `SegmentedOptions` can be either a field name defined in `items` or a direct CSS selector.
 - **Segmentation**: For each anchor found, the engine calls `_nextSiblingsUntil(anchor, anchorSelector)` to collect all subsequent sibling nodes until the next anchor.
+- **Relative Positioning (`relativeTo: 'previous'`)**:
+  - **Purpose**: Solves extraction from "Flat & Featureless" structures where multiple fields share the same selector.
+  - **Mechanism**: Implements a "Consuming Cursor". After extracting a field, the engine automatically narrows the search scope for subsequent fields to the siblings *following* the matched element.
+  - **Deep Dive: The Consuming Cursor Logic**:
+        1. **Initialization**: When `relativeTo: 'previous'` is enabled and the scope is a segment (array of siblings), the engine initializes a `currentWorkingScope`.
+        2. **Order Execution**: It iterates through properties based on the `order` array. For each property:
+           - It performs a `_querySelectorAll` within the `currentWorkingScope`.
+           - If a match is found (say `Element_N`), it extracts the value.
+           - **Crucial Step (Recursion Protection)**: When calling `_extract` recursively for the matched element, the engine passes a temporary schema with the `selector` removed. This prevents the recursive call from searching *inside* `Element_N` for itself.
+           - **Scope Slicing**: After a successful extraction, the engine identifies the index of the matched element (or its top-level container within the segment using `_isAncestor`) and slices the `currentWorkingScope` to start *after* that index.
+        3. **Fallback**: If an optional field matches nothing, the `currentWorkingScope` remains unchanged, allowing the next field to scan from the same relative origin.
+  - **Order Sensitivity**: Requires an explicit `order` array (or relies on object key insertion order) to ensure fields are "consumed" in the correct sequence.
 - **Strict Mode**: When `strict: true` is set in the mode options, it ensures that:
-    - At least one anchor element must be found.
-    - Each segment must satisfy all `required` fields in `items`.
+  - At least one anchor element must be found.
+  - Each segment must satisfy all `required` fields in `items`.
 - **Context Injection**: These nodes (Anchor + Siblings) are passed as an array-based `context` to the recursive `_extract` call.
 - **The `_nextSiblingsUntil` Internal**: This abstract method is the engine-specific core of segmentation. It is responsible for scanning the DOM from a given anchor point.
-    - **Responsibility**: Returns an array of sibling elements starting *after* the current anchor and stopping *before* the next element that matches the `untilSelector`.
-    - **Cheerio Implementation**: Leverages Cheerio's efficient `.nextUntil(selector)` or `.nextAll()`.
-    - **Playwright Implementation**: Since Playwright Locators don't have a native `nextUntil`, it uses the XPath `following-sibling::*` to fetch all subsequent siblings and then iterates through them, performing a browser-side `el.matches(selector)` check to find the segment boundary.
+  - **Responsibility**: Returns an array of sibling elements starting *after* the current anchor and stopping *before* the next element that matches the `untilSelector`.
+  - **Cheerio Implementation**: Leverages Cheerio's efficient `.nextUntil(selector)` or `.nextAll()`.
+  - **Playwright Implementation**: Since Playwright Locators don't have a native `nextUntil`, it uses the XPath `following-sibling::*` to fetch all subsequent siblings and then iterates through them, performing a browser-side `el.matches(selector)` check to find the segment boundary.
 - **Abstraction**: Base class `FetchEngine` manages the segmentation flow and strictness propagation, while concrete engines implement the low-level scanning.
 
 #### 3. Heuristic Mode Selection
 
 When `mode` is omitted, the engine follows these rules:
+
 1. If the array `selector` matches **multiple** elements -> **Nested Mode**.
 2. If it matches **exactly one** element AND `items` has child selectors -> **Columnar Mode**.
 3. If Columnar extraction yields no results -> Fallback to **Nested Mode**.
@@ -411,20 +433,20 @@ When `mode` is omitted, the engine follows these rules:
 
 To ensure consistency across different engines and maintain high testability, the data extraction logic is split into three distinct layers:
 
-1.  **Normalization Layer (`src/core/normalize-extract-schema.ts`)**:
-    *   **Responsibility**: Converts flexible, shorthand user schemas (like strings or implicit objects) into a strict, canonical `ExtractSchema` format.
-    *   **Key Logic**: Handles CSS filter merging (`selector` + `has`/`exclude` -> `:has()`/`:not()`), defaults assignment, and recursive normalization of nested structures.
-2.  **Core Extraction Engine (`src/core/extract.ts`)**:
-    *   **Responsibility**: The engine-agnostic business logic of extraction. It handles the "how" of the process.
-    *   **Key Logic**: Manages recursion, array mode dispatching (Nested vs. Columnar vs. Segmented), strict mode inheritance, and `required` field validation/skipping logic.
-    *   **Abstraction**: Uses the `IExtractEngine` interface to perform low-level DOM operations without knowing if it's running in Cheerio or Playwright.
-3.  **Engine Shim Layer (`src/engine/base.ts` & implementations)**:
-    *   **Responsibility**: Provides the "primitive" operations required by the Core Engine and the unified action processor.
-    *   **Key Logic**: Implements low-level DOM operations using `FetchElementScope` (an abstraction for engine-specific element handles like Cheerio objects or Playwright Locators).
-    *   **New Primitives**:
-        *   `_getInitialElementScope`: Converts the crawling context into the root element scope for extraction.
-        *   `_querySelectorAll`, `_extractValue`, `_parentElement`, and `_nextSiblingsUntil`.
-    *   **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
+1. **Normalization Layer (`src/core/normalize-extract-schema.ts`)**:
+    * **Responsibility**: Converts flexible, shorthand user schemas (like strings or implicit objects) into a strict, canonical `ExtractSchema` format.
+    * **Key Logic**: Handles CSS filter merging (`selector` + `has`/`exclude` -> `:has()`/`:not()`), defaults assignment, and recursive normalization of nested structures.
+2. **Core Extraction Engine (`src/core/extract.ts`)**:
+    * **Responsibility**: The engine-agnostic business logic of extraction. It handles the "how" of the process.
+    * **Key Logic**: Manages recursion, array mode dispatching (Nested vs. Columnar vs. Segmented), strict mode inheritance, and `required` field validation/skipping logic.
+    * **Abstraction**: Uses the `IExtractEngine` interface to perform low-level DOM operations without knowing if it's running in Cheerio or Playwright.
+3. **Engine Shim Layer (`src/engine/base.ts` & implementations)**:
+    * **Responsibility**: Provides the "primitive" operations required by the Core Engine and the unified action processor.
+    * **Key Logic**: Implements low-level DOM operations using `FetchElementScope` (an abstraction for engine-specific element handles like Cheerio objects or Playwright Locators).
+    * **New Primitives**:
+        * `_getInitialElementScope`: Converts the crawling context into the root element scope for extraction.
+        * `_querySelectorAll`, `_extractValue`, `_parentElement`, and `_nextSiblingsUntil`.
+    * **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
 
 ### Extraction Schema Normalization & Implicit Objects
 
@@ -442,7 +464,7 @@ To provide an "AI-friendly" and developer-friendly experience, the `extract` act
 A critical challenge in implicit objects is distinguishing between **extraction configuration** (like `selector`, `has`) and **data properties** (like `items`, `mode`).
 
 - **The Logic**: In the context of an implicit object, we divide keys into two categories:
-  1. **Context Keys**: `selector`, `has`, `exclude`, `required`, `strict`. These define *how* and *where* to look.
+  1. **Context Keys**: `selector`, `has`, `exclude`, `required`, `strict`, `relativeTo`, `order`. These define *how* and *where* to look.
   2. **Data Keys**: Everything else (including `items`, `attribute`, `mode`). These define *what* to extract.
 - **Why?**: This allows users to extract a field named `items` (e.g., in a JSON-like HTML structure) without it being misidentified as the `items` configuration for an array. Similarly, `required` or `strict` can be property names if they are not explicitly part of the schema definition.
 - **Implementation**: The `_normalizeSchema` method recursively peels off context keys and moves all other keys into a generated `properties` object, ensuring the core engine always receives a standardized, unambiguous `ExtractObjectSchema`.

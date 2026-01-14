@@ -390,6 +390,37 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
   * Defaults to the selector of the first field in `items`.
 * **`strict`** (boolean, default: `false`): If `true`, throws an error if no anchor elements are found or if any item violates its own `required` constraints.
 
+###### 5.1 Advanced: Handling Repeating Tags (`relativeTo`)
+
+When a segment contains multiple identical tags (e.g., several `<p>` tags in a row) representing different fields, use `relativeTo: "previous"` to "consume" them one by one.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#container",
+    "mode": {
+      "type": "segmented",
+      "anchor": ".item-start",
+      "relativeTo": "previous"
+    },
+    "items": {
+      "type": "object",
+      "order": ["id", "desc", "extra"],
+      "properties": {
+        "id": "h1",
+        "desc": "p",
+        "extra": "p"
+      }
+    }
+  }
+}
+```
+
+* **`relativeTo: "previous"`**: After finding `id` (h1), the search for `desc` starts *after* that h1. After finding `desc` (the first p), the search for `extra` starts *after* that p, successfully picking up the second `<p>`.
+* **`order`**: Defines the sequence of consumption. Highly recommended with `relativeTo: "previous"`.
+
 ###### 6. Quality Control: `required` and `strict`
 
 To ensure data integrity and handle messy HTML, you can use `required` and `strict` fields.

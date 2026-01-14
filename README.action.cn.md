@@ -389,6 +389,37 @@ await fetchWeb({
   * 默认使用 `items` 中第一个字段的选择器。
 * **`strict`** (boolean, 默认: `false`): 如果为 `true`，若未找到任何锚点元素，或任何项目违反了自身的 `required` 约束，将抛出错误。
 
+###### 5.1 进阶：处理重复标签 (relativeTo)
+
+当一个分段中包含多个完全相同的标签（例如连续多个 `<p>` 标签）分别代表不同字段时，可以使用 `relativeTo: "previous"` 按顺序“消耗”它们。
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#container",
+    "mode": {
+      "type": "segmented",
+      "anchor": ".item-start",
+      "relativeTo": "previous"
+    },
+    "items": {
+      "type": "object",
+      "order": ["id", "desc", "extra"],
+      "properties": {
+        "id": "h1",
+        "desc": "p",
+        "extra": "p"
+      }
+    }
+  }
+}
+```
+
+* **`relativeTo: "previous"`**: 找到 `id` (h1) 后，查找 `desc` 会从该 h1 之后开始。找到 `desc` (第一个 p) 后，查找 `extra` 会从该 p 之后开始，从而成功匹配到第二个 `<p>`。
+* **`order`**: 定义了消耗 DOM 的确切顺序。在使用 `relativeTo: "previous"` 时强烈建议显式指定。
+
 ###### 6. 数据质量控制: `required` 和 `strict`
 
 为了确保数据的完整性并处理不规范的 HTML 结构，您可以使用 `required` 和 `strict` 字段。
