@@ -79,19 +79,12 @@ The project employs a two-tier testing strategy:
     },
     {
       "action": "extract",
-      "params": { "schema": { "title": "h1" } },
-      "storeAs": "main_data"
+      "params": { "schema": { "title": "h1" } }
     }
   ],
   "expected": {
     "statusCode": 200,
-    "data": { "title": "Hello" }, // Checks the result of the LAST action
-    "outputs": {
-      "main_data": {
-        "title": "Hello",
-        "ad": null // Verify #ads was removed by trim
-      }
-    }
+    "data": { "title": "Hello" } // Checks the result of the LAST action (extract)
   }
 }
 ```
@@ -109,6 +102,20 @@ The test runner supports powerful recursive assertions using "Condition Objects"
   - `{ "and": [{ "contains": "A" }, { "contains": "B" }] }`
 - **`equals`**: Strict equality check.
   - `{ "equals": 123 }`
+
+#### Error Assertions
+
+When testing for errors in `expected.error`, you can use strings (for substring matches) or **Regex strings** (e.g., `"/invalid selector/i"`). If the expectation is an object, you can check specific error properties (like `name` or `message`).
+
+Example:
+```json
+"expected": {
+  "error": {
+    "message": "/missing required field/i",
+    "name": "CommonError"
+  }
+}
+```
 
 Example of checking that a comment was removed:
 ```json
@@ -179,6 +186,17 @@ To enable debug mode, add `"debug": true` to the `options` object in `fixture.js
 * **`params` vs `args`**: We prioritize using the named `params` object for action arguments to match the `FetchActionOptions` interface and improve readability.
 * **Engine**: By default, tests run on both `cheerio` (http) and `playwright` (browser) engines. You can restrict a test to a specific engine by adding `"engine": "playwright"` to the root of the JSON.
 
+**Built-in Actions (Reference):**
+- `goto`: Navigates to a URL.
+- `click`: Clicks on an element.
+- `fill`: Fills an input field.
+- `submit`: Submits a form.
+- `trim`: Removes elements from the DOM to clean up the page (e.g., scripts, ads, hidden content).
+- `waitFor`: Waits for conditions to be met.
+- `pause`: Pauses the action script execution. In interactive environments, this can trigger a callback.
+- `extract`: Extracts structured data from the page.
+- `getContent`: Retrieves the page content (Automatically called by `executeAll` to return the final state).
+
 ## 📐 Architecture & Design Decisions
 
 ### Session Architecture
@@ -203,7 +221,10 @@ The library follows a strict priority to determine which engine (`http` or `brow
 1. **Explicit Option**: Prioritizes `engine` from constructor or `executeAll` options.
     * **Fail-Fast**: If an explicit engine (not `'auto'`) is requested but unavailable, an error is thrown immediately.
 2. **Site Registry**: If in `'auto'` mode, it matches the URL against the `sites` registry.
-3. **Smart Upgrade**: If enabled, it may upgrade from `http` to `browser` based on the response.
+3. **Smart Upgrade**: If `enableSmart` is true, the system evaluates the HTTP response. It may automatically switch to `'browser'` if:
+    * The status code is 401, 403, or 5xx.
+    * The HTML body contains signatures of dynamic frameworks (React, Vue, Next.js, Nuxt) or anti-bot services (Cloudflare, Captchas).
+    * The content indicates that JavaScript is required to render.
 4. **Default**: Falls back to `'http'`.
 
 For more details, see [README.engine.md](./README.engine.md).
@@ -221,7 +242,11 @@ When adding a new action (e.g., `src/action/definitions/my-action.ts`):
 1. **Normalize in Base**: Use `_normalizeSchema` or similar methods in `FetchEngine` (base.ts) to handle shorthands (like converting a string to a `{ selector: '...' }` object) and single-string-to-array conversions. This ensures consistent behavior across engines.
 2. **Abstract Business Logic**: If an action has complex logic for presets or parameter resolution (like `trim`), implement a protected helper method in `FetchEngine` (e.g., `_getTrimInfo`) so that both `CheerioFetchEngine` and `PlaywrightFetchEngine` can share the same logic.
 3. **Engine Delegation**: Keep the `onExecute` method in the `FetchAction` class thin. Its main job is to extract parameters and call `this.delegateToEngine(context, 'methodName', params)`.
-4. **Persistent State**: Actions like `trim` or `fill` should update `this.lastResponse` in the engine after modifying the DOM, so that subsequent `extract` or `getContent` calls work on the updated state.
+4. **Action Processing Architecture**:
+    * **`_processAction` (Base)**: Handles engine-agnostic actions like `extract`, `pause`, and `getContent`. It also includes optimizations like short-circuiting for simple `waitFor` (sleep).
+    * **`executeAction` (Subclass)**: Concrete engines only need to implement technology-specific interactions (e.g., actual `click`, `fill`, or complex `waitFor` conditions) in their `executeAction` implementation. This maximizes code reuse in the base class.
+5. **Persistent State**: Actions like `trim`, `fill`, or `pause` should ensure the internal engine state remains consistent. Some actions like `fill` update `this.lastResponse` so that subsequent `extract` or `getContent` calls work on the updated state.
+5. **Antibot Awareness**: When implementing features that affect browser behavior, consider how they interact with `antibot: true`. This mode uses `camoufox-js` to enhance stealth, which might affect certain browser primitives.
 
 ### Fixture Params
 
@@ -273,6 +298,14 @@ The `cleanup()` (aliased as `dispose()`) method manages the lifecycle of storage
     - If `false`, the data is preserved, allowing future sessions with the same `storage.id` to reuse it.
 4. **Event Cleanup**: Removes all listeners to prevent memory leaks.
 
+### Antibot Mode & Camoufox
+
+To combat sophisticated anti-bot measures, the `PlaywrightFetchEngine` offers an `antibot` mode.
+
+- **Technology**: It integrates [Camoufox](https://github.com/prescience-data/camoufox), a hardened Firefox browser designed for stealth.
+- **Behavior**: When `antibot: true` is set, the engine switches to Firefox (regardless of other settings) and applies Camoufox's launch options.
+- **Constraints**: This requires `camoufox-js` as a dependency and a local installation of Firefox. It also disables default fingerprint spoofing to avoid conflicts with Camoufox's own management.
+
 ### Crawlee Session Persistence
 
 * **State Restoration Timing**: Attempting to restore `SessionPool` state (like cookies) inside `preNavigationHooks` is too late because the session is already assigned.
@@ -304,6 +337,13 @@ Since Cheerio is a static parser, we simulate `innerText` in `src/utils/cheerio-
 
 **Why this approach?**
 A naive `.text()` in Cheerio just concatenates all text nodes, losing all structural line breaks (e.g., `<div>A</div><div>B</div>` becomes `"AB"`). Our simulation ensures that structural breaks are preserved, making the output from the `http` engine consistent with the `browser` engine.
+
+#### 3. HTML Extraction (`html` & `outerHTML`)
+
+We support extracting raw HTML:
+- **`mode: 'html'`**: Extracts the `innerHTML` of the element.
+- **`mode: 'outerHTML'`**: Extracts the `outerHTML` (including the element's own tag).
+- **Engine Consistency**: Both engines use their respective underlying libraries (Cheerio's `.html()` and Playwright's `locator.evaluate(el => el.outerHTML)`) to ensure accurate results.
 
 ### Feature: Data Extraction Quality Control (`required` & `strict`)
 
@@ -379,8 +419,11 @@ To ensure consistency across different engines and maintain high testability, th
     *   **Key Logic**: Manages recursion, array mode dispatching (Nested vs. Columnar vs. Segmented), strict mode inheritance, and `required` field validation/skipping logic.
     *   **Abstraction**: Uses the `IExtractEngine` interface to perform low-level DOM operations without knowing if it's running in Cheerio or Playwright.
 3.  **Engine Shim Layer (`src/engine/base.ts` & implementations)**:
-    *   **Responsibility**: Provides the "primitive" operations required by the Core Engine.
-    *   **Key Logic**: Implements `_querySelectorAll`, `_extractValue`, `_parentElement`, and `_nextSiblingsUntil`.
+    *   **Responsibility**: Provides the "primitive" operations required by the Core Engine and the unified action processor.
+    *   **Key Logic**: Implements low-level DOM operations using `FetchElementScope` (an abstraction for engine-specific element handles like Cheerio objects or Playwright Locators).
+    *   **New Primitives**:
+        *   `_getInitialElementScope`: Converts the crawling context into the root element scope for extraction.
+        *   `_querySelectorAll`, `_extractValue`, `_parentElement`, and `_nextSiblingsUntil`.
     *   **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
 
 ### Extraction Schema Normalization & Implicit Objects

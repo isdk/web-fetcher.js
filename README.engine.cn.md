@@ -28,12 +28,22 @@
 
 这是定义所有抓取引擎契约的抽象基类。
 
-* **职责**：为导航、内容检索和用户交互等操作提供一致的高级 API。
+* **职责**：为导航、内容检索和用户交互等操作提供一致的高级 API。它充当核心 **动作分发器 (Action Dispatcher)**，统一处理引擎无关的逻辑（如 `extract`、`pause`、`getContent`），并将其余动作委托给具体实现。
 * **关键抽象**：
   * **生命周期**：`initialize()` 和 `cleanup()` 方法。
   * **核心操作**：`goto()`、`getContent()`、`click()`、`fill()`、`submit()`、`waitFor()`、`extract()`。
+  * **DOM 原子操作 (Primitives)**: `_querySelectorAll()`、`_extractValue()`、`_parentElement()`、`_nextSiblingsUntil()`。
   * **配置与状态**：`headers()`、`cookies()`、`blockResources()`、`getState()`、`sessionPoolOptions`。
 * **静态注册表**：它维护所有可用引擎实现的静态注册表（`FetchEngine.register`），允许通过 `id` 或 `mode` 动态选择引擎。
+
+### `FetchElementScope`
+
+**`FetchElementScope`** 是引擎相关的 DOM 元素“句柄”或“上下文”。
+
+- 在 **`CheerioFetchEngine`** 中，它是 Cheerio API (`$`) 与当前选择 (`el`) 的组合。
+- 在 **`PlaywrightFetchEngine`** 中，它是 `Locator`。
+
+所有提取和交互的原子操作都基于此 Scope 运行，确保了在不同底层技术之上引用元素的统一方式。
 
 ### `FetchEngine.create(context, options)`
 
@@ -77,14 +87,14 @@ await session.executeAll([
 引擎支持在多次执行之间持久化和恢复会话状态（主要是 Cookie）。
 
 * **灵活的会话隔离与存储控制**：库提供了对会话数据存储和隔离的精细控制，通过 `storage` 配置实现：
-    * **`id`**：自定义存储标识符。
-        * **隔离（默认）**：如果省略，每个会话将获得一个唯一 ID，确保 `RequestQueue`、`KeyValueStore` 和 `SessionPool` 完全隔离。
-        * **共享**：在不同会话中提供相同的 `id` 可以让它们共享底层存储，适用于保持持久登录状态。
-    * **`persist`**：(boolean) 是否启用磁盘持久化（对应 Crawlee 的 `persistStorage`）。默认为 `false`（仅在内存中）。
-    * **`purge`**：(boolean) 会话关闭时是否删除存储（清理 `RequestQueue` 和 `KeyValueStore`）。默认为 `true`。
-        * 设置 `purge: false` 并配合固定的 `id`，可以创建跨应用重启依然存在的持久会话。
-    * **`config`**：允许向底层 Crawlee 实例传递原生配置。
-        * **注意**：当 `persist` 为 true 时，在 config 中使用 `localDataDirectory` 指定存储路径（例如：`storage: { persist: true, config: { localDataDirectory: './my-data' } }`）。
+  * **`id`**：自定义存储标识符。
+    * **隔离（默认）**：如果省略，每个会话将获得一个唯一 ID，确保 `RequestQueue`、`KeyValueStore` 和 `SessionPool` 完全隔离。
+    * **共享**：在不同会话中提供相同的 `id` 可以让它们共享底层存储，适用于保持持久登录状态。
+  * **`persist`**：(boolean) 是否启用磁盘持久化（对应 Crawlee 的 `persistStorage`）。默认为 `false`（仅在内存中）。
+  * **`purge`**：(boolean) 会话关闭时是否删除存储（清理 `RequestQueue` 和 `KeyValueStore`）。默认为 `true`。
+    * 设置 `purge: false` 并配合固定的 `id`，可以创建跨应用重启依然存在的持久会话。
+  * **`config`**：允许向底层 Crawlee 实例传递原生配置。
+    * **注意**：当 `persist` 为 true 时，在 config 中使用 `localDataDirectory` 指定存储路径（例如：`storage: { persist: true, config: { localDataDirectory: './my-data' } }`）。
 * **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。该状态会**自动包含在每个 `FetchResponse` 中**，方便进行持久化，并在以后初始化引擎时通过选项传回。
 * **`sessionPoolOptions`**: 允许对底层的 Crawlee `SessionPool` 进行高级配置（例如 `maxUsageCount`, `maxPoolSize`）。
 * **`overrideSessionState`**: 如果设置为 `true`，则强制引擎使用提供的 `sessionState` 覆盖存储中的任何现有持久化状态。当你希望确保会话以确切提供的状态启动，忽略持久化层中的任何陈旧数据时，这非常有用。
@@ -94,6 +104,7 @@ await session.executeAll([
 
 **优先级规则：**
 如果同时提供了 `sessionState` 和 `cookies`，引擎将采用**“合并并覆盖”**策略：
+
 1. 首先从 `sessionState` 恢复会话。
 2. 然后在之上应用显式的 `cookies`。
    * **结果**：`sessionState` 中任何冲突的 Cookie 都会被显式的 `cookies` **覆盖**。
@@ -123,7 +134,9 @@ await session.executeAll([
     * 页面被标记为“活动”状态 (`isPageActive = true`)。
     * 至关重要的是，在 `requestHandler` 返回之前，它会启动一个**动作循环** (`_executePendingActions`)。此循环通过监听 `EventEmitter` 上的事件，有效地**暂停 `requestHandler`**，从而保持页面上下文的存活。
 5. **交互式动作 (`click`, `fill` 等)**：消费者现在可以调用 `await engine.click(...)`。此方法将一个动作分派到 `EventEmitter` 并返回一个新的 `Promise`。
-6. **动作执行**：仍在原始 `requestHandler` 作用域内运行的动作循环，会监听到该事件。因为它能访问页面上下文，所以可以执行*实际的*交互（例如 `page.click(...)`）。
+6. **动作执行**：仍在原始 `requestHandler` 作用域内运行的动作循环，会监听到该事件。
+    * **统一处理的动作**：像 `extract`、`pause` 和 `getContent` 这样的动作会直接由 `FetchEngine` 基类使用统一的逻辑进行处理。
+    * **委托执行的动作**：引擎相关的交互（如 `click`、`fill`）会委托给子类的 `executeAction` 实现。
 7. **健壮的清理**：当调用 `dispose()` 或 `cleanup()` 时：
     * 设置 `isEngineDisposed` 标志以阻止新动作。
     * 发出 `dispose` 信号以唤醒并终止动作循环。
@@ -178,9 +191,9 @@ await session.executeAll([
 
 为了确保不同引擎之间的一致性并保持高质量,提取系统分为三个层次:
 
-1.  **规范化层 (`src/core/normalize-extract-schema.ts`)**: 将用户提供的各种简写模式预处理为统一的内部格式,处理 CSS 筛选器的合并。
-2.  **核心提取逻辑 (`src/core/extract.ts`)**: 引擎无关层,管理提取的“工作流”,包括递归、数组模式切换（Nested, Columnar, Segmented）以及严格模式/必填字段验证。
-3.  **引擎接口层 (`IExtractEngine`)**: 在核心层定义,由各引擎在 `base.ts` 及其子类中实现,提供底层的 DOM 原子操作（如 `querySelectorAll` 和 `extractValue`）。
+1. **规范化层 (`src/core/normalize-extract-schema.ts`)**: 将用户提供的各种简写模式预处理为统一的内部格式,处理 CSS 筛选器的合并。
+2. **核心提取逻辑 (`src/core/extract.ts`)**: 引擎无关层,管理提取的“工作流”,包括递归、数组模式切换（Nested, Columnar, Segmented）以及严格模式/必填字段验证。它在 **`FetchElementScope`** 之上运行。
+3. **引擎接口层 (`IExtractEngine`)**: 在核心层定义,由各引擎在 `base.ts` 及其子类中实现,提供底层的 DOM 原子操作（如 `_querySelectorAll` 和 `_extractValue`），这些操作均接受并返回上述 Scope。
 
 这种解耦确保了诸如 **列对齐 (Columnar Alignment)** 或 **锚点扫描 (Segmented Scanning)** 等复杂功能,无论是在快速的 Cheerio 引擎还是完整的 Playwright 浏览器中,其行为都完全一致。
 

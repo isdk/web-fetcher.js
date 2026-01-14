@@ -1,37 +1,58 @@
 import { CommonError } from '@isdk/common-error'
+import { normalizeExtractSchema } from './normalize-extract-schema'
+
+/**
+ * Represents the engine-specific execution scope (e.g., a Cheerio node or a Playwright Locator).
+ * It acts as the target for extraction and interaction actions.
+ */
+export type FetchElementScope = any
 
 /**
  * Interface representing the minimal engine capabilities required for extraction.
  */
 export interface IExtractEngine {
-  _querySelectorAll(context: any, selector: string): Promise<any[]>
-  _extractValue(schema: ExtractValueSchema, context: any): Promise<any>
-  _parentElement(element: any): Promise<any | null>
-  _isSameElement(element1: any, element2: any): Promise<boolean>
-  _nextSiblingsUntil(element: any, untilSelector?: string): Promise<any[]>
+  _querySelectorAll(scope: FetchElementScope, selector: string): Promise<FetchElementScope[]>
+  _extractValue(schema: ExtractValueSchema, scope: FetchElementScope): Promise<any>
+  _parentElement(scope: FetchElementScope): Promise<FetchElementScope | null>
+  _isSameElement(scope1: FetchElementScope, scope2: FetchElementScope): Promise<boolean>
+  _nextSiblingsUntil(scope: FetchElementScope, untilSelector?: string): Promise<FetchElementScope[]>
   _logDebug(...args: any[]): void
+}
+
+/**
+ * Public entry point for extraction.
+ * Normalizes the schema and then calls the internal _extract logic.
+ */
+export async function extract(
+  this: IExtractEngine,
+  schema: any,
+  scope: FetchElementScope,
+  parentStrict?: boolean
+): Promise<any> {
+  const normalizedSchema = normalizeExtractSchema(schema)
+  return _extract.call(this, normalizedSchema, scope, parentStrict)
 }
 
 /**
  * The core extraction logic, engine-agnostic.
  * @param this - The engine instance providing low-level DOM access.
  * @param schema - The extraction schema.
- * @param context - The current DOM context (element or array of elements).
+ * @param scope - The current DOM scope (element or array of elements).
  * @param parentStrict - Whether strict mode is inherited from parent.
  */
 export async function _extract(
   this: IExtractEngine,
   schema: ExtractSchema,
-  context: any,
+  scope: FetchElementScope,
   parentStrict?: boolean
 ): Promise<any> {
   const schemaType = (schema as any).type
   const schemaSelector = (schema as any).selector
   const strict = (schema as any).strict ?? parentStrict
 
-  if (!context) {
+  if (!scope) {
     this._logDebug(
-      `_extract: No context for selector "${schemaSelector || ''}", type "${schemaType || 'value'}"`
+      `_extract: No scope for selector "${schemaSelector || ''}", type "${schemaType || 'value'}"`
     )
     return schemaType === 'array' ? [] : null
   }
@@ -43,17 +64,17 @@ export async function _extract(
       strict: objectStrict,
     } = schema as ExtractObjectSchema
     const finalStrict = objectStrict ?? strict
-    let newContext = context
+    let newScope = scope
     if (selector) {
-      const elements = await this._querySelectorAll(context, selector)
-      newContext = elements.length > 0 ? elements[0] : null
+      const elements = await this._querySelectorAll(scope, selector)
+      newScope = elements.length > 0 ? elements[0] : null
       this._logDebug(
         `_extract: object selector "${selector}" found ${elements.length} elements`
       )
     }
-    if (!newContext) {
+    if (!newScope) {
       this._logDebug(
-        `_extract: object context not found for selector "${selector}"`
+        `_extract: object scope not found for selector "${selector}"`
       )
       if (finalStrict && (schema as any).required) {
         throw new CommonError(
@@ -71,7 +92,7 @@ export async function _extract(
       const value = await _extract.call(
         this,
         properties[key],
-        newContext,
+        newScope,
         finalStrict
       )
       if (value === null && (properties[key] as any).required) {
@@ -104,8 +125,8 @@ export async function _extract(
     } = schema as ExtractArraySchema
     const finalStrict = arrayStrict ?? strict
     const elements = selector
-      ? await this._querySelectorAll(context, selector)
-      : [context]
+      ? await this._querySelectorAll(scope, selector)
+      : [scope]
 
     this._logDebug(
       `_extract: array selector "${selector || ''}" found ${elements.length} elements`
@@ -167,15 +188,15 @@ export async function _extract(
   }
 
   const { selector } = schema as ExtractValueSchema
-  let elementToExtract = context
+  let elementToExtract = scope
   if (selector) {
-    const elements = await this._querySelectorAll(context, selector)
+    const elements = await this._querySelectorAll(scope, selector)
     elementToExtract = elements.length > 0 ? elements[0] : null
     this._logDebug(
       `_extract: value selector "${selector}" found ${elements.length} elements`
     )
-  } else if (Array.isArray(context)) {
-    elementToExtract = context.length > 0 ? context[0] : null
+  } else if (Array.isArray(scope)) {
+    elementToExtract = scope.length > 0 ? scope[0] : null
   }
 
   if (!elementToExtract) {
