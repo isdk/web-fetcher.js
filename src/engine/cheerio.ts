@@ -2,18 +2,16 @@ import { CheerioCrawler, Configuration } from 'crawlee'
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee'
 import * as cheerio from 'cheerio'
 import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base'
-import { FetchResponse, OnFetchPauseCallback } from '../core/types'
+import { FetchResponse } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { createPromiseLock } from './promise-lock'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema, FetchElementScope } from '../core/extract'
+import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>
 type CheerioSelection = ReturnType<CheerioAPI>
 type CheerioNode = ReturnType<CheerioSelection['first']>
-
-import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeExtractSchema } from '../core/normalize-extract-schema'
 
 export class CheerioFetchEngine extends FetchEngine<
   CheerioCrawlingContext,
