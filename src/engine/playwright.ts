@@ -5,12 +5,11 @@ import type {
 } from 'crawlee'
 import { firefox } from 'playwright'
 import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base'
-import { FetchResponse, type OnFetchPauseCallback } from '../core/types'
+import { FetchResponse } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 import { normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeExtractSchema } from '../core/normalize-extract-schema'
 
 const DefaultTimeoutMs = 30_000
 
