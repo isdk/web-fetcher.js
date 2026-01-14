@@ -6,7 +6,7 @@ import { FetchResponse, OnFetchPauseCallback } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { createPromiseLock } from './promise-lock'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
-import { ExtractValueSchema } from '../core/extract'
+import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>
 type CheerioSelection = ReturnType<CheerioAPI>
@@ -94,14 +94,14 @@ export class CheerioFetchEngine extends FetchEngine<
   }
 
   async _querySelectorAll(
-    context: { $: CheerioAPI; el: any } | any[],
+    scope: { $: CheerioAPI; el: any } | any[],
     selector: string
-  ): Promise<any[]> {
-    if (Array.isArray(context)) {
-      if (context.length === 0) return []
-      const { $ } = context[0]
+  ): Promise<FetchElementScope[]> {
+    if (Array.isArray(scope)) {
+      if (scope.length === 0) return []
+      const { $ } = scope[0]
       // Use the underlying DOM elements [0] for Cheerio collection
-      const nodes = context.map((c) => c.el[0]).filter(Boolean)
+      const nodes = scope.map((c) => c.el[0]).filter(Boolean)
       const $els = $(nodes)
       return $els
         .find(selector)
@@ -109,7 +109,7 @@ export class CheerioFetchEngine extends FetchEngine<
         .toArray()
         .map((e: any) => ({ $, el: $(e) }))
     }
-    const { $, el } = context
+    const { $, el } = scope
     return el
       .find(selector)
       .toArray()
@@ -117,38 +117,38 @@ export class CheerioFetchEngine extends FetchEngine<
   }
 
   async _nextSiblingsUntil(
-    context: { $: CheerioAPI; el: CheerioNode },
+    scope: { $: CheerioAPI; el: CheerioNode },
     untilSelector?: string
-  ): Promise<any[]> {
-    const { $, el } = context
+  ): Promise<FetchElementScope[]> {
+    const { $, el } = scope
     const nextSiblings = untilSelector
       ? el.nextUntil(untilSelector)
       : el.nextAll()
     return nextSiblings.toArray().map((e) => ({ $, el: $(e) }))
   }
 
-  async _parentElement(context: {
+  async _parentElement(scope: {
     $: CheerioAPI
     el: CheerioNode
-  }): Promise<any | null> {
-    const { $, el } = context
+  }): Promise<FetchElementScope | null> {
+    const { $, el } = scope
     const parent = el.parent()
     if (parent.length === 0) return null
     return { $, el: parent }
   }
 
   async _isSameElement(
-    context1: { el: CheerioNode },
-    context2: { el: CheerioNode }
+    scope1: { el: CheerioNode },
+    scope2: { el: CheerioNode }
   ): Promise<boolean> {
-    return context1.el[0] === context2.el[0]
+    return scope1.el[0] === scope2.el[0]
   }
 
   async _extractValue(
     schema: ExtractValueSchema,
-    context: { $: CheerioAPI; el: CheerioNode }
+    scope: { $: CheerioAPI; el: CheerioNode }
   ): Promise<any> {
-    const { $, el } = context
+    const { $, el } = scope
     const { attribute, type = 'string', mode = 'text' } = schema
 
     if (el.length === 0) return null
@@ -181,6 +181,12 @@ export class CheerioFetchEngine extends FetchEngine<
     }
   }
 
+  protected _getInitialElementScope(context: CheerioCrawlingContext): FetchElementScope {
+    const { $ } = context
+    if (!$) return null
+    return { $, el: $.root() }
+  }
+
   protected async executeAction(
     context: CheerioCrawlingContext,
     action: FetchEngineAction
@@ -190,15 +196,6 @@ export class CheerioFetchEngine extends FetchEngine<
       case 'dispose':
         // This action is used by the base class cleanup logic.
         return
-      case 'extract': {
-        if (!$)
-          throw new CommonError(
-            `Cheerio context not available for action: ${action.type}`,
-            'extract'
-          )
-        const normalizedSchema = normalizeExtractSchema(action.schema)
-        return this._extract(normalizedSchema, { $, el: $.root() })
-      }
       case 'click': {
         if (!$)
           throw new CommonError(
@@ -298,22 +295,6 @@ export class CheerioFetchEngine extends FetchEngine<
           )
         }
         return
-      case 'pause':
-        const onPauseHandler = (this.ctx as any)?.onPause as
-          | OnFetchPauseCallback
-          | undefined
-        if (onPauseHandler) {
-          console.info(
-            action.message || 'Execution paused for manual intervention.'
-          )
-          await onPauseHandler({ message: action.message })
-          console.info('Resuming execution...')
-        } else {
-          console.warn(
-            '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.'
-          )
-        }
-        return
       case 'submit': {
         if (!$)
           throw new CommonError(
@@ -384,8 +365,6 @@ export class CheerioFetchEngine extends FetchEngine<
         await this._updateStateAfterNavigation(context, loadedRequest)
         return
       }
-      case 'getContent':
-        return this.buildResponse(context)
       default:
         throw new CommonError(
           `Unknown action type: ${(action as any).type}`,

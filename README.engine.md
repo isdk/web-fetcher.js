@@ -28,12 +28,22 @@ When the `debug: true` option is enabled, the engine provides detailed tracing o
 
 This is the abstract base class that defines the contract for all fetch engines.
 
-* **Role**: To provide a consistent, high-level API for actions like navigation, content retrieval, and user interaction.
+* **Role**: To provide a consistent, high-level API for actions like navigation, content retrieval, and user interaction. It acts as the central **Action Dispatcher**, handling engine-agnostic logic (like `extract`, `pause`, `getContent`) and delegating others.
 * **Key Abstractions**:
   * **Lifecycle**: `initialize()` and `cleanup()` methods.
   * **Core Actions**: `goto()`, `getContent()`, `click()`, `fill()`, `submit()`, `waitFor()`, `extract()`.
+  * **DOM Primitives**: `_querySelectorAll()`, `_extractValue()`, `_parentElement()`, `_nextSiblingsUntil()`.
   * **Configuration & State**: `headers()`, `cookies()`, `blockResources()`, `getState()`, `sessionPoolOptions`.
 * **Static Registry**: It maintains a static registry of all available engine implementations (`FetchEngine.register`), allowing for dynamic selection by `id` or `mode`.
+
+### `FetchElementScope`
+
+The **`FetchElementScope`** is the engine-specific "handle" or "context" for a DOM element.
+
+- In **`CheerioFetchEngine`**, it is a combination of the Cheerio API (`$`) and the current selection (`el`).
+- In **`PlaywrightFetchEngine`**, it is a `Locator`.
+
+All extraction and interaction primitives operate on this scope, ensuring a unified way to reference elements across different underlying technologies.
 
 ### `FetchEngine.create(context, options)`
 
@@ -123,7 +133,9 @@ Our engine solves this by creating a bridge between the external API calls and t
     * The page is marked as "active" (`isPageActive = true`).
     * Crucially, before the `requestHandler` returns, it starts an **action loop** (`_executePendingActions`). This loop effectively **pauses the `requestHandler`** by listening for events on an `EventEmitter`, keeping the page context alive.
 5. **Interactive Actions (`click`, `fill`, etc.)**: The consumer can now call `await engine.click(...)`. This dispatches an action to the `EventEmitter` and returns a new `Promise`.
-6. **Action Execution**: The action loop, still running within the original `requestHandler`'s scope, hears the event. Because it has access to the page context, it can perform the *actual* interaction (e.g., `page.click(...)`).
+6. **Action Execution**: The action loop, still running within the original `requestHandler`'s scope, hears the event.
+    *   **Centralized Actions**: Actions like `extract`, `pause`, and `getContent` are processed immediately by the `FetchEngine` base class using the unified logic.
+    *   **Delegated Actions**: Engine-specific interactions (e.g., `click`, `fill`) are delegated to the subclass's `executeAction` implementation.
 7. **Robust Cleanup**: When `dispose()` or `cleanup()` is called:
     * An `isEngineDisposed` flag is set to prevent new actions.
     * A `dispose` signal is emitted to wake up and terminate the action loop.
@@ -179,8 +191,8 @@ The `extract()` method provides a powerful, declarative way to pull structured d
 To ensure consistency across engines and maintain high quality, the extraction system is divided into three layers:
 
 1.  **Normalization Layer (`src/core/normalize-extract-schema.ts`)**: Pre-processes user-provided schemas into a canonical internal format. This handles shorthands and merges CSS filters.
-2.  **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer that manages the "workflow" of extraction, including recursion, array mode switching (Nested, Columnar, Segmented), and strict mode/required field validation.
-3.  **Engine Interface (`IExtractEngine`)**: Defined in the core layer and implemented by each engine (in `base.ts` and its subclasses), providing atomic DOM operations like `querySelectorAll` and `extractValue`.
+2.  **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer that manages the "workflow" of extraction, including recursion, array mode switching (Nested, Columnar, Segmented), and strict mode/required field validation. It operates on a **`FetchElementScope`**.
+3.  **Engine Interface (`IExtractEngine`)**: Defined in the core layer and implemented by each engine (in `base.ts` and its subclasses), providing atomic DOM operations like `_querySelectorAll` and `_extractValue` that work with the scope.
 
 This decoupling ensures that complex features like **Columnar Alignment** or **Segmented Scanning** behave identically whether you are using the fast Cheerio engine or the full Playwright browser.
 

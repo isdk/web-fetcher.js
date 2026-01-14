@@ -150,17 +150,17 @@ This is the main entry point for the library.
 
 ### Built-in Actions
 
-Here are the essential built-in actions:
+The library provides a set of powerful built-in actions, many of which are engine-agnostic and handled centrally for consistency:
 
 * `goto`: Navigates to a new URL.
-* `click`: Clicks on an element specified by a selector.
-* `fill`: Fills an input field with a specified value.
-* `submit`: Submits a form.
-* `trim`: Removes elements from the DOM to clean up the page (e.g., scripts, ads, hidden content).
-* `waitFor`: Pauses execution to wait for a specific condition (e.g., a timeout, a selector to appear, or network to be idle).
-* `pause`: Pauses execution for manual intervention (e.g., solving a CAPTCHA).
-* `getContent`: Retrieves the full content (HTML, text, etc.) of the current page state.
-* `extract`: Extracts any structured data from the page with ease using an expressive, declarative schema. Supports `required` fields and `strict` validation for high-quality data collection.
+* `click`: Clicks on an element (Engine-specific).
+* `fill`: Fills an input field (Engine-specific).
+* `submit`: Submits a form (Engine-specific).
+* `trim`: Removes elements from the DOM to clean up the page.
+* `waitFor`: Pauses execution to wait for a specific condition (Supports fixed timeouts centrally).
+* `pause`: Pauses execution for manual intervention (Handled centrally).
+* `getContent`: Retrieves the full content of the current page (Handled centrally).
+* `extract`: Extracts structured data using an engine-agnostic core logic and engine-specific DOM primitives. Supports `required` fields and `strict` validation.
 
 ### Response Structure
 

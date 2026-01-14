@@ -384,10 +384,10 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
 
 **Segmented Configuration:**
 
-* **`anchor`** (string): 
-    * Can be a **field name** defined in `items` (e.g., `"title"`).
-    * Can be a **direct CSS selector** (e.g., `"h3.item-title"`).
-    * Defaults to the selector of the first field in `items`.
+* **`anchor`** (string):
+  * Can be a **field name** defined in `items` (e.g., `"title"`).
+  * Can be a **direct CSS selector** (e.g., `"h3.item-title"`).
+  * Defaults to the selector of the first field in `items`.
 * **`strict`** (boolean, default: `false`): If `true`, throws an error if no anchor elements are found or if any item violates its own `required` constraints.
 
 ###### 6. Quality Control: `required` and `strict`
@@ -446,14 +446,6 @@ For simpler object extraction, you can omit `type: 'object'` and `properties`. I
 > 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
 > 3. **Context Separation**: Only `selector`, `has`, `exclude`, `required`, and `strict` are used to define the context and validation for the implicit object; all other keys are treated as data to be extracted.
 > 4. **Null Propagation**: If an implicit object has no `selector` and ALL of its sub-properties extract to `null`, the object itself returns `null`. This is crucial for `required` validation on the parent object or for skipping items in an array.
-}
-```
-
-> **Key features of implicit objects:**
->
-> 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present.
-> 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
-> 3. **Context Separation**: Only `selector`, `has`, and `exclude` are used to define the DOM context for the implicit object; all other keys are treated as data to be extracted.
 
 ###### 8. Advanced Filtering: `has` and `exclude`
 

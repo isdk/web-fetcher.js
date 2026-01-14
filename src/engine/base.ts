@@ -27,11 +27,13 @@ import {
   ColumnarOptions,
   SegmentedOptions,
   IExtractEngine,
+  extract,
   _extract,
   _extractNested,
   _extractColumnar,
   _extractSegmented,
   _normalizeArrayMode,
+  FetchElementScope,
 } from '../core/extract'
 import {
   BaseFetcherProperties,
@@ -40,6 +42,7 @@ import {
   FetchResponse,
   ResourceType,
   DefaultFetcherProperties,
+  OnFetchPauseCallback,
 } from '../core/types'
 import { normalizeHeaders } from '../utils/headers'
 import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
@@ -351,63 +354,63 @@ export abstract class FetchEngine<
   }
 
   /**
-   * Finds all elements matching the selector within the given context.
-   * @param context - The context to search in (Engine-specific element/node or array of nodes).
+   * Finds all elements matching the selector within the given scope.
+   * @param scope - The scope to search in (Engine-specific element/node or array of nodes).
    * @param selector - CSS selector.
    * @internal
    */
   public abstract _querySelectorAll(
-    context: any,
+    scope: FetchElementScope,
     selector: string
-  ): Promise<any[]>
+  ): Promise<FetchElementScope[]>
 
   /**
    * Extracts a primitive value from the element based on schema.
    * @param schema - Value extraction schema.
-   * @param context - The element context.
+   * @param scope - The element scope.
    * @internal
    */
   public abstract _extractValue(
     schema: ExtractValueSchema,
-    context: any
+    scope: FetchElementScope
   ): Promise<any>
 
   /**
    * Gets the parent element of the given element.
-   * @param element - The element.
+   * @param scope - The element scope.
    * @internal
    */
-  public abstract _parentElement(element: any): Promise<any | null>
+  public abstract _parentElement(scope: FetchElementScope): Promise<FetchElementScope | null>
 
   /**
    * Checks if two elements are the same.
-   * @param element1 - First element.
-   * @param element2 - Second element.
+   * @param scope1 - First element scope.
+   * @param scope2 - Second element scope.
    * @internal
    */
   public abstract _isSameElement(
-    element1: any,
-    element2: any
+    scope1: FetchElementScope,
+    scope2: FetchElementScope
   ): Promise<boolean>
 
   /**
    * Gets all subsequent siblings of an element until a sibling matches the selector.
    * Used in 'segmented' extraction mode.
-   * @param element - The anchor element.
+   * @param scope - The anchor element scope.
    * @param untilSelector - Optional selector that marks the end of the segment.
    * @internal
    */
   public abstract _nextSiblingsUntil(
-    element: any,
+    scope: FetchElementScope,
     untilSelector?: string
-  ): Promise<any[]>
+  ): Promise<FetchElementScope[]>
 
   protected async _extract(
     schema: ExtractSchema,
-    context: any,
+    scope: FetchElementScope,
     parentStrict?: boolean
   ): Promise<any> {
-    return _extract.call(this, schema, context, parentStrict)
+    return _extract.call(this, schema, scope, parentStrict)
   }
 
   /**
@@ -429,7 +432,7 @@ export abstract class FetchEngine<
    */
   protected async _extractNested(
     items: ExtractSchema,
-    elements: any[],
+    elements: FetchElementScope[],
     opts?: { strict?: boolean }
   ): Promise<any[]> {
     return _extractNested.call(this, items, elements, opts)
@@ -446,7 +449,7 @@ export abstract class FetchEngine<
    */
   protected async _extractColumnar(
     schema: ExtractSchema,
-    container: any,
+    container: FetchElementScope,
     opts?: ColumnarOptions
   ): Promise<any[] | null> {
     return _extractColumnar.call(this, schema, container, opts)
@@ -463,7 +466,7 @@ export abstract class FetchEngine<
    */
   protected async _extractSegmented(
     schema: ExtractSchema,
-    container: any,
+    container: FetchElementScope,
     opts?: SegmentedOptions
   ): Promise<any[] | null> {
     return _extractSegmented.call(this, schema, container, opts)
@@ -844,6 +847,58 @@ export abstract class FetchEngine<
   }
 
   /**
+   * Gets the initial scope for extraction for the specific engine.
+   * @param context - Crawlee crawling context
+   * @internal
+   */
+  protected abstract _getInitialElementScope(context: TContext): FetchElementScope
+
+  /**
+   * Unified action processor that handles engine-agnostic actions.
+   * @param context - Crawlee crawling context
+   * @param action - Action to execute
+   * @internal
+   */
+  protected async _processAction(
+    context: TContext,
+    action: FetchEngineAction
+  ): Promise<any> {
+    switch (action.type) {
+      case 'extract':
+        return extract.call(this, action.schema, this._getInitialElementScope(context))
+      case 'pause':
+        return this._handlePause(action)
+      case 'getContent':
+        return this.buildResponse(context)
+      case 'waitFor':
+        if (action.options?.ms && Object.keys(action.options).length === 1) {
+          await new Promise((resolve) => setTimeout(resolve, action.options!.ms))
+          return
+        }
+        return this.executeAction(context, action)
+      default:
+        return this.executeAction(context, action)
+    }
+  }
+
+  protected async _handlePause(action: { message?: string }): Promise<void> {
+    const onPauseHandler = (this.ctx as any)?.onPause as
+      | OnFetchPauseCallback
+      | undefined
+    if (onPauseHandler) {
+      console.info(
+        action.message || 'Execution paused for manual intervention.'
+      )
+      await onPauseHandler({ message: action.message })
+      console.info('Resuming execution...')
+    } else {
+      console.warn(
+        '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.'
+      )
+    }
+  }
+
+  /**
    * Executes all pending fetch engine actions within the current Crawlee request handler context.
    *
    * **Critical Execution Constraint**: This method **MUST** be awaited within the synchronous execution path
@@ -880,7 +935,7 @@ export abstract class FetchEngine<
             resolve()
             return
           }
-          const result = await this.executeAction(context, action)
+          const result = await this._processAction(context, action)
           resolve(result)
         } catch (error) {
           reject(error)

@@ -8,7 +8,7 @@ import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base'
 import { FetchResponse, type OnFetchPauseCallback } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
-import { ExtractValueSchema } from '../core/extract'
+import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 import { normalizeHtml } from '../utils/cheerio-helpers'
 import { normalizeExtractSchema } from '../core/normalize-extract-schema'
 
@@ -86,12 +86,12 @@ export class PlaywrightFetchEngine extends FetchEngine<
   }
 
   async _querySelectorAll(
-    context: Locator | Locator[],
+    scope: Locator | Locator[],
     selector: string
-  ): Promise<any[]> {
-    if (Array.isArray(context)) {
+  ): Promise<FetchElementScope[]> {
+    if (Array.isArray(scope)) {
       const results: Locator[] = []
-      for (const loc of context) {
+      for (const loc of scope) {
         // find in children
         const matches = await loc.locator(selector).all()
         results.push(...matches)
@@ -104,14 +104,14 @@ export class PlaywrightFetchEngine extends FetchEngine<
       }
       return results
     }
-    return context.locator(selector).all()
+    return scope.locator(selector).all()
   }
 
   async _nextSiblingsUntil(
-    context: Locator,
+    scope: Locator,
     untilSelector?: string
-  ): Promise<any[]> {
-    const allFollowing = await context
+  ): Promise<FetchElementScope[]> {
+    const allFollowing = await scope
       .locator('xpath=following-sibling::*')
       .all()
     if (!untilSelector) return allFollowing
@@ -126,19 +126,19 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return results
   }
 
-  async _parentElement(context: Locator): Promise<any | null> {
+  async _parentElement(scope: Locator): Promise<FetchElementScope | null> {
     // In Playwright, xpath '..' gets parent
-    const parent = context.locator('xpath=..')
+    const parent = scope.locator('xpath=..')
     if ((await parent.count()) === 0) return null
     return parent.first()
   }
 
   async _isSameElement(
-    context1: Locator,
-    context2: Locator
+    scope1: Locator,
+    scope2: Locator
   ): Promise<boolean> {
-    const h1 = await context1.elementHandle()
-    const h2 = await context2.elementHandle()
+    const h1 = await scope1.elementHandle()
+    const h2 = await scope2.elementHandle()
     if (!h1 || !h2) return false
     const result = await h1.evaluate((node1, node2) => node1 === node2, h2)
     // Handles should be disposed?
@@ -152,26 +152,26 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
   async _extractValue(
     schema: ExtractValueSchema,
-    context: Locator
+    scope: Locator
   ): Promise<any> {
     const { attribute, type = 'string', mode = 'text' } = schema
 
-    if ((await context.count()) === 0) return null
+    if ((await scope.count()) === 0) return null
 
     let value: string | null = ''
     if (attribute) {
-      value = await context.getAttribute(attribute)
+      value = await scope.getAttribute(attribute)
     } else if (type === 'html' || mode === 'html' || mode === 'outerHTML') {
       if (mode === 'outerHTML') {
-        value = await context.evaluate((el) => el.outerHTML)
+        value = await scope.evaluate((el) => el.outerHTML)
       } else {
-        value = await context.innerHTML()
+        value = await scope.innerHTML()
       }
       if (value) value = normalizeHtml(value)
     } else if (mode === 'innerText') {
-      value = await context.innerText()
+      value = await scope.innerText()
     } else {
-      value = await context.textContent()
+      value = await scope.textContent()
     }
 
     if (value === null) return null
@@ -188,6 +188,12 @@ export class PlaywrightFetchEngine extends FetchEngine<
     }
   }
 
+  protected _getInitialElementScope(context: PlaywrightCrawlingContext): FetchElementScope {
+    const { page } = context
+    if (!page) return null
+    return page.locator(':root')
+  }
+
   protected async executeAction(
     context: PlaywrightCrawlingContext,
     action: FetchEngineAction
@@ -195,6 +201,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const { page } = context
     const defaultTimeout = this.opts?.timeoutMs || DefaultTimeoutMs
     switch (action.type) {
+      case 'dispose':
+        return
       case 'navigate': {
         const response = await page.goto(action.url, {
           waitUntil: action.opts?.waitUntil || 'domcontentloaded',
@@ -204,15 +212,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
         const fetchResponse = await this.buildResponse(context)
         this.lastResponse = fetchResponse
         return fetchResponse
-      }
-      case 'extract': {
-        const normalizedSchema = normalizeExtractSchema(action.schema)
-        const result = await this._extract(
-          normalizedSchema,
-          page.locator(':root')
-        )
-        this.lastResponse = await this.buildResponse(context)
-        return result
       }
       case 'click': {
         // const beforePageId = page.mainFrame().url();
@@ -351,26 +350,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
           this.lastResponse = await this.buildResponse(context)
           return
         }
-      }
-      case 'pause': {
-        const onPauseHandler = (this.ctx as any)?.onPause as
-          | OnFetchPauseCallback
-          | undefined
-        if (onPauseHandler) {
-          console.info(
-            action.message || 'Execution paused for manual intervention.'
-          )
-          await onPauseHandler({ message: action.message })
-          console.info('Resuming execution...')
-        } else {
-          console.warn(
-            '[PauseAction] was called, but no `onPause` handler was provided in fetchWeb options. Skipped.'
-          )
-        }
-        return
-      }
-      case 'getContent': {
-        return this.buildResponse(context)
       }
       default:
         throw new CommonError(

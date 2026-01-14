@@ -383,10 +383,10 @@ await fetchWeb({
 
 **Segmented 配置参数:**
 
-* **`anchor`** (string): 
-    * 可以是 `items` 中定义的**字段名**（如 `"title"`）。
-    * 也可以是直接的 **CSS 选择器**（如 `"h3.item-title"`）。
-    * 默认使用 `items` 中第一个字段的选择器。
+* **`anchor`** (string):
+  * 可以是 `items` 中定义的**字段名**（如 `"title"`）。
+  * 也可以是直接的 **CSS 选择器**（如 `"h3.item-title"`）。
+  * 默认使用 `items` 中第一个字段的选择器。
 * **`strict`** (boolean, 默认: `false`): 如果为 `true`，若未找到任何锚点元素，或任何项目违反了自身的 `required` 约束，将抛出错误。
 
 ###### 6. 数据质量控制: `required` 和 `strict`
@@ -437,7 +437,6 @@ await fetchWeb({
     "items": { "type": "array", "selector": "li" }
   }
 }
-```
 ```
 
 > **隐式对象的核心特性：**
