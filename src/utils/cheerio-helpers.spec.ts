@@ -20,7 +20,9 @@ describe('cheerio-helpers', () => {
     })
 
     it('should handle block-level elements with single newlines', () => {
-      const $ = load('<div><h1>Title</h1><div>Content</div><ul><li>Item 1</li><li>Item 2</li></ul></div>')
+      const $ = load(
+        '<div><h1>Title</h1><div>Content</div><ul><li>Item 1</li><li>Item 2</li></ul></div>'
+      )
       const result = getInnerText($('div').first())
       expect(result).toBe('Title\nContent\nItem 1\nItem 2')
     })
@@ -61,8 +63,12 @@ describe('cheerio-helpers', () => {
 
   describe('normalizeHtml', () => {
     it('should decode common HTML entities', () => {
-      expect(normalizeHtml('Hello&nbsp;World &copy; 2024')).toBe('Hello World © 2024')
-      expect(normalizeHtml('Price: &euro;100 &yen;1000')).toBe('Price: €100 ¥1000')
+      expect(normalizeHtml('Hello&nbsp;World &copy; 2024')).toBe(
+        'Hello World © 2024'
+      )
+      expect(normalizeHtml('Price: &euro;100 &yen;1000')).toBe(
+        'Price: €100 ¥1000'
+      )
     })
 
     it('should decode numeric and hex entities', () => {
@@ -81,7 +87,9 @@ describe('cheerio-helpers', () => {
     })
 
     it('should decode &quot; and &apos;', () => {
-      expect(normalizeHtml('He said: &quot;Hello&quot;')).toBe('He said: "Hello"')
+      expect(normalizeHtml('He said: &quot;Hello&quot;')).toBe(
+        'He said: "Hello"'
+      )
       expect(normalizeHtml('It&apos;s a test')).toBe("It's a test")
     })
 

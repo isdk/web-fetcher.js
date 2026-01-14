@@ -1,0 +1,37 @@
+{
+  "title": "segmented relativeTo previous test",
+  "options": { "debug": true },
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": {
+          "type": "segmented",
+          "anchor": ".item-start",
+          "relativeTo": "previous"
+        },
+        "items": {
+          "type": "object",
+          "order": ["id", "propA", "propB"],
+          "properties": {
+            "id": { "selector": "h1" },
+            "propA": { "selector": "span" },
+            "propB": { "selector": "span" }
+          }
+        }
+      },
+      "storeAs": "relative_results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "relative_results": [
+        { "id": "Item 1", "propA": "Property A1", "propB": "Property B1" },
+        { "id": "Item 2", "propA": "Property A2", "propB": "Property B2" }
+      ]
+    }
+  }
+}

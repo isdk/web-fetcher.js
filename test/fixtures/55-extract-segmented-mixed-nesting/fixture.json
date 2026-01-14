@@ -1,0 +1,37 @@
+{
+  "title": "mixed nesting consumption test",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": ".title", "relativeTo": "previous" },
+        "items": {
+          "type": "object",
+          "order": ["title", "tags", "author"],
+          "properties": {
+            "title": { "selector": ".title" },
+            "tags": { 
+              "type": "array",
+              "selector": ".tags",
+              "items": { "selector": ".tag" },
+              "required": false
+            },
+            "author": { "selector": ".footer" }
+          }
+        }
+      },
+      "storeAs": "mixed_results"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "mixed_results": [
+        { "title": "Post 1", "tags": ["News", "Tech"], "author": "Alice" },
+        { "title": "Post 2", "tags": null, "author": "Bob" }
+      ]
+    }
+  }
+}

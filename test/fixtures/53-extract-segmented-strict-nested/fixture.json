@@ -1,0 +1,59 @@
+{
+  "title": "strict and nested segmented relativeTo tests",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": ".title", "relativeTo": "previous" },
+        "items": {
+          "type": "object",
+          "order": ["title", "info", "description"],
+          "properties": {
+            "title": { "selector": ".title" },
+            "info": {
+              "type": "object",
+              "selector": ".meta",
+              "properties": {
+                "user": { "selector": ".author" }
+              }
+            },
+            "description": { "selector": ".desc", "required": false }
+          }
+        }
+      },
+      "storeAs": "nested_results"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": { "type": "segmented", "anchor": ".title", "relativeTo": "previous", "strict": true },
+        "items": {
+          "type": "object",
+          "order": ["title", "description"],
+          "properties": {
+            "title": { "selector": ".title" },
+            "description": { "selector": ".desc", "required": true }
+          }
+        }
+      },
+      "storeAs": "strict_error_test"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "nested_results": [
+        { "title": "Item 1", "info": { "user": "Alice" }, "description": "Description 1" },
+        { "title": "Item 2", "info": { "user": "Bob" }, "description": null }
+      ]
+    },
+    "error": {
+      "actionIndex": 2,
+      "message": "/Required property \"description\" is missing./"
+    }
+  }
+}

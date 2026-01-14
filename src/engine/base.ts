@@ -210,7 +210,8 @@ export abstract class FetchEngine<
   TContext extends CrawlingContext = any,
   TCrawler extends BasicCrawler<TContext> = any,
   TOptions extends BasicCrawlerOptions<TContext> = any,
-> implements IExtractEngine {
+> implements IExtractEngine
+{
   // ===== 静态成员：注册管理 =====
   private static registry = new Map<string, AnyFetchEngineCtor>()
 
@@ -380,7 +381,9 @@ export abstract class FetchEngine<
    * @param scope - The element scope.
    * @internal
    */
-  public abstract _parentElement(scope: FetchElementScope): Promise<FetchElementScope | null>
+  public abstract _parentElement(
+    scope: FetchElementScope
+  ): Promise<FetchElementScope | null>
 
   /**
    * Checks if two elements are the same.
@@ -851,7 +854,9 @@ export abstract class FetchEngine<
    * @param context - Crawlee crawling context
    * @internal
    */
-  protected abstract _getInitialElementScope(context: TContext): FetchElementScope
+  protected abstract _getInitialElementScope(
+    context: TContext
+  ): FetchElementScope
 
   /**
    * Unified action processor that handles engine-agnostic actions.
@@ -865,14 +870,20 @@ export abstract class FetchEngine<
   ): Promise<any> {
     switch (action.type) {
       case 'extract':
-        return extract.call(this, action.schema, this._getInitialElementScope(context))
+        return extract.call(
+          this,
+          action.schema,
+          this._getInitialElementScope(context)
+        )
       case 'pause':
         return this._handlePause(action)
       case 'getContent':
         return this.buildResponse(context)
       case 'waitFor':
         if (action.options?.ms && Object.keys(action.options).length === 1) {
-          await new Promise((resolve) => setTimeout(resolve, action.options!.ms))
+          await new Promise((resolve) =>
+            setTimeout(resolve, action.options!.ms)
+          )
           return
         }
         return this.executeAction(context, action)

@@ -22,6 +22,8 @@ const CONTEXT_KEYS = new Set([
   'exclude',
   'required',
   'strict',
+  'relativeTo',
+  'order',
   // 'mode', // mode is not valid for Object schema, only Value/Array.
 ])
 
@@ -68,6 +70,8 @@ export function isImplicitObject(schema: any): boolean {
         'mode',
         'required',
         'strict',
+        'relativeTo',
+        'order',
       ].includes(key)
     ) {
       return true
@@ -92,7 +96,9 @@ export function isImplicitObject(schema: any): boolean {
  *    - Value mode defaults to 'text' (if string).
  *    - Array mode defaults to { type: 'nested' }.
  */
-export function normalizeExtractSchema(schema: ExtractSchema | string): ExtractSchema {
+export function normalizeExtractSchema(
+  schema: ExtractSchema | string
+): ExtractSchema {
   // 1. Handle String Shorthand
   if (typeof schema === 'string') {
     return {

@@ -11,11 +11,23 @@ export type FetchElementScope = any
  * Interface representing the minimal engine capabilities required for extraction.
  */
 export interface IExtractEngine {
-  _querySelectorAll(scope: FetchElementScope, selector: string): Promise<FetchElementScope[]>
-  _extractValue(schema: ExtractValueSchema, scope: FetchElementScope): Promise<any>
+  _querySelectorAll(
+    scope: FetchElementScope,
+    selector: string
+  ): Promise<FetchElementScope[]>
+  _extractValue(
+    schema: ExtractValueSchema,
+    scope: FetchElementScope
+  ): Promise<any>
   _parentElement(scope: FetchElementScope): Promise<FetchElementScope | null>
-  _isSameElement(scope1: FetchElementScope, scope2: FetchElementScope): Promise<boolean>
-  _nextSiblingsUntil(scope: FetchElementScope, untilSelector?: string): Promise<FetchElementScope[]>
+  _isSameElement(
+    scope1: FetchElementScope,
+    scope2: FetchElementScope
+  ): Promise<boolean>
+  _nextSiblingsUntil(
+    scope: FetchElementScope,
+    untilSelector?: string
+  ): Promise<FetchElementScope[]>
   _logDebug(...args: any[]): void
 }
 
@@ -62,6 +74,8 @@ export async function _extract(
       selector,
       properties,
       strict: objectStrict,
+      relativeTo,
+      order,
     } = schema as ExtractObjectSchema
     const finalStrict = objectStrict ?? strict
     let newScope = scope
@@ -87,15 +101,72 @@ export async function _extract(
 
     const result: Record<string, any> = {}
     let hasValue = false
-    for (const key in properties) {
+    const keys = order || Object.keys(properties)
+    let currentWorkingScope = newScope
+    const isSequential = relativeTo === 'previous' && Array.isArray(newScope)
+
+    for (const key of keys) {
+      const propSchema = properties[key]
+      if (!propSchema) continue
+
       this._logDebug(`_extract: extracting property "${key}"`)
-      const value = await _extract.call(
-        this,
-        properties[key],
-        newScope,
-        finalStrict
-      )
-      if (value === null && (properties[key] as any).required) {
+
+      let value: any
+      if (isSequential && (propSchema as any).selector) {
+        const propSelector = (propSchema as any).selector
+        const matches = await this._querySelectorAll(
+          currentWorkingScope,
+          propSelector
+        )
+        if (matches.length > 0) {
+          const matchedElement = matches[0]
+          // Use a temporary schema without selector to avoid redundant lookup in recursion
+          const tempSchema = { ...propSchema, selector: undefined } as any
+          value = await _extract.call(
+            this,
+            tempSchema,
+            matchedElement,
+            finalStrict
+          )
+
+          if (value !== null) {
+            // Find which element in currentWorkingScope contains matchedElement
+            let containerIndex = -1
+            for (let i = 0; i < currentWorkingScope.length; i++) {
+              if (
+                (await this._isSameElement(
+                  currentWorkingScope[i],
+                  matchedElement
+                )) ||
+                (await _isAncestor.call(
+                  this,
+                  currentWorkingScope[i],
+                  matchedElement
+                ))
+              ) {
+                containerIndex = i
+                break
+              }
+            }
+            if (containerIndex !== -1) {
+              currentWorkingScope = currentWorkingScope.slice(
+                containerIndex + 1
+              )
+            }
+          }
+        } else {
+          value = null
+        }
+      } else {
+        value = await _extract.call(
+          this,
+          propSchema,
+          currentWorkingScope,
+          finalStrict
+        )
+      }
+
+      if (value === null && (propSchema as any).required) {
         this._logDebug(`_extract: required property "${key}" is null`)
         if (finalStrict) {
           throw new CommonError(
@@ -158,11 +229,7 @@ export async function _extract(
       }
     }
 
-    if (
-      normalizedMode.type === 'segmented' &&
-      elements.length === 1 &&
-      items
-    ) {
+    if (normalizedMode.type === 'segmented' && elements.length === 1 && items) {
       this._logDebug('_extract: trying segmented extraction')
       const results = await _extractSegmented.call(
         this,
@@ -421,7 +488,10 @@ export async function _extractColumnar(
     const valueSchema = schema as ExtractValueSchema
     if (!valueSchema.selector) return null
 
-    const matches = await this._querySelectorAll(container, valueSchema.selector)
+    const matches = await this._querySelectorAll(
+      container,
+      valueSchema.selector
+    )
     if (matches.length <= 1) return null
 
     const results = await Promise.all(
@@ -479,7 +549,17 @@ export async function _extractSegmented(
     this._logDebug(
       `_extractSegmented: segment ${i} created with ${segmentContext.length} elements using anchorSelector "${anchorSelector}"`
     )
-    const result = await _extract.call(this, schema, segmentContext, opts?.strict)
+    // Inject relativeTo from options if not set in schema
+    const itemSchema = { ...schema } as ExtractObjectSchema
+    if (opts?.relativeTo && !itemSchema.relativeTo) {
+      itemSchema.relativeTo = opts.relativeTo
+    }
+    const result = await _extract.call(
+      this,
+      itemSchema,
+      segmentContext,
+      opts?.strict
+    )
     const isRequired = (schema as any).required
     const isComplex =
       (schema as any).type === 'object' || (schema as any).type === 'array'
@@ -494,6 +574,22 @@ export async function _extractSegmented(
   }
 
   return results
+}
+
+/**
+ * Checks if one element is an ancestor of another.
+ */
+async function _isAncestor(
+  this: IExtractEngine,
+  ancestor: FetchElementScope,
+  descendant: FetchElementScope
+): Promise<boolean> {
+  let current = await this._parentElement(descendant)
+  while (current) {
+    if (await this._isSameElement(ancestor, current)) return true
+    current = await this._parentElement(current)
+  }
+  return false
 }
 
 /**
@@ -596,6 +692,12 @@ export interface SegmentedOptions extends BaseModeOptions {
    * Defaults to the first property key's selector defined in `items`.
    */
   anchor?: string
+  /**
+   * Where to start searching for fields within each segment.
+   * - 'anchor': (Default) All fields are searched within the entire segment.
+   * - 'previous': Each field is searched starting from after the previous field's match.
+   */
+  relativeTo?: 'anchor' | 'previous'
 }
 
 /**
@@ -658,6 +760,18 @@ export interface ExtractObjectSchema extends BaseExtractSchema {
    * Exclude the object element if it matches this selector.
    */
   exclude?: string
+  /**
+   * Where to start searching for fields within this object.
+   * Only applicable when the object is being extracted from an array of elements (e.g. in 'segmented' mode).
+   * - 'anchor': (Default) All fields are searched within the entire scope.
+   * - 'previous': Each field is searched starting from after the previous field's match.
+   */
+  relativeTo?: 'anchor' | 'previous'
+  /**
+   * Explicit order of property extraction.
+   * Useful when using `relativeTo: 'previous'`.
+   */
+  order?: string[]
   /**
    * Definition of the object's properties and their corresponding extraction schemas.
    */
