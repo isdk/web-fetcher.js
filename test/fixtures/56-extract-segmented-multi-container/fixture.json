@@ -1,6 +1,5 @@
 {
   "title": "Verify Segmented Extraction",
-  "options": {"debug": true},
   "actions": [
     { "action": "goto", "params": { "url": "/" } },
     {

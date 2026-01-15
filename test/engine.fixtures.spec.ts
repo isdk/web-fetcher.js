@@ -338,10 +338,20 @@ const engineTestSuite = (
         // If the last action was extract with an auto-injected storeAs, use it as result
         if (res.outputs && '__test_result__' in res.outputs) {
           result = res.outputs.__test_result__;
+        } else if (res.outputs && fixture.expected?.data) {
+          // Heuristic: If we expect data, and outputs exist but no __test_result__
+          const keys = Object.keys(res.outputs);
+          if (keys.length === 1) {
+            result = res.outputs[keys[0]];
+          } else if ('data' in res.outputs) {
+            result = res.outputs.data;
+          } else {
+            result = res.result;
+          }
         } else {
           result = res.result;
         }
-        // console.log('🚀 ~ file: engine.fixtures.spec.ts:340 ~ result:', JSON.stringify(res.outputs, null, 2))
+        console.log('🚀 ~ file: engine.fixtures.spec.ts:340 ~ result:', JSON.stringify(res.outputs, null, 2))
 
         if (consoleSpy) {
           if (fixture.expected?.logs) {
