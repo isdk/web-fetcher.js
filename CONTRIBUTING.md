@@ -91,6 +91,7 @@ The project employs a two-tier testing strategy:
 
 **Note on Results**:
 The test runner checks `expected.data` against:
+
 1. The implicit result of the last action (stored as `__test_result__`).
 2. An explicit output named `data` (if you used `"storeAs": "data"`).
 3. The single output available if `storeAs` was used but with a different name.
@@ -285,6 +286,46 @@ fix(session): ensure cookies are persisted across redirects
 ```
 
 ## 🧩 Implementation Details & Gotchas
+
+### 核心提取逻辑实现细节 (`src/core/extract.ts`)
+
+为了处理复杂的 Web 结构（如非嵌套的平铺列表或需要跨字段引用的锚点），核心提取逻辑采用了以下关键设计：
+
+#### 1. 字段追踪与锚点关联 (`fieldElements`)
+
+**设计初衷**：在 `object` 提取过程中，我们维护了一个 `fieldElements` Map，记录每个字段名对应的 DOM 元素。
+
+- **注意点**：无论字段是否具有 `selector`，只要提取成功，就必须记录其 `extractedElement`。这是为了支持后续字段通过 `anchor: "fieldName"` 引用它。
+- **逻辑边界**：如果一个字段提取的是数组，`fieldElements` 通常记录该数组的第一个元素作为锚点参考。
+
+#### 2. 递归中的上下文保护 (`_skipSelector`)
+
+**为什么需要**：在 `object` 循环中，父级往往已经通过 `querySelectorAll` 选好了子字段的元素。
+
+- **实现细节**：在递归调用子级的 `_extract` 时，我们会传入 `_skipSelector: true`。
+- **目的**：
+    1. **性能**：避免在 Playwright 中执行冗余的跨进程 DOM 查询。
+    2. **正确性**：防止子级 Schema 的 `selector` 在其自身内部重新搜索。例如字段 Schema 为 `{ "id": { "selector": "span" } }`，如果已经选好了那个 `span`，子级就不应再在其内部寻找另一个 `span`。
+
+#### 3. 冒泡定位策略 (`_bubbleUpToScope`)
+
+**设计初衷**：锚点（Anchor）可能是一个深层嵌套的元素（如 `div > p > span`），但顺序扫描或分段模式通常操作的是一组直系兄弟节点（如 `div` 列表）。
+
+- **实现原理**：该函数从深层元素向上回溯，直到找到一个直接存在于当前 `scope`（作用域数组）中的祖先。
+- **重要性**：只有定位到这个“直系项”，我们才能正确执行 `nextSiblingsUntil` 或游标切片，否则扫描位置会发生偏移。
+
+#### 4. 消费游标逻辑 (`_sliceSequentialScope`)
+
+**设计初衷**：处理 `relativeTo: 'previous'`（顺序提取）。
+
+- **工作方式**：提取完一个字段后，通过 `_bubbleUpToScope` 确定该字段对应的顶级兄弟节点位置，然后将当前的搜索范围（`currentWorkingScope`）“切掉”已处理的部分。
+- **注意点**：如果字段匹配失败，游标不应移动，以便下一个可选字段从相同位置继续尝试。
+
+#### 5. 性能提醒：Playwright RPC 调用
+
+在 `browser` 模式下，每次 `_querySelectorAll` 或 `_isSameElement` 都是一次昂贵的 RPC 调用。
+
+- **优化建议**：在实现新功能（如推理或去重）时，优先考虑批量操作，或在可能的情况下利用 `_skipSelector` 减少查询频率。
 
 ### DOM Traversal Safeguard (MAX_DOM_DEPTH)
 

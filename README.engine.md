@@ -191,24 +191,25 @@ The `extract()` method provides a powerful, declarative way to pull structured d
 
 To ensure consistency across engines and maintain high quality, the extraction system is divided into three layers:
 
-1. **Normalization Layer (`src/core/normalize-extract-schema.ts`)**: Pre-processes user-provided schemas into a canonical internal format. This handles shorthands and merges CSS filters.
-2. **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer that manages the "workflow" of extraction, including recursion, array mode switching (Nested, Columnar, Segmented), and strict mode/required field validation. It operates on a **`FetchElementScope`**.
-3. **Engine Interface (`IExtractEngine`)**: Defined in the core layer and implemented by each engine (in `base.ts` and its subclasses), providing atomic DOM operations that work with the scope.
+1. **Normalization Layer (`src/core/normalize-extract-schema.ts`)**: Pre-processes user-provided schemas into a canonical internal format, handling CSS filter merging and implicit object detection.
+2. **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer responsible for the extraction workflow. It dispatches tasks to `_extractObject`, `_extractArray`, or `_extractValue` via a **Dispatcher (`_extract`)**. It manages recursion, strict mode, required field validation, anchor resolution, and sequential consumption cursors.
+3. **Engine Interface (`IExtractEngine`)**: Defined at the core layer and implemented by engines to provide low-level DOM primitives.
 
 #### Implementation Rules for `IExtractEngine`
 
-To maintain cross-engine consistency, all implementations MUST follow these rules:
+To maintain cross-engine consistency, all implementations MUST follow these behavior contracts:
 
 - **`_querySelectorAll`**:
   - MUST return matching elements in **document order**.
-  - MUST check if the scope element(s) **themselves** match the selector.
-  - MUST search the **descendants** of each scope element.
+  - MUST check if the scope element(s) **themselves** match the selector and search their **descendants**.
 - **`_nextSiblingsUntil`**:
-  - MUST return a flat list of siblings starting *after* the anchor and stopping *before* the first element matching the `untilSelector` (exclusive).
-- **`_bubbleUpToScope`**:
-  - MUST implement a depth limit (default 1000) to prevent infinite loops in corrupted DOM structures.
+  - MUST return a flat list of siblings starting *after* the anchor and stopping *before* the first element matching the `untilSelector`.
+- **`_isSameElement`**:
+  - MUST compare elements based on **identity**, not content.
+- **`_bubbleUpToScope` (Internal Helper)**:
+  - Implements the logic to bubble up from a deep element to its direct ancestor in the current scope. MUST include a depth limit (default 1000) to prevent infinite loops.
 
-This decoupling ensures that complex features like **Columnar Alignment**, **Segmented Scanning**, and **Anchor Jumping** behave identically whether you are using the fast Cheerio engine or the full Playwright browser.
+This architecture ensures that complex features like **Columnar Alignment**, **Segmented Scanning**, and **Anchor Jumping** behave identically across the fast Cheerio engine and the full Playwright browser.
 
 ### Schema Normalization
 

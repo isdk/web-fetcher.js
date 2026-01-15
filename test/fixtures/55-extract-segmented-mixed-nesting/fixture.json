@@ -13,7 +13,7 @@
           "order": ["title", "tags", "author"],
           "properties": {
             "title": { "selector": ".title" },
-            "tags": { 
+            "tags": {
               "type": "array",
               "selector": ".tags",
               "items": { "selector": ".tag" },

@@ -192,21 +192,24 @@ await session.executeAll([
 为了确保不同引擎之间的一致性并保持高质量,提取系统分为三个层次:
 
 1. **规范化层 (`src/core/normalize-extract-schema.ts`)**: 将用户提供的各种简写模式预处理为统一的内部格式,处理 CSS 筛选器的合并。
-2. **核心提取逻辑 (`src/core/extract.ts`)**: 引擎无关层,管理提取的“工作流”,包括递归、数组模式切换（Nested, Columnar, Segmented）以及严格模式/必填字段验证。它在 **`FetchElementScope`** 之上运行。
-3. **引擎接口层 (`IExtractEngine`)**: 在核心层定义,由各引擎在 `base.ts` 及其子类中实现,提供底层的 DOM 原子操作，这些操作均接受并返回上述 Scope。
+2. **核心提取逻辑 (`src/core/extract.ts`)**: 引擎无关层,负责提取的工作流分发。它通过 **Dispatcher (`_extract`)** 将任务分发给 `_extractObject`、`_extractArray` 或 `_extractValue`。该层管理递归、严格模式/必填字段验证、锚点解析以及顺序消费游标逻辑。
+3. **引擎接口层 (`IExtractEngine`)**: 在核心层定义,由各引擎实现,提供底层的 DOM 原子操作。
 
 #### `IExtractEngine` 实现准则
 
-为了保持跨引擎的一致性，所有实现必须遵循以下规则：
+为了保持跨引擎的一致性，所有实现必须遵循以下行为契约：
 
 - **`_querySelectorAll`**:
   - 必须按 **DOM 文档顺序**返回匹配的元素。
-  - 必须检查 Scope 元素**自身**是否匹配选择器。
-  - 必须搜索每个 Scope 元素的**后代**。
+  - 必须检查 Scope 元素**自身**是否匹配选择器，并搜索其**后代**。
 - **`_nextSiblingsUntil`**:
-  - 必须返回一个平铺的兄弟节点列表，从起始锚点之后开始，到第一个匹配 `untilSelector` 的元素之前停止（不含边界）。
-- **`_bubbleUpToScope`**:
-  - 必须实现深度限制（默认 1000），防止在损坏的 DOM 结构中陷入死循环。
+  - 必须返回一个平铺的兄弟节点列表，从起始锚点之后开始，到第一个匹配 `untilSelector` 的元素之前停止。
+- **`_isSameElement`**:
+  - 必须基于元素身份（Identity）进行比较，而不是内容。
+- **`_bubbleUpToScope` (内部辅助)**:
+  - 实现从深层元素向上回溯至当前作用域直系子项的逻辑。必须包含深度限制（默认 1000），防止死循环。
+
+这种架构确保了诸如 **列对齐 (Columnar Alignment)**、**分段扫描 (Segmented Scanning)** 以及 **属性锚点跳转 (Anchor Jumping)** 等复杂功能在不同引擎下表现高度一致。
 
 这种解耦确保了诸如 **列对齐 (Columnar Alignment)**、**分段扫描 (Segmented Scanning)** 以及 **属性锚点跳转 (Anchor Jumping)** 等复杂功能,无论是在快速的 Cheerio 引擎还是完整的 Playwright 浏览器中,其行为都完全一致。
 

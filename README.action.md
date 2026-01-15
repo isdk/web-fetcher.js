@@ -298,13 +298,15 @@ Define a structured object using `type: 'object'` and the `properties` field.
 }
 ```
 
-**Object Configuration:**
+**Advanced Object Features:**
 
-* **`anchor`** (string, optional): Specifies the starting anchor for extraction of a field.
-  * **Field Name**: Uses the DOM element of a previously extracted field as the anchor.
-  * **CSS Selector**: Re-queries the selector within the current object scope to find the anchor.
-  * Once anchored, the search scope for this field becomes the siblings **following** the anchor (similar to `relativeTo: "previous"` but with an explicit start point).
-  * **Bubble Up**: If the anchor is nested deep inside a structure, the engine automatically "bubbles up" to find the valid container within the current scope.
+* **Anchor Jumping (`anchor`)**: Specifies a starting reference point for a field.
+  * **Field Reference**: Use the DOM element of a previously extracted field.
+  * **CSS Selector**: Query an anchor element on the fly within the object's scope.
+  * **Effect**: Once an anchor is set, the search scope for that field becomes the siblings **following** the anchor. This allows for non-linear "jumping" extraction in flat structures.
+* **Sequential Consumption (`relativeTo: "previous"`)**:
+  * Combined with the `order` property, this ensures each field's search scope starts *after* the previous field's match.
+  * Essential for extracting from lists composed of identical tags (e.g., consecutive `<p>` tags with different meanings).
 
 ###### 3. Extracting an Array (Convenient Usage)
 
@@ -373,14 +375,15 @@ This mode is used when the `selector` points to a **container** (like a results 
 
 ###### 5. Segmented Mode (Anchor-based Scanning)
 
-This mode is ideal for "flat" structures where there are no item wrappers, **or for identifying logical containers (like Cards) when the anchor is nested deep inside**. It uses a specified `anchor` to segment the container's content.
+Ideal for "flat" structures where there are no item wrappers. It uses a specified `anchor` to segment the container's content.
 
-**Feature: Automatic Container Detection (Bubble Up)**
+**Core Feature: Automatic Container Detection (Bubble Up)**
 
-When the anchor is nested (e.g., `div.card > div.header > h3.title`), the engine automatically "bubbles up" from the anchor to find the largest safe container (e.g., `div.card`) that doesn't overlap with neighboring anchors.
+To handle structures that appear flat but have subtle containers, the engine uses a bubble-up strategy:
 
-* **Nested Structure**: If a safe container is found, it becomes the scope for that segment, allowing you to extract other fields (like `div.footer > span.date`) that are outside the anchor's immediate parent but inside the same logical item.
-* **Flat Structure (Fallback)**: If bubbling is impossible (e.g., items share a direct parent), it automatically falls back to the classic "sibling scanning" mode.
+- **Smart Bubble Up**: When an anchor is nested deep (e.g., `div.card > h3.title`), the engine automatically crawls up the DOM to find the largest "safe container" (e.g., `div.card`) that doesn't overlap with neighbors.
+- **Logical Isolation**: If a container is found, it becomes the scope for that segment. This allows you to extract any content within that container using simple relative selectors, even if it's "above" or deep alongside the anchor.
+- **Flat Fallback**: If no container isolation is possible, it automatically falls back to classic sibling scanning.
 
 ```json
 {
@@ -438,15 +441,14 @@ When a segment contains multiple identical tags (e.g., several `<p>` tags in a r
 
 ###### 6. Quality Control: `required` and `strict`
 
-To ensure data integrity and handle messy HTML, you can use `required` and `strict` fields.
-
-* **`required`**: Marks a field as mandatory.
-  * If a `required` field is missing, an **Object** will return `null`.
-  * In an **Array**, the entire row/item will be **skipped** (ignored).
-* **`strict`**: Controls how failures are handled.
-  * `false` (Default): Missing required fields are silently ignored/skipped.
-  * `true`: Any missing required field or alignment mismatch will throw an error.
-  * **Propagation**: Setting `strict: true` at the array level (e.g., in `mode`) automatically enables strict checking for all nested items.
+- **`required`**: Marks a field as mandatory.
+  - **In Objects**: If any required field is `null`, the entire object returns `null`.
+  - **In Arrays**: Items missing a required field are automatically skipped.
+  - **Null Propagation**: For implicit objects without a `selector`, if ALL sub-properties are `null`, the object itself becomes `null`, triggering parent-level required or skip logic.
+- **`strict`**:
+  - `false` (Default): Silently skip or ignore incomplete data.
+  - `true`: Throw an error on any missing required field or alignment mismatch.
+  - **Inheritance**: Setting `strict: true` at the array level automatically propagates to all nested children.
 
 **Example: Ignoring items with missing mandatory fields**
 
