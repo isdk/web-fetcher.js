@@ -112,8 +112,15 @@ export interface IExtractEngine {
 const MAX_DOM_DEPTH = 1000
 
 /**
- * Public entry point for extraction.
- * Normalizes the schema and then calls the internal _extract logic.
+ * Public entry point for structured data extraction.
+ *
+ * This function normalizes the input schema and initiates the recursive extraction process.
+ *
+ * @param this - The engine instance (Cheerio or Playwright).
+ * @param schema - The raw extraction schema or a shortcut.
+ * @param scope - The initial DOM scope (usually the document root).
+ * @param parentStrict - Internal use: inherited strict mode from parent.
+ * @returns A promise resolving to the extracted structured data.
  */
 export async function extract(
   this: IExtractEngine,
@@ -126,11 +133,20 @@ export async function extract(
 }
 
 /**
- * The core extraction logic, engine-agnostic.
- * @param this - The engine instance providing low-level DOM access.
- * @param schema - The extraction schema.
- * @param scope - The current DOM scope (element or array of elements).
- * @param parentStrict - Whether strict mode is inherited from parent.
+ * The core recursive extraction logic.
+ *
+ * Handles three main types of extraction:
+ * 1. **Object**: Extracts multiple properties, supporting anchors and sequential scanning.
+ * 2. **Array**: Extracts lists of items using nested, columnar, or segmented modes.
+ * 3. **Value**: Extracts primitive data (text, HTML, attributes) from elements.
+ *
+ * @param this - The engine instance.
+ * @param schema - The normalized extraction schema.
+ * @param scope - The current execution context (single element or array of elements).
+ * @param parentStrict - Whether to throw errors on missing required fields.
+ * @returns A promise resolving to the extracted value, object, or array.
+ *
+ * @internal
  */
 export async function _extract(
   this: IExtractEngine,
@@ -149,322 +165,301 @@ export async function _extract(
     return schemaType === 'array' ? [] : null
   }
 
-  if (schemaType === 'object') {
-    const {
-      selector,
-      properties,
-      strict: objectStrict,
-      relativeTo,
-      order,
-    } = schema as ExtractObjectSchema
-    const finalStrict = objectStrict ?? strict
-    let newScope = scope
-    if (selector) {
-      const elements = await this._querySelectorAll(scope, selector)
-      newScope = elements.length > 0 ? elements[0] : null
-      this._logDebug(
-        `_extract: object selector "${selector}" found ${elements.length} elements`
+  switch (schemaType) {
+    case 'object':
+      return _extractObject.call(
+        this,
+        schema as ExtractObjectSchema,
+        scope,
+        strict
+      )
+    case 'array':
+      return _extractArray.call(
+        this,
+        schema as ExtractArraySchema,
+        scope,
+        strict
+      )
+    default:
+      return _extractValue.call(
+        this,
+        schema as ExtractValueSchema,
+        scope,
+        strict
+      )
+  }
+}
+
+/**
+ * Extracts an object with multiple properties.
+ *
+ * This function handles:
+ * 1. **Scope Resolution**: Finding the root element of the object if a selector is provided.
+ * 2. **Property Iteration**: Extracting each property defined in the schema.
+ * 3. **Anchor Handling**: Adjusting the search scope for fields that specify an `anchor`.
+ * 4. **Sequential Scanning**: Advancing the cursor for `relativeTo: 'previous'` mode.
+ * 5. **Field Tracking**: Storing elements of extracted fields for subsequent anchor references.
+ *
+ * @param schema - The object extraction schema.
+ * @param scope - The parent DOM scope.
+ * @param strict - Whether to inherit strict mode.
+ * @returns A promise resolving to the extracted object, or null if not found/empty.
+ * @internal
+ */
+async function _extractObject(
+  this: IExtractEngine,
+  schema: ExtractObjectSchema,
+  scope: FetchElementScope,
+  strict?: boolean
+): Promise<any> {
+  const {
+    selector,
+    properties,
+    strict: objectStrict,
+    relativeTo,
+    order,
+  } = schema
+  const finalStrict = objectStrict ?? strict
+  const skipSelector = (schema as any)._skipSelector
+  let newScope = scope
+
+  if (selector && !skipSelector) {
+    const elements = await this._querySelectorAll(scope, selector)
+    newScope = elements.length > 0 ? elements[0] : null
+    this._logDebug(
+      `_extractObject: selector "${selector}" found ${elements.length} elements`
+    )
+  }
+
+  if (!newScope) {
+    this._logDebug(
+      `_extractObject: scope not found for selector "${selector || ''}"`
+    )
+    if (finalStrict && schema.required) {
+      throw new CommonError(
+        `Required object "${selector || ''}" is missing.`,
+        'extract'
       )
     }
-    if (!newScope) {
-      this._logDebug(
-        `_extract: object scope not found for selector "${selector}"`
+    return null
+  }
+
+  const result: Record<string, any> = {}
+  let hasValue = false
+  const keys = order || Object.keys(properties)
+  let currentWorkingScope = newScope
+  const fieldElements = new Map<string, FetchElementScope>()
+  const isSequential = relativeTo === 'previous' && Array.isArray(newScope)
+
+  for (const key of keys) {
+    const propSchema = properties[key]
+    if (!propSchema) continue
+
+    this._logDebug(`_extractObject: extracting property "${key}"`)
+
+    let scopeForField = currentWorkingScope
+    if (propSchema.anchor) {
+      const anchorResult = await _resolveAnchorScope.call(
+        this,
+        propSchema.anchor,
+        properties,
+        fieldElements,
+        newScope,
+        isSequential
       )
-      if (finalStrict && (schema as any).required) {
+      if (anchorResult) {
+        scopeForField = anchorResult.scopeForField
+        if (isSequential) {
+          currentWorkingScope = scopeForField
+        }
+      } else if (finalStrict) {
         throw new CommonError(
-          `Required object "${selector || ''}" is missing.`,
+          `Anchor "${propSchema.anchor}" not found or out of scope.`,
+          'extract'
+        )
+      }
+    }
+
+    let value: any
+    let extractedElement: FetchElementScope = null
+    const propSelector = (propSchema as any).selector
+    const isArrayField = propSchema.type === 'array'
+
+    if (propSelector) {
+      const matches = await this._querySelectorAll(scopeForField, propSelector)
+      if (matches.length > 0) {
+        extractedElement = matches[0]
+        const tempSchema = { ...propSchema, _skipSelector: true } as any
+        value = await _extract.call(
+          this,
+          tempSchema,
+          isArrayField ? matches : extractedElement,
+          finalStrict
+        )
+
+        if (isSequential && !propSchema.anchor) {
+          const matchToSliceAfter =
+            isArrayField && Array.isArray(value)
+              ? matches[matches.length - 1]
+              : extractedElement
+          currentWorkingScope = await _sliceSequentialScope.call(
+            this,
+            matchToSliceAfter,
+            currentWorkingScope
+          )
+        }
+      } else {
+        value = null
+      }
+    } else {
+      value = await _extract.call(this, propSchema, scopeForField, finalStrict)
+      if (value !== null) {
+        extractedElement = Array.isArray(scopeForField)
+          ? scopeForField[0]
+          : scopeForField
+      }
+    }
+
+    if (extractedElement) {
+      fieldElements.set(key, extractedElement)
+    }
+
+    if (value === null && (propSchema as any).required) {
+      if (finalStrict) {
+        throw new CommonError(
+          `Required property "${key}" is missing.`,
           'extract'
         )
       }
       return null
     }
-
-    const result: Record<string, any> = {}
-    let hasValue = false
-    const keys = order || Object.keys(properties)
-    let currentWorkingScope = newScope
-    // fieldElements stores the DOM element(s) associated with each extracted field
-    const fieldElements = new Map<string, FetchElementScope>()
-
-    const isSequential = relativeTo === 'previous' && Array.isArray(newScope)
-
-    for (const key of keys) {
-      const propSchema = properties[key]
-      if (!propSchema) continue
-
-      this._logDebug(`_extract: extracting property "${key}"`)
-
-      // --- Anchor Logic ---
-      let scopeForField = currentWorkingScope
-      if (propSchema.anchor) {
-        let anchorElement: FetchElementScope = null
-        // 1. Check if anchor is a reference to a known field property
-        const isFieldRef = properties.hasOwnProperty(propSchema.anchor)
-
-        if (isFieldRef) {
-          if (fieldElements.has(propSchema.anchor)) {
-            anchorElement = fieldElements.get(propSchema.anchor)
-            this._logDebug(
-              `_extract: anchor resolved from field "${propSchema.anchor}"`
-            )
-          } else {
-            // It is a field ref, but that field wasn't found.
-            // We should NOT fallback to selector.
-            this._logDebug(
-              `_extract: anchor field "${propSchema.anchor}" was not found previously`
-            )
-          }
-        } else {
-          // 2. Not a field name, treat as a CSS selector within the object's root scope
-          // Note: we use 'newScope' (the object container) as the base for the selector
-          const anchors = await this._querySelectorAll(
-            newScope,
-            propSchema.anchor
-          )
-          if (anchors.length > 0) {
-            anchorElement = anchors[0]
-            this._logDebug(
-              `_extract: anchor resolved from selector "${propSchema.anchor}"`
-            )
-          }
-        }
-
-        if (anchorElement) {
-          // Bubble up to find the "effective anchor" within the current context
-          // If we are operating on a list of siblings (isSequential or caused by previous anchor),
-          // we need to find which sibling contains our anchor.
-          // If we are in a single element scope, we find which direct child contains the anchor.
-          const effectiveAnchor = await _bubbleUpToScope.call(
-            this,
-            anchorElement,
-            newScope
-          )
-
-          if (effectiveAnchor) {
-            // Set scope to siblings AFTER the anchor
-            scopeForField = await this._nextSiblingsUntil(effectiveAnchor)
-            this._logDebug(
-              `_extract: scope adjusted to ${scopeForField.length} siblings after anchor`
-            )
-            // If this is a sequential flow, we might want to update currentWorkingScope too,
-            // but strict 'anchor' usually implies a specific jump for THIS field.
-            // However, if relativeTo='previous' is ON, should this jump affect subsequent fields?
-            // "Anchor" effectively resets the cursor. So yes, it makes sense to update currentWorkingScope
-            // if we are in sequential mode.
-            if (isSequential) {
-              currentWorkingScope = scopeForField
-            }
-          } else {
-            this._logDebug(
-              `_extract: anchor element found but not within current scope chain`
-            )
-            if (finalStrict) {
-              throw new CommonError(
-                `Anchor "${propSchema.anchor}" is not within the expected scope.`,
-                'extract'
-              )
-            }
-          }
-        } else {
-          this._logDebug(`_extract: anchor "${propSchema.anchor}" not found`)
-          if (finalStrict) {
-            throw new CommonError(
-              `Anchor "${propSchema.anchor}" not found.`,
-              'extract'
-            )
-          }
-        }
-      }
-
-      let value: any
-      let extractedElement: FetchElementScope = null
-
-      // Determine if we should pre-select the element to track it
-      // We do this if it has a selector OR if we are in a sequential/array scope where we need to pick one.
-      const propSelector = (propSchema as any).selector
-
-      if (propSelector && (Array.isArray(scopeForField) || propSchema.anchor)) {
-        // Hoisted selection logic for accurate element tracking
-        const matches = await this._querySelectorAll(
-          scopeForField,
-          propSelector
-        )
-        if (matches.length > 0) {
-          extractedElement = matches[0]
-          // Use a temporary schema without selector to avoid redundant lookup
-          const tempSchema = { ...propSchema, selector: undefined } as any
-          value = await _extract.call(
-            this,
-            tempSchema,
-            extractedElement,
-            finalStrict
-          )
-
-          // If sequential, update the cursor (slice scope)
-          if (isSequential && !propSchema.anchor) {
-            // Logic to find matchedElement index in currentWorkingScope and slice
-            // (Reusing existing logic, but now robust with _bubbleUp)
-            const effectiveMatch = await _bubbleUpToScope.call(
-              this,
-              extractedElement,
-              currentWorkingScope
-            )
-            if (effectiveMatch) {
-              // Actually _bubbleUpToScope already returns the item from the array if matched.
-              // But we can't easily find index of an object reference if they are different wrappers.
-              // Let's rely on _isSameElement loop.
-              let containerIndex = -1
-              for (let i = 0; i < currentWorkingScope.length; i++) {
-                if (
-                  await this._isSameElement(
-                    currentWorkingScope[i],
-                    effectiveMatch
-                  )
-                ) {
-                  containerIndex = i
-                  break
-                }
-              }
-              if (containerIndex !== -1) {
-                currentWorkingScope = currentWorkingScope.slice(
-                  containerIndex + 1
-                )
-              }
-            }
-          }
-        } else {
-          value = null
-        }
-      } else {
-        // Standard extraction (recurses and handles selection internally)
-        value = await _extract.call(
-          this,
-          propSchema,
-          scopeForField,
-          finalStrict
-        )
-        // If successful and it was a simple extraction from the current scope...
-        // We can't easily get the element back if we delegated everything.
-        // But for anchoring to work, we mostly care about fields WITH selectors.
-        // If a field has no selector (inherits scope), its element IS the scope.
-        if (value !== null && !propSelector) {
-          extractedElement = Array.isArray(scopeForField)
-            ? scopeForField[0]
-            : scopeForField
-        }
-      }
-
-      if (extractedElement) {
-        fieldElements.set(key, extractedElement)
-      }
-
-      if (value === null && (propSchema as any).required) {
-        this._logDebug(`_extract: required property "${key}" is null`)
-        if (finalStrict) {
-          throw new CommonError(
-            `Required property "${key}" is missing.`,
-            'extract'
-          )
-        }
-        return null
-      }
-      if (value !== null) {
-        hasValue = true
-      }
-      result[key] = value
+    if (value !== null) {
+      hasValue = true
     }
-    if (!selector && !hasValue && Object.keys(properties).length > 0) {
-      return null
-    }
-    return result
+    result[key] = value
   }
 
-  if (schemaType === 'array') {
-    const {
-      selector,
-      items,
-      mode,
-      strict: arrayStrict,
-    } = schema as ExtractArraySchema
-    const finalStrict = arrayStrict ?? strict
-    const elements = selector
+  if (!selector && !hasValue && Object.keys(properties).length > 0) {
+    return null
+  }
+  return result
+}
+
+/**
+ * Extracts an array of items.
+ *
+ * This function dispatches the extraction to different modes:
+ * 1. **Columnar**: Aligns multiple value matches by index into objects.
+ * 2. **Segmented**: Splits the container into segments using an anchor element.
+ * 3. **Nested (Default)**: Recursively extracts items from each matched element.
+ *
+ * It correctly handles `skipSelector` to avoid redundant queries when elements
+ * have been pre-selected by a parent object.
+ *
+ * @param schema - The array extraction schema.
+ * @param scope - The parent DOM scope.
+ * @param strict - Whether to inherit strict mode.
+ * @returns A promise resolving to the array of extracted items.
+ * @internal
+ */
+async function _extractArray(
+  this: IExtractEngine,
+  schema: ExtractArraySchema,
+  scope: FetchElementScope,
+  strict?: boolean
+): Promise<any[]> {
+  const { selector, items, mode, strict: arrayStrict } = schema
+  const finalStrict = arrayStrict ?? strict
+  const skipSelector = (schema as any)._skipSelector
+  const elements =
+    selector && !skipSelector
       ? await this._querySelectorAll(scope, selector)
-      : [scope]
+      : Array.isArray(scope)
+        ? scope
+        : [scope]
 
-    this._logDebug(
-      `_extract: array selector "${selector || ''}" found ${elements.length} elements`
+  this._logDebug(
+    `_extractArray: selector "${selector || ''}" found ${elements.length} elements`
+  )
+
+  const normalizedMode = _normalizeArrayMode.call(this, mode)
+  if (finalStrict !== undefined && normalizedMode.strict === undefined) {
+    normalizedMode.strict = finalStrict
+  }
+
+  if (
+    (!mode || normalizedMode.type === 'columnar') &&
+    elements.length === 1 &&
+    items
+  ) {
+    this._logDebug('_extractArray: trying columnar extraction')
+    const results = await _extractColumnar.call(
+      this,
+      items,
+      elements[0],
+      normalizedMode
     )
+    if (results) return results
+  }
 
-    const normalizedMode = _normalizeArrayMode.call(this, mode)
-    if (finalStrict !== undefined && normalizedMode.strict === undefined) {
-      normalizedMode.strict = finalStrict
-    }
-    const isAuto = !mode
+  if (normalizedMode.type === 'segmented' && items) {
+    this._logDebug(
+      `_extractArray: trying segmented extraction for ${elements.length} containers`
+    )
+    const allResults: any[] = []
+    let success = false
 
-    if (
-      (isAuto || normalizedMode.type === 'columnar') &&
-      elements.length === 1 &&
-      items
-    ) {
-      this._logDebug('_extract: trying columnar extraction')
-      const results = await _extractColumnar.call(
+    for (const element of elements) {
+      const results = await _extractSegmented.call(
         this,
         items,
-        elements[0],
+        element,
         normalizedMode
       )
       if (results) {
-        this._logDebug(
-          `_extract: columnar extraction successful, found ${results.length} items`
-        )
-        return results
+        success = true
+        allResults.push(...results)
       }
     }
-
-    if (normalizedMode.type === 'segmented' && items) {
-      this._logDebug(
-        `_extract: trying segmented extraction for ${elements.length} containers`
-      )
-      const allResults: any[] = []
-      let success = false
-
-      for (const element of elements) {
-        const results = await _extractSegmented.call(
-          this,
-          items,
-          element,
-          normalizedMode
-        )
-        if (results) {
-          success = true
-          allResults.push(...results)
-        }
-      }
-
-      if (success) {
-        this._logDebug(
-          `_extract: segmented extraction successful, found ${allResults.length} items`
-        )
-        return allResults
-      }
-    }
-
-    // Default fallback or explicit nested
-    this._logDebug(
-      `_extract: using nested extraction for ${elements.length} elements`
-    )
-    return _extractNested.call(this, items!, elements, {
-      strict: normalizedMode.strict,
-    })
+    if (success) return allResults
   }
 
-  const { selector } = schema as ExtractValueSchema
+  this._logDebug(
+    `_extractArray: using nested extraction for ${elements.length} elements`
+  )
+  return _extractNested.call(this, items!, elements, {
+    strict: normalizedMode.strict,
+  })
+}
+
+/**
+ * Extracts a single primitive value (string, number, boolean, or HTML).
+ *
+ * This function locates the target element and delegates the actual data
+ * retrieval to the engine's `_extractValue` implementation.
+ *
+ * @param schema - The value extraction schema.
+ * @param scope - The parent DOM scope.
+ * @param strict - Whether to inherit strict mode.
+ * @returns A promise resolving to the extracted primitive value, or null if not found.
+ * @internal
+ */
+async function _extractValue(
+  this: IExtractEngine,
+  schema: ExtractValueSchema,
+  scope: FetchElementScope,
+  strict?: boolean
+): Promise<any> {
+  const { selector } = schema
+  const skipSelector = (schema as any)._skipSelector
+  const finalStrict = schema.strict ?? strict
   let elementToExtract = scope
-  if (selector) {
+
+  if (selector && !skipSelector) {
     const elements = await this._querySelectorAll(scope, selector)
     elementToExtract = elements.length > 0 ? elements[0] : null
     this._logDebug(
-      `_extract: value selector "${selector}" found ${elements.length} elements`
+      `_extractValue: selector "${selector}" found ${elements.length} elements`
     )
   } else if (Array.isArray(scope)) {
     elementToExtract = scope.length > 0 ? scope[0] : null
@@ -472,17 +467,20 @@ export async function _extract(
 
   if (!elementToExtract) {
     this._logDebug(
-      `_extract: value element not found for selector "${selector || ''}"`
+      `_extractValue: element not found for selector "${selector || ''}"`
     )
+    if (finalStrict && schema.required) {
+      throw new CommonError(
+        `Required value "${selector || ''}" is missing.`,
+        'extract'
+      )
+    }
     return null
   }
 
-  const result = await this._extractValue(
-    schema as ExtractValueSchema,
-    elementToExtract
-  )
+  const result = await this._extractValue(schema, elementToExtract)
   this._logDebug(
-    `_extract: value extracted for selector "${selector || ''}":`,
+    `_extractValue: extracted for selector "${selector || ''}":`,
     result
   )
   return result
@@ -828,10 +826,17 @@ export async function _extractSegmented(
 }
 
 /**
- * Finds the element within `scope` that contains or is the `element`.
+ * Finds the logical container of an element within a given scope.
  *
- * - If `scope` is an array of siblings, returns the sibling that contains `element`.
- * - If `scope` is a single element, returns the direct child of `scope` that contains `element`.
+ * - If `scope` is an array (e.g., list of siblings), it returns the sibling that contains `element`.
+ * - If `scope` is a single element, it returns the direct child of `scope` that contains `element`.
+ *
+ * This is crucial for "Segmented" and "Sequential" modes to identify which "slot" or "segment"
+ * an element belongs to.
+ *
+ * @param element - The deep element to bubble up from.
+ * @param scope - The boundary scope to stop at.
+ * @returns The direct child/item of scope that contains the element, or null if not found.
  */
 async function _bubbleUpToScope(
   this: IExtractEngine,
@@ -845,13 +850,8 @@ async function _bubbleUpToScope(
   let parent = await this._parentElement(current)
   let depth = 0
 
-  // First, check if the element itself is in the scope (or is a child of the single scope)
-  // Optimization: direct check
-  // But we need to loop up.
-
   while (current && depth < MAX_DOM_DEPTH) {
     depth++
-    // 1. Check if current matches any item in scope (for Array scope)
     if (isScopeArray) {
       for (const item of scopeItems) {
         if (await this._isSameElement(current, item)) {
@@ -859,8 +859,6 @@ async function _bubbleUpToScope(
         }
       }
     } else {
-      // 2. Check if parent matches the single scope (for Element scope)
-      // If parent is the scope, then 'current' is the direct child we want.
       if (parent && (await this._isSameElement(parent, scope as any))) {
         return current
       }
@@ -876,6 +874,10 @@ async function _bubbleUpToScope(
 
 /**
  * Checks if one element is an ancestor of another.
+ *
+ * @param ancestor - The potential ancestor.
+ * @param descendant - The element to check.
+ * @returns True if `ancestor` contains `descendant`.
  */
 async function _isAncestor(
   this: IExtractEngine,
@@ -892,6 +894,97 @@ async function _isAncestor(
   return false
 }
 
+/**
+ * Resolves the search scope for a field based on its `anchor` configuration.
+ *
+ * It supports:
+ * 1. **Field Reference**: Using the DOM element of a previously extracted field as the anchor.
+ * 2. **Selector**: Querying a new anchor element within the current object's root scope.
+ *
+ * Once the anchor is found, it finds the effective sibling/child and returns all following siblings.
+ *
+ * @param anchor - The field name or CSS selector for the anchor.
+ * @param properties - The schema definitions of the current object.
+ * @param fieldElements - Map of elements already extracted in the current object.
+ * @param rootScope - The root element of the current object.
+ * @param isSequential - Whether we are in 'previous' mode (used for logging context).
+ * @returns An object containing the new scope (following siblings), or null if resolution fails.
+ */
+async function _resolveAnchorScope(
+  this: IExtractEngine,
+  anchor: string,
+  properties: Record<string, ExtractSchema>,
+  fieldElements: Map<string, FetchElementScope>,
+  rootScope: FetchElementScope,
+  isSequential: boolean
+): Promise<{ scopeForField: FetchElementScope[] } | null> {
+  let anchorElement: FetchElementScope = null
+  const isFieldRef = properties.hasOwnProperty(anchor)
+
+  if (isFieldRef) {
+    anchorElement = fieldElements.get(anchor) || null
+  } else {
+    const anchors = await this._querySelectorAll(rootScope, anchor)
+    if (anchors.length > 0) {
+      anchorElement = anchors[0]
+    }
+  }
+
+  if (anchorElement) {
+    const effectiveAnchor = await _bubbleUpToScope.call(
+      this,
+      anchorElement,
+      rootScope
+    )
+
+    if (effectiveAnchor) {
+      const scopeForField = await this._nextSiblingsUntil(effectiveAnchor)
+      this._logDebug(
+        `_resolveAnchorScope: anchor "${anchor}" found, adjusted to ${scopeForField.length} siblings`
+      )
+      return { scopeForField }
+    }
+  }
+
+  this._logDebug(`_resolveAnchorScope: anchor "${anchor}" not found`)
+  return null
+}
+
+/**
+ * Advances the search cursor in sequential mode (`relativeTo: 'previous'`).
+ *
+ * Given the last matched element (which could be deep), it finds which item in the current
+ * array-based scope it belongs to and returns the remaining (following) items.
+ *
+ * @param lastMatchedElement - The element that was just extracted.
+ * @param currentWorkingScope - The current list of items we are scanning through.
+ * @returns The remaining items to search in for subsequent fields.
+ */
+async function _sliceSequentialScope(
+  this: IExtractEngine,
+  lastMatchedElement: FetchElementScope,
+  currentWorkingScope: FetchElementScope[]
+): Promise<FetchElementScope[]> {
+  const effectiveMatch = await _bubbleUpToScope.call(
+    this,
+    lastMatchedElement,
+    currentWorkingScope
+  )
+
+  if (effectiveMatch) {
+    let containerIndex = -1
+    for (let i = 0; i < currentWorkingScope.length; i++) {
+      if (await this._isSameElement(currentWorkingScope[i], effectiveMatch)) {
+        containerIndex = i
+        break
+      }
+    }
+    if (containerIndex !== -1) {
+      return currentWorkingScope.slice(containerIndex + 1)
+    }
+  }
+  return currentWorkingScope
+}
 
 /**
  * Base configuration for all extraction schemas.

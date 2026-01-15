@@ -17,6 +17,6 @@
     }
   ],
   "expected": {
-    "error": "Anchor \"non-existent\" not found."
+    "error": "Anchor \"non-existent\" not found or out of scope."
   }
 }

@@ -1,0 +1,28 @@
+{
+  "name": "Object Field Anchor Tracking",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "selector": ".item",
+        "strict": true,
+        "properties": {
+          "nameLabel": { "selector": "span.name-label" },
+          "name": { "anchor": "nameLabel", "selector": "span.value" },
+          "ageLabel": { "selector": "span.age-label" },
+          "age": { "anchor": "ageLabel", "selector": "span.value", "type": "number" }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "nameLabel": "Name:",
+      "name": "John Doe",
+      "ageLabel": "Age:",
+      "age": 30
+    }
+  }
+}
