@@ -103,6 +103,9 @@ export async function _extract(
     let hasValue = false
     const keys = order || Object.keys(properties)
     let currentWorkingScope = newScope
+    // fieldElements stores the DOM element(s) associated with each extracted field
+    const fieldElements = new Map<string, FetchElementScope>()
+
     const isSequential = relativeTo === 'previous' && Array.isArray(newScope)
 
     for (const key of keys) {
@@ -111,59 +114,164 @@ export async function _extract(
 
       this._logDebug(`_extract: extracting property "${key}"`)
 
+      // --- Anchor Logic ---
+      let scopeForField = currentWorkingScope
+      if (propSchema.anchor) {
+        let anchorElement: FetchElementScope = null
+        // 1. Try to resolve as a reference to a previous field
+        if (fieldElements.has(propSchema.anchor)) {
+          anchorElement = fieldElements.get(propSchema.anchor)
+          this._logDebug(
+            `_extract: anchor resolved from field "${propSchema.anchor}"`
+          )
+        } else {
+          // 2. Try to resolve as a CSS selector within the object's root scope
+          // Note: we use 'newScope' (the object container) as the base for the selector
+          const anchors = await this._querySelectorAll(
+            newScope,
+            propSchema.anchor
+          )
+          if (anchors.length > 0) {
+            anchorElement = anchors[0]
+            this._logDebug(
+              `_extract: anchor resolved from selector "${propSchema.anchor}"`
+            )
+          }
+        }
+
+        if (anchorElement) {
+          // Bubble up to find the "effective anchor" within the current context
+          // If we are operating on a list of siblings (isSequential or caused by previous anchor),
+          // we need to find which sibling contains our anchor.
+          // If we are in a single element scope, we find which direct child contains the anchor.
+          const effectiveAnchor = await _bubbleUpToScope.call(
+            this,
+            anchorElement,
+            newScope
+          )
+
+          if (effectiveAnchor) {
+            // Set scope to siblings AFTER the anchor
+            scopeForField = await this._nextSiblingsUntil(effectiveAnchor)
+            this._logDebug(
+              `_extract: scope adjusted to ${scopeForField.length} siblings after anchor`
+            )
+            // If this is a sequential flow, we might want to update currentWorkingScope too,
+            // but strict 'anchor' usually implies a specific jump for THIS field.
+            // However, if relativeTo='previous' is ON, should this jump affect subsequent fields?
+            // "Anchor" effectively resets the cursor. So yes, it makes sense to update currentWorkingScope
+            // if we are in sequential mode.
+            if (isSequential) {
+              currentWorkingScope = scopeForField
+            }
+          } else {
+            this._logDebug(
+              `_extract: anchor element found but not within current scope chain`
+            )
+            if (finalStrict) {
+              throw new CommonError(
+                `Anchor "${propSchema.anchor}" is not within the expected scope.`,
+                'extract'
+              )
+            }
+          }
+        } else {
+          this._logDebug(`_extract: anchor "${propSchema.anchor}" not found`)
+          if (finalStrict) {
+            throw new CommonError(
+              `Anchor "${propSchema.anchor}" not found.`,
+              'extract'
+            )
+          }
+        }
+      }
+
       let value: any
-      if (isSequential && (propSchema as any).selector) {
-        const propSelector = (propSchema as any).selector
+      let extractedElement: FetchElementScope = null
+
+      // Determine if we should pre-select the element to track it
+      // We do this if it has a selector OR if we are in a sequential/array scope where we need to pick one.
+      const propSelector = (propSchema as any).selector
+
+      if (propSelector && (Array.isArray(scopeForField) || propSchema.anchor)) {
+        // Hoisted selection logic for accurate element tracking
         const matches = await this._querySelectorAll(
-          currentWorkingScope,
+          scopeForField,
           propSelector
         )
         if (matches.length > 0) {
-          const matchedElement = matches[0]
-          // Use a temporary schema without selector to avoid redundant lookup in recursion
+          extractedElement = matches[0]
+          // Use a temporary schema without selector to avoid redundant lookup
           const tempSchema = { ...propSchema, selector: undefined } as any
           value = await _extract.call(
             this,
             tempSchema,
-            matchedElement,
+            extractedElement,
             finalStrict
           )
 
-          if (value !== null) {
-            // Find which element in currentWorkingScope contains matchedElement
-            let containerIndex = -1
-            for (let i = 0; i < currentWorkingScope.length; i++) {
-              if (
-                (await this._isSameElement(
-                  currentWorkingScope[i],
-                  matchedElement
-                )) ||
-                (await _isAncestor.call(
-                  this,
-                  currentWorkingScope[i],
-                  matchedElement
-                ))
-              ) {
-                containerIndex = i
-                break
-              }
-            }
-            if (containerIndex !== -1) {
-              currentWorkingScope = currentWorkingScope.slice(
-                containerIndex + 1
+          // If sequential, update the cursor (slice scope)
+          if (isSequential && !propSchema.anchor) {
+            // Logic to find matchedElement index in currentWorkingScope and slice
+            // (Reusing existing logic, but now robust with _bubbleUp)
+            const effectiveMatch = await _bubbleUpToScope.call(
+              this,
+              extractedElement,
+              currentWorkingScope
+            )
+            if (effectiveMatch) {
+              // Find index
+              const idx = (currentWorkingScope as any[]).findIndex(
+                // We need to compare handles. _bubbleUp returns the exact object ref if from array?
+                // No, _bubbleUp returns an element. We need async comparison.
+                () => false // Placeholder, we do manual loop below
               )
+              // Actually _bubbleUpToScope already returns the item from the array if matched.
+              // But we can't easily find index of an object reference if they are different wrappers.
+              // Let's rely on _isSameElement loop.
+              let containerIndex = -1
+              for (let i = 0; i < currentWorkingScope.length; i++) {
+                if (
+                  await this._isSameElement(
+                    currentWorkingScope[i],
+                    effectiveMatch
+                  )
+                ) {
+                  containerIndex = i
+                  break
+                }
+              }
+              if (containerIndex !== -1) {
+                currentWorkingScope = currentWorkingScope.slice(
+                  containerIndex + 1
+                )
+              }
             }
           }
         } else {
           value = null
         }
       } else {
+        // Standard extraction (recurses and handles selection internally)
         value = await _extract.call(
           this,
           propSchema,
-          currentWorkingScope,
+          scopeForField,
           finalStrict
         )
+        // If successful and it was a simple extraction from the current scope...
+        // We can't easily get the element back if we delegated everything.
+        // But for anchoring to work, we mostly care about fields WITH selectors.
+        // If a field has no selector (inherits scope), its element IS the scope.
+        if (value !== null && !propSelector) {
+          extractedElement = Array.isArray(scopeForField)
+            ? scopeForField[0]
+            : scopeForField
+        }
+      }
+
+      if (extractedElement) {
+        fieldElements.set(key, extractedElement)
       }
 
       if (value === null && (propSchema as any).required) {
@@ -636,6 +744,51 @@ export async function _extractSegmented(
 }
 
 /**
+ * Finds the element within `scope` that contains or is the `element`.
+ *
+ * - If `scope` is an array of siblings, returns the sibling that contains `element`.
+ * - If `scope` is a single element, returns the direct child of `scope` that contains `element`.
+ */
+async function _bubbleUpToScope(
+  this: IExtractEngine,
+  element: FetchElementScope,
+  scope: FetchElementScope | FetchElementScope[]
+): Promise<FetchElementScope | null> {
+  const isScopeArray = Array.isArray(scope)
+  const scopeItems = isScopeArray ? scope : [scope]
+
+  let current = element
+  let parent = await this._parentElement(current)
+
+  // First, check if the element itself is in the scope (or is a child of the single scope)
+  // Optimization: direct check
+  // But we need to loop up.
+
+  while (current) {
+    // 1. Check if current matches any item in scope (for Array scope)
+    if (isScopeArray) {
+      for (const item of scopeItems) {
+        if (await this._isSameElement(current, item)) {
+          return item
+        }
+      }
+    } else {
+      // 2. Check if parent matches the single scope (for Element scope)
+      // If parent is the scope, then 'current' is the direct child we want.
+      if (parent && (await this._isSameElement(parent, scope as any))) {
+        return current
+      }
+    }
+
+    if (!parent) break
+    current = parent
+    parent = await this._parentElement(current)
+  }
+
+  return null
+}
+
+/**
  * Checks if one element is an ancestor of another.
  */
 async function _isAncestor(
@@ -651,6 +804,7 @@ async function _isAncestor(
   return false
 }
 
+
 /**
  * Base configuration for all extraction schemas.
  */
@@ -665,6 +819,14 @@ export interface BaseExtractSchema {
    * If true, missing required fields will throw an error instead of being skipped.
    */
   strict?: boolean
+  /**
+   * Specifies the starting anchor for extraction of this field.
+   * - Field Name: Uses the DOM element of a previously extracted field as the anchor.
+   * - CSS Selector: Re-queries the selector within the current object scope to find the anchor.
+   *
+   * Once anchored, the search scope for this field becomes the siblings following the anchor.
+   */
+  anchor?: string
 }
 
 /**
