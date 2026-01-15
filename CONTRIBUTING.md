@@ -280,10 +280,15 @@ We follow the **Conventional Commits** specification.
 
 Example:
 
-```
+```sh
 feat(engine): add support for custom headers in playwright
 fix(session): ensure cookies are persisted across redirects
 ```
+
+Note:
+
+* `BREAKING CHANGE`: a commit that has a footer `BREAKING CHANGE:`, or appends a `!` after the type/scope, introduces a breaking API change (correlating with MAJOR in Semantic Versioning). A BREAKING CHANGE can be part of commits of any type.
+* *footers* other than BREAKING CHANGE: `<description>` may be provided and follow a convention similar to git trailer format.
 
 ## 🧩 Implementation Details & Gotchas
 
