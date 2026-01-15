@@ -193,9 +193,22 @@ To ensure consistency across engines and maintain high quality, the extraction s
 
 1. **Normalization Layer (`src/core/normalize-extract-schema.ts`)**: Pre-processes user-provided schemas into a canonical internal format. This handles shorthands and merges CSS filters.
 2. **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer that manages the "workflow" of extraction, including recursion, array mode switching (Nested, Columnar, Segmented), and strict mode/required field validation. It operates on a **`FetchElementScope`**.
-3. **Engine Interface (`IExtractEngine`)**: Defined in the core layer and implemented by each engine (in `base.ts` and its subclasses), providing atomic DOM operations like `_querySelectorAll` and `_extractValue` that work with the scope.
+3. **Engine Interface (`IExtractEngine`)**: Defined in the core layer and implemented by each engine (in `base.ts` and its subclasses), providing atomic DOM operations that work with the scope.
 
-This decoupling ensures that complex features like **Columnar Alignment** or **Segmented Scanning** behave identically whether you are using the fast Cheerio engine or the full Playwright browser.
+#### Implementation Rules for `IExtractEngine`
+
+To maintain cross-engine consistency, all implementations MUST follow these rules:
+
+- **`_querySelectorAll`**:
+  - MUST return matching elements in **document order**.
+  - MUST check if the scope element(s) **themselves** match the selector.
+  - MUST search the **descendants** of each scope element.
+- **`_nextSiblingsUntil`**:
+  - MUST return a flat list of siblings starting *after* the anchor and stopping *before* the first element matching the `untilSelector` (exclusive).
+- **`_bubbleUpToScope`**:
+  - MUST implement a depth limit (default 1000) to prevent infinite loops in corrupted DOM structures.
+
+This decoupling ensures that complex features like **Columnar Alignment**, **Segmented Scanning**, and **Anchor Jumping** behave identically whether you are using the fast Cheerio engine or the full Playwright browser.
 
 ### Schema Normalization
 

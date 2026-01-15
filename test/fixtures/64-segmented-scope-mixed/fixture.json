@@ -1,0 +1,26 @@
+{
+    "actions": [
+      { "action": "goto", "params": { "url": "/" } },
+      {
+        "action": "extract",
+        "params": {
+          "type": "array",
+          "selector": "#list",
+          "mode": {
+            "type": "segmented",
+            "anchor": "h3.title"
+          },
+          "items": {
+            "title": "h3.title",
+            "desc": "p.desc"
+          }
+        }
+      }
+    ],
+    "expected": {
+      "data": [
+        { "title": "Item 1 Title", "desc": "Item 1 Desc" },
+        { "title": "Item 2 Title", "desc": "Item 2 Desc" }
+      ]
+    }
+  }

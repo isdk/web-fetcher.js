@@ -286,6 +286,10 @@ fix(session): ensure cookies are persisted across redirects
 
 ## 🧩 Implementation Details & Gotchas
 
+### DOM Traversal Safeguard (MAX_DOM_DEPTH)
+
+To prevent infinite loops during DOM traversal (e.g., in `_bubbleUpToScope` or `_isAncestor`), we implement a `MAX_DOM_DEPTH` limit (default: 1000). Any traversal exceeding this depth will be truncated or return `null` to ensure system stability when encountering corrupted or extremely deep DOM structures.
+
 ### Session Isolation & Storage
 
 To support concurrent executions without side effects, the library implements flexible session isolation via the `storage` configuration:
@@ -458,9 +462,10 @@ To ensure consistency across different engines and maintain high testability, th
 3. **Engine Shim Layer (`src/engine/base.ts` & implementations)**:
     * **Responsibility**: Provides the "primitive" operations required by the Core Engine and the unified action processor.
     * **Key Logic**: Implements low-level DOM operations using `FetchElementScope` (an abstraction for engine-specific element handles like Cheerio objects or Playwright Locators).
-    * **New Primitives**:
-        * `_getInitialElementScope`: Converts the crawling context into the root element scope for extraction.
-        * `_querySelectorAll`, `_extractValue`, `_parentElement`, and `_nextSiblingsUntil`.
+    * **IExtractEngine Contract**:
+        * `_querySelectorAll`: MUST return results in **document order**. When `scope` is an array, it MUST check both the elements themselves and their descendants.
+        * `_extractValue`: Handles primitive extraction according to `mode` and `attribute`.
+        * `_parentElement`, `_isSameElement`, and `_nextSiblingsUntil`.
     * **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
 
 ### Extraction Schema Normalization & Implicit Objects
@@ -479,7 +484,7 @@ To provide an "AI-friendly" and developer-friendly experience, the `extract` act
 A critical challenge in implicit objects is distinguishing between **extraction configuration** (like `selector`, `has`) and **data properties** (like `items`, `mode`).
 
 - **The Logic**: In the context of an implicit object, we divide keys into two categories:
-  1. **Context Keys**: `selector`, `has`, `exclude`, `required`, `strict`, `relativeTo`, `order`. These define *how* and *where* to look.
+  1. **Context Keys**: `selector`, `has`, `exclude`, `required`, `strict`, `relativeTo`, `order`, `anchor`. These define *how* and *where* to look.
   2. **Data Keys**: Everything else (including `items`, `attribute`, `mode`). These define *what* to extract.
 - **Why?**: This allows users to extract a field named `items` (e.g., in a JSON-like HTML structure) without it being misidentified as the `items` configuration for an array. Similarly, `required` or `strict` can be property names if they are not explicitly part of the schema definition.
 - **Implementation**: The `_normalizeSchema` method recursively peels off context keys and moves all other keys into a generated `properties` object, ensuring the core engine always receives a standardized, unambiguous `ExtractObjectSchema`.
