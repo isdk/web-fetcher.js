@@ -1,0 +1,64 @@
+{
+  "title": "Verify Segmented Extraction",
+  "options": {"debug": true},
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "type": "array",
+          "selector": "#sequential-container",
+          "mode": {
+            "type": "segmented",
+            "anchor": ".item-start",
+            "relativeTo": "previous"
+          },
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "selector": ".item-start" },
+              "v1": { "selector": ".val" },
+              "v2": { "selector": ".val" }
+            }
+          }
+        }
+      },
+      "storeAs": "sequentialResult"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "type": "array",
+          "selector": ".multi-container",
+          "mode": {
+            "type": "segmented",
+            "anchor": ".m-item"
+          },
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": { "selector": ".m-item" },
+              "val": { "selector": ".m-val" }
+            }
+          }
+        }
+      },
+      "storeAs": "multiResult"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "sequentialResult": [
+        { "name": "Item 1", "v1": "Val 1A", "v2": "Val 1B" },
+        { "name": "Item 2", "v1": "Val 2A", "v2": null }
+      ],
+      "multiResult": [
+        { "name": "M-Item 1-1", "val": "M-Val 1-1" },
+        { "name": "M-Item 2-1", "val": "M-Val 2-1" },
+        { "name": "M-Item 2-2", "val": "M-Val 2-2" }
+      ]
+    }
+  }
+}

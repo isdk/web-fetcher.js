@@ -229,19 +229,31 @@ export async function _extract(
       }
     }
 
-    if (normalizedMode.type === 'segmented' && elements.length === 1 && items) {
-      this._logDebug('_extract: trying segmented extraction')
-      const results = await _extractSegmented.call(
-        this,
-        items,
-        elements[0],
-        normalizedMode
+    if (normalizedMode.type === 'segmented' && items) {
+      this._logDebug(
+        `_extract: trying segmented extraction for ${elements.length} containers`
       )
-      if (results) {
-        this._logDebug(
-          `_extract: segmented extraction successful, found ${results.length} items`
+      const allResults: any[] = []
+      let success = false
+
+      for (const element of elements) {
+        const results = await _extractSegmented.call(
+          this,
+          items,
+          element,
+          normalizedMode
         )
-        return results
+        if (results) {
+          success = true
+          allResults.push(...results)
+        }
+      }
+
+      if (success) {
+        this._logDebug(
+          `_extract: segmented extraction successful, found ${allResults.length} items`
+        )
+        return allResults
       }
     }
 
@@ -405,6 +417,7 @@ export async function _extractColumnar(
       const values = await Promise.all(
         matches.map((m) => this._extractValue(valueSchema, m))
       )
+      this._logDebug(`_extractColumnar: field "${key}" values:`, values)
       collectedValues[key] = values
     }
 
@@ -468,6 +481,9 @@ export async function _extractColumnar(
         }
 
         if (val === null && propSchema.required) {
+          this._logDebug(
+            `_extractColumnar: skipping row ${i} because required field "${key}" is null`
+          )
           if (strict) {
             throw new CommonError(
               `Required field "${key}" is missing at index ${i}.`,
