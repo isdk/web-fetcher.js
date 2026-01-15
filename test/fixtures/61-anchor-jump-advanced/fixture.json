@@ -1,0 +1,68 @@
+{
+  "name": "Anchor Jump Advanced",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "properties": {
+          "case1_ref": {
+            "selector": ".ref-test",
+            "type": "object",
+            "properties": {
+              "header": { "selector": ".head" },
+              "content": { "selector": ".body", "anchor": "header" }
+            }
+          },
+          "case2_mixed": {
+            "selector": ".seq-test",
+            "type": "object",
+            "relativeTo": "previous",
+            "properties": {
+              "item1": { "selector": "p", "anchor": ".flag-1" },
+              "item2": { "selector": "p" },
+              "item3": { "selector": "p", "anchor": ".flag-2" },
+              "item4": { "selector": "p" }
+            }
+          },
+          "case3_bubble": {
+            "selector": ".bubble-test",
+            "type": "object",
+            "properties": {
+              "target": { "selector": ".target", "anchor": ".deep-anchor" }
+            }
+          },
+          "case4_missing_loose": {
+            "selector": ".missing-test",
+            "type": "object",
+            "properties": {
+              "val": { "selector": ".fallback", "anchor": ".non-existent-anchor" }
+            }
+          }
+        }
+      },
+      "storeAs": "result"
+    }
+  ],
+  "expected": {
+    "result": {
+      "case1_ref": {
+        "header": "The Header",
+        "content": "The Content"
+      },
+      "case2_mixed": {
+        "item1": "Item 1",
+        "item2": "Item 2",
+        "item3": "Item 3",
+        "item4": "Item 4"
+      },
+      "case3_bubble": {
+        "target": "Target Node"
+      },
+      "case4_missing_loose": {
+        "val": "Fallback Content"
+      }
+    }
+  }
+}

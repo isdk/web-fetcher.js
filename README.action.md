@@ -298,6 +298,14 @@ Define a structured object using `type: 'object'` and the `properties` field.
 }
 ```
 
+**Object Configuration:**
+
+* **`anchor`** (string, optional): Specifies the starting anchor for extraction of a field.
+    * **Field Name**: Uses the DOM element of a previously extracted field as the anchor.
+    * **CSS Selector**: Re-queries the selector within the current object scope to find the anchor.
+    * Once anchored, the search scope for this field becomes the siblings **following** the anchor (similar to `relativeTo: "previous"` but with an explicit start point).
+    * **Bubble Up**: If the anchor is nested deep inside a structure, the engine automatically "bubbles up" to find the valid container within the current scope.
+
 ###### 3. Extracting an Array (Convenient Usage)
 
 Extract a list using `type: 'array'`. To make the most common operations simpler, we provide some convenient usages.

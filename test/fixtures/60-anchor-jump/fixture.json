@@ -1,0 +1,45 @@
+{
+  "name": "Anchor Jump Extraction",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "properties": {
+          "flat": {
+            "selector": ".flat-card",
+            "type": "object",
+            "properties": {
+              "p1": { "selector": "p", "anchor": ".marker-start" },
+              "p2": { "selector": "p", "anchor": ".marker-middle" },
+              "p3": { "selector": "p", "anchor": ".marker-end" }
+            }
+          },
+          "mixed": {
+            "selector": ".flat-mixed",
+            "type": "object",
+            "properties": {
+              "c1": { "selector": "p", "anchor": ".title-1" },
+              "c2": { "selector": "p", "anchor": ".title-2" }
+            }
+          }
+        }
+      },
+      "storeAs": "result"
+    }
+  ],
+  "expected": {
+    "result": {
+      "flat": {
+        "p1": "Intro text",
+        "p2": "Body text",
+        "p3": "Outro text"
+      },
+      "mixed": {
+        "c1": "Content 1",
+        "c2": "Content 2"
+      }
+    }
+  }
+}

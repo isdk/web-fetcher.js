@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+<body>
+  <!-- Case 1: Reference by Field Name -->
+  <div class="ref-test">
+    <h2 class="head">The Header</h2>
+    <div class="ignore-me">Noise</div>
+    <p class="body">The Content</p>
+  </div>
+
+  <!-- Case 2: Mixed RelativeTo and Anchor -->
+  <div class="seq-test">
+    <span class="flag-1">Flag 1</span>
+    <p>Item 1</p>
+    <p>Item 2</p>
+    <div class="separator">---</div>
+    <span class="flag-2">Flag 2</span>
+    <p>Item 3</p>
+    <p>Item 4</p>
+  </div>
+
+  <!-- Case 3: Bubble Up -->
+  <div class="bubble-test">
+    <div class="complex-wrapper">
+      <div class="inner-level">
+        <span class="deep-anchor">Deep Anchor</span>
+      </div>
+    </div>
+    <p class="target">Target Node</p>
+  </div>
+
+  <!-- Case 4: Missing Anchor (Non-Strict) -->
+  <div class="missing-test">
+    <p class="fallback">Fallback Content</p>
+  </div>
+</body>
+</html>

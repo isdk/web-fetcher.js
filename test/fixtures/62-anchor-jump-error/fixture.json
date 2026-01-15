@@ -1,0 +1,22 @@
+{
+  "name": "Anchor Jump Strict Error",
+  "options": {
+    "debug": true
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "strict": true,
+        "properties": {
+          "val": { "selector": "div", "anchor": "non-existent" }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "error": "Anchor \"non-existent\" not found."
+  }
+}
