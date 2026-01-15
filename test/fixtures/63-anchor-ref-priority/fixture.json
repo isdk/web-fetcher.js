@@ -1,0 +1,27 @@
+{
+    "actions": [
+      { "action": "goto", "params": { "url": "/" } },
+      {
+        "action": "extract",
+        "params": {
+          "type": "object",
+          "selector": "#container",
+          "strict": true,
+          "properties": {
+            "prev": {
+                "selector": ".non-existent",
+                "required": false
+            },
+            "next": {
+                "selector": "#target",
+                "anchor": "prev",
+                "required": false
+            }
+          }
+        }
+      }
+    ],
+    "expected": {
+      "error": "/Anchor \"prev\" not found/i"
+    }
+  }

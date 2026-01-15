@@ -9,27 +9,107 @@ export type FetchElementScope = any
 
 /**
  * Interface representing the minimal engine capabilities required for extraction.
+ *
+ * @remarks
+ * This interface abstracts the underlying DOM manipulation library (Cheerio or Playwright).
+ * Implementing classes must ensure consistent behavior across different engines, especially
+ * regarding scope handling (Element vs Array of Elements) and DOM traversal.
  */
 export interface IExtractEngine {
+  /**
+   * Finds all elements matching the selector within the given scope.
+   *
+   * @param scope - The context to search in. Can be a single element or an array of elements (e.g., in segmented mode).
+   * @param selector - The CSS selector to match.
+   * @returns A promise resolving to an array of found element scopes.
+   *
+   * @remarks
+   * **Behavior Contract:**
+   * 1. **Descendants**: It MUST search for descendants matching the selector within the scope.
+   * 2. **Self-Matching**: It MUST check if the scope element(s) *themselves* match the selector.
+   * 3. **Array Scope**: If `scope` is an array:
+   *    - It MUST process elements in the order they appear in the array (which should match document order).
+   *    - It MUST perform the check (Self + Descendants) for *each* element in the array.
+   *    - It MUST flatten the results into a single array.
+   *    - It SHOULD dedup the results if the engine's query mechanism naturally produces duplicates (e.g. nested scopes),
+   *      but generally, preserving document order is the priority.
+   */
   _querySelectorAll(
     scope: FetchElementScope,
     selector: string
   ): Promise<FetchElementScope[]>
+
+  /**
+   * Extracts a primitive value from the element based on the schema configuration.
+   *
+   * @param schema - The value extraction schema defining `type`, `mode`, and `attribute`.
+   * @param scope - The specific element to extract data from.
+   * @returns A promise resolving to the extracted value (string, number, boolean, or null).
+   *
+   * @remarks
+   * **Behavior Contract:**
+   * - **Attribute**: If `schema.attribute` is set, returns the attribute value. If missing, returns `null` or empty string based on engine.
+   * - **HTML**: If `schema.mode` is 'html', returns `innerHTML`.
+   * - **OuterHTML**: If `schema.mode` is 'outerHTML', returns `outerHTML`.
+   * - **Text**: If `schema.mode` is 'text', returns `textContent` (trimmed by default in most implementations).
+   * - **InnerText**: If `schema.mode` is 'innerText', returns rendered text (visual approximation in Cheerio).
+   */
   _extractValue(
     schema: ExtractValueSchema,
     scope: FetchElementScope
   ): Promise<any>
+
+  /**
+   * Gets the parent element of the given scope.
+   *
+   * @param scope - The element to find the parent of.
+   * @returns A promise resolving to the parent element scope, or `null` if the element is root or detached.
+   */
   _parentElement(scope: FetchElementScope): Promise<FetchElementScope | null>
+
+  /**
+   * Checks if two element scopes refer to the exact same DOM node.
+   *
+   * @param scope1 - The first element scope.
+   * @param scope2 - The second element scope.
+   * @returns A promise resolving to `true` if they are the same node, `false` otherwise.
+   *
+   * @remarks
+   * This comparison MUST be identity-based, not just content-based.
+   */
   _isSameElement(
     scope1: FetchElementScope,
     scope2: FetchElementScope
   ): Promise<boolean>
+
+  /**
+   * Retrieves all subsequent sibling elements of the `scope` element, stopping *before* the first sibling that matches `untilSelector`.
+   *
+   * @param scope - The anchor element (starting point). The returned list starts *after* this element.
+   * @param untilSelector - Optional. A CSS selector. If provided, the scanning stops when a sibling matches this selector (exclusive).
+   *                        If omitted or null, returns all following siblings.
+   * @returns A promise resolving to an array of sibling element scopes.
+   *
+   * @remarks
+   * **Behavior Contract:**
+   * - **Starting Point**: The `scope` element itself IS NOT included in the result.
+   * - **Ending Point**: The element matching `untilSelector` IS NOT included in the result.
+   * - **Direction**: Only scans *following* siblings (next siblings).
+   * - **Flattening**: The result is a flat list of siblings, not a nested structure.
+   */
   _nextSiblingsUntil(
     scope: FetchElementScope,
     untilSelector?: string
   ): Promise<FetchElementScope[]>
+
+  /**
+   * Logs debug information if debug mode is enabled.
+   * @param args - Arguments to log.
+   */
   _logDebug(...args: any[]): void
 }
+
+const MAX_DOM_DEPTH = 1000
 
 /**
  * Public entry point for extraction.
@@ -118,14 +198,24 @@ export async function _extract(
       let scopeForField = currentWorkingScope
       if (propSchema.anchor) {
         let anchorElement: FetchElementScope = null
-        // 1. Try to resolve as a reference to a previous field
-        if (fieldElements.has(propSchema.anchor)) {
-          anchorElement = fieldElements.get(propSchema.anchor)
-          this._logDebug(
-            `_extract: anchor resolved from field "${propSchema.anchor}"`
-          )
+        // 1. Check if anchor is a reference to a known field property
+        const isFieldRef = properties.hasOwnProperty(propSchema.anchor)
+
+        if (isFieldRef) {
+          if (fieldElements.has(propSchema.anchor)) {
+            anchorElement = fieldElements.get(propSchema.anchor)
+            this._logDebug(
+              `_extract: anchor resolved from field "${propSchema.anchor}"`
+            )
+          } else {
+            // It is a field ref, but that field wasn't found.
+            // We should NOT fallback to selector.
+            this._logDebug(
+              `_extract: anchor field "${propSchema.anchor}" was not found previously`
+            )
+          }
         } else {
-          // 2. Try to resolve as a CSS selector within the object's root scope
+          // 2. Not a field name, treat as a CSS selector within the object's root scope
           // Note: we use 'newScope' (the object container) as the base for the selector
           const anchors = await this._querySelectorAll(
             newScope,
@@ -759,12 +849,14 @@ async function _bubbleUpToScope(
 
   let current = element
   let parent = await this._parentElement(current)
+  let depth = 0
 
   // First, check if the element itself is in the scope (or is a child of the single scope)
   // Optimization: direct check
   // But we need to loop up.
 
-  while (current) {
+  while (current && depth < MAX_DOM_DEPTH) {
+    depth++
     // 1. Check if current matches any item in scope (for Array scope)
     if (isScopeArray) {
       for (const item of scopeItems) {
@@ -797,7 +889,9 @@ async function _isAncestor(
   descendant: FetchElementScope
 ): Promise<boolean> {
   let current = await this._parentElement(descendant)
-  while (current) {
+  let depth = 0
+  while (current && depth < MAX_DOM_DEPTH) {
+    depth++
     if (await this._isSameElement(ancestor, current)) return true
     current = await this._parentElement(current)
   }

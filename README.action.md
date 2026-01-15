@@ -301,10 +301,10 @@ Define a structured object using `type: 'object'` and the `properties` field.
 **Object Configuration:**
 
 * **`anchor`** (string, optional): Specifies the starting anchor for extraction of a field.
-    * **Field Name**: Uses the DOM element of a previously extracted field as the anchor.
-    * **CSS Selector**: Re-queries the selector within the current object scope to find the anchor.
-    * Once anchored, the search scope for this field becomes the siblings **following** the anchor (similar to `relativeTo: "previous"` but with an explicit start point).
-    * **Bubble Up**: If the anchor is nested deep inside a structure, the engine automatically "bubbles up" to find the valid container within the current scope.
+  * **Field Name**: Uses the DOM element of a previously extracted field as the anchor.
+  * **CSS Selector**: Re-queries the selector within the current object scope to find the anchor.
+  * Once anchored, the search scope for this field becomes the siblings **following** the anchor (similar to `relativeTo: "previous"` but with an explicit start point).
+  * **Bubble Up**: If the anchor is nested deep inside a structure, the engine automatically "bubbles up" to find the valid container within the current scope.
 
 ###### 3. Extracting an Array (Convenient Usage)
 
@@ -378,6 +378,7 @@ This mode is ideal for "flat" structures where there are no item wrappers, **or 
 **Feature: Automatic Container Detection (Bubble Up)**
 
 When the anchor is nested (e.g., `div.card > div.header > h3.title`), the engine automatically "bubbles up" from the anchor to find the largest safe container (e.g., `div.card`) that doesn't overlap with neighboring anchors.
+
 * **Nested Structure**: If a safe container is found, it becomes the scope for that segment, allowing you to extract other fields (like `div.footer > span.date`) that are outside the anchor's immediate parent but inside the same logical item.
 * **Flat Structure (Fallback)**: If bubbling is impossible (e.g., items share a direct parent), it automatically falls back to the classic "sibling scanning" mode.
 

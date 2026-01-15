@@ -356,8 +356,11 @@ export abstract class FetchEngine<
 
   /**
    * Finds all elements matching the selector within the given scope.
+   *
    * @param scope - The scope to search in (Engine-specific element/node or array of nodes).
    * @param selector - CSS selector.
+   * @returns List of matching elements.
+   * @see {@link IExtractEngine._querySelectorAll} for behavior contract.
    * @internal
    */
   public abstract _querySelectorAll(
@@ -367,8 +370,11 @@ export abstract class FetchEngine<
 
   /**
    * Extracts a primitive value from the element based on schema.
+   *
    * @param schema - Value extraction schema.
    * @param scope - The element scope.
+   * @returns Extracted value.
+   * @see {@link IExtractEngine._extractValue} for behavior contract.
    * @internal
    */
   public abstract _extractValue(
@@ -378,7 +384,9 @@ export abstract class FetchEngine<
 
   /**
    * Gets the parent element of the given element.
+   *
    * @param scope - The element scope.
+   * @returns Parent element or null.
    * @internal
    */
   public abstract _parentElement(
@@ -386,9 +394,11 @@ export abstract class FetchEngine<
   ): Promise<FetchElementScope | null>
 
   /**
-   * Checks if two elements are the same.
+   * Checks if two elements are the same identity.
+   *
    * @param scope1 - First element scope.
    * @param scope2 - Second element scope.
+   * @returns True if they are the same DOM node.
    * @internal
    */
   public abstract _isSameElement(
@@ -399,8 +409,10 @@ export abstract class FetchEngine<
   /**
    * Gets all subsequent siblings of an element until a sibling matches the selector.
    * Used in 'segmented' extraction mode.
+   *
    * @param scope - The anchor element scope.
-   * @param untilSelector - Optional selector that marks the end of the segment.
+   * @param untilSelector - Optional selector that marks the end of the segment (exclusive).
+   * @returns List of sibling elements between anchor and untilSelector.
    * @internal
    */
   public abstract _nextSiblingsUntil(
