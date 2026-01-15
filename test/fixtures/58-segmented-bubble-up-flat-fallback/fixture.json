@@ -1,0 +1,25 @@
+{
+  "name": "Segmented Bubble Up - Flat Fallback",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "mode": "segmented",
+        "selector": "div.list",
+        "items": {
+          "title": { "selector": "h3.anchor" },
+          "desc": { "selector": "p.desc" }
+        }
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "data": [
+      { "title": "Item 1", "desc": "Description 1" },
+      { "title": "Item 2", "desc": "Description 2" }
+    ]
+  }
+}

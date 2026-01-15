@@ -1,0 +1,34 @@
+{
+  "name": "Segmented Bubble Up Test",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "mode": "segmented",
+        "selector": "div.results",
+        "items": {
+          "url": { "selector": "a:has(h3)", "attribute": "href", "required": true },
+          "title": { "selector": "a:has(h3) h3", "required": true, "mode": "innerText" },
+          "snippet": { "selector": "div[style*='-webkit-line-clamp'] span", "mode": "innerText" }
+        }
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "data": [
+      {
+      "title": "Google Gemini",
+      "url": "https://gemini.google.com",
+      "snippet": "Meet Gemini, Google's AI assistant. Get help with writing, planning, brainstorming, and more. Experience the power of generative AI."
+      },
+      {
+        "title": "Title 2",
+        "url": "https://example.com/url2",
+        "snippet": "snippet 2"
+      }
+    ]
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "name": "Segmented Bubble Up - Partial",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "mode": "segmented",
+        "selector": "div.wrapper",
+        "items": {
+          "id": { "selector": "span.anchor" },
+          "data": { "selector": "span.data" }
+        }
+      },
+      "storeAs": "data"
+    }
+  ],
+  "expected": {
+    "data": [
+      { "id": "Anchor 1", "data": "Data 1" },
+      { "id": "Anchor 2", "data": "Data 2" }
+    ]
+  }
+}

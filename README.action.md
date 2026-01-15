@@ -365,7 +365,13 @@ This mode is used when the `selector` points to a **container** (like a results 
 
 ###### 5. Segmented Mode (Anchor-based Scanning)
 
-This mode is ideal for "flat" structures where there are no item wrappers. It uses a specified `anchor` to segment the container's content.
+This mode is ideal for "flat" structures where there are no item wrappers, **or for identifying logical containers (like Cards) when the anchor is nested deep inside**. It uses a specified `anchor` to segment the container's content.
+
+**Feature: Automatic Container Detection (Bubble Up)**
+
+When the anchor is nested (e.g., `div.card > div.header > h3.title`), the engine automatically "bubbles up" from the anchor to find the largest safe container (e.g., `div.card`) that doesn't overlap with neighboring anchors.
+* **Nested Structure**: If a safe container is found, it becomes the scope for that segment, allowing you to extract other fields (like `div.footer > span.date`) that are outside the anchor's immediate parent but inside the same logical item.
+* **Flat Structure (Fallback)**: If bubbling is impossible (e.g., items share a direct parent), it automatically falls back to the classic "sibling scanning" mode.
 
 ```json
 {

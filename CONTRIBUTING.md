@@ -84,10 +84,17 @@ The project employs a two-tier testing strategy:
   ],
   "expected": {
     "statusCode": 200,
-    "data": { "title": "Hello" } // Checks the result of the LAST action (extract)
+    "data": { "title": "Hello" } // Checks the result of the LAST action or 'data' output
   }
 }
 ```
+
+**Note on Results**:
+The test runner checks `expected.data` against:
+1. The implicit result of the last action (stored as `__test_result__`).
+2. An explicit output named `data` (if you used `"storeAs": "data"`).
+3. The single output available if `storeAs` was used but with a different name.
+4. The raw `result` object.
 
 ### Advanced Assertions (Condition Objects)
 

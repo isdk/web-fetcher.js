@@ -560,11 +560,54 @@ export async function _extractSegmented(
   const results: any[] = []
   for (let i = 0; i < anchorElements.length; i++) {
     const anchor = anchorElements[i]
-    const segment = await this._nextSiblingsUntil(anchor, anchorSelector)
-    const segmentContext = [anchor, ...segment]
-    this._logDebug(
-      `_extractSegmented: segment ${i} created with ${segmentContext.length} elements using anchorSelector "${anchorSelector}"`
-    )
+    const prevAnchor = i > 0 ? anchorElements[i - 1] : null
+    const nextAnchor =
+      i < anchorElements.length - 1 ? anchorElements[i + 1] : null
+
+    // "Bubble Up" strategy:
+    // Find the highest ancestor of the current anchor that does NOT contain
+    // the previous or next anchors. This allows identifying the "Card" container
+    // even if the anchor is deep inside.
+    let currentScope = anchor
+    let bestScope = anchor
+    while (true) {
+      const parent = await this._parentElement(currentScope)
+      if (!parent || (await this._isSameElement(parent, container))) break
+
+      // Check if parent contains neighbors
+      let conflict = false
+      if (prevAnchor && (await _isAncestor.call(this, parent, prevAnchor))) {
+        conflict = true
+      }
+      if (
+        !conflict &&
+        nextAnchor &&
+        (await _isAncestor.call(this, parent, nextAnchor))
+      ) {
+        conflict = true
+      }
+
+      if (conflict) break
+      currentScope = parent
+      bestScope = currentScope
+    }
+
+    let segmentContext: any
+    if (await this._isSameElement(bestScope, anchor)) {
+      // Flat structure (or conflict immediately): use siblings scanning
+      const segment = await this._nextSiblingsUntil(anchor, anchorSelector)
+      segmentContext = [anchor, ...segment]
+      this._logDebug(
+        `_extractSegmented: segment ${i} (flat) created with ${segmentContext.length} elements`
+      )
+    } else {
+      // Nested structure: use the bubbled-up container
+      segmentContext = bestScope
+      this._logDebug(
+        `_extractSegmented: segment ${i} (nested) identified as container element`
+      )
+    }
+
     // Inject relativeTo from options if not set in schema
     const itemSchema = { ...schema } as ExtractObjectSchema
     if (opts?.relativeTo && !itemSchema.relativeTo) {
