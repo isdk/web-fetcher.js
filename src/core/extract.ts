@@ -310,12 +310,6 @@ export async function _extract(
               currentWorkingScope
             )
             if (effectiveMatch) {
-              // Find index
-              const idx = (currentWorkingScope as any[]).findIndex(
-                // We need to compare handles. _bubbleUp returns the exact object ref if from array?
-                // No, _bubbleUp returns an element. We need async comparison.
-                () => false // Placeholder, we do manual loop below
-              )
               // Actually _bubbleUpToScope already returns the item from the array if matched.
               // But we can't easily find index of an object reference if they are different wrappers.
               // Let's rely on _isSameElement loop.
