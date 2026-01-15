@@ -415,9 +415,17 @@ Ideal for "Flat" structures where items are simply a sequence of siblings withou
            - It performs a `_querySelectorAll` within the `currentWorkingScope`.
            - If a match is found (say `Element_N`), it extracts the value.
            - **Crucial Step (Recursion Protection)**: When calling `_extract` recursively for the matched element, the engine passes a temporary schema with the `selector` removed. This prevents the recursive call from searching *inside* `Element_N` for itself.
-           - **Scope Slicing**: After a successful extraction, the engine identifies the index of the matched element (or its top-level container within the segment using `_isAncestor`) and slices the `currentWorkingScope` to start *after* that index.
+           - **Scope Slicing**: After a successful extraction, the engine identifies the index of the matched element (or its top-level container within the segment using `_bubbleUpToScope`) and slices the `currentWorkingScope` to start *after* that index.
         3. **Fallback**: If an optional field matches nothing, the `currentWorkingScope` remains unchanged, allowing the next field to scan from the same relative origin.
   - **Order Sensitivity**: Requires an explicit `order` array (or relies on object key insertion order) to ensure fields are "consumed" in the correct sequence.
+- **Anchor Jumping (Arbitrary Object Anchors)**:
+  - **Concept**: We extended the `anchor` concept from array segmentation to individual object properties, enabling "random access" scanning within a sequential process.
+  - **Mechanism**: Any field in an `ExtractObjectSchema` can define an `anchor` (referencing a prior field name or a CSS selector) to reset its search scope.
+  - **Deep Dive: The Jump & Bubble Up Logic**:
+        1. **Element Tracking**: The engine maintains a `fieldElements` Map (key -> DOM Element) during object extraction to track every successfully extracted field.
+        2. **Anchor Resolution**: When a field defines an `anchor`, the engine resolves it either from `fieldElements` (if it's a known field name) or by querying the object's root scope (if it's a selector).
+        3. **Bubble Up Strategy**: The resolved anchor might be deeply nested (e.g., a `span` inside a `div`). To find the effective "starting line" in the current scope (which might be a list of sibling `div`s), the engine calls `_bubbleUpToScope(anchor, currentScope)`. This function walks up the DOM tree from the anchor until it finds the ancestor that is a direct member of the current scope.
+        4. **Cursor Reset**: Once the effective anchor is found, the engine resets the scanning cursor (`currentWorkingScope`) to the siblings immediately **following** that anchor. This allows the extraction flow to "jump" to a new section of the content, bypassing intermediate nodes.
 - **Strict Mode**: When `strict: true` is set in the mode options, it ensures that:
   - At least one anchor element must be found.
   - Each segment must satisfy all `required` fields in `items`.
