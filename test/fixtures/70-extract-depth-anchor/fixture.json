@@ -1,0 +1,58 @@
+{
+  "name": "Extract with Depth (Anchor)",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "type": "array",
+          "selector": ".group",
+          "items": {
+            "type": "object",
+            "properties": {
+              "anchorField": { "selector": ".label" },
+              "noDepth": {
+                "anchor": "anchorField",
+                "selector": ".body"
+              },
+              "withDepth0": {
+                "anchor": "anchorField",
+                "depth": 0,
+                "selector": ".body"
+              },
+              "withDepth1": {
+                "anchor": "anchorField",
+                "depth": 1,
+                "selector": ".body"
+              },
+              "withDepth2": {
+                "anchor": "anchorField",
+                "depth": 2,
+                "selector": ".body"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": [
+      {
+        "anchorField": "Anchor Point",
+        "noDepth": "Target Content 1",
+        "withDepth0": null,
+        "withDepth1": "Target Content 1",
+        "withDepth2": "Target Content 1"
+      },
+      {
+        "anchorField": "Another Anchor",
+        "noDepth": "Target Content 2",
+        "withDepth0": null,
+        "withDepth1": "Target Content 2",
+        "withDepth2": "Target Content 2"
+      }
+    ]
+  }
+}

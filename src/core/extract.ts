@@ -295,6 +295,14 @@ async function _extractObject(
   if (selector && !skipSelector) {
     const elements = await this._querySelectorAll(scope, selector)
     newScope = elements.length > 0 ? elements[0] : null
+    if (newScope && schema.depth !== undefined) {
+      newScope = await _bubbleUpToScope.call(
+        this,
+        newScope,
+        scope,
+        schema.depth
+      )
+    }
     this._logDebug(
       `_extractObject: selector "${selector}" found ${elements.length} elements`
     )
@@ -334,7 +342,8 @@ async function _extractObject(
         properties,
         fieldElements,
         newScope,
-        isSequential
+        isSequential,
+        propSchema.depth
       )
       if (anchorResult) {
         scopeForField = anchorResult.scopeForField
@@ -355,8 +364,15 @@ async function _extractObject(
     const isArrayField = propSchema.type === 'array'
 
     if (propSelector) {
-      const matches = await this._querySelectorAll(scopeForField, propSelector)
+      let matches = await this._querySelectorAll(scopeForField, propSelector)
       if (matches.length > 0) {
+        if (propSchema.depth !== undefined) {
+          matches = await Promise.all(
+            matches.map((m) =>
+              _bubbleUpToScope.call(this, m, scopeForField, propSchema.depth)
+            )
+          )
+        }
         extractedElement = matches[0]
         const tempSchema = { ...propSchema, _skipSelector: true } as any
         value = await _extract.call(
@@ -444,12 +460,18 @@ async function _extractArray(
   const { selector, items, mode, strict: arrayStrict } = schema
   const finalStrict = arrayStrict ?? strict
   const skipSelector = (schema as any)._skipSelector
-  const elements =
+  let elements =
     selector && !skipSelector
       ? await this._querySelectorAll(scope, selector)
       : Array.isArray(scope)
         ? scope
         : [scope]
+
+  if (selector && !skipSelector && schema.depth !== undefined) {
+    elements = await Promise.all(
+      elements.map((e) => _bubbleUpToScope.call(this, e, scope, schema.depth))
+    )
+  }
 
   this._logDebug(
     `_extractArray: selector "${selector || ''}" found ${elements.length} elements`
@@ -531,6 +553,14 @@ async function _extractValue(
   if (selector && !skipSelector) {
     const elements = await this._querySelectorAll(scope, selector)
     elementToExtract = elements.length > 0 ? elements[0] : null
+    if (elementToExtract && schema.depth !== undefined) {
+      elementToExtract = await _bubbleUpToScope.call(
+        this,
+        elementToExtract,
+        scope,
+        schema.depth
+      )
+    }
     this._logDebug(
       `_extractValue: selector "${selector}" found ${elements.length} elements`
     )
@@ -823,10 +853,21 @@ export async function _extractSegmented(
   if (opts?.anchor) {
     anchorSelector = properties[opts.anchor]?.selector || opts.anchor
   } else {
-    anchorSelector = properties[keys[0]]?.selector
+    // Find the first property that has a selector
+    for (const key of keys) {
+      if ((properties[key] as any).selector) {
+        anchorSelector = (properties[key] as any).selector
+        break
+      }
+    }
   }
 
-  if (!anchorSelector) return null
+  if (!anchorSelector) {
+    this._logDebug(
+      '_extractSegmented: no anchor selector found, falling back to nested'
+    )
+    return null
+  }
 
   const anchorElements = await this._querySelectorAll(container, anchorSelector)
   this._logDebug(
@@ -870,13 +911,23 @@ export async function _extractSegmented(
 
     if (conflictLCA) {
       // The container is the child of conflictLCA that leads to anchor
-      const bubbled = await _bubbleUpToScope.call(this, anchor, conflictLCA)
+      const bubbled = await _bubbleUpToScope.call(
+        this,
+        anchor,
+        conflictLCA,
+        opts?.depth
+      )
       if (bubbled && !(await this._isSameElement(bubbled, anchor))) {
         bestScope = bubbled
       }
     } else {
       // No neighbor conflict (e.g. single item), try to bubble up to container
-      const bubbled = await _bubbleUpToScope.call(this, anchor, container)
+      const bubbled = await _bubbleUpToScope.call(
+        this,
+        anchor,
+        container,
+        opts?.depth
+      )
       if (bubbled) {
         bestScope = bubbled
       }
@@ -936,22 +987,35 @@ export async function _extractSegmented(
  *
  * @param element - The deep element to bubble up from.
  * @param scope - The boundary scope to stop at.
+ * @param maxDepth - Optional. Maximum number of levels to bubble up.
  * @returns The direct child/item of scope that contains the element, or null if not found.
  */
 async function _bubbleUpToScope(
   this: IExtractEngine,
   element: FetchElementScope,
-  scope: FetchElementScope | FetchElementScope[]
+  scope: FetchElementScope | FetchElementScope[],
+  maxDepth?: number
 ): Promise<FetchElementScope | null> {
   const isScopeArray = Array.isArray(scope)
   const scopeItems = isScopeArray ? scope : [scope]
 
   // Performance Optimization: Use the engine's optimized ancestor search
-  if (!isScopeArray) {
-    return this._findContainerChild(element, scope)
-  }
+  const target = isScopeArray
+    ? await this._findClosestAncestor(element, scopeItems)
+    : await this._findContainerChild(element, scope)
 
-  return this._findClosestAncestor(element, scopeItems)
+  if (maxDepth === undefined || !target) return target
+
+  // Cap the bubbling by maxDepth
+  let current = element
+  for (let i = 0; i < maxDepth; i++) {
+    if (await this._isSameElement(current, target)) break
+
+    const parent = await this._parentElement(current)
+    if (!parent || !(await this._contains(target, parent))) break
+    current = parent
+  }
+  return current
 }
 
 /**
@@ -968,6 +1032,7 @@ async function _bubbleUpToScope(
  * @param fieldElements - Map of elements already extracted in the current object.
  * @param rootScope - The root element of the current object.
  * @param isSequential - Whether we are in 'previous' mode (used for logging context).
+ * @param maxDepth - Optional. Maximum number of levels to bubble up from the anchor.
  * @returns An object containing the new scope (following siblings), or null if resolution fails.
  */
 async function _resolveAnchorScope(
@@ -976,7 +1041,8 @@ async function _resolveAnchorScope(
   properties: Record<string, ExtractSchema>,
   fieldElements: Map<string, FetchElementScope>,
   rootScope: FetchElementScope,
-  isSequential: boolean
+  isSequential: boolean,
+  maxDepth?: number
 ): Promise<{ scopeForField: FetchElementScope[] } | null> {
   let anchorElement: FetchElementScope = null
   const isFieldRef = properties.hasOwnProperty(anchor)
@@ -993,12 +1059,11 @@ async function _resolveAnchorScope(
   if (anchorElement) {
     const scopes: FetchElementScope[] = []
     let current = anchorElement
-    let depth = 0
+    let d = 0
+    const maxD = maxDepth !== undefined ? maxDepth : MAX_DOM_DEPTH
 
     // Collect subsequent siblings from the anchor up to the rootScope
-    while (current && depth < MAX_DOM_DEPTH) {
-      depth++
-
+    while (current && d <= maxD) {
       // Get siblings following the current element
       const siblings = await this._nextSiblingsUntil(current)
       scopes.push(...siblings)
@@ -1014,17 +1079,14 @@ async function _resolveAnchorScope(
 
       if (isRoot) break
       current = parent
+      d++
     }
 
-    if (scopes.length > 0) {
-      this._logDebug(
-        `_resolveAnchorScope: anchor "${anchor}" resolved to composite scope of ${scopes.length} elements`
-      )
+    if (scopes.length > 0 || maxDepth !== undefined) {
       return { scopeForField: scopes }
     }
   }
 
-  this._logDebug(`_resolveAnchorScope: anchor "${anchor}" not found`)
   return null
 }
 
@@ -1057,7 +1119,9 @@ async function _sliceSequentialScope(
       if (containerIndex === -1) {
         // Fallback to identity-based comparison
         for (let i = 0; i < currentWorkingScope.length; i++) {
-          if (await this._isSameElement(currentWorkingScope[i], effectiveMatch)) {
+          if (
+            await this._isSameElement(currentWorkingScope[i], effectiveMatch)
+          ) {
             containerIndex = i
             break
           }
@@ -1094,11 +1158,17 @@ export interface BaseExtractSchema {
   /**
    * Specifies the starting anchor for extraction of this field.
    * - Field Name: Uses the DOM element of a previously extracted field as the anchor.
-   * - CSS Selector: Re-queries the selector within the current object scope to find the anchor.
+   * - CSS Selector: Re-queries the selector within the current context to find the anchor.
    *
    * Once anchored, the search scope for this field becomes the siblings following the anchor.
    */
   anchor?: string
+  /**
+   * The maximum number of levels to bubble up from the anchor or matched element.
+   * - In 'anchor' mode: Defines how many parent levels to traverse to collect following siblings.
+   * - In 'segmented' mode: Defines the maximum levels to ascend from the anchor to find a container.
+   */
+  depth?: number
 }
 
 /**
@@ -1191,6 +1261,11 @@ export interface SegmentedOptions extends BaseModeOptions {
    * - 'previous': Each field is searched starting from after the previous field's match.
    */
   relativeTo?: 'anchor' | 'previous'
+  /**
+   * The maximum number of levels to bubble up from the anchor to find a segment container.
+   * If omitted, it bubbles up as high as possible without conflicting with neighboring segments.
+   */
+  depth?: number
 }
 
 /**

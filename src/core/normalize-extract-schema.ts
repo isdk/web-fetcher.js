@@ -25,6 +25,7 @@ const CONTEXT_KEYS = new Set([
   'relativeTo',
   'order',
   'anchor',
+  'depth',
   // 'mode', // mode is not valid for Object schema, only Value/Array.
 ])
 
@@ -74,6 +75,7 @@ export function isImplicitObject(schema: any): boolean {
         'relativeTo',
         'order',
         'anchor',
+        'depth',
       ].includes(key)
     ) {
       return true

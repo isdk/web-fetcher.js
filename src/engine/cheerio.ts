@@ -174,6 +174,7 @@ export class CheerioFetchEngine extends FetchEngine<
   ): Promise<boolean> {
     const containerNode = container.el[0]
     const elementNode = element.el[0]
+    if (containerNode === elementNode) return true
     const $ = container.$ as any
     if (typeof $.contains === 'function') {
       return $.contains(containerNode, elementNode)
@@ -212,17 +213,26 @@ export class CheerioFetchEngine extends FetchEngine<
     const containerNode = container.el[0]
     let current = el
 
-    // Handle case where element IS the container (though logic usually implies element is descendant)
+    // Handle case where element IS the container
     if (current[0] === containerNode) return element
 
-    while (current.length > 0) {
-      const parent = current.parent()
-      if (parent.length === 0) break
-      if (parent[0] === containerNode) {
-        return { $, el: current }
+    const ancestors = current.parents().toArray()
+    for (let i = 0; i < ancestors.length; i++) {
+      if (ancestors[i] === containerNode) {
+        // The child of container that contains element is the one before container in parents list
+        const childNode = i > 0 ? ancestors[i - 1] : el[0]
+        return { $, el: $(childNode) }
       }
-      current = parent
     }
+
+    // Special case for root node which might not be in the parents() list
+    const rootNode = ($.root() as any)[0]
+    if (containerNode === rootNode) {
+      const childNode =
+        ancestors.length > 0 ? ancestors[ancestors.length - 1] : el[0]
+      return { $, el: $(childNode) }
+    }
+
     return null
   }
 

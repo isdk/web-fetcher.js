@@ -1,0 +1,34 @@
+{
+  "name": "Extract with Depth (Sequential)",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "type": "array",
+          "selector": ".container",
+          "items": {
+            "type": "object",
+            "relativeTo": "previous",
+            "properties": {
+              "marker": {
+                "selector": ".marker",
+                "depth": 2
+              },
+              "value": {
+                "selector": ".content-row"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": [
+      { "marker": "Start Here", "value": "Data 1" },
+      { "marker": "Next Marker", "value": "Data 2" }
+    ]
+  }
+}

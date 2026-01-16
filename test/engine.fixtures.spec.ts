@@ -17,50 +17,50 @@ const isConditionObject = (obj: any): boolean => {
   return keys.some(key => ['and', 'or', 'not', 'contains', 'equals'].includes(key));
 };
 
-const checkExpectations = (value: any, expectations: any) => {
+const checkExpectations = (value: any, expectations: any, path: string = 'root') => {
   if (Array.isArray(expectations)) {
     if (Array.isArray(value)) {
-      expect(value).toHaveLength(expectations.length);
+      expect(value, `at ${path}`).toHaveLength(expectations.length);
     }
     // If expectations is an array, we need to decide if we're matching an array or multiple conditions
     if (Array.isArray(value) && expectations.length === value.length && expectations.length > 0 && !isConditionObject(expectations[0])) {
-      value.forEach((v, i) => checkExpectations(v, expectations[i]));
+      value.forEach((v, i) => checkExpectations(v, expectations[i], `${path}.${i}`));
     } else {
-      expectations.forEach(c => checkExpectations(value, c));
+      expectations.forEach((c, i) => checkExpectations(value, c, `${path}[condition:${i}]`));
     }
     return;
   }
 
   if (typeof expectations === 'string') {
-    expect(String(value || '')).toContain(expectations);
+    expect(String(value || ''), `at ${path}`).toContain(expectations);
     return;
   }
 
   if (typeof expectations !== 'object' || expectations === null) {
-    expect(value).toEqual(expectations);
+    expect(value, `at ${path}`).toEqual(expectations);
     return;
   }
 
   if (!isConditionObject(expectations)) {
     // It's a plain object, check properties recursively
     if (value === null || value === undefined) {
-      expect(value).toEqual(expectations);
+      expect(value, `at ${path}`).toEqual(expectations);
       return;
     }
     Object.keys(expectations).forEach(key => {
-      checkExpectations(value[key], expectations[key]);
+      checkExpectations(value[key], expectations[key], `${path}.${key}`);
     });
     return;
   }
 
   if (expectations.and) {
-    expectations.and.forEach((c: any) => checkExpectations(value, c));
+    expectations.and.forEach((c: any, i: number) => checkExpectations(value, c, `${path}[and:${i}]`));
     return;
   }
   if (expectations.or) {
     const passed = expectations.or.some((c: any) => {
       try {
-        checkExpectations(value, c);
+        checkExpectations(value, c, path);
         return true;
       } catch {
         return false;
@@ -70,12 +70,12 @@ const checkExpectations = (value: any, expectations: any) => {
     if (!passed) {
       if (expectations.or.length > 0) {
         try {
-          checkExpectations(value, expectations.or[0]);
+          checkExpectations(value, expectations.or[0], path);
         } catch (e) {
-          throw new Error(`None of the "or" conditions were met. First failure: ${(e as Error).message}`);
+          throw new Error(`[at ${path}] None of the "or" conditions were met. First failure: ${(e as Error).message}`);
         }
       }
-      expect.fail('None of the "or" conditions were met.');
+      expect.fail(`[at ${path}] None of the "or" conditions were met.`);
     }
     return;
   }
@@ -84,7 +84,7 @@ const checkExpectations = (value: any, expectations: any) => {
     const notCondition = expectations.not;
     const passed = (() => {
       try {
-        checkExpectations(value, notCondition);
+        checkExpectations(value, notCondition, path);
         return true;
       } catch {
         return false;
@@ -92,7 +92,7 @@ const checkExpectations = (value: any, expectations: any) => {
     })();
 
     if(passed) {
-      expect.fail(`NOT condition failed: wrapped condition should have failed but passed. Condition: ${JSON.stringify(notCondition)}`);
+      expect.fail(`[at ${path}] NOT condition failed: wrapped condition should have failed but passed. Condition: ${JSON.stringify(notCondition)}`);
     }
 
     return;
@@ -109,13 +109,13 @@ const checkExpectations = (value: any, expectations: any) => {
     }
 
     if (caseInsensitive) {
-      expect(target.toLowerCase()).toContain(String(contains).toLowerCase());
+      expect(target.toLowerCase(), `at ${path}`).toContain(String(contains).toLowerCase());
     } else {
-      expect(target).toContain(String(contains));
+      expect(target, `at ${path}`).toContain(String(contains));
     }
   }
   if ('equals' in expectations) {
-    expect(value).toEqual(expectations.equals);
+    expect(value, `at ${path}`).toEqual(expectations.equals);
   }
 };
 
@@ -438,7 +438,7 @@ const engineTestSuite = (
         checkExpectations(content.metadata, fixture.expected.metadata);
       }
       if ('data' in fixture.expected) {
-        checkExpectations(result, fixture.expected.data);
+        checkExpectations(result, fixture.expected.data, 'data');
       }
 
       await session.dispose();
