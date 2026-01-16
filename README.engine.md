@@ -206,6 +206,12 @@ To maintain cross-engine consistency, all implementations MUST follow these beha
   - MUST return a flat list of siblings starting *after* the anchor and stopping *before* the first element matching the `untilSelector`.
 - **`_isSameElement`**:
   - MUST compare elements based on **identity**, not content.
+- **`_findClosestAncestor`**:
+  - MUST efficiently find the closest ancestor of an element that exists in a given set of candidates.
+  - MUST be optimized to avoid multiple IPC calls in browser-based engines.
+- **`_contains`**:
+  - MUST implement standard DOM `Node.contains()` behavior.
+  - MUST be optimized for high-frequency boundary checks.
 - **`_bubbleUpToScope` (Internal Helper)**:
   - Implements the logic to bubble up from a deep element to its direct ancestor in the current scope. MUST include a depth limit (default 1000) to prevent infinite loops.
 

@@ -147,6 +147,40 @@ export class CheerioFetchEngine extends FetchEngine<
     return scope1.el[0] === scope2.el[0]
   }
 
+  async _findClosestAncestor(
+    scope: { $: CheerioAPI; el: CheerioNode },
+    candidates: { $: CheerioAPI; el: CheerioNode }[]
+  ): Promise<FetchElementScope | null> {
+    if (candidates.length === 0) return null
+
+    // O(N) to build the set
+    const candidateNodes = new Set(candidates.map((c) => c.el[0]))
+    const { $, el } = scope
+    let current = el
+
+    // O(D) traversal
+    while (current.length > 0) {
+      if (candidateNodes.has(current[0])) {
+        return { $, el: current }
+      }
+      current = current.parent()
+    }
+    return null
+  }
+
+  async _contains(
+    container: { $: CheerioAPI; el: CheerioNode },
+    element: { $: CheerioAPI; el: CheerioNode }
+  ): Promise<boolean> {
+    const containerNode = container.el[0]
+    const elementNode = element.el[0]
+    const $ = container.$ as any
+    if (typeof $.contains === 'function') {
+      return $.contains(containerNode, elementNode)
+    }
+    return container.el.find(element.el as any).length > 0
+  }
+
   async _extractValue(
     schema: ExtractValueSchema,
     scope: { $: CheerioAPI; el: CheerioNode }

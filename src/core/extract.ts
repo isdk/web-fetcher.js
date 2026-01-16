@@ -103,6 +103,45 @@ export interface IExtractEngine {
   ): Promise<FetchElementScope[]>
 
   /**
+   * Finds the closest ancestor of the `scope` element (including the element itself) that is present in the `candidates` array.
+   *
+   * @param scope - The starting element from which to ascend the DOM tree.
+   * @param candidates - An array of potential ancestor elements to check against.
+   * @returns A promise resolving to the matching candidate element from the array, or `null` if no match is found.
+   *
+   * @remarks
+   * **Performance Critical**: This method is a key optimization for "bubbling up" logic (e.g., in Segmented extraction).
+   * It effectively answers: "Which of these container candidates does my current element belong to?"
+   *
+   * **Implementation Guidelines**:
+   * - **Cheerio**: Should use a `Set` for O(1) candidate lookup during tree traversal (Total O(Depth)).
+   * - **Playwright**: Should perform the entire traversal within a single `page.evaluate` call to avoid O(Depth) IPC round-trips.
+   */
+  _findClosestAncestor(
+    scope: FetchElementScope,
+    candidates: FetchElementScope[]
+  ): Promise<FetchElementScope | null>
+
+  /**
+   * Checks if the `container` element contains the `element` (descendant).
+   *
+   * @param container - The potential ancestor element.
+   * @param element - The potential descendant element.
+   * @returns A promise resolving to `true` if `container` contains `element`, `false` otherwise.
+   *
+   * @remarks
+   * **Standard Compliance**: This mirrors the DOM [Node.contains()](https://developer.mozilla.org/en-US/docs/Web/API/Node/contains) behavior.
+   *
+   * **Performance Critical**: Used extensively in boundary checks for Segmented extraction.
+   * - **Playwright**: MUST use `elementHandle.evaluate` to use native `Node.contains` in the browser context, reducing IPC overhead.
+   * - **Cheerio**: Should use efficient lookups like `$.contains` or `.find()`.
+   */
+  _contains(
+    container: FetchElementScope,
+    element: FetchElementScope
+  ): Promise<boolean>
+
+  /**
    * Logs debug information if debug mode is enabled.
    * @param args - Arguments to log.
    */
@@ -785,13 +824,13 @@ export async function _extractSegmented(
 
       // Check if parent contains neighbors
       let conflict = false
-      if (prevAnchor && (await _isAncestor.call(this, parent, prevAnchor))) {
+      if (prevAnchor && (await this._contains(parent, prevAnchor))) {
         conflict = true
       }
       if (
         !conflict &&
         nextAnchor &&
-        (await _isAncestor.call(this, parent, nextAnchor))
+        (await this._contains(parent, nextAnchor))
       ) {
         conflict = true
       }
@@ -865,22 +904,20 @@ async function _bubbleUpToScope(
   const isScopeArray = Array.isArray(scope)
   const scopeItems = isScopeArray ? scope : [scope]
 
+  if (isScopeArray) {
+    return this._findClosestAncestor(element, scopeItems)
+  }
+
   let current = element
   let parent = await this._parentElement(current)
   let depth = 0
 
   while (current && depth < MAX_DOM_DEPTH) {
     depth++
-    if (isScopeArray) {
-      for (const item of scopeItems) {
-        if (await this._isSameElement(current, item)) {
-          return item
-        }
-      }
-    } else {
-      if (parent && (await this._isSameElement(parent, scope as any))) {
-        return current
-      }
+    // For single scope, we check if the parent matches the scope
+    // This implies the 'scope' is a container of 'element'
+    if (parent && (await this._isSameElement(parent, scope as any))) {
+      return current
     }
 
     if (!parent) break
@@ -889,28 +926,6 @@ async function _bubbleUpToScope(
   }
 
   return null
-}
-
-/**
- * Checks if one element is an ancestor of another.
- *
- * @param ancestor - The potential ancestor.
- * @param descendant - The element to check.
- * @returns True if `ancestor` contains `descendant`.
- */
-async function _isAncestor(
-  this: IExtractEngine,
-  ancestor: FetchElementScope,
-  descendant: FetchElementScope
-): Promise<boolean> {
-  let current = await this._parentElement(descendant)
-  let depth = 0
-  while (current && depth < MAX_DOM_DEPTH) {
-    depth++
-    if (await this._isSameElement(ancestor, current)) return true
-    current = await this._parentElement(current)
-  }
-  return false
 }
 
 /**
