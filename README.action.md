@@ -351,6 +351,8 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
 This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns.
 
+> **💡 Broadcasting Behavior**: If a property matches the container element itself (e.g. by matching the `selector` of the container), its value is "broadcasted" to every row in the resulting array. This is useful for including category names or timestamps that appear only once in the header/container.
+
 ```json
 {
   "id": "extract",
@@ -367,6 +369,27 @@ This mode is used when the `selector` points to a **container** (like a results 
 ```
 
 > **Heuristic Detection:** If `mode` is omitted and the `selector` matches exactly one element while `items` contains nested selectors, the engine automatically uses **columnar** mode.
+
+**Example: Columnar Broadcasting**
+
+When you have a list where the category is on the container, but items are inside.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#book-category",
+    "mode": "columnar",
+    "items": {
+      "category": { "attribute": "data-category" },
+      "title": { "selector": ".book-title" }
+    }
+  }
+}
+```
+
+> If `#book-category` has `data-category="Sci-Fi"` and contains 3 books, the result will be 3 items, each having `"category": "Sci-Fi"`.
 
 **Columnar Configuration:**
 

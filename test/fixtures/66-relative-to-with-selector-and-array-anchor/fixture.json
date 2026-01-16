@@ -1,0 +1,50 @@
+{
+  "title": "Repro issues: relativeTo with selector & Array Anchor",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "properties": {
+          "issue1": {
+            "type": "object",
+            "selector": "#issue1 .wrapper",
+            "relativeTo": "previous",
+            "properties": {
+              "l1": { "selector": ".label" },
+              "v1": { "selector": ".value" },
+              "l2": { "selector": ".label" },
+              "v2": { "selector": ".value" }
+            }
+          },
+          "issue2": {
+            "type": "object",
+            "selector": "#issue2",
+            "properties": {
+              "tags": { "type": "array", "selector": ".tag" },
+              "meta": { "selector": ".meta", "anchor": "tags" }
+            }
+          }
+        }
+      },
+      "storeAs": "result"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "result": {
+        "issue1": {
+          "l1": "Label 1",
+          "v1": "Value 1",
+          "l2": "Label 2",
+          "v2": "Value 2"
+        },
+        "issue2": {
+          "tags": ["Tag 1", "Tag 2"],
+          "meta": "Correct Meta"
+        }
+      }
+    }
+  }
+}

@@ -512,9 +512,19 @@ To ensure consistency across different engines and maintain high testability, th
         * `_querySelectorAll`: MUST return results in **document order**. When `scope` is an array, it MUST check both the elements themselves and their descendants.
         * `_extractValue`: Handles primitive extraction according to `mode` and `attribute`.
         * `_parentElement`, `_isSameElement`, and `_nextSiblingsUntil`.
-    * **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
-
-### Extraction Schema Normalization & Implicit Objects
+        *   **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
+    
+    ### Engine Limitations & Quirks
+    
+    #### Cheerio: The `:scope` Selector
+    
+    Cheerio does not naturally support the `:scope` pseudo-class in `find()` or `filter()` operations in the same way modern browsers do.
+    
+    * **Impact**: Standard CSS queries using `:scope` to reference the current element (e.g., in `columnar` extraction where the selector is the container itself) will fail if passed directly to Cheerio.
+    * **Solution**: The `CheerioFetchEngine._querySelectorAll` method explicitly checks for `selector === ':scope'` and returns the element itself to align behavior with the Playwright engine. Developers modifying this engine must preserve this manual check.
+    
+    ### Extraction Schema Normalization & Implicit Objects
+    
 
 To provide an "AI-friendly" and developer-friendly experience, the `extract` action supports highly flexible shorthand syntaxes. These are handled by a dedicated normalization layer in `src/core/normalize-extract-schema.ts`.
 

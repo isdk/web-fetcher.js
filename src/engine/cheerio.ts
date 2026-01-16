@@ -108,8 +108,13 @@ export class CheerioFetchEngine extends FetchEngine<
         .map((e: any) => ({ $, el: $(e) }))
     }
     const { $, el } = scope
+    // Cheerio doesn't support :scope pseudo-class natively in find/filter in the same way browsers do for all versions
+    if (selector === ':scope') {
+      return [{ $, el }]
+    }
     return el
       .find(selector)
+      .add(el.filter(selector))
       .toArray()
       .map((e: any) => ({ $, el: $(e) }))
   }
