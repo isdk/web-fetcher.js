@@ -292,6 +292,36 @@ Note:
 
 ## 🧩 Implementation Details & Gotchas
 
+### 性能优化实现细节与陷阱 (Performance Optimization & Pitfalls)
+
+在处理深层 DOM 树或大规模数据提取时，性能优化至关重要。
+
+#### 1. 最小化 Playwright IPC 开销
+
+**核心挑战**：在 `browser` 模式下，Node.js 进程与浏览器进程之间的每一次通信（如 `locator.evaluate`）都是一次昂贵的跨进程通信 (IPC)。
+
+- **优化原则**：**将逻辑尽可能推向浏览器端执行**。如果一个操作需要多次遍历 DOM 或多次判断元素关系，应该将其封装在一个 `evaluate` 调用中完成，而不是在 Node.js 中使用循环多次调用浏览器 API。
+
+#### 2. Playwright 中的 XPath 陷阱与解决方案
+
+在实现 `_findCommonAncestor` (LCA) 和 `_findContainerChild` 时，我们需要从浏览器端的 `evaluate` 函数中返回一个元素句柄或选择器，以便 Node.js 端能继续操作该元素。
+
+- **为什么不能直接返回 ElementHandle?**：
+  从 `evaluate` 返回 `ElementHandle` 会增加额外的句柄管理负担。更重要的是，我们希望返回的是一个 `Locator`，而 `Locator` 通常基于选择器。
+- **为什么使用 XPath 而非 CSS Selector?**：
+  - **路径唯一性**：对于在内存中动态找到的任意 DOM 节点，生成一个简短且唯一的 CSS 选择器非常困难且不可靠。
+  - **XPath 的优势**：我们可以编写一个简单的辅助函数（如 `getXPath(element)`），递归地生成该元素的绝对路径（如 `/html/body/div[2]/span[1]`）。
+  - **双向转换**：
+    1. 在浏览器端（`evaluate` 内部）找到目标节点。
+    2. 使用 `getXPath` 将节点转换为唯一的 XPath 字符串。
+    3. 将字符串返回给 Node.js。
+    4. 在 Node.js 端，使用 `page.locator('xpath=' + xpath)` 重新获得该元素的 `Locator`。
+- **教训**：不要试图在 Node.js 中通过 `parentElement()` 循环来寻找祖先，这会导致 O(N) 次 IPC 调用，在 DOM 树较深时性能会急剧下降。
+
+#### 3. Cheerio 的同步优势
+
+在 `http` 模式下，所有 DOM 操作都在同一个 Node.js 进程中同步完成，因此 `_findCommonAncestor` 等操作可以直接利用循环实现，性能开销极低。尽管如此，我们依然提供了专门的接口，以便未来可以利用 Cheerio 的内部优化。
+
 ### 核心提取逻辑实现细节 (`src/core/extract.ts`)
 
 为了处理复杂的 Web 结构（如非嵌套的平铺列表或需要跨字段引用的锚点），核心提取逻辑采用了以下关键设计：
@@ -512,19 +542,18 @@ To ensure consistency across different engines and maintain high testability, th
         * `_querySelectorAll`: MUST return results in **document order**. When `scope` is an array, it MUST check both the elements themselves and their descendants.
         * `_extractValue`: Handles primitive extraction according to `mode` and `attribute`.
         * `_parentElement`, `_isSameElement`, and `_nextSiblingsUntil`.
-        *   **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
-    
-    ### Engine Limitations & Quirks
-    
-    #### Cheerio: The `:scope` Selector
-    
+        * **Integration**: `FetchEngine` delegates its `extract` call to the core `_extract` function, passing itself (`this`) as the engine provider.
+
+   ### Engine Limitations & Quirks
+
+   #### Cheerio: The `:scope` Selector
+
     Cheerio does not naturally support the `:scope` pseudo-class in `find()` or `filter()` operations in the same way modern browsers do.
-    
+
     * **Impact**: Standard CSS queries using `:scope` to reference the current element (e.g., in `columnar` extraction where the selector is the container itself) will fail if passed directly to Cheerio.
     * **Solution**: The `CheerioFetchEngine._querySelectorAll` method explicitly checks for `selector === ':scope'` and returns the element itself to align behavior with the Playwright engine. Developers modifying this engine must preserve this manual check.
-    
-    ### Extraction Schema Normalization & Implicit Objects
-    
+
+   ### Extraction Schema Normalization & Implicit Objects
 
 To provide an "AI-friendly" and developer-friendly experience, the `extract` action supports highly flexible shorthand syntaxes. These are handled by a dedicated normalization layer in `src/core/normalize-extract-schema.ts`.
 

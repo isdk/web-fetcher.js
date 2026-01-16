@@ -192,7 +192,7 @@ The `extract()` method provides a powerful, declarative way to pull structured d
 To ensure consistency across engines and maintain high quality, the extraction system is divided into three layers:
 
 1. **Normalization Layer (`src/core/normalize-extract-schema.ts`)**: Pre-processes user-provided schemas into a canonical internal format, handling CSS filter merging and implicit object detection.
-2. **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer responsible for the extraction workflow. It dispatches tasks to `_extractObject`, `_extractArray`, or `_extractValue` via a **Dispatcher (`_extract`)**. It manages recursion, strict mode, required field validation, anchor resolution, and sequential consumption cursors.
+2. **Core Extraction Logic (`src/core/extract.ts`)**: An engine-agnostic layer responsible for the extraction workflow. It dispatches tasks to `_extractObject`, `_extractArray`, or `_extractValue` via a **Dispatcher (`_extract`)**. It manages recursion, strict mode, required field validation, anchor resolution, performance-optimized tree operations (LCA, bubbling), and sequential consumption cursors.
 3. **Engine Interface (`IExtractEngine`)**: Defined at the core layer and implemented by engines to provide low-level DOM primitives.
 
 #### Implementation Rules for `IExtractEngine`
@@ -212,6 +212,12 @@ To maintain cross-engine consistency, all implementations MUST follow these beha
 - **`_contains`**:
   - MUST implement standard DOM `Node.contains()` behavior.
   - MUST be optimized for high-frequency boundary checks.
+- **`_findCommonAncestor`**:
+  - MUST find the Lowest Common Ancestor (LCA) of two elements.
+  - **Performance Critical**: In browser engines, this MUST be executed within a single `evaluate` call to minimize IPC (Inter-Process Communication) overhead.
+- **`_findContainerChild`**:
+  - MUST find the direct child of a container that contains a specific descendant.
+  - **Performance Critical**: This replaces manual "bubble-up" loops in the Node.js context, significantly reducing overhead for deep DOM trees.
 - **`_bubbleUpToScope` (Internal Helper)**:
   - Implements the logic to bubble up from a deep element to its direct ancestor in the current scope. MUST include a depth limit (default 1000) to prevent infinite loops.
 

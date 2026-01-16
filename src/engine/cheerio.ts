@@ -181,6 +181,51 @@ export class CheerioFetchEngine extends FetchEngine<
     return container.el.find(element.el as any).length > 0
   }
 
+  async _findCommonAncestor(
+    scope1: { $: CheerioAPI; el: CheerioNode },
+    scope2: { $: CheerioAPI; el: CheerioNode }
+  ): Promise<FetchElementScope | null> {
+    const { $, el: el1 } = scope1
+    const { el: el2 } = scope2
+
+    if (el1[0] === el2[0]) return scope1
+    if (await this._contains(scope1, scope2)) return scope1
+    if (await this._contains(scope2, scope1)) return scope2
+
+    const parents1 = el1.parents().toArray()
+    const nodes2 = el2.parents().toArray()
+    const parents2 = new Set(nodes2)
+
+    for (const p of parents1) {
+      if (parents2.has(p)) {
+        return { $, el: $(p) }
+      }
+    }
+    return null
+  }
+
+  async _findContainerChild(
+    element: { $: CheerioAPI; el: CheerioNode },
+    container: { $: CheerioAPI; el: CheerioNode }
+  ): Promise<FetchElementScope | null> {
+    const { $, el } = element
+    const containerNode = container.el[0]
+    let current = el
+
+    // Handle case where element IS the container (though logic usually implies element is descendant)
+    if (current[0] === containerNode) return element
+
+    while (current.length > 0) {
+      const parent = current.parent()
+      if (parent.length === 0) break
+      if (parent[0] === containerNode) {
+        return { $, el: current }
+      }
+      current = parent
+    }
+    return null
+  }
+
   async _extractValue(
     schema: ExtractValueSchema,
     scope: { $: CheerioAPI; el: CheerioNode }

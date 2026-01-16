@@ -88,22 +88,40 @@ export class PlaywrightFetchEngine extends FetchEngine<
     scope: Locator | Locator[],
     selector: string
   ): Promise<FetchElementScope[]> {
-    if (Array.isArray(scope)) {
-      const results: Locator[] = []
-      for (const loc of scope) {
-        // find in children
-        const matches = await loc.locator(selector).all()
-        results.push(...matches)
-        // check if current element matches
+    const scopes = Array.isArray(scope) ? scope : [scope]
+    const results: Locator[] = []
+
+    for (const loc of scopes) {
+      const matches = await loc.locator(selector).all()
+      results.push(...matches)
+
+      try {
         const isMatch = await loc.evaluate(
           (el, sel) => el.matches(sel),
           selector
         )
-        if (isMatch) results.push(loc)
+        if (isMatch) {
+          // Handled in order below
+        }
+      } catch (e) {
+        // Ignore
       }
-      return results
     }
-    return scope.locator(selector).all()
+
+    const finalResults: Locator[] = []
+    for (const loc of scopes) {
+      let isSelfMatch = false
+      try {
+        isSelfMatch = await loc.evaluate((el, sel) => el.matches(sel), selector)
+      } catch {}
+
+      if (isSelfMatch) finalResults.push(loc)
+
+      const descendants = await loc.locator(selector).all()
+      finalResults.push(...descendants)
+    }
+
+    return finalResults
   }
 
   async _nextSiblingsUntil(
@@ -124,7 +142,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
   }
 
   async _parentElement(scope: Locator): Promise<FetchElementScope | null> {
-    // In Playwright, xpath '..' gets parent
     const parent = scope.locator('xpath=..')
     if ((await parent.count()) === 0) return null
     return parent.first()
@@ -134,14 +151,13 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const h1 = await scope1.elementHandle()
     const h2 = await scope2.elementHandle()
     if (!h1 || !h2) return false
-    const result = await h1.evaluate((node1, node2) => node1 === node2, h2)
-    // Handles should be disposed?
-    // In this flow, we might be creating many handles.
-    // Ideally we should manage disposal, but Locators manage their own lifecycle mostly.
-    // ElementHandles obtained manually should be disposed.
-    await h1.dispose()
-    await h2.dispose()
-    return result
+    try {
+      const result = await h1.evaluate((node1, node2) => node1 === node2, h2)
+      return result
+    } finally {
+      await h1.dispose()
+      await h2.dispose()
+    }
   }
 
   async _findClosestAncestor(
@@ -150,7 +166,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
   ): Promise<FetchElementScope | null> {
     if (candidates.length === 0) return null
 
-    // 1. Resolve all handles
     const scopeHandle = await scope.elementHandle()
     if (!scopeHandle) return null
 
@@ -159,32 +174,23 @@ export class PlaywrightFetchEngine extends FetchEngine<
     )
 
     try {
-      // 2. Pass all handles to evaluate.
-      // We return the INDEX of the matching candidate to avoid creating new handles/locators
-      // and to ensure we return the exact same Locator object from the candidates array.
-      const matchIndex = await scopeHandle.evaluate(
-        (node, nodes) => {
-          const candidateSet = new Set(nodes)
-          let current: SVGElement | HTMLElement | null = node
-          while (current) {
-            // Check if current node is in the candidate set
-            // Note: Set.has works with object references in browser JS
-            if (candidateSet.has(current)) {
-              return nodes.indexOf(current)
-            }
-            current = current.parentElement
+      const matchIndex = await scopeHandle.evaluate((node, nodes) => {
+        const candidateSet = new Set(nodes)
+        let current: SVGElement | HTMLElement | null = node
+        while (current) {
+          if (candidateSet.has(current)) {
+            return nodes.indexOf(current)
           }
-          return -1
-        },
-        candidateHandles
-      )
+          current = current.parentElement
+        }
+        return -1
+      }, candidateHandles)
 
       if (matchIndex !== -1) {
         return candidates[matchIndex]
       }
       return null
     } finally {
-      // 3. Cleanup handles
       await scopeHandle.dispose()
       await Promise.all(candidateHandles.map((h) => h?.dispose()))
     }
@@ -199,6 +205,147 @@ export class PlaywrightFetchEngine extends FetchEngine<
     } finally {
       await h1.dispose()
       await h2.dispose()
+    }
+  }
+
+  async _findCommonAncestor(
+    scope1: Locator,
+    scope2: Locator
+  ): Promise<FetchElementScope | null> {
+    const h1 = await scope1.elementHandle()
+    const h2 = await scope2.elementHandle()
+    if (!h1 || !h2) return null
+
+    try {
+      const resultHandle = await h1.evaluateHandle((node1, node2) => {
+        function getXPath(elm: any): string {
+          if (elm.id) return `//*[@id="${elm.id}"]`
+          if (elm === document.body) return '/html/body'
+          if (elm === document.documentElement) return '/html'
+
+          let ix = 0
+          const siblings = elm.parentNode ? elm.parentNode.childNodes : []
+          for (let i = 0; i < siblings.length; i++) {
+            const sibling = siblings[i]
+            if (sibling === elm) {
+              return (
+                getXPath(elm.parentNode) +
+                '/' +
+                elm.tagName.toLowerCase() +
+                '[' +
+                (ix + 1) +
+                ']'
+              )
+            }
+            if (sibling.nodeType === 1 && sibling.tagName === elm.tagName) ix++
+          }
+          return ''
+        }
+
+        let result: Node | null = null
+        if (node1 === node2) result = node1
+        else if (node1.contains(node2)) result = node1
+        else if (node2.contains(node1)) result = node2
+        else {
+          const parents2 = new Set()
+          let curr: any = node2.parentElement
+          while (curr) {
+            parents2.add(curr)
+            curr = curr.parentElement
+          }
+
+          curr = node1.parentElement
+          while (curr) {
+            if (parents2.has(curr)) {
+              result = curr
+              break
+            }
+            curr = curr.parentElement
+          }
+        }
+
+        if (!result || result.nodeType !== 1) return null
+        return getXPath(result)
+      }, h2)
+
+      if (!resultHandle) return null
+      const xpath = await resultHandle.jsonValue()
+
+      if (typeof xpath === 'string' && xpath) {
+        return scope1.page().locator(`xpath=${xpath}`)
+      }
+      return null
+    } finally {
+      await h1.dispose()
+      await h2.dispose()
+    }
+  }
+
+  async _findContainerChild(
+    element: Locator,
+    container: Locator
+  ): Promise<FetchElementScope | null> {
+    const hElement = await element.elementHandle()
+    const hContainer = await container.elementHandle()
+    if (!hElement || !hContainer) return null
+
+    try {
+      const resultHandle = await hElement.evaluateHandle(
+        (node, containerNode) => {
+          function getXPath(elm: any): string {
+            if (elm.id) return `//*[@id="${elm.id}"]`
+            if (elm === document.body) return '/html/body'
+            if (elm === document.documentElement) return '/html'
+
+            let ix = 0
+            const siblings = elm.parentNode ? elm.parentNode.childNodes : []
+            for (let i = 0; i < siblings.length; i++) {
+              const sibling = siblings[i]
+              if (sibling === elm) {
+                return (
+                  getXPath(elm.parentNode) +
+                  '/' +
+                  elm.tagName.toLowerCase() +
+                  '[' +
+                  (ix + 1) +
+                  ']'
+                )
+              }
+              if (sibling.nodeType === 1 && sibling.tagName === elm.tagName)
+                ix++
+            }
+            return ''
+          }
+
+          let result: any = null
+          if (node === containerNode) result = node
+          else {
+            let curr: any = node
+            while (curr) {
+              if (curr.parentElement === containerNode) {
+                result = curr
+                break
+              }
+              curr = curr.parentElement
+            }
+          }
+
+          if (!result || result.nodeType !== 1) return null
+          return getXPath(result)
+        },
+        hContainer
+      )
+
+      if (!resultHandle) return null
+      const xpath = await resultHandle.jsonValue()
+
+      if (typeof xpath === 'string' && xpath) {
+        return element.page().locator(`xpath=${xpath}`)
+      }
+      return null
+    } finally {
+      await hElement.dispose()
+      await hContainer.dispose()
     }
   }
 
@@ -268,13 +415,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
         return fetchResponse
       }
       case 'click': {
-        // const beforePageId = page.mainFrame().url();
         await page.click(action.selector, { timeout: defaultTimeout })
         await page.waitForLoadState('networkidle', { timeout: defaultTimeout })
-        // if (beforePageId !== page.mainFrame().url()) {
         const navResponse = await this.buildResponse(context)
         this.lastResponse = navResponse
-        // }
         return
       }
       case 'fill':
@@ -433,7 +577,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       preNavigationHooks: [
         async ({ page, request }, gotOptions) => {
-          // await page.setExtraHTTPHeaders(this.hdrs);
           gotOptions.throwHttpErrors = ctx.throwHttpErrors
 
           const blockedTypes = this.blockedTypes
@@ -452,7 +595,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
     if (this.opts?.antibot) {
       crawlerOptions.browserPoolOptions = {
-        // Disable the default fingerprint spoofing to avoid conflicts with Camoufox.
         useFingerprints: false,
       }
 
@@ -492,7 +634,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
     await this.requestQueue.addRequest({
       url,
-      headers: this.hdrs, // update headers
+      headers: this.hdrs,
       userData: {
         requestId,
         waitUntil: opts?.waitUntil || 'domcontentloaded',

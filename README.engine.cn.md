@@ -192,7 +192,7 @@ await session.executeAll([
 为了确保不同引擎之间的一致性并保持高质量,提取系统分为三个层次:
 
 1. **规范化层 (`src/core/normalize-extract-schema.ts`)**: 将用户提供的各种简写模式预处理为统一的内部格式,处理 CSS 筛选器的合并。
-2. **核心提取逻辑 (`src/core/extract.ts`)**: 引擎无关层,负责提取的工作流分发。它通过 **Dispatcher (`_extract`)** 将任务分发给 `_extractObject`、`_extractArray` 或 `_extractValue`。该层管理递归、严格模式/必填字段验证、锚点解析以及顺序消费游标逻辑。
+2. **核心提取逻辑 (`src/core/extract.ts`)**: 引擎无关层,负责提取的工作流分发。它通过 **Dispatcher (`_extract`)** 将任务分发给 `_extractObject`、`_extractArray` 或 `_extractValue`。该层管理递归、严格模式/必填字段验证、锚点解析、性能优化的树操作（LCA、冒泡）以及顺序消费游标逻辑。
 3. **引擎接口层 (`IExtractEngine`)**: 在核心层定义,由各引擎实现,提供底层的 DOM 原子操作。
 
 #### `IExtractEngine` 实现准则
@@ -212,6 +212,12 @@ await session.executeAll([
 - **`_contains`**:
   - 必须实现标准的 DOM `Node.contains()` 行为。
   - 必须针对高频边界检查进行优化。
+- **`_findCommonAncestor`**:
+  - 必须查找两个元素的最近公共祖先 (Lowest Common Ancestor, LCA)。
+  - **性能关键**: 在浏览器引擎中，这必须在单次 `evaluate` 调用中执行，以最小化 IPC (进程间通信) 开销。
+- **`_findContainerChild`**:
+  - 必须在容器中查找包含特定后代元素的直系子元素。
+  - **性能关键**: 这取代了在 Node.js 环境中的手动“冒泡”循环，显著减少了深层 DOM 树的操作开销。
 - **`_bubbleUpToScope` (内部辅助)**:
   - 实现从深层元素向上回溯至当前作用域直系子项的逻辑。必须包含深度限制（默认 1000），防止死循环。
 

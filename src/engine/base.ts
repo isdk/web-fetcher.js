@@ -448,6 +448,32 @@ export abstract class FetchEngine<
     element: FetchElementScope
   ): Promise<boolean>
 
+  /**
+   * Finds the Lowest Common Ancestor (LCA) of two element scopes.
+   *
+   * @param scope1 - The first element scope.
+   * @param scope2 - The second element scope.
+   * @returns A promise resolving to the LCA element scope, or `null` if none found.
+   * @internal
+   */
+  public abstract _findCommonAncestor(
+    scope1: FetchElementScope,
+    scope2: FetchElementScope
+  ): Promise<FetchElementScope | null>
+
+  /**
+   * Finds the direct child of container that contains element.
+   *
+   * @param element - The descendant element.
+   * @param container - The container element.
+   * @returns The child element of container, or null.
+   * @internal
+   */
+  public abstract _findContainerChild(
+    element: FetchElementScope,
+    container: FetchElementScope
+  ): Promise<FetchElementScope | null>
+
   protected async _extract(
     schema: ExtractSchema,
     scope: FetchElementScope,
