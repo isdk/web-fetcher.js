@@ -420,6 +420,34 @@ export abstract class FetchEngine<
     untilSelector?: string
   ): Promise<FetchElementScope[]>
 
+  /**
+   * Finds the closest ancestor of `scope` (including itself) that exists in the `candidates` array.
+   *
+   * @param scope - The starting element.
+   * @param candidates - The array of potential ancestor scopes.
+   * @returns A promise resolving to the matching candidate scope, or `null` if none found.
+   * @see {@link IExtractEngine._findClosestAncestor} for implementation details.
+   * @internal
+   */
+  public abstract _findClosestAncestor(
+    scope: FetchElementScope,
+    candidates: FetchElementScope[]
+  ): Promise<FetchElementScope | null>
+
+  /**
+   * Checks if the `container` scope contains the `element` scope.
+   *
+   * @param container - The potential ancestor element.
+   * @param element - The potential descendant element.
+   * @returns A promise resolving to `true` if `container` contains `element`.
+   * @see {@link IExtractEngine._contains} for implementation details.
+   * @internal
+   */
+  public abstract _contains(
+    container: FetchElementScope,
+    element: FetchElementScope
+  ): Promise<boolean>
+
   protected async _extract(
     schema: ExtractSchema,
     scope: FetchElementScope,

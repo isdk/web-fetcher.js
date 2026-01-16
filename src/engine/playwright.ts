@@ -144,6 +144,64 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return result
   }
 
+  async _findClosestAncestor(
+    scope: Locator,
+    candidates: Locator[]
+  ): Promise<FetchElementScope | null> {
+    if (candidates.length === 0) return null
+
+    // 1. Resolve all handles
+    const scopeHandle = await scope.elementHandle()
+    if (!scopeHandle) return null
+
+    const candidateHandles = await Promise.all(
+      candidates.map((c) => c.elementHandle())
+    )
+
+    try {
+      // 2. Pass all handles to evaluate.
+      // We return the INDEX of the matching candidate to avoid creating new handles/locators
+      // and to ensure we return the exact same Locator object from the candidates array.
+      const matchIndex = await scopeHandle.evaluate(
+        (node, nodes) => {
+          const candidateSet = new Set(nodes)
+          let current: SVGElement | HTMLElement | null = node
+          while (current) {
+            // Check if current node is in the candidate set
+            // Note: Set.has works with object references in browser JS
+            if (candidateSet.has(current)) {
+              return nodes.indexOf(current)
+            }
+            current = current.parentElement
+          }
+          return -1
+        },
+        candidateHandles
+      )
+
+      if (matchIndex !== -1) {
+        return candidates[matchIndex]
+      }
+      return null
+    } finally {
+      // 3. Cleanup handles
+      await scopeHandle.dispose()
+      await Promise.all(candidateHandles.map((h) => h?.dispose()))
+    }
+  }
+
+  async _contains(container: Locator, element: Locator): Promise<boolean> {
+    const h1 = await container.elementHandle()
+    const h2 = await element.elementHandle()
+    if (!h1 || !h2) return false
+    try {
+      return await h1.evaluate((parent, child) => parent.contains(child), h2)
+    } finally {
+      await h1.dispose()
+      await h2.dispose()
+    }
+  }
+
   async _extractValue(
     schema: ExtractValueSchema,
     scope: Locator

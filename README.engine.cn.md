@@ -206,6 +206,12 @@ await session.executeAll([
   - 必须返回一个平铺的兄弟节点列表，从起始锚点之后开始，到第一个匹配 `untilSelector` 的元素之前停止。
 - **`_isSameElement`**:
   - 必须基于元素身份（Identity）进行比较，而不是内容。
+- **`_findClosestAncestor`**:
+  - 必须高效地查找在给定候选集中的最近祖先元素。
+  - 必须针对浏览器引擎进行优化，避免多次 IPC 调用。
+- **`_contains`**:
+  - 必须实现标准的 DOM `Node.contains()` 行为。
+  - 必须针对高频边界检查进行优化。
 - **`_bubbleUpToScope` (内部辅助)**:
   - 实现从深层元素向上回溯至当前作用域直系子项的逻辑。必须包含深度限制（默认 1000），防止死循环。
 
