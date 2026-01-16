@@ -601,6 +601,14 @@ export async function _extractNested(
 
 /**
  * Performs columnar extraction (Column Alignment Mode).
+ *
+ * This mode is optimized for speed by aligning multiple independent value matches into objects.
+ * It features:
+ * 1. **Index Alignment**: Matches from different fields are paired by their document order index.
+ * 2. **Broadcasting**: Fields with a single match that equals the container are "broadcast" to all rows.
+ * 3. **Heuristic Inference**: When counts mismatch, it attempts to identify common item wrappers
+ *    using an optimized ancestor search to recover the list structure.
+ * 4. **Performance Optimized**: Broadcast checks and alignment calculations are pre-computed to minimize RPC calls.
  */
 export async function _extractColumnar(
   this: IExtractEngine,
@@ -697,34 +705,21 @@ export async function _extractColumnar(
       maxCount > 1 &&
       maxCountMatches.length > 0
     ) {
-      // ... (keeping existing inference logic)
+      // Use the engine's optimized ancestor search to find item wrappers
       const itemWrappers: any[] = []
       for (const match of maxCountMatches) {
-        let current = match
-        let parent = await this._parentElement(current)
-        let childOfContainer = current
-
-        while (parent) {
-          if (await this._isSameElement(parent, container)) {
-            itemWrappers.push(childOfContainer)
-            break
-          }
-          childOfContainer = parent
-          current = parent
-          parent = await this._parentElement(current)
+        const wrapper = await this._findContainerChild(match, container)
+        if (wrapper) {
+          itemWrappers.push(wrapper)
         }
       }
 
       const uniqueWrappers: any[] = []
       for (const w of itemWrappers) {
-        let isDuplicate = false
-        for (const u of uniqueWrappers) {
-          if (await this._isSameElement(w, u)) {
-            isDuplicate = true
-            break
-          }
+        const existing = await this._findClosestAncestor(w, uniqueWrappers)
+        if (!existing) {
+          uniqueWrappers.push(w)
         }
-        if (!isDuplicate) uniqueWrappers.push(w)
       }
 
       if (uniqueWrappers.length > 1) {
@@ -737,6 +732,23 @@ export async function _extractColumnar(
 
     const resultCount = strict && commonCount !== -1 ? commonCount! : maxCount
 
+    // Pre-calculate broadcastable flags to avoid RPC calls in the loop
+    const broadcastFlags: Record<string, boolean> = {}
+    if (resultCount > 1) {
+      for (const key of keys) {
+        const vals = collectedValues[key]
+        if (vals.length === 1) {
+          const propSchema = properties[key] as any
+          const isBroadcastable =
+            !propSchema.selector ||
+            (await this._isSameElement(collectedMatches[key][0], container))
+          if (isBroadcastable) {
+            broadcastFlags[key] = true
+          }
+        }
+      }
+    }
+
     const results: any[] = []
     for (let i = 0; i < resultCount; i++) {
       const obj: Record<string, any> = {}
@@ -745,13 +757,8 @@ export async function _extractColumnar(
         const vals = collectedValues[key]
         const propSchema = properties[key] as any
         let val = vals[i]
-        if (vals.length === 1 && resultCount > 1) {
-          const isBroadcastable =
-            !propSchema.selector ||
-            (await this._isSameElement(collectedMatches[key][0], container))
-          if (isBroadcastable) {
-            val = vals[0]
-          }
+        if (broadcastFlags[key]) {
+          val = vals[0]
         }
 
         if (val === undefined) {
@@ -1001,19 +1008,9 @@ async function _resolveAnchorScope(
       if (!parent) break
 
       // Stop if we hit the root scope (or one of the root scope items)
-      let isRoot = false
-      if (Array.isArray(rootScope)) {
-        for (const item of rootScope) {
-          if (await this._isSameElement(parent, item)) {
-            isRoot = true
-            break
-          }
-        }
-      } else {
-        if (await this._isSameElement(parent, rootScope)) {
-          isRoot = true
-        }
-      }
+      const isRoot = Array.isArray(rootScope)
+        ? (await this._findClosestAncestor(parent, rootScope)) !== null
+        : await this._isSameElement(parent, rootScope)
 
       if (isRoot) break
       current = parent
@@ -1054,13 +1051,19 @@ async function _sliceSequentialScope(
 
   if (effectiveMatch) {
     if (Array.isArray(currentWorkingScope)) {
-      let containerIndex = -1
-      for (let i = 0; i < currentWorkingScope.length; i++) {
-        if (await this._isSameElement(currentWorkingScope[i], effectiveMatch)) {
-          containerIndex = i
-          break
+      // First try direct reference equality (fast, no RPC)
+      let containerIndex = currentWorkingScope.indexOf(effectiveMatch)
+
+      if (containerIndex === -1) {
+        // Fallback to identity-based comparison
+        for (let i = 0; i < currentWorkingScope.length; i++) {
+          if (await this._isSameElement(currentWorkingScope[i], effectiveMatch)) {
+            containerIndex = i
+            break
+          }
         }
       }
+
       if (containerIndex !== -1) {
         return currentWorkingScope.slice(containerIndex + 1)
       }
