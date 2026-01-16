@@ -219,7 +219,9 @@ To maintain cross-engine consistency, all implementations MUST follow these beha
   - MUST find the direct child of a container that contains a specific descendant.
   - **Performance Critical**: This replaces manual "bubble-up" loops in the Node.js context, significantly reducing overhead for deep DOM trees.
 - **`_bubbleUpToScope` (Internal Helper)**:
-  - Implements the logic to bubble up from a deep element to its direct ancestor in the current scope. MUST include a depth limit (default 1000) to prevent infinite loops.
+  - Implements the logic to bubble up from a deep element to its direct ancestor in the current scope.
+  - Supports an optional `depth` parameter to limit how many parent levels to traverse.
+  - MUST include a maximum depth limit (default 1000) to prevent infinite loops.
 
 This architecture ensures that complex features like **Columnar Alignment**, **Segmented Scanning**, and **Anchor Jumping** behave identically across the fast Cheerio engine and the full Playwright browser.
 
@@ -240,7 +242,7 @@ To enhance usability and flexibility, the `extract` method internally implements
 
 In **Implicit Objects**, the engine must distinguish between *configuration* (where to look) and *data* (what to extract).
 
-- **Context Keys**: The keys `selector`, `has`, `exclude`, `required`, and `strict` are reserved for defining the extraction context and validation. They stay at the root of the schema.
+- **Context Keys**: The keys `selector`, `has`, `exclude`, `required`, `strict`, and `depth` are reserved for defining the extraction context and validation. They stay at the root of the schema.
 - **Data Keys**: All other keys (including `items`, `attribute`, `mode`, or even a field named `type`) are moved into the `properties` object as data fields to be extracted.
 - **Collision Handling**: You can safely extract a field named `type` as long as its value is not one of the reserved schema type keywords (`string`, `number`, `boolean`, `html`, `object`, `array`).
 

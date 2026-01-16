@@ -218,8 +218,10 @@ await session.executeAll([
 - **`_findContainerChild`**:
   - 必须在容器中查找包含特定后代元素的直系子元素。
   - **性能关键**: 这取代了在 Node.js 环境中的手动“冒泡”循环，显著减少了深层 DOM 树的操作开销。
-- **`_bubbleUpToScope` (内部辅助)**:
-  - 实现从深层元素向上回溯至当前作用域直系子项的逻辑。必须包含深度限制（默认 1000），防止死循环。
+- **`_bubbleUpToScope` (内部辅助方法)**:
+  - 实现从深层元素向上冒泡到当前作用域内直接祖先的逻辑。
+  - 支持可选的 `depth` 参数来限制向上遍历的层级。
+  - 必须包含最大深度限制 (默认 1000) 以防止无限循环。
 
 这种架构确保了诸如 **列对齐 (Columnar Alignment)**、**分段扫描 (Segmented Scanning)** 以及 **属性锚点跳转 (Anchor Jumping)** 等复杂功能在不同引擎下表现高度一致。
 
@@ -239,13 +241,13 @@ await session.executeAll([
 - **数组简写**: 在 `array` 模式下直接提供 `attribute` 会作为其 `items` 的简写。
   - *示例*: `{ "type": "array", "attribute": "href" }` 变为 `{ "type": "array", "items": { "type": "string", "attribute": "href" } }`。
 
-#### 2. 上下文 vs. 数据 (关键字分离)
+#### 2. 配置与数据 (关键字分离)
 
-在**隐式对象**中，引擎必须区分*配置*（在哪里找）和*数据*（提取什么）。
+在**隐式对象 (Implicit Objects)** 中，引擎必须区分*配置* (去哪里找) 和*数据* (提取什么)。
 
-- **上下文关键字**: `selector`、`has`、`exclude`、`required` 和 `strict` 被保留用于定义提取上下文和验证。它们保留在 Schema 的根部。
-- **数据关键字**: 所有其他键（包括 `items`、`attribute`、`mode`，甚至名为 `type` 的字段）都会被移动到 `properties` 对象中，作为要提取的数据字段。
-- **冲突处理**: 只要字段值不是保留的 Schema 类型关键字（`string`、`number`、`boolean`、`html`、`object`、`array`），你就可以安全地提取名为 `type` 的字段。
+- **上下文配置关键字 (Context Keys)**：`selector`、`has`、`exclude`、`required`、`strict` 和 `depth` 是保留的，用于定义提取上下文和校验规则。它们保留在 Schema 的根部。
+- **数据关键字 (Data Keys)**：所有其他键 (包括 `items`、`attribute`、`mode`，甚至名为 `type` 的字段) 都会被移动到 `properties` 对象中，作为要提取的数据字段。
+- **冲突处理**：您可以安全地提取名为 `type` 的字段，只要其值不是保留的 Schema 类型关键字 (`string`、`number`、`boolean`、`html`、`object`、`array`)。
 
 #### 3. 跨引擎一致性
 

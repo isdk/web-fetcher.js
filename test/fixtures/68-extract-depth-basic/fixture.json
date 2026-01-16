@@ -1,0 +1,43 @@
+{
+  "name": "Extract with Depth (Basic)",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "titleOnly": { "selector": ".title" },
+            "withDepth1": {
+              "selector": ".title",
+              "depth": 1,
+              "attribute": "data-info"
+            },
+            "withDepth2": {
+              "selector": ".title",
+              "depth": 2,
+              "attribute": "data-info"
+            },
+            "arrayWithDepth": {
+              "type": "array",
+              "selector": ".title",
+              "depth": 2,
+              "items": {
+                "attribute": "data-info"
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "titleOnly": "Item 1",
+      "withDepth1": null,
+      "withDepth2": "wrapper-1",
+      "arrayWithDepth": ["wrapper-1", "wrapper-2"]
+    }
+  }
+}

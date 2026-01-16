@@ -261,6 +261,8 @@ The `params` object itself is a Schema that describes the data structure you wan
 
 The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), a `type` (string, number, boolean, html), and a `mode` (text, innerText).
 
+* **`depth`** (number, optional): After matching the element with `selector`, it bubbles up the DOM tree by the specified number of levels. The resulting ancestor element becomes the actual target for value extraction (e.g., to extract an attribute from a parent wrapper).
+
 ```json
 {
   "id": "extract",
@@ -303,7 +305,9 @@ Define a structured object using `type: 'object'` and the `properties` field.
 * **Anchor Jumping (`anchor`)**: Specifies a starting reference point for a field.
   * **Field Reference**: Use the DOM element of a previously extracted field.
   * **CSS Selector**: Query an anchor element on the fly within the object's scope.
-  * **Effect**: Once an anchor is set, the search scope for that field becomes the siblings **following** the anchor. This allows for non-linear "jumping" extraction in flat structures.
+  * **`depth`** (number, optional): When using an anchor, defines how many parent levels to traverse upwards to collect following siblings.
+    * **Note**: If omitted, the engine defaults to maximum depth (up to the object's root) for backward compatibility. To strictly limit the search to the anchor's own siblings, set `depth: 0`.
+  * **Effect**: Once an anchor is set, the search scope for that field becomes the siblings **following** the anchor (and its ancestors, depending on `depth`). This allows for non-linear "jumping" extraction in flat structures.
 * **Sequential Consumption (`relativeTo: "previous"`)**:
   * Combined with the `order` property, this ensures each field's search scope starts *after* the previous field's match.
   * Essential for extracting from lists composed of identical tags (e.g., consecutive `<p>` tags with different meanings).
@@ -430,6 +434,7 @@ To handle structures that appear flat but have subtle containers, the engine use
   * Can be a **field name** defined in `items` (e.g., `"title"`).
   * Can be a **direct CSS selector** (e.g., `"h3.item-title"`).
   * Defaults to the selector of the first field in `items`.
+* **`depth`** (number, optional): The maximum number of levels to bubble up from the anchor to find a segment container. If omitted, it bubbles up as high as possible without conflicting with neighboring segments.
 * **`strict`** (boolean, default: `false`): If `true`, throws an error if no anchor elements are found or if any item violates its own `required` constraints.
 
 ###### 5.1 Advanced: Handling Repeating Tags (`relativeTo`)
@@ -496,7 +501,7 @@ When a segment contains multiple identical tags (e.g., several `<p>` tags in a r
 
 ###### 7. Implicit Object Extraction (Simplest Syntax)
 
-For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`, `required`, `strict`), it is treated as an object schema where keys are property names.
+For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`, `required`, `strict`, `depth`), it is treated as an object schema where keys are property names.
 
 > **Keyword Collision Handling:** You can safely extract a data field named `type` as long as its value is not a reserved schema type (like `"string"`, `"object"`, `"array"`, etc.).
 
@@ -514,9 +519,9 @@ For simpler object extraction, you can omit `type: 'object'` and `properties`. I
 
 > **Key features of implicit objects:**
 >
-> 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present. Configuration keywords like `required` and `strict` are also handled as context defining keys.
+> 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present. Configuration keywords like `required`, `strict`, and `depth` are also handled as context defining keys.
 > 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
-> 3. **Context Separation**: Only `selector`, `has`, `exclude`, `required`, and `strict` are used to define the context and validation for the implicit object; all other keys are treated as data to be extracted.
+> 3. **Context Separation**: Only `selector`, `has`, `exclude`, `required`, `strict`, and `depth` are used to define the context and validation for the implicit object; all other keys are treated as data to be extracted.
 > 4. **Null Propagation**: If an implicit object has no `selector` and ALL of its sub-properties extract to `null`, the object itself returns `null`. This is crucial for `required` validation on the parent object or for skipping items in an array.
 
 ###### 8. Advanced Filtering: `has` and `exclude`

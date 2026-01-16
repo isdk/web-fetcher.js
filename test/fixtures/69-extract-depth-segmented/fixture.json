@@ -1,0 +1,76 @@
+{
+  "name": "Extract with Depth (Segmented)",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "noDepth": {
+              "type": "array",
+              "selector": ".list",
+              "mode": {
+                "type": "segmented",
+                "anchor": ".anchor"
+              },
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "attribute": "data-id" },
+                  "text": { "selector": ".details" }
+                }
+              }
+            },
+            "withDepth1": {
+              "type": "array",
+              "selector": ".list",
+              "mode": {
+                "type": "segmented",
+                "anchor": ".anchor",
+                "depth": 1
+              },
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "attribute": "data-id" },
+                  "text": { "selector": ".details" }
+                }
+              }
+            },
+            "withDepth2": {
+              "type": "array",
+              "selector": ".list",
+              "mode": {
+                "type": "segmented",
+                "anchor": ".anchor",
+                "depth": 2
+              },
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": { "attribute": "data-id" },
+                  "text": { "selector": ".details" }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "noDepth": [
+        { "id": "row-1", "text": "Detail 1" },
+        { "id": "row-2", "text": "Detail 2" }
+      ],
+      "withDepth1": [],
+      "withDepth2": [
+        { "id": "row-1", "text": "Detail 1" },
+        { "id": "row-2", "text": "Detail 2" }
+      ]
+    }
+  }
+}
