@@ -132,7 +132,7 @@ export interface IExtractEngine {
    * @remarks
    * **Standard Compliance**: This mirrors the DOM [Node.contains()](https://developer.mozilla.org/en-US/docs/Web/API/Node/contains) behavior.
    *
-   * **Performance Critical**: Used extensively in boundary checks for Segmented extraction.
+   * @performance-critical Used extensively in boundary checks for Segmented extraction.
    * - **Playwright**: MUST use `elementHandle.evaluate` to use native `Node.contains` in the browser context, reducing IPC overhead.
    * - **Cheerio**: Should use efficient lookups like `$.contains` or `.find()`.
    */
@@ -142,14 +142,44 @@ export interface IExtractEngine {
   ): Promise<boolean>
 
   /**
+   * Finds the Lowest Common Ancestor (LCA) of two element scopes.
+   *
+   * @param scope1 - The first element.
+   * @param scope2 - The second element.
+   * @returns A promise resolving to the LCA element, or null if they are in different documents/trees.
+   *
+   * @remarks
+   * This is a fundamental tree operation used to find the point where two element paths diverge.
+   * **Performance Critical**: For Playwright, this MUST be implemented in a single `evaluate` call.
+   */
+  _findCommonAncestor(
+    scope1: FetchElementScope,
+    scope2: FetchElementScope
+  ): Promise<FetchElementScope | null>
+
+  /**
+   * Finds the direct child of the `container` that contains the `element` (or is the `element` itself).
+   *
+   * @param element - The descendant element.
+   * @param container - The ancestor container.
+   * @returns A promise resolving to the child element, or null if `element` is not a descendant of `container`.
+   *
+   * @remarks
+   * This method traverses up from `element` until it finds the node whose parent is `container`.
+   * **Performance Critical**: This replaces the manual bubble-up loop in Node.js.
+   */
+  _findContainerChild(
+    element: FetchElementScope,
+    container: FetchElementScope
+  ): Promise<FetchElementScope | null>
+
+  /**
    * Logs debug information if debug mode is enabled.
    * @param args - Arguments to log.
    */
   _logDebug(...args: any[]): void
 }
-
 const MAX_DOM_DEPTH = 1000
-
 /**
  * Public entry point for structured data extraction.
  *
@@ -813,31 +843,36 @@ export async function _extractSegmented(
       i < anchorElements.length - 1 ? anchorElements[i + 1] : null
 
     // "Bubble Up" strategy:
-    // Find the highest ancestor of the current anchor that does NOT contain
-    // the previous or next anchors. This allows identifying the "Card" container
-    // even if the anchor is deep inside.
-    let currentScope = anchor
+    // Identify the highest ancestor that does not conflict with neighbors.
     let bestScope = anchor
-    while (true) {
-      const parent = await this._parentElement(currentScope)
-      if (!parent || (await this._isSameElement(parent, container))) break
+    let conflictLCA: FetchElementScope | null = null
 
-      // Check if parent contains neighbors
-      let conflict = false
-      if (prevAnchor && (await this._contains(parent, prevAnchor))) {
-        conflict = true
+    if (prevAnchor) {
+      conflictLCA = await this._findCommonAncestor(anchor, prevAnchor)
+    }
+    if (!conflictLCA && nextAnchor) {
+      conflictLCA = await this._findCommonAncestor(anchor, nextAnchor)
+    } else if (conflictLCA && nextAnchor) {
+      // If we already have a conflict with prev, check if next is even closer
+      const nextLCA = await this._findCommonAncestor(anchor, nextAnchor)
+      if (nextLCA && (await this._contains(conflictLCA, nextLCA))) {
+        // nextLCA is a descendant of conflictLCA, so it's a tighter constraint
+        conflictLCA = nextLCA
       }
-      if (
-        !conflict &&
-        nextAnchor &&
-        (await this._contains(parent, nextAnchor))
-      ) {
-        conflict = true
-      }
+    }
 
-      if (conflict) break
-      currentScope = parent
-      bestScope = currentScope
+    if (conflictLCA) {
+      // The container is the child of conflictLCA that leads to anchor
+      const bubbled = await _bubbleUpToScope.call(this, anchor, conflictLCA)
+      if (bubbled && !(await this._isSameElement(bubbled, anchor))) {
+        bestScope = bubbled
+      }
+    } else {
+      // No neighbor conflict (e.g. single item), try to bubble up to container
+      const bubbled = await _bubbleUpToScope.call(this, anchor, container)
+      if (bubbled) {
+        bestScope = bubbled
+      }
     }
 
     let segmentContext: any
@@ -904,28 +939,12 @@ async function _bubbleUpToScope(
   const isScopeArray = Array.isArray(scope)
   const scopeItems = isScopeArray ? scope : [scope]
 
-  if (isScopeArray) {
-    return this._findClosestAncestor(element, scopeItems)
+  // Performance Optimization: Use the engine's optimized ancestor search
+  if (!isScopeArray) {
+    return this._findContainerChild(element, scope)
   }
 
-  let current = element
-  let parent = await this._parentElement(current)
-  let depth = 0
-
-  while (current && depth < MAX_DOM_DEPTH) {
-    depth++
-    // For single scope, we check if the parent matches the scope
-    // This implies the 'scope' is a container of 'element'
-    if (parent && (await this._isSameElement(parent, scope as any))) {
-      return current
-    }
-
-    if (!parent) break
-    current = parent
-    parent = await this._parentElement(current)
-  }
-
-  return null
+  return this._findClosestAncestor(element, scopeItems)
 }
 
 /**
