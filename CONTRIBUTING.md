@@ -227,6 +227,37 @@ While the Session configuration is fixed, the context for *action execution* is 
 
 **Developer Note**: When implementing new Actions or modifying core logic, **ALWAYS** use the `context` argument passed to the method (e.g., `execute(context, options)`) instead of accessing `this.context` directly. This ensures that any temporary overrides provided by the caller are correctly respected.
 
+### Engine Selection & Consistency
+
+The library follows a dual-engine architecture. Maintaining behavior consistency while optimizing for performance is critical.
+
+#### 1. Cross-Engine Implementation Guidelines
+
+When implementing or modifying core extraction logic (`src/core/extract.ts`):
+
+- **Abstract Primitives Over Loops**: Avoid manual DOM traversal using `_parentElement` loops in the core logic. Instead, use (or add) optimized primitives in `IExtractEngine`, such as `_findContainerChild` or `_findClosestAncestor`.
+    - **Why?** In `browser` mode, every call to `_parentElement` is a round-trip RPC call. Primitives allow the engine to perform the entire traversal in a single `page.evaluate` call.
+- **Reference Fast-Paths**: When looking for an element in an array (e.g., in sequential mode), always try a direct reference check (`array.indexOf(element)`) before falling back to `_isSameElement`. In many cases, the elements returned by the engine are the same objects.
+- **Batch Pre-calculation**: If a property of an element (like whether it is "broadcastable") is constant for the duration of a loop, calculate it **once** before entering the loop. Do not call `_isSameElement` or other engine methods inside high-frequency loops.
+
+#### 2. Playwright IPC Optimization (The XPath Pattern)
+
+In `PlaywrightFetchEngine`, we often need to identify an element in the browser and act on it in Node.js.
+
+- **The Problem**: Returning an `ElementHandle` adds overhead, and returning a CSS selector is often ambiguous for dynamic or deep nodes.
+- **The Pattern**:
+    1. Inside `page.evaluate`, find the target DOM `Element`.
+    2. Generate a unique, absolute XPath for that element (e.g., using a helper that builds `/html/body/...`).
+    3. Return the XPath string to Node.js.
+    4. In Node.js, wrap it back into a `Locator` using `page.locator('xpath=' + xpath)`.
+- **Performance Benefit**: This ensures O(1) RPC calls regardless of DOM depth, whereas a manual `while(parent)` loop is O(Depth).
+
+#### 3. Deduplication Logic
+
+When you need to ensure a list of elements is unique:
+- **Inefficient**: Nested loops using `_isSameElement` (O(N^2) RPC calls).
+- **Efficient**: Use `_findClosestAncestor(element, uniqueList)` which can be implemented as an optimized search, or use engine-specific unique identifiers if available.
+
 ### Engine Selection
 
 The library follows a strict priority to determine which engine (`http` or `browser`) to use. The engine is initialized on the first action and remains fixed for the session.
@@ -291,36 +322,6 @@ Note:
 * *footers* other than BREAKING CHANGE: `<description>` may be provided and follow a convention similar to git trailer format.
 
 ## 🧩 Implementation Details & Gotchas
-
-### 性能优化实现细节与陷阱 (Performance Optimization & Pitfalls)
-
-在处理深层 DOM 树或大规模数据提取时，性能优化至关重要。
-
-#### 1. 最小化 Playwright IPC 开销
-
-**核心挑战**：在 `browser` 模式下，Node.js 进程与浏览器进程之间的每一次通信（如 `locator.evaluate`）都是一次昂贵的跨进程通信 (IPC)。
-
-- **优化原则**：**将逻辑尽可能推向浏览器端执行**。如果一个操作需要多次遍历 DOM 或多次判断元素关系，应该将其封装在一个 `evaluate` 调用中完成，而不是在 Node.js 中使用循环多次调用浏览器 API。
-
-#### 2. Playwright 中的 XPath 陷阱与解决方案
-
-在实现 `_findCommonAncestor` (LCA) 和 `_findContainerChild` 时，我们需要从浏览器端的 `evaluate` 函数中返回一个元素句柄或选择器，以便 Node.js 端能继续操作该元素。
-
-- **为什么不能直接返回 ElementHandle?**：
-  从 `evaluate` 返回 `ElementHandle` 会增加额外的句柄管理负担。更重要的是，我们希望返回的是一个 `Locator`，而 `Locator` 通常基于选择器。
-- **为什么使用 XPath 而非 CSS Selector?**：
-  - **路径唯一性**：对于在内存中动态找到的任意 DOM 节点，生成一个简短且唯一的 CSS 选择器非常困难且不可靠。
-  - **XPath 的优势**：我们可以编写一个简单的辅助函数（如 `getXPath(element)`），递归地生成该元素的绝对路径（如 `/html/body/div[2]/span[1]`）。
-  - **双向转换**：
-    1. 在浏览器端（`evaluate` 内部）找到目标节点。
-    2. 使用 `getXPath` 将节点转换为唯一的 XPath 字符串。
-    3. 将字符串返回给 Node.js。
-    4. 在 Node.js 端，使用 `page.locator('xpath=' + xpath)` 重新获得该元素的 `Locator`。
-- **教训**：不要试图在 Node.js 中通过 `parentElement()` 循环来寻找祖先，这会导致 O(N) 次 IPC 调用，在 DOM 树较深时性能会急剧下降。
-
-#### 3. Cheerio 的同步优势
-
-在 `http` 模式下，所有 DOM 操作都在同一个 Node.js 进程中同步完成，因此 `_findCommonAncestor` 等操作可以直接利用循环实现，性能开销极低。尽管如此，我们依然提供了专门的接口，以便未来可以利用 Cheerio 的内部优化。
 
 ### 核心提取逻辑实现细节 (`src/core/extract.ts`)
 

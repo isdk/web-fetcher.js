@@ -349,9 +349,9 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
 ###### 4. Columnar Mode (formerly Zip Strategy)
 
-This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns.
+This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns. It is highly optimized for performance, especially in browser mode, by minimizing the number of DOM queries and RPC calls.
 
-> **💡 Broadcasting Behavior**: If a property matches the container element itself (e.g. by matching the `selector` of the container), its value is "broadcasted" to every row in the resulting array. This is useful for including category names or timestamps that appear only once in the header/container.
+> **💡 Broadcasting & Performance**: If a property matches the container element itself (e.g. by omitting a selector or matching the container's own attributes), its value is **broadcasted** to every row. This is not only a feature but also a major performance optimization: the value is extracted **once** and reused across all rows, avoiding thousands of redundant engine calls.
 
 ```json
 {
@@ -394,7 +394,8 @@ When you have a list where the category is on the container, but items are insid
 **Columnar Configuration:**
 
 * **`strict`** (boolean, default: `true`): If `true`, throws an error if fields have different match counts.
-* **`inference`** (boolean, default: `false`): If `true`, tries to automatically find the "item wrapper" elements to fix misaligned lists.
+* **`inference`** (boolean, default: `false`): If `true`, tries to automatically find the "item wrapper" elements to fix misaligned lists. It uses an **optimized ancestor search** that is significantly faster in browser mode than manual traversal.
+* **Performance Note**: The engine automatically detects shared structures and pre-calculates alignment to ensure O(N) performance even in complex DOM trees. In browser mode, it minimizes IPC round-trips by pre-calculating "broadcast" flags.
 
 ###### 5. Segmented Mode (Anchor-based Scanning)
 
