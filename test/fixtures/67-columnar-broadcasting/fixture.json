@@ -1,0 +1,50 @@
+{
+  "title": "Columnar Broadcasting with self selector",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": "columnar",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": { "attribute": "data-category" },
+            "name": { "selector": ".item" }
+          }
+        }
+      },
+      "storeAs": "res1"
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#container",
+        "mode": "columnar",
+        "items": {
+          "type": "object",
+          "properties": {
+            "category": { "selector": ":scope", "attribute": "data-category" },
+            "name": { "selector": ".item" }
+          }
+        }
+      },
+      "storeAs": "res2"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "res1": [
+        { "category": "Books", "name": "Item 1" },
+        { "category": "Books", "name": "Item 2" }
+      ],
+      "res2": [
+        { "category": "Books", "name": "Item 1" },
+        { "category": "Books", "name": "Item 2" }
+      ]
+    }
+  }
+}

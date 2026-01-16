@@ -249,7 +249,7 @@ async function _extractObject(
   const keys = order || Object.keys(properties)
   let currentWorkingScope = newScope
   const fieldElements = new Map<string, FetchElementScope>()
-  const isSequential = relativeTo === 'previous' && Array.isArray(newScope)
+  const isSequential = relativeTo === 'previous'
 
   for (const key of keys) {
     const propSchema = properties[key]
@@ -307,6 +307,10 @@ async function _extractObject(
             matchToSliceAfter,
             currentWorkingScope
           )
+        }
+
+        if (isArrayField) {
+          extractedElement = matches[matches.length - 1]
         }
       } else {
         value = null
@@ -546,6 +550,7 @@ export async function _extractColumnar(
     if (keys.length === 0) return null
 
     const collectedValues: Record<string, any[]> = {}
+    const collectedMatches: Record<string, any[]> = {}
     let commonCount: number | null = null
     let maxCount = 0
     let maxCountMatches: any[] = []
@@ -567,6 +572,7 @@ export async function _extractColumnar(
       } else {
         matches = [container]
       }
+      collectedMatches[key] = matches
 
       const count = matches.length
       this._logDebug(
@@ -590,16 +596,22 @@ export async function _extractColumnar(
             commonCount = -1
             this._logDebug('_extractColumnar: mismatch marked for inference')
           } else if (strict) {
-            if (propSchema.required && count < commonCount!) {
+            // Check if it's a broadcastable field (only 1 match and it's the container)
+            const isBroadcastable =
+              count === 1 &&
+              (await this._isSameElement(matches[0], container))
+            if (!isBroadcastable) {
+              if (propSchema.required && count < commonCount!) {
+                throw new CommonError(
+                  `Required field "${key}" is missing at index ${count}.`,
+                  'extract'
+                )
+              }
               throw new CommonError(
-                `Required field "${key}" is missing at index ${count}.`,
+                `Columnar extraction mismatch: field "${key}" has ${count} matches, but expected ${commonCount}.`,
                 'extract'
               )
             }
-            throw new CommonError(
-              `Columnar extraction mismatch: field "${key}" has ${count} matches, but expected ${commonCount}.`,
-              'extract'
-            )
           }
         }
       }
@@ -617,6 +629,7 @@ export async function _extractColumnar(
       maxCount > 1 &&
       maxCountMatches.length > 0
     ) {
+      // ... (keeping existing inference logic)
       const itemWrappers: any[] = []
       for (const match of maxCountMatches) {
         let current = match
@@ -664,9 +677,16 @@ export async function _extractColumnar(
         const vals = collectedValues[key]
         const propSchema = properties[key] as any
         let val = vals[i]
-        if (vals.length === 1 && resultCount > 1 && !propSchema.selector) {
-          val = vals[0]
-        } else if (val === undefined) {
+        if (vals.length === 1 && resultCount > 1) {
+          const isBroadcastable =
+            !propSchema.selector ||
+            (await this._isSameElement(collectedMatches[key][0], container))
+          if (isBroadcastable) {
+            val = vals[0]
+          }
+        }
+
+        if (val === undefined) {
           val = null
         }
 
@@ -931,18 +951,46 @@ async function _resolveAnchorScope(
   }
 
   if (anchorElement) {
-    const effectiveAnchor = await _bubbleUpToScope.call(
-      this,
-      anchorElement,
-      rootScope
-    )
+    const scopes: FetchElementScope[] = []
+    let current = anchorElement
+    let depth = 0
 
-    if (effectiveAnchor) {
-      const scopeForField = await this._nextSiblingsUntil(effectiveAnchor)
+    // Collect subsequent siblings from the anchor up to the rootScope
+    while (current && depth < MAX_DOM_DEPTH) {
+      depth++
+
+      // Get siblings following the current element
+      const siblings = await this._nextSiblingsUntil(current)
+      scopes.push(...siblings)
+
+      // Move up to parent
+      const parent = await this._parentElement(current)
+      if (!parent) break
+
+      // Stop if we hit the root scope (or one of the root scope items)
+      let isRoot = false
+      if (Array.isArray(rootScope)) {
+        for (const item of rootScope) {
+          if (await this._isSameElement(parent, item)) {
+            isRoot = true
+            break
+          }
+        }
+      } else {
+        if (await this._isSameElement(parent, rootScope)) {
+          isRoot = true
+        }
+      }
+
+      if (isRoot) break
+      current = parent
+    }
+
+    if (scopes.length > 0) {
       this._logDebug(
-        `_resolveAnchorScope: anchor "${anchor}" found, adjusted to ${scopeForField.length} siblings`
+        `_resolveAnchorScope: anchor "${anchor}" resolved to composite scope of ${scopes.length} elements`
       )
-      return { scopeForField }
+      return { scopeForField: scopes }
     }
   }
 
@@ -963,7 +1011,7 @@ async function _resolveAnchorScope(
 async function _sliceSequentialScope(
   this: IExtractEngine,
   lastMatchedElement: FetchElementScope,
-  currentWorkingScope: FetchElementScope[]
+  currentWorkingScope: FetchElementScope | FetchElementScope[]
 ): Promise<FetchElementScope[]> {
   const effectiveMatch = await _bubbleUpToScope.call(
     this,
@@ -972,18 +1020,25 @@ async function _sliceSequentialScope(
   )
 
   if (effectiveMatch) {
-    let containerIndex = -1
-    for (let i = 0; i < currentWorkingScope.length; i++) {
-      if (await this._isSameElement(currentWorkingScope[i], effectiveMatch)) {
-        containerIndex = i
-        break
+    if (Array.isArray(currentWorkingScope)) {
+      let containerIndex = -1
+      for (let i = 0; i < currentWorkingScope.length; i++) {
+        if (await this._isSameElement(currentWorkingScope[i], effectiveMatch)) {
+          containerIndex = i
+          break
+        }
       }
-    }
-    if (containerIndex !== -1) {
-      return currentWorkingScope.slice(containerIndex + 1)
+      if (containerIndex !== -1) {
+        return currentWorkingScope.slice(containerIndex + 1)
+      }
+    } else {
+      // Single element scope: the "sequence" continues with following siblings
+      return this._nextSiblingsUntil(effectiveMatch)
     }
   }
-  return currentWorkingScope
+  return Array.isArray(currentWorkingScope)
+    ? currentWorkingScope
+    : [currentWorkingScope]
 }
 
 /**

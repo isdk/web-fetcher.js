@@ -367,6 +367,27 @@ await fetchWeb({
 
 > **启发式自动检测:** 如果省略了 `mode`，且 `selector` 恰好只匹配到一个元素，同时 `items` 中包含选择器，引擎会自动使用 **columnar** 模式。
 
+**示例：列模式的广播行为 (Broadcasting)**
+
+当列表中的某些数据（如分类）位于容器上，而具体项目在容器内部时。
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#book-category",
+    "mode": "columnar",
+    "items": {
+      "category": { "attribute": "data-category" },
+      "title": { "selector": ".book-title" }
+    }
+  }
+}
+```
+
+> 如果 `#book-category` 拥有 `data-category="Sci-Fi"` 属性并包含 3 本书，结果将返回 3 个项目，且每个项目都带有 `"category": "Sci-Fi"`。
+
 **Columnar 配置参数:**
 
 * **`strict`** (boolean, 默认: `true`): 如果为 `true`，当不同字段匹配到的数量不一致时将抛出错误。
