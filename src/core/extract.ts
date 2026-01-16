@@ -598,8 +598,7 @@ export async function _extractColumnar(
           } else if (strict) {
             // Check if it's a broadcastable field (only 1 match and it's the container)
             const isBroadcastable =
-              count === 1 &&
-              (await this._isSameElement(matches[0], container))
+              count === 1 && (await this._isSameElement(matches[0], container))
             if (!isBroadcastable) {
               if (propSchema.required && count < commonCount!) {
                 throw new CommonError(
