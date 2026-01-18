@@ -1,0 +1,96 @@
+{
+  "title": "verify object bubble-up strategy (try-and-bubble)",
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "type": "object",
+        "properties": {
+          "standard": {
+            "type": "object",
+            "selector": "#internal",
+            "depth": 10,
+            "properties": {
+              "extractedId": { "attribute": "id" }
+            }
+          },
+          "bubbleToWrapper": {
+            "type": "object",
+            "selector": "#internal",
+            "depth": 10,
+            "properties": {
+              "extractedId": { "attribute": "id" },
+              "wrapperData": { "attribute": "data-wrapper", "required": true }
+            }
+          },
+          "bubbleToContainer": {
+            "type": "object",
+            "selector": "#internal",
+            "depth": 10,
+            "properties": {
+              "extractedId": { "attribute": "id" },
+              "uniqueData": { "attribute": "data-unique", "required": true }
+            }
+          },
+          "depthLimitFail": {
+            "type": "object",
+            "selector": "#internal",
+            "depth": 1,
+            "properties": {
+              "uniqueData": { "attribute": "data-unique", "required": true }
+            }
+          },
+          "nestedIndependent": {
+            "type": "object",
+            "selector": "#container",
+            "properties": {
+              "parentId": { "attribute": "id" },
+              "child": {
+                "type": "object",
+                "selector": "#internal",
+                "depth": 5,
+                "properties": {
+                  "wrapperAttr": { "attribute": "data-wrapper", "required": true },
+                  "myId": { "attribute": "id" }
+                }
+              }
+            }
+          },
+          "arrayDeterministic": {
+            "type": "object",
+            "selector": "#list",
+            "properties": {
+              "items": {
+                "type": "array",
+                "selector": ".name",
+                "depth": 1,
+                "items": { "attribute": "class" }
+              }
+            }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "standard": { "extractedId": "internal" },
+      "bubbleToWrapper": { "extractedId": "wrapper", "wrapperData": "false" },
+      "bubbleToContainer": { "extractedId": "container", "uniqueData": "container-only" },
+      "depthLimitFail": null,
+      "nestedIndependent": {
+        "parentId": "container",
+        "child": { "wrapperAttr": "false", "myId": "wrapper" }
+      },
+      "arrayDeterministic": {
+        "items": ["item", "item"]
+      }
+    }
+  }
+}
