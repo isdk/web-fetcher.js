@@ -706,3 +706,97 @@ The `FetchAction` base class provides lifecycle hooks that allow injecting custo
 * `protected onAfterExec?()`: Called after `onExecute`.
 
 For Actions that need to manage complex state or resources, you can implement these hooks. Generally, for composite actions, writing the logic directly in `onExecute` is sufficient.
+
+---
+
+## 💎 7. Action Return Types & State Management (Advanced)
+
+In `@isdk/web-fetcher`, an Action's `static returnType` is more than a type hint. It defines how the framework manages the **session state** and automates data synchronization after execution.
+
+### 7.1 Detailed Type Breakdown
+
+#### 🟢 `response` (Page Response)
+
+* **Definition**: A `FetchResponse` object containing HTTP status, headers, body, and cookies.
+* **Purpose**: To synchronize the latest page content and state with the session.
+* **Usage**: Used by actions that navigate, refresh, or capture the current page state.
+* **System Behavior**: The framework automatically updates `context.lastResponse` with this result in the `afterExec` phase. Subsequent actions can access this via the context.
+* **Typical Actions**: `goto`, `getContent`, `fill` (in some engines).
+* **Example**:
+
+  ```typescript
+  export class MyNavigateAction extends FetchAction {
+    static override id = 'myGoto';
+    static override returnType = 'response' as const;
+
+    async onExecute(context, options) {
+      // Logic that returns a FetchResponse
+      return await this.delegateToEngine(context, 'goto', options.params.url);
+    }
+  }
+  ```
+
+#### 🟡 `any` (Generic Data - Default)
+
+* **Definition**: Any serializable data structure (Object, Array, string, etc.).
+* **Purpose**: Primary mechanism for business data extraction.
+* **Usage**: Use this when your action produces processed data that doesn't represent the whole page or system state.
+* **System Behavior**: If the action configuration includes `storeAs: "key"`, the framework automatically saves the `result` into `context.outputs["key"]`.
+* **Typical Actions**: `extract`.
+* **Example**:
+
+  ```typescript
+  static override returnType = 'any' as const;
+  async onExecute(context, options) {
+    return { title: 'Hello', price: 99 }; // Saved to outputs if storeAs is set
+  }
+  ```
+
+#### ⚪ `none` (No Return)
+
+* **Definition**: `void`.
+* **Purpose**: Pure interaction/side-effects without data output.
+* **Usage**: Actions that perform UI interactions or timing controls.
+* **Typical Actions**: `click`, `submit`, `pause`, `trim`, `waitFor`.
+* **Example**:
+
+  ```typescript
+  static override returnType = 'none' as const;
+  async onExecute(context, options) {
+    await this.delegateToEngine(context, 'click', options.params.selector);
+    // No return value needed
+  }
+  ```
+
+#### 🔵 `outputs` (Accumulated Results)
+
+* **Definition**: The entire `context.outputs` record (`Record<string, any>`).
+* **Purpose**: To retrieve all data extracted and stored during the current session.
+* **Usage**: Typically used as a "summary" action at the end of a chain or for debugging.
+* **Typical Actions**: Custom data summary actions.
+
+#### 🟣 `context` (Session Snapshot)
+
+* **Definition**: The full `FetchContext` object.
+* **Purpose**: Meta-programming and deep debugging.
+* **Usage**: Allows the caller to inspect current session configurations (timeouts, proxies, headers) and internal engine metadata.
+
+---
+
+### 7.2 Result Wrapping (`FetchActionResult`)
+
+Every value returned by `onExecute` is automatically wrapped by the `FetchAction.execute` method into a `FetchActionResult` object. This ensures consistent error handling and metadata tracking across all actions.
+
+**Structure of `FetchActionResult`:**
+
+* `status`: `Success`, `Failed`, or `Skipped`.
+* `returnType`: Matches the action's `static returnType`.
+* `result`: The raw data returned by `onExecute`.
+* `error`: Captured error if the action failed.
+* `meta`: Diagnostic information including execution time, engine type, and retry counts.
+
+### 7.3 Developer Best Practices
+
+1. **Choose `response` for Navigation**: Always use `response` for actions that land on a new URL to ensure the session's "current page" is kept in sync.
+2. **Leverage `any` + `storeAs`**: For data extraction, return the data as `any` and let the user decide the storage key via `storeAs` in the JSON script.
+3. **Be Explicit with `none`**: Using `none` clearly signals that the action is used for its side effects (like clicking or waiting), making the workflow easier to understand.

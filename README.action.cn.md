@@ -705,3 +705,97 @@ await fetchWeb({
 * `protected onAfterExec?()`: 在 `onExecute` 执行后调用。
 
 对于需要管理复杂状态或资源的 Action，可以实现这些钩子。通常，对于组合式 Action，直接在 `onExecute` 中编写逻辑已经足够。
+
+---
+
+## 💎 7. Action 返回类型与状态管理 (进阶)
+
+在 `@isdk/web-fetcher` 中，Action 的 `static returnType` 不仅仅是一个类型提示。它定义了框架如何管理 **Session 状态** 以及如何在执行后自动同步数据。
+
+### 7.1 返回类型详解
+
+#### 🟢 `response` (页面响应)
+
+* **定义**: 包含 HTTP 状态码、响应头、正文和 Cookie 的 `FetchResponse` 对象。
+* **用途**: 将最新的页面内容和状态同步到会话中。
+* **用法**: 适用于执行导航、刷新或获取当前页面快照的动作。
+* **系统行为**: 框架在 `afterExec` 阶段会自动将此结果更新到 `context.lastResponse`。后续动作可以通过上下文访问它。
+* **典型 Action**: `goto`, `getContent`, `fill`（在某些引擎中）。
+* **示例**:
+
+  ```typescript
+  export class MyNavigateAction extends FetchAction {
+    static override id = 'myGoto';
+    static override returnType = 'response' as const;
+
+    async onExecute(context, options) {
+      // 返回 FetchResponse 的逻辑
+      return await this.delegateToEngine(context, 'goto', options.params.url);
+    }
+  }
+  ```
+
+#### 🟡 `any` (通用数据 - 默认)
+
+* **定义**: 任何可序列化的数据结构（对象、数组、字符串等）。
+* **用途**: 业务数据提取的主要机制。
+* **用法**: 当你的动作产生处理后的业务数据（而不是代表整个页面或系统状态）时使用。
+* **系统行为**: 如果 Action 配置包含 `storeAs: "key"`，框架会自动将 `result` 保存到 `context.outputs["key"]` 中。
+* **典型 Action**: `extract`。
+* **示例**:
+
+  ```typescript
+  static override returnType = 'any' as const;
+  async onExecute(context, options) {
+    return { title: 'Hello', price: 99 }; // 如果设置了 storeAs，则保存到 outputs
+  }
+  ```
+
+#### ⚪ `none` (无返回)
+
+* **定义**: `void`。
+* **用途**: 纯交互或副作用，不输出数据。
+* **用法**: 执行 UI 交互或时间控制的动作。
+* **典型 Action**: `click`, `submit`, `pause`, `trim`, `waitFor`。
+* **示例**:
+
+  ```typescript
+  static override returnType = 'none' as const;
+  async onExecute(context, options) {
+    await this.delegateToEngine(context, 'click', options.params.selector);
+    // 不需要返回值
+  }
+  ```
+
+#### 🔵 `outputs` (累积结果)
+
+* **定义**: 整个 `context.outputs` 记录 (`Record<string, any>`)。
+* **用途**: 获取当前会话期间提取并存储的所有数据。
+* **用法**: 通常用作链条末尾的“总结”动作或用于调试。
+* **典型 Action**: 自定义数据总结动作。
+
+#### 🟣 `context` (会话快照)
+
+* **定义**: 完整的 `FetchContext` 对象。
+* **用途**: 元编程和深度调试。
+* **用法**: 允许调用者检查当前的会话配置（超时、代理、请求头）和内部引擎元数据。
+
+---
+
+### 7.2 结果包装机制 (`FetchActionResult`)
+
+`onExecute` 返回的每个值都会被 `FetchAction.execute` 方法自动包装成 `FetchActionResult` 对象。这确保了所有动作之间一致的错误处理和元数据追踪。
+
+**`FetchActionResult` 的结构**:
+
+* `status`: `Success` (成功), `Failed` (失败), 或 `Skipped` (跳过)。
+* `returnType`: 匹配 Action 的 `static returnType`。
+* `result`: `onExecute` 返回的原始数据。
+* `error`: 如果动作失败，捕获到的错误对象。
+* `meta`: 诊断信息，包括执行时间、引擎类型和重试次数。
+
+### 7.3 开发者最佳实践
+
+1. **为导航选择 `response`**: 对于跳转到新 URL 的动作，务必使用 `response`，以确保会话的“当前页面”保持同步。
+2. **利用 `any` + `storeAs`**: 对于数据提取，将数据作为 `any` 返回，并让用户通过 JSON 脚本中的 `storeAs` 决定存储键。
+3. **明确使用 `none`**: 使用 `none` 可以清晰地表明该动作用于其副作用（如点击或等待），使工作流更易于理解。
