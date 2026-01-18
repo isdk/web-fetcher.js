@@ -236,7 +236,7 @@ The library follows a dual-engine architecture. Maintaining behavior consistency
 When implementing or modifying core extraction logic (`src/core/extract.ts`):
 
 - **Abstract Primitives Over Loops**: Avoid manual DOM traversal using `_parentElement` loops in the core logic. Instead, use (or add) optimized primitives in `IExtractEngine`, such as `_findContainerChild` or `_findClosestAncestor`.
-    - **Why?** In `browser` mode, every call to `_parentElement` is a round-trip RPC call. Primitives allow the engine to perform the entire traversal in a single `page.evaluate` call.
+  - **Why?** In `browser` mode, every call to `_parentElement` is a round-trip RPC call. Primitives allow the engine to perform the entire traversal in a single `page.evaluate` call.
 - **Reference Fast-Paths**: When looking for an element in an array (e.g., in sequential mode), always try a direct reference check (`array.indexOf(element)`) before falling back to `_isSameElement`. In many cases, the elements returned by the engine are the same objects.
 - **Batch Pre-calculation**: If a property of an element (like whether it is "broadcastable") is constant for the duration of a loop, calculate it **once** before entering the loop. Do not call `_isSameElement` or other engine methods inside high-frequency loops.
 
@@ -255,6 +255,7 @@ In `PlaywrightFetchEngine`, we often need to identify an element in the browser 
 #### 3. Deduplication Logic
 
 When you need to ensure a list of elements is unique:
+
 - **Inefficient**: Nested loops using `_isSameElement` (O(N^2) RPC calls).
 - **Efficient**: Use `_findClosestAncestor(element, uniqueList)` which can be implemented as an optimized search, or use engine-specific unique identifiers if available.
 
@@ -281,16 +282,57 @@ For more details, see [README.engine.md](./README.engine.md).
 
 ### Implementing New Actions
 
-When adding a new action (e.g., `src/action/definitions/my-action.ts`):
+When adding a new action (e.g., `src/action/definitions/my-action.ts`), follow these guidelines to ensure consistency and prevent common bugs.
 
-1. **Normalize in Base**: Use `_normalizeSchema` or similar methods in `FetchEngine` (base.ts) to handle shorthands (like converting a string to a `{ selector: '...' }` object) and single-string-to-array conversions. This ensures consistent behavior across engines.
-2. **Abstract Business Logic**: If an action has complex logic for presets or parameter resolution (like `trim`), implement a protected helper method in `FetchEngine` (e.g., `_getTrimInfo`) so that both `CheerioFetchEngine` and `PlaywrightFetchEngine` can share the same logic.
-3. **Engine Delegation**: Keep the `onExecute` method in the `FetchAction` class thin. Its main job is to extract parameters and call `this.delegateToEngine(context, 'methodName', params)`.
-4. **Action Processing Architecture**:
-    * **`_processAction` (Base)**: Handles engine-agnostic actions like `extract`, `pause`, and `getContent`. It also includes optimizations like short-circuiting for simple `waitFor` (sleep).
-    * **`executeAction` (Subclass)**: Concrete engines only need to implement technology-specific interactions (e.g., actual `click`, `fill`, or complex `waitFor` conditions) in their `executeAction` implementation. This maximizes code reuse in the base class.
-5. **Persistent State**: Actions like `trim`, `fill`, or `pause` should ensure the internal engine state remains consistent. Some actions like `fill` update `this.lastResponse` so that subsequent `extract` or `getContent` calls work on the updated state.
-6. **Antibot Awareness**: When implementing features that affect browser behavior, consider how they interact with `antibot: true`. This mode uses `camoufox-js` to enhance stealth, which might affect certain browser primitives.
+#### 1. Core Principles
+
+- **Normalize in Base**: Use `_normalizeSchema` or similar methods in `FetchEngine` (base.ts) to handle shorthands (like converting a string to a `{ selector: '...' }` object) and single-string-to-array conversions. This ensures consistent behavior across engines.
+- **Abstract Business Logic**: If an action has complex logic for presets or parameter resolution (like `trim`), implement a protected helper method in `FetchEngine` (e.g., `_getTrimInfo`) so that both `CheerioFetchEngine` and `PlaywrightFetchEngine` can share the same logic.
+- **Engine Delegation**: Keep the `onExecute` method in the `FetchAction` class thin. Its main job is to extract parameters and call `this.delegateToEngine(context, 'methodName', params)`.
+- **Persistent State**: Actions like `trim`, `fill`, or `pause` should ensure the internal engine state remains consistent. Some actions like `fill` update `this.lastResponse` so that subsequent `extract` or `getContent` calls work on the updated state.
+- **Antibot Awareness**: When implementing features that affect browser behavior, consider how they interact with `antibot: true`. This mode uses `camoufox-js` to enhance stealth, which might affect certain browser primitives.
+
+#### 2. Technical Safeguards (Lessons from `evaluate`)
+
+- **Parameter Passing Consistency**: Always follow the **"Single Parameter"** rule. Playwright's `page.evaluate(fn, arg)` only accepts **one** data argument. Use an array or object for multiple values.
+  - ✅ **Correct**: `fn: ([a, b]) => a + b`, `args: [1, 2]`
+- **Cross-Engine Compatibility (The Cheerio Shim)**: Since Cheerio runs in Node.js, it lacks browser globals. You must manually mock them if the action expects a browser-like environment:
+  - **Global Mocking**: Temporarily inject `window`, `document`, and `$` into the Node.js `global` object during execution, and **always** restore the original values in a `finally` block to prevent memory leaks or side effects.
+  - **DOM Simulation**: Implement basic DOM methods like `getElementById` or `querySelector` using Cheerio's `$` to allow browser-style scripts to run unmodified in `http` mode.
+- **Navigation Race Conditions**: If an action triggers a URL change (like `click` or `evaluate` with `window.location.href = ...`):
+  - **Detection**: Check if the URL has changed after the primary interaction.
+  - **Wait for Load**: If a navigation is detected, you **must** await `page.waitForLoadState('domcontentloaded')` (in Playwright) or call `this.goto(newUrl)` (in Cheerio) **before** calling `buildResponse`.
+  - **The Pitfall**: Calling `page.content()` (via `buildResponse`) while a navigation is in progress will throw an "Unable to retrieve content because the page is navigating" error.
+
+#### 3. Implementation Pattern
+
+1. **Base Class (`base.ts`)**: Define the Action Options interface and add the abstract/protected method to `FetchEngine`.
+2. **Action Definition (`definitions/`)**: Implement `onExecute` as a thin wrapper that calls `this.delegateToEngine(context, 'methodName', params)`.
+3. **Engine Implementation**:
+    - **Playwright**: Direct implementation using Playwright APIs, with navigation detection.
+    - **Cheerio**: Simulation using Cheerio/Node.js logic, with relative URL resolution for navigation.
+
+#### 4. Action Processing Architecture
+
+- **`_processAction` (Base)**: Handles engine-agnostic actions like `extract`, `pause`, and `getContent`. It also includes optimizations like short-circuiting for simple `waitFor` (sleep).
+- **`executeAction` (Subclass)**: Concrete engines only need to implement technology-specific interactions (actual `click`, `fill`, or complex `waitFor` conditions) in their `executeAction` implementation. This maximizes code reuse in the base class.
+
+#### 5. Lessons Learned from `evaluate` Action (Implementation Gotchas)
+
+Implementing the `evaluate` action revealed several critical technical constraints:
+
+- **Playwright's "Single Argument" Trap**: `page.evaluate(fn, arg)` only accepts **one** secondary argument. Passing multiple arguments via `...args` will throw `Error: Too many arguments`.
+  - **Solution**: Always wrap multiple parameters into a single array or object and use destructuring in the function definition (e.g., `fn: ([a, b]) => ...`).
+- **Function Serialization (JSON vs. JS)**: When an action is loaded from JSON, `fn` is a string. Direct `page.evaluate(string, args)` in Playwright evaluates the string as an expression, returning the function definition instead of executing it.
+  - **Solution**: Wrap the evaluation in the browser context: `page.evaluate(([f, a]) => { const evalFn = eval("(" + f + ")"); return evalFn(a); }, [fnStr, args])`.
+- **Navigation during Interaction**: If `evaluate` (or any script) triggers `window.location.href = ...`, the engine immediately enters a "navigating" state.
+  - **The Bug**: Calling `page.content()` or `page.textContent()` while the page is navigating throws an error.
+  - **The Fix**: Detect URL changes or catch "navigating" errors, and explicitly await `waitForLoadState('domcontentloaded')` before attempting to build a response.
+- **Cheerio's Relative Navigation**: In `http` mode, mocking `window.location.href` is easy, but triggering a jump requires care.
+  - **The Fix**: If `mockWindow.location.href` changes, you must resolve it against the current absolute URL (`new URL(newHref, currentUrl)`) before calling `this.goto()`, as standard HTTP clients require absolute paths.
+- **Global Pollution in Node.js**: When mocking `window` and `document` in Cheerio, they are injected into the Node.js `global` object.
+  - **The Risk**: Forgetting to restore them can cause unpredictable behavior in other parts of the system or concurrent sessions.
+  - **The Requirement**: Use a `try...finally` block to guarantee the restoration of original global states.
 
 ### Fixture Params
 
@@ -336,7 +378,7 @@ Note:
 
 #### 2. 递归中的上下文保护 (`_skipSelector`)
 
-**为什么需要**：在 `object` 循环中，父级往往已经通过 `querySelectorAll` 选好了子字段的元素。
+**为什么需要**：在 `object` 循环中，父级往往已经通过 `querySelectorAll` 选好了子字段操。
 
 - **实现细节**：在递归调用子级的 `_extract` 时，我们会传入 `_skipSelector: true`。
 - **目的**：
@@ -356,11 +398,13 @@ Note:
 在处理 `depth` 参数时，我们根据提取目标的不同采用了两种截然不同的策略：
 
 **A. 按需回溯 (Try-And-Bubble) - 用于 Object**
+
 - **逻辑**：先在当前选中的元素（Selector 命中点）尝试提取。只有当标记为 `required` 的字段缺失时，才向上回溯一级并重试，直到找到数据或达到 `depth` 限制。
 - **优点**：符合直觉。如果数据就在当前元素上，不需要无谓地扩大搜索范围。
 - **实现细节**：在 `_extractObject` 中通过 `while` 循环实现。递归调用子对象时，父级不应预先回溯，而是将原始命中元素传给子级，由子级自行控制回溯。
 
 **B. 确定性回溯 (Deterministic Bubble) - 用于 Array/Value**
+
 - **逻辑**：一旦定义了 `depth`，在开始提取之前就立即向上回溯到目标层级。
 - **原因**：Array 的 `selector` 通常是为了定位“列表项容器”。如果用户指定了 `depth`，通常是因为选择器只能定位到内部元素，必须回溯到容器才能正确分割数组项。
 

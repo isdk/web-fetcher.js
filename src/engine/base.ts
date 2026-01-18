@@ -138,6 +138,39 @@ export const TRIM_PRESETS: Record<string, string[]> = {
 }
 
 /**
+ * Options for the {@link FetchEngine.evaluate} action, specifying the function to execute and its arguments.
+ *
+ * @example
+ * ```json
+ * {
+ *   "action": "evaluate",
+ *   "params": {
+ *     "fn": "([a, b]) => a + b",
+ *     "args": [1, 2]
+ *   }
+ * }
+ * ```
+ */
+export interface EvaluateActionOptions {
+  /**
+   * The function to execute. Can be a function object or a string containing a function definition or expression.
+   *
+   * @remarks
+   * In `browser` mode, this runs in the browser context.
+   * In `http` mode, this runs in Node.js with a mocked browser-like environment (window, document, $).
+   */
+  fn: string | ((...args: any[]) => any)
+  /**
+   * A single argument to pass to the function. To pass multiple arguments, use an array or object and destructure it in the function definition.
+   *
+   * @example
+   * Array: `fn: ([a, b]) => a + b`, `args: [1, 2]`
+   * Object: `fn: ({ x, y }) => x * y`, `args: { x: 6, y: 7 }`
+   */
+  args?: any
+}
+
+/**
  * Union type representing all possible engine actions that can be dispatched.
  *
  * @remarks
@@ -154,6 +187,7 @@ export type FetchEngineAction =
   | { type: 'extract'; schema: ExtractSchema }
   | { type: 'pause'; message?: string }
   | { type: 'trim'; options: TrimActionOptions }
+  | { type: 'evaluate'; params: EvaluateActionOptions }
   | { type: 'dispose' }
 
 /**
@@ -712,6 +746,30 @@ export abstract class FetchEngine<
    */
   pause(message?: string): Promise<void> {
     return this.dispatchAction({ type: 'pause', message })
+  }
+
+  /**
+   * Executes a function or expression within the current page context.
+   *
+   * @remarks
+   * This is a powerful action that allows running custom logic.
+   * - **Browser Mode**: Executes directly in the browser.
+   * - **HTTP Mode**: Executes in Node.js with a mocked environment.
+   *
+   * If the execution changes `window.location.href`, a navigation will be triggered automatically.
+   *
+   * @param params - The function to execute and its single argument (array/object recommended)
+   * @returns Promise resolving to the result of the execution
+   * @throws {Error} When no active page context exists
+   *
+   * @example
+   * ```ts
+   * const title = await engine.evaluate({ fn: "document.title" });
+   * const sum = await engine.evaluate({ fn: "([a, b]) => a + b", args: [10, 20] });
+   * ```
+   */
+  evaluate(params: EvaluateActionOptions): Promise<any> {
+    return this.dispatchAction({ type: 'evaluate', params })
   }
 
   /**

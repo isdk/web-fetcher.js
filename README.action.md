@@ -245,6 +245,35 @@ Retrieves the full content of the current page state.
 * **`params`**: (none)
 * **`returns`**: `response`
 
+#### `evaluate`
+
+Executes a JavaScript function or expression within the page context. This is a powerful action for custom logic that isn't covered by built-in actions.
+
+* **`id`**: `evaluate`
+* **`params`**:
+  * **`fn`** (string | function): The function or expression to execute.
+  * **`args`** (any, optional): A single argument to pass to the function. Use an array or object for multiple arguments.
+* **`returns`**: `any` (the result of the execution)
+
+> **💡 Cross-Engine Compatibility**:
+>
+> * **`browser`**: Runs directly in the browser.
+> * **`http`**: Runs in Node.js with a mocked environment (providing `window`, `document`, and `$`).
+> * **Navigation**: If the code modifies `window.location.href`, the engine will automatically trigger a `goto` to the new URL.
+
+**Example: Extracting data via custom script**
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "([selector]) => document.querySelector(selector).innerText",
+    "args": [".main-title"]
+  },
+  "storeAs": "title"
+}
+```
+
 #### `extract`
 
 Extracts structured data from the page using a powerful and declarative Schema. This is the core Action for data collection.
