@@ -300,6 +300,8 @@ Define a structured object using `type: 'object'` and the `properties` field.
 }
 ```
 
+* **`depth`** (number, optional): Enables "Try-And-Bubble" strategy. If a `required` field is missing in the matched element, the engine attempts to bubble up the DOM tree (up to `depth` levels) to find an ancestor where the required field exists. This is useful when the selector matches a descendant (e.g., an inner `span`) but the data resides on a parent container.
+
 **Advanced Object Features:**
 
 * **Anchor Jumping (`anchor`)**: Specifies a starting reference point for a field.

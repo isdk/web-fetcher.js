@@ -281,34 +281,20 @@ async function _extractObject(
   scope: FetchElementScope,
   strict?: boolean
 ): Promise<any> {
-  const {
-    selector,
-    properties,
-    strict: objectStrict,
-    relativeTo,
-    order,
-  } = schema
+  const { selector, properties, strict: objectStrict } = schema
   const finalStrict = objectStrict ?? strict
   const skipSelector = (schema as any)._skipSelector
-  let newScope = scope
+  let currentScope = scope
 
   if (selector && !skipSelector) {
     const elements = await this._querySelectorAll(scope, selector)
-    newScope = elements.length > 0 ? elements[0] : null
-    if (newScope && schema.depth !== undefined) {
-      newScope = await _bubbleUpToScope.call(
-        this,
-        newScope,
-        scope,
-        schema.depth
-      )
-    }
+    currentScope = elements.length > 0 ? elements[0] : null
     this._logDebug(
       `_extractObject: selector "${selector}" found ${elements.length} elements`
     )
   }
 
-  if (!newScope) {
+  if (!currentScope) {
     this._logDebug(
       `_extractObject: scope not found for selector "${selector || ''}"`
     )
@@ -321,10 +307,100 @@ async function _extractObject(
     return null
   }
 
+  // "Try-And-Bubble" Loop
+  // If required fields are missing, we try to bubble up the scope (up to schema.depth)
+  // and retry extraction. This allows finding an object root that satisfies constraints.
+  let depth = schema.depth ?? 0
+  const maxRetries = depth
+
+  while (true) {
+    const { result, hasValue, missingRequired } =
+      await _extractObjectProperties.call(
+        this,
+        schema,
+        currentScope,
+        finalStrict
+      )
+
+    // Success condition: No missing required fields
+    if (missingRequired.length === 0) {
+      if (!selector && !hasValue && Object.keys(properties).length > 0) {
+        return null
+      }
+      return result
+    }
+
+    // Failure condition: Try to bubble up?
+    let canBubble = false
+    if (depth > 0) {
+      if (skipSelector) {
+        // If selector was skipped, 'scope' is the starting element itself.
+        // We are implicitly allowed to bubble up from it (governed by depth).
+        canBubble = true
+      } else {
+        // If selector was used, the initial scope is the boundary.
+        // We must ensure we don't bubble out of it.
+        const isAtBoundary = await this._isSameElement(currentScope, scope)
+        const isInsideBoundary = await this._contains(scope, currentScope)
+        canBubble = !isAtBoundary && isInsideBoundary
+      }
+    }
+
+    if (canBubble) {
+      const parent = await this._parentElement(currentScope)
+      if (parent) {
+        // Ensure the new parent is still within (or is) the original scope
+        // Only if we have a strict boundary (skipSelector is false)
+        let isValidParent = true
+        if (!skipSelector) {
+          isValidParent =
+            (await this._isSameElement(scope, parent)) ||
+            (await this._contains(scope, parent))
+        }
+
+        if (isValidParent) {
+          this._logDebug(
+            `_extractObject: missing required fields [${missingRequired.join(', ')}], bubbling up from depth ${maxRetries - depth} to ${maxRetries - depth + 1}`
+          )
+          currentScope = parent
+          depth--
+          continue
+        }
+      }
+    }
+
+    // Final Failure
+    if (finalStrict) {
+      throw new CommonError(
+        `Required property "${missingRequired[0]}" is missing.`,
+        'extract'
+      )
+    }
+    return null
+  }
+}
+
+/**
+ * Helper to extract all properties of an object at a given scope.
+ * Returns the result map and a list of missing required fields.
+ */
+async function _extractObjectProperties(
+  this: IExtractEngine,
+  schema: ExtractObjectSchema,
+  scope: FetchElementScope,
+  strict?: boolean
+): Promise<{
+  result: Record<string, any>
+  hasValue: boolean
+  missingRequired: string[]
+}> {
+  const { properties, relativeTo, order } = schema
   const result: Record<string, any> = {}
+  const missingRequired: string[] = []
   let hasValue = false
+
   const keys = order || Object.keys(properties)
-  let currentWorkingScope = newScope
+  let currentWorkingScope = scope
   const fieldElements = new Map<string, FetchElementScope>()
   const isSequential = relativeTo === 'previous'
 
@@ -341,7 +417,7 @@ async function _extractObject(
         propSchema.anchor,
         properties,
         fieldElements,
-        newScope,
+        scope,
         isSequential,
         propSchema.depth
       )
@@ -350,11 +426,16 @@ async function _extractObject(
         if (isSequential) {
           currentWorkingScope = scopeForField
         }
-      } else if (finalStrict) {
+      } else if (strict) {
         throw new CommonError(
           `Anchor "${propSchema.anchor}" not found or out of scope.`,
           'extract'
         )
+      } else {
+        // If anchor not found and not strict, this field is effectively null
+        result[key] = null
+        if ((propSchema as any).required) missingRequired.push(key)
+        continue
       }
     }
 
@@ -366,7 +447,7 @@ async function _extractObject(
     if (propSelector) {
       let matches = await this._querySelectorAll(scopeForField, propSelector)
       if (matches.length > 0) {
-        if (propSchema.depth !== undefined) {
+        if (propSchema.depth !== undefined && propSchema.type !== 'object') {
           matches = await Promise.all(
             matches.map((m) =>
               _bubbleUpToScope.call(this, m, scopeForField, propSchema.depth)
@@ -379,7 +460,7 @@ async function _extractObject(
           this,
           tempSchema,
           isArrayField ? matches : extractedElement,
-          finalStrict
+          strict
         )
 
         if (isSequential && !propSchema.anchor) {
@@ -401,7 +482,7 @@ async function _extractObject(
         value = null
       }
     } else {
-      value = await _extract.call(this, propSchema, scopeForField, finalStrict)
+      value = await _extract.call(this, propSchema, scopeForField, strict)
       if (value !== null) {
         extractedElement = Array.isArray(scopeForField)
           ? scopeForField[0]
@@ -414,13 +495,7 @@ async function _extractObject(
     }
 
     if (value === null && (propSchema as any).required) {
-      if (finalStrict) {
-        throw new CommonError(
-          `Required property "${key}" is missing.`,
-          'extract'
-        )
-      }
-      return null
+      missingRequired.push(key)
     }
     if (value !== null) {
       hasValue = true
@@ -428,10 +503,7 @@ async function _extractObject(
     result[key] = value
   }
 
-  if (!selector && !hasValue && Object.keys(properties).length > 0) {
-    return null
-  }
-  return result
+  return { result, hasValue, missingRequired }
 }
 
 /**
@@ -1167,6 +1239,7 @@ export interface BaseExtractSchema {
    * The maximum number of levels to bubble up from the anchor or matched element.
    * - In 'anchor' mode: Defines how many parent levels to traverse to collect following siblings.
    * - In 'segmented' mode: Defines the maximum levels to ascend from the anchor to find a container.
+   * - In 'object' mode: Enables "Try-And-Bubble". Attempts extraction at current level; if required fields are missing, bubbles up (max `depth` levels) to retry.
    */
   depth?: number
 }

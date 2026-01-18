@@ -349,14 +349,29 @@ Note:
 
 - **实现原理**：该函数从深层元素向上回溯，直到找到一个直接存在于当前 `scope`（作用域数组）中的祖先。
 - **重要性**：只有定位到这个“直系项”，我们才能正确执行 `nextSiblingsUntil` 或游标切片，否则扫描位置会发生偏移。
-- **Depth 参数**：我们引入了 `depth` 参数允许用户手动控制向上冒泡的层数。这在需要从深层匹配项回溯到特定包装容器（Wrapper）时非常有用。
+- **Depth 参数**：允许用户手动控制向上冒泡的层数。
 
-#### 4. 关键实现坑点 (Implementation Gotchas)
+#### 4. 实践中的回溯策略 (Lessons Learned: Bubble-Up Strategies)
 
-- **Cheerio 的根节点处理**：在 Cheerio 引擎中，`$.root()` 是一个特殊的虚拟节点，它不会出现在元素的 `parents()` 列表中。在实现 `_findContainerChild` 时，必须显式处理容器为根节点的情况，否则向上回溯会因找不到匹配而返回 `null`。
-- **`Node.contains()` 语义**：标准的 DOM `contains` 方法是包含自身的（`A.contains(A)` 为 true）。但在 Cheerio 中，`.find()` 仅搜索后代。在编写冒泡循环或边界检查时，务必确保 `_contains` 的实现符合标准语义，以免在到达容器边缘时循环意外中断。
-- **锚点回溯的兼容性**：在 `_resolveAnchorScope` 中，如果用户**未指定** `depth`，逻辑应保持宽松，允许在当前层级找不到兄弟时回退到全局搜索（保持旧版本行为）。只有当用户**显式指定**了 `depth`（包括 `0`）时，才应严格限制搜索范围。
-- **Schema 关键字标准化**：新增像 `depth` 这样的配置关键字时，必须同步更新 `src/core/normalize-extract-schema.ts` 中的 `CONTEXT_KEYS` 和 `isImplicitObject` 的保留关键字列表。否则，该关键字在隐式对象模式下会被误认为是要提取的数据属性。
+在处理 `depth` 参数时，我们根据提取目标的不同采用了两种截然不同的策略：
+
+**A. 按需回溯 (Try-And-Bubble) - 用于 Object**
+- **逻辑**：先在当前选中的元素（Selector 命中点）尝试提取。只有当标记为 `required` 的字段缺失时，才向上回溯一级并重试，直到找到数据或达到 `depth` 限制。
+- **优点**：符合直觉。如果数据就在当前元素上，不需要无谓地扩大搜索范围。
+- **实现细节**：在 `_extractObject` 中通过 `while` 循环实现。递归调用子对象时，父级不应预先回溯，而是将原始命中元素传给子级，由子级自行控制回溯。
+
+**B. 确定性回溯 (Deterministic Bubble) - 用于 Array/Value**
+- **逻辑**：一旦定义了 `depth`，在开始提取之前就立即向上回溯到目标层级。
+- **原因**：Array 的 `selector` 通常是为了定位“列表项容器”。如果用户指定了 `depth`，通常是因为选择器只能定位到内部元素，必须回溯到容器才能正确分割数组项。
+
+#### 5. 关键实现坑点 (Implementation Gotchas)
+
+- **`_skipSelector` 的妙用**：在 `object` 循环中，父级往往已经选好了子字段的元素。在递归调用子级的 `_extract` 时，通过传入 `_skipSelector: true` 避免冗余查询。
+- **Object 递归中的回溯隔离**：当 `_skipSelector` 为真时，子对象接收到的 `scope` 就是它的起始点。由于此时它没有父级的边界约束（因为它自己就是起始点），在执行 Try-And-Bubble 时应允许其在 `depth` 范围内向上回溯，而不必受限于传入的 `scope`。
+- **Cheerio 的根节点处理**：在 Cheerio 引擎中，`$.root()` 是一个特殊的虚拟节点，它不会出现在元素的 `parents()` 列表中。在实现 `_findContainerChild` 时，必须显式处理容器为根节点的情况。
+- **`Node.contains()` 语义**：标准的 DOM `contains` 方法是包含自身的（`A.contains(A)` 为 true）。但在 Cheerio 中，`.find()` 仅搜索后代。确保实现符合标准。
+- **锚点回溯的兼容性**：在 `_resolveAnchorScope` 中，如果用户**未指定** `depth`，逻辑应保持宽松，允许在当前层级找不到兄弟时回退到全局搜索（即默认回溯到最大深度）。只有当用户**显式指定**了 `depth`（包括 `0`）时，才应严格限制搜索范围。
+- **Schema 关键字标准化**：新增配置关键字（如 `depth`）时，必须同步更新 `src/core/normalize-extract-schema.ts` 中的 `CONTEXT_KEYS`。否则，该关键字在隐式对象模式下会被误认为是要提取的数据属性。
 
 #### 5. 消费游标逻辑 (`_sliceSequentialScope`)
 
