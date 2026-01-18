@@ -565,7 +565,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
             }
             return evaluated
           },
-          [typeof fn === 'function' ? fn.toString() : fn, args]
+          [typeof fn === 'function' ? fn.toString() : fn, args] as [any, any]
         )
 
         // If URL changed, wait for load
