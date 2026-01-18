@@ -459,6 +459,79 @@ export class CheerioFetchEngine extends FetchEngine<
         await this._updateStateAfterNavigation(context, loadedRequest)
         return
       }
+      case 'evaluate': {
+        const { fn, args = [] } = action.params
+        const currentUrl = context.request.loadedUrl || context.request.url
+        const mockWindow: any = {
+          location: {
+            href: currentUrl,
+          },
+        }
+
+        const mockDocument = {
+          getElementById: (id: string) => {
+            const el = $(`#${id}`).first()
+            if (el.length === 0) return null
+            return {
+              textContent: el.text(),
+              innerHTML: el.html(),
+              getAttribute: (attr: string) => el.attr(attr),
+            }
+          },
+          querySelector: (selector: string) => {
+            const el = $(selector).first()
+            if (el.length === 0) return null
+            return {
+              textContent: el.text(),
+              innerHTML: el.html(),
+              getAttribute: (attr: string) => el.attr(attr),
+            }
+          },
+        }
+        mockWindow.document = mockDocument
+
+        // Provide global context for compatibility with browser-like code
+        const originalWindow = (global as any).window
+        const originalDocument = (global as any).document
+        const original$ = (global as any).$
+        ;(global as any).window = mockWindow
+        ;(global as any).document = mockDocument
+        ;(global as any).$ = $
+
+        let result: any
+        try {
+          // Move eval inside the context so expressions can access window/document
+          // eslint-disable-next-line no-eval
+          const actualFn = typeof fn === 'string' ? (0, eval)(`(${fn})`) : fn
+
+          if (typeof actualFn === 'function') {
+            // Pass args as a single argument to match Playwright's behavior
+            result = await actualFn(args)
+          } else {
+            // If it's a direct expression (like "document.title"), return the eval result
+            result = actualFn
+          }
+        } finally {
+          // Restore original globals
+          if (originalWindow === undefined) delete (global as any).window
+          else (global as any).window = originalWindow
+          if (originalDocument === undefined) delete (global as any).document
+          else (global as any).document = originalDocument
+          if (original$ === undefined) delete (global as any).$
+          else (global as any).$ = original$
+        }
+
+        if (mockWindow.location.href !== currentUrl) {
+          // Trigger navigation if href was changed
+          // Ensure URL is absolute relative to the current page
+          const targetUrl = new URL(mockWindow.location.href, currentUrl).href
+          await this.goto(targetUrl)
+        } else {
+          this.lastResponse = await this.buildResponse(context)
+        }
+
+        return result
+      }
       default:
         throw new CommonError(
           `Unknown action type: ${(action as any).type}`,

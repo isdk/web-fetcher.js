@@ -160,6 +160,7 @@ The library provides a set of powerful built-in actions, many of which are engin
 * `waitFor`: Pauses execution to wait for a specific condition (Supports fixed timeouts centrally).
 * `pause`: Pauses execution for manual intervention (Handled centrally).
 * `getContent`: Retrieves the full content of the current page (Handled centrally).
+* `evaluate`: Executes custom JavaScript within the page context.
 * `extract`: Extracts structured data using an engine-agnostic core logic and engine-specific DOM primitives. Supports `required` fields and `strict` validation.
 
 ### Response Structure

@@ -1,0 +1,44 @@
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "evaluate",
+      "params": {
+        "fn": "() => document.getElementById('test').textContent"
+      },
+      "storeAs": "val1"
+    },
+    {
+      "action": "evaluate",
+      "params": {
+        "fn": "([a, b]) => a + b",
+        "args": [1, 2]
+      },
+      "storeAs": "val2"
+    },
+    {
+      "action": "evaluate",
+      "params": {
+        "fn": "() => { window.location.href = '/target'; }"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "title": "#result"
+        }
+      },
+      "storeAs": "navResult"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "val1": "Hello",
+      "val2": 3,
+      "navResult": {
+        "title": "Target Page"
+      }
+    }
+  }
+}

@@ -160,6 +160,7 @@ searchGoogle('gemini');
 * `waitFor`: 暂停执行以等待特定条件（支持统一处理的固定超时）。
 * `pause`: 暂停执行以进行人工干预（如处理验证码，由核心层统一处理）。
 * `getContent`: 获取当前页面状态的完整内容（由核心层统一处理）。
+* `evaluate`: 在页面上下文中执行自定义 JavaScript。
 * `extract`: 使用引擎无关的核心逻辑和引擎相关的 DOM 原语提取结构化数据。支持 `required` 字段和 `strict` 验证。
 
 ### 响应结构

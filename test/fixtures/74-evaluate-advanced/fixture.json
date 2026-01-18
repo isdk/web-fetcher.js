@@ -1,0 +1,38 @@
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "comment": "Test: Object parameters destructuring",
+      "action": "evaluate",
+      "params": {
+        "fn": "({ a, b }) => a * b",
+        "args": { "a": 6, "b": 7 }
+      },
+      "storeAs": "objParam"
+    },
+    {
+      "comment": "Test: Direct expression (no function wrapper)",
+      "action": "evaluate",
+      "params": {
+        "fn": "document.querySelector('.item').getAttribute('data-id')"
+      },
+      "storeAs": "expression"
+    },
+    {
+      "comment": "Test: Async function",
+      "action": "evaluate",
+      "params": {
+        "fn": "async (args) => { return new Promise(resolve => setTimeout(() => resolve('delayed'), 10)); }",
+        "args": []
+      },
+      "storeAs": "asyncVal"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "objParam": 42,
+      "expression": "101",
+      "asyncVal": "delayed"
+    }
+  }
+}
