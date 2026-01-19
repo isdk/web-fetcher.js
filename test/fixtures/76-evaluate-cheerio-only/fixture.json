@@ -1,0 +1,19 @@
+{
+  "engine": "cheerio",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "comment": "Test: Direct $ usage (Cheerio injected context)",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => $('#cheerio-target').text()"
+      },
+      "storeAs": "cheerioValue"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "cheerioValue": "Cheerio Test Content"
+    }
+  }
+}

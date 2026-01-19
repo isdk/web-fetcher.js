@@ -140,6 +140,18 @@ export const TRIM_PRESETS: Record<string, string[]> = {
 /**
  * Options for the {@link FetchEngine.evaluate} action, specifying the function to execute and its arguments.
  *
+ * @remarks
+ * This action allows executing custom JavaScript logic within the page context.
+ *
+ * **Execution Environments:**
+ * - **`browser` mode (Playwright)**: Executes directly in the real browser's execution context.
+ * - **`http` mode (Cheerio)**: Executes in a Node.js sandbox using `newFunction`. It provides a mocked browser environment
+ *   including `window`, `document` (with `querySelector`, `querySelectorAll`, etc.), and `console`.
+ *
+ * **Navigation Handling:**
+ * If the executed code modifies `window.location.href` (or calls `assign()`/`replace()`), the engine will
+ * automatically detect the change, trigger a navigation, and wait for the new page to load before resolving the action.
+ *
  * @example
  * ```json
  * {
@@ -150,22 +162,38 @@ export const TRIM_PRESETS: Record<string, string[]> = {
  *   }
  * }
  * ```
+ *
+ * @example
+ * ```json
+ * {
+ *   "action": "evaluate",
+ *   "params": {
+ *     "fn": "({ x, y }) => x * y",
+ *     "args": { "x": 6, "y": 7 }
+ *   }
+ * }
+ * ```
  */
 export interface EvaluateActionOptions {
   /**
-   * The function to execute. Can be a function object or a string containing a function definition or expression.
+   * The function or expression to execute.
    *
    * @remarks
-   * In `browser` mode, this runs in the browser context.
-   * In `http` mode, this runs in Node.js with a mocked browser-like environment (window, document, $).
+   * Can be:
+   * 1. A function object (only available when using the API directly).
+   * 2. A string containing a function definition, e.g., `"async (args) => { ... }"`
+   * 3. A string containing a direct expression, e.g., `"document.title"`
+   *
+   * **Note:** When using a function, it receives exactly ONE argument: the value provided in {@link args}.
+   * Use destructuring to handle multiple parameters.
    */
   fn: string | ((...args: any[]) => any)
   /**
-   * A single argument to pass to the function. To pass multiple arguments, use an array or object and destructure it in the function definition.
+   * Data to pass to the function.
    *
-   * @example
-   * Array: `fn: ([a, b]) => a + b`, `args: [1, 2]`
-   * Object: `fn: ({ x, y }) => x * y`, `args: { x: 6, y: 7 }`
+   * @remarks
+   * This value is passed as the first and only argument to the function defined in {@link fn}.
+   * Recommended to use an array or object for multiple values.
    */
   args?: any
 }
@@ -749,24 +777,22 @@ export abstract class FetchEngine<
   }
 
   /**
-   * Executes a function or expression within the current page context.
+   * Executes a custom function or expression within the current page context.
    *
    * @remarks
-   * This is a powerful action that allows running custom logic.
-   * - **Browser Mode**: Executes directly in the browser.
-   * - **HTTP Mode**: Executes in Node.js with a mocked environment.
+   * This is a powerful action that allows running custom logic to interact with the DOM,
+   * calculate values, or trigger navigations.
    *
-   * If the execution changes `window.location.href`, a navigation will be triggered automatically.
+   * - In **Browser Mode**, it runs in the real browser.
+   * - In **HTTP Mode**, it runs in a Node.js sandbox with a mocked DOM.
    *
-   * @param params - The function to execute and its single argument (array/object recommended)
-   * @returns Promise resolving to the result of the execution
-   * @throws {Error} When no active page context exists
+   * The action handles automatic navigation if `window.location` is modified.
    *
-   * @example
-   * ```ts
-   * const title = await engine.evaluate({ fn: "document.title" });
-   * const sum = await engine.evaluate({ fn: "([a, b]) => a + b", args: [10, 20] });
-   * ```
+   * @param params - Configuration for the execution, including the function and arguments.
+   * @returns A promise resolving to the result of the execution.
+   * @throws {Error} If no active page context exists or if execution fails.
+   *
+   * @see {@link EvaluateActionOptions} for detailed parameter options and examples.
    */
   evaluate(params: EvaluateActionOptions): Promise<any> {
     return this.dispatchAction({ type: 'evaluate', params })

@@ -319,20 +319,17 @@ When adding a new action (e.g., `src/action/definitions/my-action.ts`), follow t
 
 #### 5. Lessons Learned from `evaluate` Action (Implementation Gotchas)
 
-Implementing the `evaluate` action revealed several critical technical constraints:
+Implementing the `evaluate` action revealed several critical technical traps that must be avoided in future modifications:
 
 - **Playwright's "Single Argument" Trap**: `page.evaluate(fn, arg)` only accepts **one** secondary argument. Passing multiple arguments via `...args` will throw `Error: Too many arguments`.
-  - **Solution**: Always wrap multiple parameters into a single array or object and use destructuring in the function definition (e.g., `fn: ([a, b]) => ...`).
-- **Function Serialization (JSON vs. JS)**: When an action is loaded from JSON, `fn` is a string. Direct `page.evaluate(string, args)` in Playwright evaluates the string as an expression, returning the function definition instead of executing it.
-  - **Solution**: Wrap the evaluation in the browser context: `page.evaluate(([f, a]) => { const evalFn = eval("(" + f + ")"); return evalFn(a); }, [fnStr, args])`.
-- **Navigation during Interaction**: If `evaluate` (or any script) triggers `window.location.href = ...`, the engine immediately enters a "navigating" state.
-  - **The Bug**: Calling `page.content()` or `page.textContent()` while the page is navigating throws an error.
-  - **The Fix**: Detect URL changes or catch "navigating" errors, and explicitly await `waitForLoadState('domcontentloaded')` before attempting to build a response.
-- **Cheerio's Relative Navigation**: In `http` mode, mocking `window.location.href` is easy, but triggering a jump requires care.
-  - **The Fix**: If `mockWindow.location.href` changes, you must resolve it against the current absolute URL (`new URL(newHref, currentUrl)`) before calling `this.goto()`, as standard HTTP clients require absolute paths.
-- **Global Pollution in Node.js**: When mocking `window` and `document` in Cheerio, they are injected into the Node.js `global` object.
-  - **The Risk**: Forgetting to restore them can cause unpredictable behavior in other parts of the system or concurrent sessions.
-  - **The Requirement**: Use a `try...finally` block to guarantee the restoration of original global states.
+  - **Current Solution**: We enforce a single-parameter convention. All engines receive `args` as the first and only parameter.
+- **Function Serialization (JSON vs. JS)**: When an action is loaded from JSON, `fn` is a string. In Playwright, `page.evaluate(string)` evaluates it as an expression, not a function execution if it contains a function definition.
+  - **Current Solution**: We use a wrapper in Playwright and `newFunction` (from `util-ex`) in Cheerio to consistently handle both function strings and direct expressions.
+- **Navigation Race Conditions**: If `evaluate` triggers `window.location.href = ...`, the engine must not resolve the action until the new page is loaded.
+  - **Current Pitfall**: A simple `if (urlChanged)` check after execution is insufficient for `setTimeout` or async-driven jumps.
+  - **Current Solution**: In Cheerio, we use a getter/setter on `mockWindow.location.href` to intercept and `await` navigation. In Playwright, we check for URL changes and pending load states.
+- **Global Pollution (Cheerio)**: Directly assigning to Node.js `global.window` for Cheerio mocks causes severe memory leaks and concurrency bugs.
+  - **Current Solution**: Always use `newFunction` to create an isolated sandbox for execution.
 
 ### Fixture Params
 
