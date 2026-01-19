@@ -553,36 +553,37 @@ export class PlaywrightFetchEngine extends FetchEngine<
         const { fn, args = [] } = action.params
         const prevUrl = page.url()
 
-        // We handle the evaluation logic inside the browser to support both:
-        // 1. Function strings: "(args) => args.a + args.b"
-        // 2. Direct expressions: "document.title"
-        const result = await page.evaluate(
-          async ([f, a]: [any, any]) => {
-            // eslint-disable-next-line no-eval
-            const evaluated = typeof f === 'string' ? (0, eval)(`(${f})`) : f
-            if (typeof evaluated === 'function') {
-              return await evaluated(a)
-            }
-            return evaluated
-          },
-          [typeof fn === 'function' ? fn.toString() : fn, args] as [any, any]
-        )
+        let result: any
+        if (typeof fn === 'function') {
+          result = await page.evaluate(fn, args)
+        } else {
+          result = await page.evaluate(
+            ([f, a]: [any, any]) => {
+              // eslint-disable-next-line no-eval
+              const evaluated = (0, eval)(`(${f})`)
+              return typeof evaluated === 'function' ? evaluated(a) : evaluated
+            },
+            [fn, args] as [any, any]
+          )
+        }
 
-        // If URL changed, wait for load
+        // If URL changed or page is navigating, wait for it to settle
         if (page.url() !== prevUrl) {
           await page
             .waitForLoadState('domcontentloaded', { timeout: defaultTimeout })
             .catch(() => {})
-        }
-
-        try {
           this.lastResponse = await this.buildResponse(context)
-        } catch (e) {
-          // Fallback for cases where navigation is detected during buildResponse
-          await page
-            .waitForLoadState('domcontentloaded', { timeout: defaultTimeout })
-            .catch(() => {})
-          this.lastResponse = await this.buildResponse(context)
+        } else {
+          // Even if URL didn't change, the content might have been updated by JS
+          try {
+            this.lastResponse = await this.buildResponse(context)
+          } catch (e) {
+            // If buildResponse fails (e.g. page navigated away during build), try one more wait
+            await page
+              .waitForLoadState('domcontentloaded', { timeout: defaultTimeout })
+              .catch(() => {})
+            this.lastResponse = await this.buildResponse(context)
+          }
         }
         return result
       }

@@ -247,18 +247,46 @@ Retrieves the full content of the current page state.
 
 #### `evaluate`
 
-Executes a JavaScript function or expression within the page context. This is a powerful action for custom logic that isn't covered by built-in actions.
+Executes custom JavaScript code or an expression within the page context.
 
 * **`id`**: `evaluate`
 * **`params`**:
-  * **`fn`** (string | function): The function or expression to execute.
-  * **`args`** (any, optional): A single argument to pass to the function. Use an array or object for multiple arguments.
-* **`returns`**: `any` (the result of the execution)
+  * **`fn`**: `string | Function` - The JavaScript function or expression to execute.
+    * In `browser` mode, this runs in the real browser.
+    * In `http` mode, this runs in a safe Node.js sandbox with a mocked browser environment (`window`, `document`, `console`, `).
+  * **`args`**: `any` - A single argument to pass to the function. Use an array or object to pass multiple values.
 
-> **💡 Cross-Engine Compatibility**:
+**Key Features:**
+
+- **Automatic Navigation**: If the code modifies `window.location.href` or calls `assign()`/`replace()`, the engine automatically triggers and waits for the navigation to complete.
+- **Enhanced Mock DOM (HTTP Mode)**: Supports common DOM methods like `querySelector`, `querySelectorAll`, `getElementById`, `getElementsByClassName`, and properties like `document.body` and `document.title`.
+- **Sandbox Security**: Uses `util-ex`'s `newFunction` in HTTP mode to prevent global state pollution.
+
+**Example (Array Args):**
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "([a, b]) => a + b",
+    "args": [1, 2]
+  }
+}
+```
+
+**Example (Navigation):**
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "() => { window.location.href = '/new-page'; }"
+  }
+}
+```
+
+$`).
 >
-> * **`browser`**: Runs directly in the browser.
-> * **`http`**: Runs in Node.js with a mocked environment (providing `window`, `document`, and `$`).
 > * **Navigation**: If the code modifies `window.location.href`, the engine will automatically trigger a `goto` to the new URL.
 
 **Example: Extracting data via custom script**

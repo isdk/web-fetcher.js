@@ -1,0 +1,29 @@
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "comment": "Trigger async navigation via setTimeout",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => { setTimeout(() => { window.location.href = '/target'; }, 100); }"
+      }
+    },
+    {
+      "comment": "Wait for navigation to complete",
+      "action": "waitFor",
+      "params": { "ms": 500 }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": { "title": "h1" }
+      },
+      "storeAs": "navResult"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "navResult": { "title": "Target Page" }
+    }
+  }
+}

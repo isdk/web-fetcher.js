@@ -257,18 +257,34 @@ await fetchWeb({
 >
 > * **`browser`**: 直接在浏览器中运行。
 > * **`http`**: 在 Node.js 中运行，并提供模拟环境（提供 `window`, `document` 和 `$`）。
-> * **导航**: 如果代码修改了 `window.location.href`，引擎会自动触发 `goto` 跳转到新 URL。
+    * **`args`**: `any` - 传递给函数的单个参数。如需传递多个值，请使用数组或对象。
 
-**示例：通过自定义脚本提取数据**
+**核心特性：**
+
+- **自动导航检测**：如果代码修改了 `window.location.href` 或调用了 `assign()`/`replace()`，引擎会自动触发并等待导航完成。
+- **增强型 Mock DOM (HTTP 模式)**：支持常用的 DOM 方法，如 `querySelector`, `querySelectorAll`, `getElementById`, `getElementsByClassName`，以及 `document.body` 和 `document.title` 等属性。
+- **沙箱安全**：在 HTTP 模式下使用 `util-ex` 的 `newFunction`，防止全局状态污染。
+
+**示例 (数组参数)：**
 
 ```json
 {
   "action": "evaluate",
   "params": {
-    "fn": "([selector]) => document.querySelector(selector).innerText",
-    "args": [".main-title"]
-  },
-  "storeAs": "title"
+    "fn": "([a, b]) => a + b",
+    "args": [1, 2]
+  }
+}
+```
+
+**示例 (导航)：**
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "() => { window.location.href = '/new-page'; }"
+  }
 }
 ```
 

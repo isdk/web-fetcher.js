@@ -1,0 +1,13 @@
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "comment": "Test: Runtime error in evaluate",
+      "action": "evaluate",
+      "params": { "fn": "() => { throw new Error('test error'); }" }
+    }
+  ],
+  "expected": {
+    "error": "test error"
+  }
+}

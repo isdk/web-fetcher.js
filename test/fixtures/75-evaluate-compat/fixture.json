@@ -1,0 +1,51 @@
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "comment": "Test: querySelectorAll mapping",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => document.querySelectorAll('.item').length"
+      },
+      "storeAs": "qsaLength"
+    },
+    {
+      "comment": "Test: getElementsByClassName mapping",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => document.getElementsByClassName('item')[1].textContent"
+      },
+      "storeAs": "item2Text"
+    },
+    {
+      "comment": "Test: document.body and title access",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => ({ bodyType: typeof document.body, title: document.title })"
+      },
+      "storeAs": "docInfo"
+    },
+    {
+      "comment": "Test: outerHTML and matches (enhanced mock API)",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => { const el = document.querySelector('.item'); return { isMatch: el.matches('.item'), hasHtml: el.outerHTML.includes('Item 1') }; }"
+      },
+      "storeAs": "enhancedApi"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "qsaLength": 3,
+      "item2Text": "Item 2",
+      "docInfo": {
+        "bodyType": "object",
+        "title": "Compat Test"
+      },
+      "enhancedApi": {
+        "isMatch": true,
+        "hasHtml": true
+      }
+    }
+  }
+}

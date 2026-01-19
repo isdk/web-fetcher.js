@@ -1,6 +1,7 @@
 import { CheerioCrawler, Configuration } from 'crawlee'
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee'
 import * as cheerio from 'cheerio'
+import { newFunction } from 'util-ex'
 import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base'
 import { FetchResponse } from '../core/types'
 import { FetchEngineContext } from '../core/context'
@@ -462,71 +463,86 @@ export class CheerioFetchEngine extends FetchEngine<
       case 'evaluate': {
         const { fn, args = [] } = action.params
         const currentUrl = context.request.loadedUrl || context.request.url
+
+        let navigationPromise: Promise<any> | null = null
+        const createMockElement = (el: any) => {
+          if (!el || el.length === 0) return null
+          return {
+            textContent: el.text(),
+            innerHTML: el.html(),
+            outerHTML: $.html(el),
+            getAttribute: (attr: string) => el.attr(attr),
+            matches: (sel: string) => el.is(sel),
+          }
+        }
+
+        const self = this
         const mockWindow: any = {
           location: {
-            href: currentUrl,
+            _href: currentUrl,
+            get href() {
+              return this._href
+            },
+            set href(val) {
+              if (val && val !== this._href) {
+                this._href = val
+                const targetUrl = new URL(val, currentUrl).href
+                navigationPromise = self.goto(targetUrl)
+              }
+            },
+            assign(url: string) {
+              this.href = url
+            },
+            replace(url: string) {
+              this.href = url
+            },
           },
         }
 
-        const mockDocument = {
-          getElementById: (id: string) => {
-            const el = $(`#${id}`).first()
-            if (el.length === 0) return null
-            return {
-              textContent: el.text(),
-              innerHTML: el.html(),
-              getAttribute: (attr: string) => el.attr(attr),
-            }
+        const mockDocument: any = {
+          getElementById: (id: string) =>
+            createMockElement($(`#${id}`).first()),
+          querySelector: (selector: string) =>
+            createMockElement($(selector).first()),
+          querySelectorAll: (selector: string) =>
+            $(selector)
+              .toArray()
+              .map((el) => createMockElement($(el))),
+          getElementsByClassName: (className: string) =>
+            $(`.${className}`)
+              .toArray()
+              .map((el) => createMockElement($(el))),
+          getElementsByTagName: (tagName: string) =>
+            $(tagName)
+              .toArray()
+              .map((el) => createMockElement($(el))),
+          get body() {
+            return createMockElement($('body').first())
           },
-          querySelector: (selector: string) => {
-            const el = $(selector).first()
-            if (el.length === 0) return null
-            return {
-              textContent: el.text(),
-              innerHTML: el.html(),
-              getAttribute: (attr: string) => el.attr(attr),
-            }
+          get title() {
+            return $('title').text()
           },
         }
         mockWindow.document = mockDocument
 
-        // Provide global context for compatibility with browser-like code
-        const originalWindow = (global as any).window
-        const originalDocument = (global as any).document
-        const original$ = (global as any).$
-        ;(global as any).window = mockWindow
-        ;(global as any).document = mockDocument
-        ;(global as any).$ = $
-
-        let result: any
-        try {
-          // Move eval inside the context so expressions can access window/document
-          // eslint-disable-next-line no-eval
-          const actualFn = typeof fn === 'string' ? (0, eval)(`(${fn})`) : fn
-
-          if (typeof actualFn === 'function') {
-            // Pass args as a single argument to match Playwright's behavior
-            result = await actualFn(args)
-          } else {
-            // If it's a direct expression (like "document.title"), return the eval result
-            result = actualFn
-          }
-        } finally {
-          // Restore original globals
-          if (originalWindow === undefined) delete (global as any).window
-          else (global as any).window = originalWindow
-          if (originalDocument === undefined) delete (global as any).document
-          else (global as any).document = originalDocument
-          if (original$ === undefined) delete (global as any).$
-          else (global as any).$ = original$
+        const scope = {
+          window: mockWindow,
+          document: mockDocument,
+          $,
+          console,
         }
 
-        if (mockWindow.location.href !== currentUrl) {
-          // Trigger navigation if href was changed
-          // Ensure URL is absolute relative to the current page
-          const targetUrl = new URL(mockWindow.location.href, currentUrl).href
-          await this.goto(targetUrl)
+        let result: any
+        const actualFn = newFunction(fn, scope)
+        if (typeof actualFn === 'function') {
+          result = await actualFn(args)
         } else {
+          result = actualFn
+        }
+
+        if (navigationPromise) {
+          await navigationPromise
+        } else if (mockWindow.location.href === currentUrl) {
           this.lastResponse = await this.buildResponse(context)
         }
 

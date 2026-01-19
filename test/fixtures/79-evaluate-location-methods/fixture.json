@@ -1,0 +1,40 @@
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "comment": "Test: window.location.assign",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => { window.location.assign('/target'); }"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": { "title": "h1" }
+      },
+      "storeAs": "res1"
+    },
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "comment": "Test: window.location.replace",
+      "action": "evaluate",
+      "params": {
+        "fn": "() => { window.location.replace('/target'); }"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": { "title": "h1" }
+      },
+      "storeAs": "res2"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "res1": { "title": "Target Page" },
+      "res2": { "title": "Target Page" }
+    }
+  }
+}
