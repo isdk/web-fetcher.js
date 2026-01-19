@@ -1,0 +1,58 @@
+{
+  "title": "should handle multiple goto actions to different pages",
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "title": "h1"
+        }
+      },
+      "storeAs": "page1"
+    },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/page2"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "title": "h1"
+        }
+      },
+      "storeAs": "page2"
+    },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/fixture"
+      }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "title": "h1"
+        }
+      },
+      "storeAs": "page1_again"
+    }
+  ],
+  "expected": {
+    "finalUrl": "/fixture",
+    "outputs": {
+      "page1": { "title": "Page 1" },
+      "page2": { "title": "Page 2" },
+      "page1_again": { "title": "Page 1" }
+    }
+  }
+}
