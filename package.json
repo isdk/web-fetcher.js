@@ -45,7 +45,7 @@
     "lodash-es": "^4.17.21",
     "nanoid": "^5.1.6",
     "playwright": "^1.57.0",
-    "util-ex": "^2.4.0"
+    "util-ex": "^2.5.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.7.3",
