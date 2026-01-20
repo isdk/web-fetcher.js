@@ -1,0 +1,16 @@
+{
+  "name": "Multiple Redirects Test",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "submit", "params": { "selector": "form" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": { "type": "object", "properties": { "title": { "selector": "h1", "type": "string" } } }
+      }
+    }
+  ],
+  "expected": {
+    "title": "Final Destination"
+  }
+}

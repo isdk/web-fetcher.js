@@ -384,7 +384,11 @@ export abstract class FetchEngine<
   protected isPageActive = false
   protected isEngineDisposed = false
   protected navigationLock: PromiseLock = createResolvedPromiseLock()
+  protected activeContext?: TContext
+  protected isExecutingAction = false
   protected lastResponse?: FetchResponse
+  protected actionQueue: DispatchedEngineAction[] = []
+  protected isProcessingActionLoop = false
   protected blockedTypes = new Set<string>()
 
   public _logDebug(category: string, ...args: any[]) {
@@ -1093,32 +1097,51 @@ export abstract class FetchEngine<
    */
   protected async _executePendingActions(context: TContext) {
     if (this.isEngineDisposed) return
-    await new Promise<void>((resolveLoop) => {
-      const listener = async ({
-        action,
-        resolve,
-        reject,
-      }: DispatchedEngineAction) => {
-        try {
-          if (action.type === 'dispose') {
-            this.actionEmitter.emit('dispose')
-            resolve()
-            return
+    this.activeContext = context
+
+    const processQueue = async () => {
+      if (this.isProcessingActionLoop) return
+      this.isProcessingActionLoop = true
+      try {
+        while (this.actionQueue.length > 0 && this.isPageActive && !this.isEngineDisposed) {
+          const item = this.actionQueue.shift()!
+          try {
+            if (item.action.type === 'dispose') {
+              this.actionEmitter.emit('dispose')
+              item.resolve()
+              continue
+            }
+            this.isExecutingAction = true
+            const result = await this._processAction(context, item.action)
+            item.resolve(result)
+          } catch (error) {
+            item.reject(error)
+          } finally {
+            this.isExecutingAction = false
           }
-          const result = await this._processAction(context, action)
-          resolve(result)
-        } catch (error) {
-          reject(error)
         }
+      } finally {
+        this.isProcessingActionLoop = false
+      }
+    }
+
+    await new Promise<void>((resolveLoop) => {
+      const listener = (dispatched: DispatchedEngineAction) => {
+        this.actionQueue.push(dispatched)
+        processQueue()
       }
 
       const onDispose = () => {
         this.actionEmitter.removeListener('dispatch', listener)
+        this.activeContext = undefined
         resolveLoop()
       }
 
       this.actionEmitter.on('dispatch', listener)
       this.actionEmitter.once('dispose', onDispose)
+
+      // Initial check if there are already items in the queue
+      processQueue()
 
       if (this.isEngineDisposed) {
         onDispose()
@@ -1195,6 +1218,15 @@ export abstract class FetchEngine<
     if (!this.isPageActive) {
       throw new Error('No active page. Call goto() before performing actions.')
     }
+
+    // Re-entrancy protection:
+    // If we are already executing an action (e.g. a composite action calling a built-in action),
+    // execute it immediately to avoid deadlocking the queue.
+    if (this.isExecutingAction && this.activeContext) {
+      this._logDebug(action.type, 'Re-entrant action execution:', action)
+      return await this._processAction(this.activeContext, action)
+    }
+
     return new Promise<T>((resolve, reject) => {
       this.actionEmitter.emit('dispatch', { action, resolve, reject })
     })
@@ -1258,6 +1290,7 @@ export abstract class FetchEngine<
 
     this.actionEmitter.removeAllListeners()
     this.pendingRequests.clear()
+    this.actionQueue = []
     this.config = undefined
   }
 

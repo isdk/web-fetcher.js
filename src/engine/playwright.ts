@@ -401,6 +401,29 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return page.locator(':root')
   }
 
+  protected async _waitForNavigation(
+    context: PlaywrightCrawlingContext,
+    oldUrl: string,
+    actionType: string
+  ) {
+    const { page } = context
+    const defaultTimeout = this.opts?.timeoutMs || DefaultTimeoutMs
+
+    try {
+      // Wait for URL to change (302 redirects will be followed automatically)
+      await page.waitForURL((url) => url.href !== oldUrl, {
+        waitUntil: 'domcontentloaded',
+        timeout: 5000, // Short timeout for potential navigation
+      })
+      this._logDebug(actionType, 'URL changed to:', page.url())
+    } catch (e) {
+      this._logDebug(actionType, 'No URL change detected within 5s')
+    }
+
+    await page.waitForLoadState('networkidle', { timeout: defaultTimeout })
+    this.lastResponse = await this.buildResponse(context)
+  }
+
   protected async executeAction(
     context: PlaywrightCrawlingContext,
     action: FetchEngineAction
@@ -411,20 +434,24 @@ export class PlaywrightFetchEngine extends FetchEngine<
       case 'dispose':
         return
       case 'navigate': {
+        this._logDebug('navigate', `Navigating to: ${action.url}`)
         const response = await page.goto(action.url, {
           waitUntil: action.opts?.waitUntil || 'domcontentloaded',
           timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
         })
-        if (response) context = { ...context, response }
+        if (response) {
+          context = { ...context, response }
+          this._logDebug('navigate', `Navigation status: ${response.status()} for ${response.url()}`)
+        }
         const fetchResponse = await this.buildResponse(context)
         this.lastResponse = fetchResponse
         return fetchResponse
       }
       case 'click': {
+        this._logDebug('click', 'Clicking selector:', action.selector)
+        const oldUrl = page.url()
         await page.click(action.selector, { timeout: defaultTimeout })
-        await page.waitForLoadState('networkidle', { timeout: defaultTimeout })
-        const navResponse = await this.buildResponse(context)
-        this.lastResponse = navResponse
+        await this._waitForNavigation(context, oldUrl, 'click')
         return
       }
       case 'fill':
@@ -548,11 +575,11 @@ export class PlaywrightFetchEngine extends FetchEngine<
           this.lastResponse = result
           return
         } else {
+          this._logDebug('submit', 'Submitting form...')
+          const oldUrl = page.url()
+
           await el.evaluate((form: HTMLFormElement) => form.submit())
-          await page.waitForLoadState('networkidle', {
-            timeout: defaultTimeout,
-          })
-          this.lastResponse = await this.buildResponse(context)
+          await this._waitForNavigation(context, oldUrl, 'submit')
           return
         }
       }
