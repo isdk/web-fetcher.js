@@ -329,8 +329,10 @@ async function _extractObject(
     // Success condition: No missing required fields
     if (missingRequired.length === 0) {
       if (!selector && !hasValue && Object.keys(properties).length > 0) {
+        this._logDebug('extract', '_extractObject result: null')
         return null
       }
+      this._logDebug('extract', '_extractObject result:', result)
       return result
     }
 
