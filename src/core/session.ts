@@ -8,7 +8,7 @@ import { Cookie, DefaultFetcherProperties, FetcherOptions } from './types'
 import { FetchReturnType } from './fetch-return-type'
 import { createEvent } from '../event/create-event'
 import { defaultsDeep } from 'lodash-es'
-import { generateId } from './utils'
+import { generateId, logDebug } from './utils'
 import { maybeCreateEngine } from './select-engine'
 
 /**
@@ -44,6 +44,14 @@ export class FetchSession {
     this.context = this.createContext(options)
   }
 
+  protected _logDebug(category: string, ...args: any[]) {
+    logDebug(
+      this.context.debug,
+      { prefix: 'FetchSession', id: this.id.slice(0, 8), category },
+      ...args
+    )
+  }
+
   /**
    * Executes a single action within the session.
    *
@@ -61,6 +69,9 @@ export class FetchSession {
     actionOptions: FetchActionOptions,
     context: FetchContext = this.context
   ): Promise<FetchActionResult<R>> {
+    const actionId = actionOptions.id || actionOptions.name || actionOptions.action
+    this._logDebug('execute', `Executing action: ${actionId}`, actionOptions.params)
+
     const index = actionOptions.index ?? (context.internal.actionIndex || 0)
     context.internal.actionIndex = index + 1
 
@@ -120,6 +131,11 @@ export class FetchSession {
     actions: FetchActionOptions[],
     options?: Partial<FetcherOptions> & { index?: number }
   ) {
+    this._logDebug(
+      'executeAll',
+      `Total actions: ${actions.length}`,
+      actions.map((a) => a.id || a.name || a.action)
+    )
     const runContext: FetchContext = options
       ? {
           ...this.context,
