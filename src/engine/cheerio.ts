@@ -244,6 +244,10 @@ export class CheerioFetchEngine extends FetchEngine<
     const { $, el } = scope
     const { attribute, type = 'string', mode = 'text' } = schema
 
+    this._logDebug(
+      'extract',
+      `_extractValue: el.length=${el.length} schema=${JSON.stringify(schema)}`
+    )
     if (el.length === 0) return null
 
     let value: string | null = ''
@@ -449,12 +453,26 @@ export class CheerioFetchEngine extends FetchEngine<
             body = new URLSearchParams(formData).toString()
             headers['Content-Type'] = 'application/x-www-form-urlencoded'
           }
+
+          this._logDebug(
+            'submit',
+            'Submitting POST to:',
+            url,
+            'enctype:',
+            enctype
+          )
           loadedRequest = await context.sendRequest({
             url,
             method: 'POST',
             body,
             headers,
           })
+          this._logDebug(
+            'submit',
+            'Submit response:',
+            loadedRequest.statusCode,
+            loadedRequest.url
+          )
         }
 
         await this._updateStateAfterNavigation(context, loadedRequest)

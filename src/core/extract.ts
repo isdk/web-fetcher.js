@@ -175,9 +175,10 @@ export interface IExtractEngine {
 
   /**
    * Logs debug information if debug mode is enabled.
+   * @param category - The category of the log message.
    * @param args - Arguments to log.
    */
-  _logDebug(...args: any[]): void
+  _logDebug(category: string, ...args: any[]): void
 }
 const MAX_DOM_DEPTH = 1000
 /**
@@ -229,6 +230,7 @@ export async function _extract(
 
   if (!scope) {
     this._logDebug(
+      'extract',
       `_extract: No scope for selector "${schemaSelector || ''}", type "${schemaType || 'value'}"`
     )
     return schemaType === 'array' ? [] : null
@@ -290,12 +292,14 @@ async function _extractObject(
     const elements = await this._querySelectorAll(scope, selector)
     currentScope = elements.length > 0 ? elements[0] : null
     this._logDebug(
+      'extract',
       `_extractObject: selector "${selector}" found ${elements.length} elements`
     )
   }
 
   if (!currentScope) {
     this._logDebug(
+      'extract',
       `_extractObject: scope not found for selector "${selector || ''}"`
     )
     if (finalStrict && schema.required) {
@@ -360,6 +364,7 @@ async function _extractObject(
 
         if (isValidParent) {
           this._logDebug(
+            'extract',
             `_extractObject: missing required fields [${missingRequired.join(', ')}], bubbling up from depth ${maxRetries - depth} to ${maxRetries - depth + 1}`
           )
           currentScope = parent
@@ -408,7 +413,7 @@ async function _extractObjectProperties(
     const propSchema = properties[key]
     if (!propSchema) continue
 
-    this._logDebug(`_extractObject: extracting property "${key}"`)
+    this._logDebug('extract', `_extractObject: extracting property "${key}"`)
 
     let scopeForField = currentWorkingScope
     if (propSchema.anchor) {
@@ -546,6 +551,7 @@ async function _extractArray(
   }
 
   this._logDebug(
+    'extract',
     `_extractArray: selector "${selector || ''}" found ${elements.length} elements`
   )
 
@@ -559,7 +565,7 @@ async function _extractArray(
     elements.length === 1 &&
     items
   ) {
-    this._logDebug('_extractArray: trying columnar extraction')
+    this._logDebug('extract', '_extractArray: trying columnar extraction')
     const results = await _extractColumnar.call(
       this,
       items,
@@ -571,6 +577,7 @@ async function _extractArray(
 
   if (normalizedMode.type === 'segmented' && items) {
     this._logDebug(
+      'extract',
       `_extractArray: trying segmented extraction for ${elements.length} containers`
     )
     const allResults: any[] = []
@@ -592,6 +599,7 @@ async function _extractArray(
   }
 
   this._logDebug(
+    'extract',
     `_extractArray: using nested extraction for ${elements.length} elements`
   )
   return _extractNested.call(this, items!, elements, {
@@ -634,6 +642,7 @@ async function _extractValue(
       )
     }
     this._logDebug(
+      'extract',
       `_extractValue: selector "${selector}" found ${elements.length} elements`
     )
   } else if (Array.isArray(scope)) {
@@ -642,6 +651,7 @@ async function _extractValue(
 
   if (!elementToExtract) {
     this._logDebug(
+      'extract',
       `_extractValue: element not found for selector "${selector || ''}"`
     )
     if (finalStrict && schema.required) {
@@ -655,6 +665,7 @@ async function _extractValue(
 
   const result = await this._extractValue(schema, elementToExtract)
   this._logDebug(
+    'extract',
     `_extractValue: extracted for selector "${selector || ''}":`,
     result
   )
@@ -738,6 +749,7 @@ export async function _extractColumnar(
       const propSchema = properties[key] as ExtractSchema
       if (propSchema.type === 'array' || propSchema.type === 'object') {
         this._logDebug(
+          'extract',
           `_extractColumnar: field "${key}" has nested structure, columnar not supported`
         )
         return null
@@ -755,6 +767,7 @@ export async function _extractColumnar(
 
       const count = matches.length
       this._logDebug(
+        'extract',
         `_extractColumnar: field "${key}" with selector "${valueSchema.selector || ''}" found ${count} matches`
       )
 
@@ -766,14 +779,21 @@ export async function _extractColumnar(
       if (valueSchema.selector) {
         if (commonCount === null) {
           commonCount = count
-          this._logDebug(`_extractColumnar: set commonCount to ${commonCount}`)
+          this._logDebug(
+            'extract',
+            `_extractColumnar: set commonCount to ${commonCount}`
+          )
         } else if (commonCount !== count) {
           this._logDebug(
+            'extract',
             `_extractColumnar: count mismatch for field "${key}": ${count} vs ${commonCount}`
           )
           if (inference && maxCount > 1) {
             commonCount = -1
-            this._logDebug('_extractColumnar: mismatch marked for inference')
+            this._logDebug(
+              'extract',
+              '_extractColumnar: mismatch marked for inference'
+            )
           } else if (strict) {
             // Check if it's a broadcastable field (only 1 match and it's the container)
             const isBroadcastable =
@@ -797,7 +817,11 @@ export async function _extractColumnar(
       const values = await Promise.all(
         matches.map((m) => this._extractValue(valueSchema, m))
       )
-      this._logDebug(`_extractColumnar: field "${key}" values:`, values)
+      this._logDebug(
+        'extract',
+        `_extractColumnar: field "${key}" values:`,
+        values
+      )
       collectedValues[key] = values
     }
 
@@ -869,6 +893,7 @@ export async function _extractColumnar(
 
         if (val === null && propSchema.required) {
           this._logDebug(
+            'extract',
             `_extractColumnar: skipping row ${i} because required field "${key}" is null`
           )
           if (strict) {
@@ -936,6 +961,7 @@ export async function _extractSegmented(
 
   if (!anchorSelector) {
     this._logDebug(
+      'extract',
       '_extractSegmented: no anchor selector found, falling back to nested'
     )
     return null
@@ -943,6 +969,7 @@ export async function _extractSegmented(
 
   const anchorElements = await this._querySelectorAll(container, anchorSelector)
   this._logDebug(
+    'extract',
     `_extractSegmented: anchor selector "${anchorSelector}" found ${anchorElements.length} elements`
   )
   if (anchorElements.length === 0) {
@@ -1011,12 +1038,14 @@ export async function _extractSegmented(
       const segment = await this._nextSiblingsUntil(anchor, anchorSelector)
       segmentContext = [anchor, ...segment]
       this._logDebug(
+        'extract',
         `_extractSegmented: segment ${i} (flat) created with ${segmentContext.length} elements`
       )
     } else {
       // Nested structure: use the bubbled-up container
       segmentContext = bestScope
       this._logDebug(
+        'extract',
         `_extractSegmented: segment ${i} (nested) identified as container element`
       )
     }

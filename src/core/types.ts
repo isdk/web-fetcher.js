@@ -72,7 +72,7 @@ export interface BaseFetcherProperties {
   enableSmart?: boolean // 启用智能探测
   useSiteRegistry?: boolean // 使用站点配置
   antibot?: boolean
-  debug?: boolean
+  debug?: boolean | string | string[]
 
   headers?: Record<string, string>
   cookies?: Cookie[]

@@ -355,7 +355,13 @@ export class PlaywrightFetchEngine extends FetchEngine<
   ): Promise<any> {
     const { attribute, type = 'string', mode = 'text' } = schema
 
-    if ((await scope.count()) === 0) return null
+    const count = await scope.count()
+    this._logDebug(
+      'extract',
+      `_extractValue: count=${count} schema=${JSON.stringify(schema)}`
+    )
+
+    if (count === 0) return null
 
     let value: string | null = ''
     if (attribute) {
@@ -499,6 +505,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
           action.options?.enctype || 'application/x-www-form-urlencoded'
 
         if (enctype === 'application/json') {
+          // ... (keep existing JSON handling) ...
           const formHandle = await el.elementHandle()
           if (!formHandle) {
             throw new CommonError(
