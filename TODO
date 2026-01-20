@@ -6,3 +6,5 @@ refactor:
 bug:
   ☐ 在 pause 期间，会受到 crawlee 的 requestHandlerTimeoutSecs 的限制。如果 pause 时间过长会导致 requestHandler 超时
     workaround: 设置 requestHandlerTimeoutSecs 更长的时间或禁用， 默认是60s
+feat:
+  ☐ feat: 增加模拟键盘输入的动作，或者就是fill动作，不过加参数模拟打字！
