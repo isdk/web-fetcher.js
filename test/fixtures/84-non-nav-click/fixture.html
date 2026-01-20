@@ -1,0 +1,12 @@
+<html>
+<body>
+  <button id="toggle">Click Me</button>
+  <div id="status" style="display:none">Hidden</div>
+  <script>
+    document.getElementById('toggle').onclick = () => {
+      document.getElementById('status').innerText = 'Visible';
+      document.getElementById('status').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

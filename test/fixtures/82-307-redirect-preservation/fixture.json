@@ -1,0 +1,36 @@
+{
+  "name": "307 Redirect Preservation Test",
+  "actions": [
+    {
+      "action": "goto",
+      "params": { "url": "/" }
+    },
+    {
+      "action": "fill",
+      "params": { "selector": "input[name=val]", "value": "secret" }
+    },
+    {
+      "action": "submit",
+      "params": { "selector": "form" }
+    },
+    {
+      "action": "extract",
+      "params": {
+        "schema": {
+          "type": "object",
+          "properties": {
+            "result": { "selector": "h1", "type": "string" },
+            "method": { "selector": "#method", "type": "string" }
+          }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "result": "Step 2 Final: secret",
+    "method": "POST"
+  },
+  "options": {
+    "debug": true
+  }
+}

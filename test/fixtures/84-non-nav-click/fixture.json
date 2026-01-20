@@ -1,0 +1,17 @@
+{
+  "name": "Non-navigating Click Test",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "click", "params": { "selector": "#toggle" } },
+    {
+      "action": "extract",
+      "params": {
+        "schema": { "type": "object", "properties": { "status": { "selector": "#status", "type": "string" } } }
+      }
+    }
+  ],
+  "expected": {
+    "status": "Visible"
+  }
+}

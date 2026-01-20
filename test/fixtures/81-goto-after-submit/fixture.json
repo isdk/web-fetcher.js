@@ -1,0 +1,58 @@
+{
+  "title": "should handle goto after form submit",
+  "options": {
+    "debug": true,
+    "antibot": true
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/"
+      }
+    },
+    {
+      "action": "fill",
+      "params": {
+        "selector": "input[name=q]",
+        "value": "test value"
+      }
+    },
+    {
+      "action": "submit",
+      "params": {
+        "selector": "form"
+      }
+    },
+    {
+      "action": "extract",
+      "storeAs": "step2",
+      "params": {
+        "schema": {
+          "step2Title": { "selector": "h1" }
+        }
+      }
+    },
+    {
+      "action": "goto",
+      "params": {
+        "url": "/step3"
+      }
+    },
+    {
+      "action": "extract",
+      "storeAs": "step3",
+      "params": {
+        "schema": {
+          "step3Title": { "selector": "h1" }
+        }
+      }
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "step2": { "step2Title": "Step 2 Loaded: test value" },
+      "step3": { "step3Title": "Step 3 Loaded" }
+    }
+  }
+}

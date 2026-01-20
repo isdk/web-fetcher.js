@@ -295,6 +295,17 @@ export class CheerioFetchEngine extends FetchEngine<
       case 'dispose':
         // This action is used by the base class cleanup logic.
         return
+      case 'navigate': {
+        const { url, opts } = action as any
+        this._logDebug('navigate', `Navigating to: ${url}`)
+        const loadedRequest = await this._requestWithRedirects(context, {
+          url,
+          method: 'GET',
+          headers: { ...this.hdrs, ...opts?.headers },
+        })
+        await this._updateStateAfterNavigation(context, loadedRequest)
+        return this.lastResponse
+      }
       case 'click': {
         if (!$)
           throw new CommonError(
@@ -334,10 +345,9 @@ export class CheerioFetchEngine extends FetchEngine<
               type: 'submit',
               selector: $form,
             })
-          throw new CommonError(
-            'click: submit-like element without form',
-            'click'
-          )
+
+          this._logDebug('click', 'Button/input clicked but no form found and no JS support in http mode. Ignoring.')
+          return
         } else {
           throw new CommonError(
             `click: unsupported element for http simulate. Selector: ${selector}`,
@@ -434,7 +444,7 @@ export class CheerioFetchEngine extends FetchEngine<
           Object.entries(formData).forEach(([key, value]) =>
             urlObj.searchParams.set(key, value)
           )
-          loadedRequest = await context.sendRequest({
+          loadedRequest = await this._requestWithRedirects(context, {
             url: urlObj.href,
             method: 'GET',
           })
@@ -461,21 +471,16 @@ export class CheerioFetchEngine extends FetchEngine<
             'enctype:',
             enctype
           )
-          loadedRequest = await context.sendRequest({
+          loadedRequest = await this._requestWithRedirects(context, {
             url,
             method: 'POST',
             body,
             headers,
           })
-          this._logDebug(
-            'submit',
-            'Submit response:',
-            loadedRequest.statusCode,
-            loadedRequest.url
-          )
         }
 
         await this._updateStateAfterNavigation(context, loadedRequest)
+        this._logDebug('submit', 'Submit finished. Current URL:', context.request.loadedUrl || context.request.url)
         return
       }
       case 'evaluate': {
@@ -575,7 +580,80 @@ export class CheerioFetchEngine extends FetchEngine<
     }
   }
 
-  private async _updateStateAfterNavigation(
+  protected async _requestWithRedirects(
+    context: CheerioCrawlingContext,
+    options: {
+      url: string
+      method: string
+      body?: any
+      headers?: Record<string, string>
+    }
+  ) {
+    let { url, method, body, headers = {} } = options
+    let redirectCount = 0
+    const maxRedirects = 5
+    let lastResponse: any
+
+    while (redirectCount <= maxRedirects) {
+      if (context.session) {
+        const cookieString = context.session.getCookieString(url)
+        if (cookieString) {
+          headers = { ...headers, cookie: cookieString }
+        }
+      }
+
+      lastResponse = await context.sendRequest({
+        url,
+        method: method as any,
+        body,
+        headers,
+        followRedirect: false,
+      })
+
+      if (!lastResponse) break
+
+      const statusCode = lastResponse.statusCode
+      const respHeaders =
+        lastResponse.headers ||
+        lastResponse.req?.res?.headers ||
+        lastResponse.res?.headers ||
+        {}
+
+      if (context.session && respHeaders['set-cookie']) {
+        context.session.setCookies(respHeaders['set-cookie'], url)
+      }
+
+      if ([301, 302, 303, 307, 308].includes(statusCode)) {
+        const redirectLocation = respHeaders.location
+        if (!redirectLocation) break
+
+        url = new URL(redirectLocation, url).href
+        redirectCount++
+
+        if ([301, 302, 303].includes(statusCode)) {
+          this._logDebug('http', `Redirect ${statusCode} (method conversion to GET):`, url)
+          method = 'GET'
+          body = undefined
+          // Remove content-type and content-length as we are switching to GET
+          const {
+            'content-type': _1,
+            'Content-Type': _2,
+            'content-length': _3,
+            'Content-Length': _4,
+            ...remainingHeaders
+          } = headers
+          headers = remainingHeaders
+        } else {
+          this._logDebug('http', `Redirect ${statusCode} (method preserved):`, url)
+        }
+        continue
+      }
+      break
+    }
+    return lastResponse
+  }
+
+  protected async _updateStateAfterNavigation(
     context: CheerioCrawlingContext,
     loadedRequest: any
   ) {
@@ -624,12 +702,8 @@ export class CheerioFetchEngine extends FetchEngine<
     url: string,
     params?: GotoActionOptions
   ): Promise<void | FetchResponse> {
-    // If a page is already active, tell it to clean up.
     if (this.isPageActive) {
-      // We don't await this, as that would re-introduce the deadlock.
-      this.dispatchAction({ type: 'dispose' }).catch(() => {
-        // Ignore errors, we just want to signal disposal.
-      })
+      return this.dispatchAction({ type: 'navigate', url, opts: params })
     }
 
     const requestId = `req-${++this.requestCounter}`
