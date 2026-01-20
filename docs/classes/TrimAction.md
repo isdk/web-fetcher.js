@@ -2,11 +2,11 @@
 
 ***
 
-[@isdk/web-fetcher](../globals.md) / PauseAction
+[@isdk/web-fetcher](../globals.md) / TrimAction
 
-# Class: PauseAction
+# Class: TrimAction
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L4)
+Defined in: [packages/web-fetcher/src/action/definitions/trim.ts:4](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/trim.ts#L4)
 
 ## Extends
 
@@ -16,11 +16,11 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://git
 
 ### Constructor
 
-> **new PauseAction**(): `PauseAction`
+> **new TrimAction**(): `TrimAction`
 
 #### Returns
 
-`PauseAction`
+`TrimAction`
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://git
 
 > `static` **capabilities**: `object`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L7)
+Defined in: [packages/web-fetcher/src/action/definitions/trim.ts:7](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/trim.ts#L7)
 
 #### browser
 
@@ -40,7 +40,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://git
 
 #### http
 
-> **http**: `"native"`
+> **http**: `"simulate"`
 
 #### Overrides
 
@@ -50,9 +50,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://git
 
 ### id
 
-> `static` **id**: `string` = `'pause'`
+> `static` **id**: `string` = `'trim'`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:5](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L5)
+Defined in: [packages/web-fetcher/src/action/definitions/trim.ts:5](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/trim.ts#L5)
 
 #### Overrides
 
@@ -64,7 +64,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:5](https://git
 
 > `static` **returnType**: `"none"`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:12](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L12)
+Defined in: [packages/web-fetcher/src/action/definitions/trim.ts:6](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/trim.ts#L6)
 
 #### Overrides
 
@@ -364,7 +364,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github
 
 > **onExecute**(`context`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:14](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L14)
+Defined in: [packages/web-fetcher/src/action/definitions/trim.ts:12](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/trim.ts#L12)
 
 #### Parameters
 

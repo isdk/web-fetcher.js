@@ -12,6 +12,7 @@
 
 - [CheerioFetchEngine](classes/CheerioFetchEngine.md)
 - [ClickAction](classes/ClickAction.md)
+- [EvaluateAction](classes/EvaluateAction.md)
 - [ExtractAction](classes/ExtractAction.md)
 - [FetchAction](classes/FetchAction.md)
 - [FetchEngine](classes/FetchEngine.md)
@@ -22,6 +23,7 @@
 - [PauseAction](classes/PauseAction.md)
 - [PlaywrightFetchEngine](classes/PlaywrightFetchEngine.md)
 - [SubmitAction](classes/SubmitAction.md)
+- [TrimAction](classes/TrimAction.md)
 - [WaitForAction](classes/WaitForAction.md)
 - [WebFetcher](classes/WebFetcher.md)
 
@@ -32,6 +34,7 @@
 - [BaseFetcherProperties](interfaces/BaseFetcherProperties.md)
 - [Cookie](interfaces/Cookie.md)
 - [DispatchedEngineAction](interfaces/DispatchedEngineAction.md)
+- [EvaluateActionOptions](interfaces/EvaluateActionOptions.md)
 - [ExtractActionProperties](interfaces/ExtractActionProperties.md)
 - [FetchActionInContext](interfaces/FetchActionInContext.md)
 - [FetchActionProperties](interfaces/FetchActionProperties.md)
@@ -47,6 +50,7 @@
 - [PendingEngineRequest](interfaces/PendingEngineRequest.md)
 - [StorageOptions](interfaces/StorageOptions.md)
 - [SubmitActionOptions](interfaces/SubmitActionOptions.md)
+- [TrimActionOptions](interfaces/TrimActionOptions.md)
 - [WaitForActionOptions](interfaces/WaitForActionOptions.md)
 
 ## Type Aliases
@@ -63,11 +67,13 @@
 - [FetchReturnTypeFor](type-aliases/FetchReturnTypeFor.md)
 - [OnFetchPauseCallback](type-aliases/OnFetchPauseCallback.md)
 - [ResourceType](type-aliases/ResourceType.md)
+- [TrimPreset](type-aliases/TrimPreset.md)
 
 ## Variables
 
 - [DefaultFetcherProperties](variables/DefaultFetcherProperties.md)
 - [FetcherOptionKeys](variables/FetcherOptionKeys.md)
+- [TRIM\_PRESETS](variables/TRIM_PRESETS.md)
 
 ## Functions
 

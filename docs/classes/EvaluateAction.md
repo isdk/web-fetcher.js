@@ -2,11 +2,37 @@
 
 ***
 
-[@isdk/web-fetcher](../globals.md) / PauseAction
+[@isdk/web-fetcher](../globals.md) / EvaluateAction
 
-# Class: PauseAction
+# Class: EvaluateAction
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L4)
+Defined in: [packages/web-fetcher/src/action/definitions/evaluate.ts:30](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/evaluate.ts#L30)
+
+Action that evaluates a JavaScript function or expression in the context of the page.
+
+## Remarks
+
+This action is cross-engine compatible. In Cheerio (HTTP) mode, it simulates a browser environment
+by providing `window` and `document` objects linked to the Cheerio instance.
+
+Key features:
+- Supports async functions.
+- Supports direct expressions (e.g., `"document.title"`).
+- Detects URL changes and triggers navigation.
+- Consistent parameter passing with Playwright (single argument).
+
+## Example
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "({ selector }) => document.querySelector(selector).textContent",
+    "args": { "selector": "h1" }
+  },
+  "storeAs": "pageTitle"
+}
+```
 
 ## Extends
 
@@ -16,11 +42,11 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://git
 
 ### Constructor
 
-> **new PauseAction**(): `PauseAction`
+> **new EvaluateAction**(): `EvaluateAction`
 
 #### Returns
 
-`PauseAction`
+`EvaluateAction`
 
 #### Inherited from
 
@@ -32,7 +58,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://git
 
 > `static` **capabilities**: `object`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L7)
+Defined in: [packages/web-fetcher/src/action/definitions/evaluate.ts:33](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/evaluate.ts#L33)
 
 #### browser
 
@@ -40,7 +66,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://git
 
 #### http
 
-> **http**: `"native"`
+> **http**: `"simulate"`
 
 #### Overrides
 
@@ -50,9 +76,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://git
 
 ### id
 
-> `static` **id**: `string` = `'pause'`
+> `static` **id**: `string` = `'evaluate'`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:5](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L5)
+Defined in: [packages/web-fetcher/src/action/definitions/evaluate.ts:31](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/evaluate.ts#L31)
 
 #### Overrides
 
@@ -62,9 +88,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:5](https://git
 
 ### returnType
 
-> `static` **returnType**: `"none"`
+> `static` **returnType**: `"any"`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:12](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L12)
+Defined in: [packages/web-fetcher/src/action/definitions/evaluate.ts:32](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/evaluate.ts#L32)
 
 #### Overrides
 
@@ -362,9 +388,9 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github
 
 ### onExecute()
 
-> **onExecute**(`context`, `options?`): `Promise`\<`void`\>
+> **onExecute**(`context`, `options?`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:14](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/pause.ts#L14)
+Defined in: [packages/web-fetcher/src/action/definitions/evaluate.ts:38](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/evaluate.ts#L38)
 
 #### Parameters
 
@@ -378,7 +404,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:14](https://gi
 
 #### Returns
 
-`Promise`\<`void`\>
+`Promise`\<`any`\>
 
 #### Overrides
 

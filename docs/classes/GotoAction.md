@@ -6,7 +6,7 @@
 
 # Class: GotoAction
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/definitions/goto.ts#L10)
+Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/goto.ts#L10)
 
 ## Extends
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://git
 
 > `static` **capabilities**: `object`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/definitions/goto.ts#L13)
+Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/goto.ts#L13)
 
 #### browser
 
@@ -52,7 +52,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://git
 
 > `static` **id**: `string` = `'goto'`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:11](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/definitions/goto.ts#L11)
+Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:11](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/goto.ts#L11)
 
 #### Overrides
 
@@ -64,7 +64,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:11](https://git
 
 > `static` **returnType**: `"response"`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:12](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/definitions/goto.ts#L12)
+Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:12](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/goto.ts#L12)
 
 #### Overrides
 
@@ -78,7 +78,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:12](https://git
 
 > **get** **capabilities**(): [`FetchActionCapabilities`](../type-aliases/FetchActionCapabilities.md)
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:163](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L163)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:163](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L163)
 
 ##### Returns
 
@@ -96,7 +96,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:163](https://github
 
 > **get** **id**(): `string`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:155](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L155)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:155](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L155)
 
 ##### Returns
 
@@ -114,7 +114,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:155](https://github
 
 > **get** **returnType**(): [`FetchReturnType`](../type-aliases/FetchReturnType.md)
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:159](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L159)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:159](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L159)
 
 ##### Returns
 
@@ -130,7 +130,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:159](https://github
 
 > **afterExec**(`context`, `options?`, `result?`, `scope?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:391](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L391)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:391](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L391)
 
 Action 结束生命周期
 负责：调用钩子、赋值lastResult, 触发事件、清理 stack、恢复 currentAction
@@ -171,9 +171,9 @@ Action 结束生命周期
 
 ### beforeExec()
 
-> **beforeExec**(`context`, `options?`): `Promise`\<\{ `collectors`: `undefined` \| `CollectorsRuntime`; `entry`: [`FetchActionInContext`](../interfaces/FetchActionInContext.md); \}\>
+> **beforeExec**(`context`, `options?`): `Promise`\<\{ `collectors`: `CollectorsRuntime` \| `undefined`; `entry`: [`FetchActionInContext`](../interfaces/FetchActionInContext.md); \}\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:347](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L347)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:347](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L347)
 
 Action 开始生命周期
 负责：初始化 stack、设置 currentAction、触发事件、调用钩子
@@ -190,7 +190,7 @@ Action 开始生命周期
 
 #### Returns
 
-`Promise`\<\{ `collectors`: `undefined` \| `CollectorsRuntime`; `entry`: [`FetchActionInContext`](../interfaces/FetchActionInContext.md); \}\>
+`Promise`\<\{ `collectors`: `CollectorsRuntime` \| `undefined`; `entry`: [`FetchActionInContext`](../interfaces/FetchActionInContext.md); \}\>
 
 #### Inherited from
 
@@ -202,7 +202,7 @@ Action 开始生命周期
 
 > `protected` **delegateToEngine**(`context`, `method`, ...`args`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:184](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L184)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:184](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L184)
 
 #### Parameters
 
@@ -232,7 +232,7 @@ keyof [`FetchEngine`](FetchEngine.md)\<`any`, `any`, `any`\>
 
 > **execute**\<`R`\>(`context`, `options?`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:448](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L448)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:448](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L448)
 
 #### Type Parameters
 
@@ -264,7 +264,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:448](https://github
 
 > **getCapability**(`mode?`): [`FetchActionCapabilityMode`](../type-aliases/FetchActionCapabilityMode.md)
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:150](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L150)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:150](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L150)
 
 #### Parameters
 
@@ -284,9 +284,9 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:150](https://github
 
 ### installCollectors()
 
-> `protected` **installCollectors**(`context`, `options?`): `undefined` \| `CollectorsRuntime`
+> `protected` **installCollectors**(`context`, `options?`): `CollectorsRuntime` \| `undefined`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:201](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L201)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:201](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L201)
 
 #### Parameters
 
@@ -300,7 +300,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:201](https://github
 
 #### Returns
 
-`undefined` \| `CollectorsRuntime`
+`CollectorsRuntime` \| `undefined`
 
 #### Inherited from
 
@@ -312,7 +312,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:201](https://github
 
 > `protected` `optional` **onAfterExec**(`context`, `options?`): `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:172](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L172)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:172](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L172)
 
 #### Parameters
 
@@ -338,7 +338,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:172](https://github
 
 > `protected` `optional` **onBeforeExec**(`context`, `options?`): `void` \| `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L168)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L168)
 
 #### Parameters
 
@@ -364,7 +364,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github
 
 > **onExecute**(`context`, `options?`, `eventPayload?`): `Promise`\<`void` \| [`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:18](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/definitions/goto.ts#L18)
+Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:18](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/definitions/goto.ts#L18)
 
 #### Parameters
 
@@ -394,9 +394,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:18](https://git
 
 #### Call Signature
 
-> `static` **create**(`id`): `undefined` \| [`FetchAction`](FetchAction.md)
+> `static` **create**(`id`): [`FetchAction`](FetchAction.md) \| `undefined`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:113](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L113)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:113](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L113)
 
 ##### Parameters
 
@@ -406,7 +406,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:113](https://github
 
 ##### Returns
 
-`undefined` \| [`FetchAction`](FetchAction.md)
+[`FetchAction`](FetchAction.md) \| `undefined`
 
 ##### Inherited from
 
@@ -414,9 +414,9 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:113](https://github
 
 #### Call Signature
 
-> `static` **create**(`id`): `undefined` \| [`FetchAction`](FetchAction.md)
+> `static` **create**(`id`): [`FetchAction`](FetchAction.md) \| `undefined`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:114](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L114)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:114](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L114)
 
 ##### Parameters
 
@@ -426,7 +426,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:114](https://github
 
 ##### Returns
 
-`undefined` \| [`FetchAction`](FetchAction.md)
+[`FetchAction`](FetchAction.md) \| `undefined`
 
 ##### Inherited from
 
@@ -436,9 +436,9 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:114](https://github
 
 ### get()
 
-> `static` **get**(`id`): `undefined` \| *typeof* [`FetchAction`](FetchAction.md)
+> `static` **get**(`id`): *typeof* [`FetchAction`](FetchAction.md) \| `undefined`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:109](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L109)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:109](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L109)
 
 #### Parameters
 
@@ -448,7 +448,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:109](https://github
 
 #### Returns
 
-`undefined` \| *typeof* [`FetchAction`](FetchAction.md)
+*typeof* [`FetchAction`](FetchAction.md) \| `undefined`
 
 #### Inherited from
 
@@ -460,7 +460,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:109](https://github
 
 > `static` **getCapability**(`mode?`): [`FetchActionCapabilityMode`](../type-aliases/FetchActionCapabilityMode.md)
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:146](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L146)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:146](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L146)
 
 #### Parameters
 
@@ -482,7 +482,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:146](https://github
 
 > `static` **has**(`name`): `boolean`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:130](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L130)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:130](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L130)
 
 #### Parameters
 
@@ -504,7 +504,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:130](https://github
 
 > `static` **list**(): `string`[]
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:134](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L134)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:134](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L134)
 
 #### Returns
 
@@ -520,7 +520,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:134](https://github
 
 > `static` **register**(`actionClass`): `void`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:103](https://github.com/isdk/web-fetcher.js/blob/61e40bab9fc20e6de9e2060909d088d8c6cc7b99/src/action/fetch-action.ts#L103)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:103](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/action/fetch-action.ts#L103)
 
 #### Parameters
 

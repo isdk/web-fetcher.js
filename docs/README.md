@@ -136,7 +136,7 @@ This is the main entry point for the library.
 * `url` (string): The initial URL to navigate to.
 * `engine` ('http' | 'browser' | 'auto'): The engine to use. Defaults to `auto`.
 * `proxy` (string | string[]): Proxy URL(s) to use for requests.
-* `debug` (boolean): Enable detailed execution metadata (timings, engine used, etc.) in response.
+* `debug` (boolean | string | string[]): Enable detailed execution metadata (timings, engine used, etc.) in response, or enable debug logs for specific categories (e.g., 'extract', 'submit', 'request').
 * `actions` (FetchActionOptions[]): An array of action objects to execute. (Supports `action`/`name` as alias for `id`, and `args` as alias for `params`)
 * `headers` (Record<string, string>): Headers to use for all requests.
 * `cookies` (Cookie[]): Array of cookies to use.
@@ -154,16 +154,18 @@ This is the main entry point for the library.
 
 ### Built-in Actions
 
-Here are the essential built-in actions:
+The library provides a set of powerful built-in actions, many of which are engine-agnostic and handled centrally for consistency:
 
 * `goto`: Navigates to a new URL.
-* `click`: Clicks on an element specified by a selector.
-* `fill`: Fills an input field with a specified value.
-* `submit`: Submits a form.
-* `waitFor`: Pauses execution to wait for a specific condition (e.g., a timeout, a selector to appear, or network to be idle).
-* `pause`: Pauses execution for manual intervention (e.g., solving a CAPTCHA).
-* `getContent`: Retrieves the full content (HTML, text, etc.) of the current page state.
-* `extract`: Extracts any structured data from the page with ease using an expressive, declarative schema.
+* `click`: Clicks on an element (Engine-specific).
+* `fill`: Fills an input field (Engine-specific).
+* `submit`: Submits a form (Engine-specific).
+* `trim`: Removes elements from the DOM to clean up the page.
+* `waitFor`: Pauses execution to wait for a specific condition (Supports fixed timeouts centrally).
+* `pause`: Pauses execution for manual intervention (Handled centrally).
+* `getContent`: Retrieves the full content of the current page (Handled centrally).
+* `evaluate`: Executes custom JavaScript within the page context.
+* `extract`: Extracts structured data using an engine-agnostic core logic and engine-specific DOM primitives. Supports `required` fields and `strict` validation.
 
 ### Response Structure
 
