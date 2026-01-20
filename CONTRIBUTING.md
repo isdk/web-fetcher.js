@@ -331,6 +331,14 @@ Implementing the `evaluate` action revealed several critical technical traps tha
 - **Global Pollution (Cheerio)**: Directly assigning to Node.js `global.window` for Cheerio mocks causes severe memory leaks and concurrency bugs.
   - **Current Solution**: Always use `newFunction` to create an isolated sandbox for execution.
 
+#### 6. Action Dispatch Loop (Technical Safeguards)
+
+To ensure stability and correctness during complex interactions, the engine uses a centralized Action Dispatch Loop in the base class.
+
+- **Strict Sequential Execution**: All actions (click, fill, extract, etc.) are processed via an internal `actionQueue`. This ensures that actions are executed in the exact order they were dispatched, even if they are asynchronous. **Never** try to bypass the queue by calling engine methods directly from a `FetchAction` unless you have a specific reason (and use re-entrancy protection).
+- **Re-entrancy Protection**: The `dispatchAction` method includes a safeguard for re-entrant calls. If an action is already being executed (e.g., a composite action calling `this.click()`), the second action is executed immediately instead of being queued. This prevents deadlocks where an action is waiting for itself to finish.
+- **Context Validity Window**: Actions are executed within the synchronous execution path of Crawlee's `requestHandler`. The loop maintains an `isPageActive` flag to prevent actions from running after the page context has been destroyed by the crawler.
+
 ### Fixture Params
 
 We recently migrated `fixture.json` files from using an `args` array to a `params` object. This unifies the data structure with the actual `FetchActionOptions` used in the code, reducing cognitive load and the need for translation layers in tests.
