@@ -133,6 +133,7 @@ Our engine solves this by creating a bridge between the external API calls and t
     * The page context is used to resolve the `Promise` from the `goto()` call.
     * The page is marked as "active" (`isPageActive = true`).
     * Crucially, before the `requestHandler` returns, it starts an **action loop** (`_executePendingActions`). This loop effectively **pauses the `requestHandler`** by listening for events on an `EventEmitter`, keeping the page context alive.
+    * **Strict Sequential Execution & Re-entrancy**: The loop uses an internal queue to ensure all actions are executed in the exact order they were dispatched. It also includes re-entrancy protection to allow composite actions to call atomic actions without deadlocking.
 5. **Interactive Actions (`click`, `fill`, etc.)**: The consumer can now call `await engine.click(...)`. This dispatches an action to the `EventEmitter` and returns a new `Promise`.
 6. **Action Execution**: The action loop, still running within the original `requestHandler`'s scope, hears the event.
     * **Centralized Actions**: Actions like `extract`, `pause`, and `getContent` are processed immediately by the `FetchEngine` base class using the unified logic.
@@ -155,6 +156,7 @@ There are two primary engine implementations:
 * **Mechanism**: Uses `CheerioCrawler` to fetch pages via raw HTTP and parse static HTML.
 * **Behavior**:
   * ✅ **Fast and Lightweight**: Ideal for speed and low resource consumption.
+  * ✅ **HTTP-Compliant Redirects**: Correctly handles 301-303 and 307/308 redirects, preserving methods/bodies or converting to GET as per HTTP specifications.
   * ❌ **No JavaScript Execution**: Cannot interact with client-side rendered content.
   * ⚙️ **Simulated Interaction**: Actions like `click` and `submit` are simulated by making new HTTP requests.
 * **Use Case**: Scraping static websites, server-rendered pages, or APIs.

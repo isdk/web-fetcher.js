@@ -90,6 +90,8 @@ Navigates the browser to a new URL.
   * ...other navigation options like `waitUntil`, `timeout` which are passed to the engine.
 * **`returns`**: `response`
 
+> **Note**: This action can be called multiple times within a single session script. The engine ensures that each navigation is completed and its corresponding Action Loop is settled before processing the next action in the sequence.
+
 #### `click`
 
 Clicks on an element specified by a selector.
