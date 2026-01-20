@@ -132,7 +132,7 @@ searchGoogle('gemini');
 * `url` (string): 要导航的初始 URL。
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
 * `proxy` (string | string[]): 用于请求的代理 URL。
-* `debug` (boolean): 在响应中启用详细的执行元数据（耗时、使用的引擎等）。
+* `debug` (boolean | string | string[]): 在响应中启用详细的执行元数据（耗时、使用的引擎等），或启用特定类别（如 'extract', 'submit', 'request'）的调试日志。
 * `actions` (FetchActionOptions[]): 要执行的动作对象数组。（支持 `action`/`name` 作为 `id` 的别名，`args` 作为 `params` 的别名）
 * `headers` (Record<string, string>): 用于所有请求的头信息。
 * `cookies` (Cookie[]): 要使用的 Cookie 数组。
@@ -148,18 +148,20 @@ searchGoogle('gemini');
 * `sessionPoolOptions` (SessionPoolOptions): 底层 Crawlee SessionPool 的高级配置。
 * ...以及许多其他用于代理、重试等的选项。
 
-### 内置动作
+### 内置动作 (Built-in Actions)
 
-以下是核心的内置动作：
+该库提供了一系列强大的内置动作，其中许多动作是跨引擎通用的，并由核心层统一处理以确保一致性：
 
-* `goto`: 导航到一个新的 URL。
-* `click`: 点击一个由选择器指定的元素。
-* `fill`: 用指定的值填充一个输入字段。
-* `submit`: 提交一个表单。
-* `waitFor`: 暂停执行以等待特定条件（例如，超时、选择器出现或网络空闲）。
-* `pause`: 暂停执行以进行手动干预（例如，解决验证码）。
-* `getContent`: 获取当前页面状态的完整内容（HTML、文本等）。
-* `extract`: 使用富有表现力的声明式 Schema,可轻松提取页面中的任意结构化数据。
+* `goto`: 导航到新 URL。
+* `click`: 点击选择器指定的元素（引擎相关）。
+* `fill`: 用指定值填充输入框（引擎相关）。
+* `submit`: 提交表单（引擎相关）。
+* `trim`: 从 DOM 中移除元素以清理页面（如脚本、广告、隐藏内容）。
+* `waitFor`: 暂停执行以等待特定条件（支持统一处理的固定超时）。
+* `pause`: 暂停执行以进行人工干预（如处理验证码，由核心层统一处理）。
+* `getContent`: 获取当前页面状态的完整内容（由核心层统一处理）。
+* `evaluate`: 在页面上下文中执行自定义 JavaScript。
+* `extract`: 使用引擎无关的核心逻辑和引擎相关的 DOM 原语提取结构化数据。支持 `required` 字段和 `strict` 验证。
 
 ### 响应结构
 

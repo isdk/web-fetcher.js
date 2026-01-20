@@ -90,6 +90,8 @@ Navigates the browser to a new URL.
   * ...other navigation options like `waitUntil`, `timeout` which are passed to the engine.
 * **`returns`**: `response`
 
+> **Note**: This action can be called multiple times within a single session script. The engine ensures that each navigation is completed and its corresponding Action Loop is settled before processing the next action in the sequence.
+
 #### `click`
 
 Clicks on an element specified by a selector.
@@ -122,6 +124,41 @@ Submits a form.
 * **`params`**:
   * `selector` (string, optional): A selector for the form element.
 * **`returns`**: `none`
+
+#### `trim`
+
+Removes specific elements from the DOM to clean up the page before extraction. This is a persistent modification to the current session's page state.
+
+* **`id`**: `trim`
+* **`params`**:
+  * **`selectors`** (string | string[], optional): One or more CSS selectors of elements to remove.
+  * **`presets`** (string | string[], optional): Predefined groups of elements to remove. Supported presets:
+    * `scripts`: Removes all `<script>` tags.
+    * `styles`: Removes all `<style>` and `<link rel="stylesheet">` tags.
+    * `svgs`: Removes all `<svg>` elements.
+    * `images`: Removes `<img>`, `<picture>`, and `<canvas>` elements.
+    * `comments`: Removes HTML comments.
+    * `hidden`: Removes elements with `hidden` attribute or inline `display:none`. In **browser** mode, it also detects and removes elements hidden via external CSS (e.g., `display: none` or `visibility: hidden` in stylesheets).
+    * `all`: Includes all of the above.
+* **`returns`**: `none`
+
+**Example: Cleaning up a page before extraction**
+
+```json
+{
+  "actions": [
+    { "action": "goto", "params": { "url": "https://example.com" } },
+    {
+      "action": "trim",
+      "params": {
+        "selectors": ["#ad-banner", ".popup"],
+        "presets": ["scripts", "styles", "comments"]
+      }
+    },
+    { "action": "extract", "params": { "schema": { "content": "#main-content" } } }
+  ]
+}
+```
 
 #### `waitFor`
 
@@ -210,6 +247,63 @@ Retrieves the full content of the current page state.
 * **`params`**: (none)
 * **`returns`**: `response`
 
+#### `evaluate`
+
+Executes custom JavaScript code or an expression within the page context.
+
+* **`id`**: `evaluate`
+* **`params`**:
+  * **`fn`**: `string | Function` - The JavaScript function or expression to execute.
+    * In `browser` mode, this runs in the real browser.
+    * In `http` mode, this runs in a safe Node.js sandbox with a mocked browser environment (`window`, `document`, `console`, `).
+  * **`args`**: `any` - A single argument to pass to the function. Use an array or object to pass multiple values.
+
+**Key Features:**
+
+- **Automatic Navigation**: If the code modifies `window.location.href` or calls `assign()`/`replace()`, the engine automatically triggers and waits for the navigation to complete.
+- **Enhanced Mock DOM (HTTP Mode)**: Supports common DOM methods like `querySelector`, `querySelectorAll`, `getElementById`, `getElementsByClassName`, and properties like `document.body` and `document.title`.
+- **Sandbox Security**: Uses `util-ex`'s `newFunction` in HTTP mode to prevent global state pollution.
+
+**Example (Array Args):**
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "([a, b]) => a + b",
+    "args": [1, 2]
+  }
+}
+```
+
+**Example (Navigation):**
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "() => { window.location.href = '/new-page'; }"
+  }
+}
+```
+
+$`).
+>
+> * **Navigation**: If the code modifies `window.location.href`, the engine will automatically trigger a `goto` to the new URL.
+
+**Example: Extracting data via custom script**
+
+```json
+{
+  "action": "evaluate",
+  "params": {
+    "fn": "([selector]) => document.querySelector(selector).innerText",
+    "args": [".main-title"]
+  },
+  "storeAs": "title"
+}
+```
+
 #### `extract`
 
 Extracts structured data from the page using a powerful and declarative Schema. This is the core Action for data collection.
@@ -225,6 +319,8 @@ The `params` object itself is a Schema that describes the data structure you wan
 ###### 1. Extracting a Single Value
 
 The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), a `type` (string, number, boolean, html), and a `mode` (text, innerText).
+
+* **`depth`** (number, optional): After matching the element with `selector`, it bubbles up the DOM tree by the specified number of levels. The resulting ancestor element becomes the actual target for value extraction (e.g., to extract an attribute from a parent wrapper).
 
 ```json
 {
@@ -262,6 +358,20 @@ Define a structured object using `type: 'object'` and the `properties` field.
   }
 }
 ```
+
+* **`depth`** (number, optional): Enables "Try-And-Bubble" strategy. If a `required` field is missing in the matched element, the engine attempts to bubble up the DOM tree (up to `depth` levels) to find an ancestor where the required field exists. This is useful when the selector matches a descendant (e.g., an inner `span`) but the data resides on a parent container.
+
+**Advanced Object Features:**
+
+* **Anchor Jumping (`anchor`)**: Specifies a starting reference point for a field.
+  * **Field Reference**: Use the DOM element of a previously extracted field.
+  * **CSS Selector**: Query an anchor element on the fly within the object's scope.
+  * **`depth`** (number, optional): When using an anchor, defines how many parent levels to traverse upwards to collect following siblings.
+    * **Note**: If omitted, the engine defaults to maximum depth (up to the object's root) for backward compatibility. To strictly limit the search to the anchor's own siblings, set `depth: 0`.
+  * **Effect**: Once an anchor is set, the search scope for that field becomes the siblings **following** the anchor (and its ancestors, depending on `depth`). This allows for non-linear "jumping" extraction in flat structures.
+* **Sequential Consumption (`relativeTo: "previous"`)**:
+  * Combined with the `order` property, this ensures each field's search scope starts *after* the previous field's match.
+  * Essential for extracting from lists composed of identical tags (e.g., consecutive `<p>` tags with different meanings).
 
 ###### 3. Extracting an Array (Convenient Usage)
 
@@ -304,7 +414,9 @@ Extract a list using `type: 'array'`. To make the most common operations simpler
 
 ###### 4. Columnar Mode (formerly Zip Strategy)
 
-This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns.
+This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns. It is highly optimized for performance, especially in browser mode, by minimizing the number of DOM queries and RPC calls.
+
+> **💡 Broadcasting & Performance**: If a property matches the container element itself (e.g. by omitting a selector or matching the container's own attributes), its value is **broadcasted** to every row. This is not only a feature but also a major performance optimization: the value is extracted **once** and reused across all rows, avoiding thousands of redundant engine calls.
 
 ```json
 {
@@ -323,14 +435,44 @@ This mode is used when the `selector` points to a **container** (like a results 
 
 > **Heuristic Detection:** If `mode` is omitted and the `selector` matches exactly one element while `items` contains nested selectors, the engine automatically uses **columnar** mode.
 
+**Example: Columnar Broadcasting**
+
+When you have a list where the category is on the container, but items are inside.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#book-category",
+    "mode": "columnar",
+    "items": {
+      "category": { "attribute": "data-category" },
+      "title": { "selector": ".book-title" }
+    }
+  }
+}
+```
+
+> If `#book-category` has `data-category="Sci-Fi"` and contains 3 books, the result will be 3 items, each having `"category": "Sci-Fi"`.
+
 **Columnar Configuration:**
 
 * **`strict`** (boolean, default: `true`): If `true`, throws an error if fields have different match counts.
-* **`inference`** (boolean, default: `false`): If `true`, tries to automatically find the "item wrapper" elements to fix misaligned lists.
+* **`inference`** (boolean, default: `false`): If `true`, tries to automatically find the "item wrapper" elements to fix misaligned lists. It uses an **optimized ancestor search** that is significantly faster in browser mode than manual traversal.
+* **Performance Note**: The engine automatically detects shared structures and pre-calculates alignment to ensure O(N) performance even in complex DOM trees. In browser mode, it minimizes IPC round-trips by pre-calculating "broadcast" flags.
 
 ###### 5. Segmented Mode (Anchor-based Scanning)
 
-This mode is ideal for "flat" structures where there are no item wrappers. It uses the first field (or a specified `anchor`) to segment the container's content.
+Ideal for "flat" structures where there are no item wrappers. It uses a specified `anchor` to segment the container's content.
+
+**Core Feature: Automatic Container Detection (Bubble Up)**
+
+To handle structures that appear flat but have subtle containers, the engine uses a bubble-up strategy:
+
+- **Smart Bubble Up**: When an anchor is nested deep (e.g., `div.card > h3.title`), the engine automatically crawls up the DOM to find the largest "safe container" (e.g., `div.card`) that doesn't overlap with neighbors.
+- **Logical Isolation**: If a container is found, it becomes the scope for that segment. This allows you to extract any content within that container using simple relative selectors, even if it's "above" or deep alongside the anchor.
+- **Flat Fallback**: If no container isolation is possible, it automatically falls back to classic sibling scanning.
 
 ```json
 {
@@ -338,7 +480,7 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
   "params": {
     "type": "array",
     "selector": "#flat-container",
-    "mode": { "type": "segmented", "anchor": "title" },
+    "mode": { "type": "segmented", "anchor": "h3.item-title" },
     "items": {
       "title": { "selector": "h3" },
       "desc": { "selector": "p" }
@@ -347,26 +489,103 @@ This mode is ideal for "flat" structures where there are no item wrappers. It us
 }
 ```
 
-> In this mode, every time the engine finds an `h3`, it starts a new item. Any `<p>` found after that `h3` (and before the next one) is assigned to that item.
+**Segmented Configuration:**
 
-###### 6. Implicit Object Extraction (Simplest Syntax)
+* **`anchor`** (string):
+  * Can be a **field name** defined in `items` (e.g., `"title"`).
+  * Can be a **direct CSS selector** (e.g., `"h3.item-title"`).
+  * Defaults to the selector of the first field in `items`.
+* **`depth`** (number, optional): The maximum number of levels to bubble up from the anchor to find a segment container. If omitted, it bubbles up as high as possible without conflicting with neighboring segments.
+* **`strict`** (boolean, default: `false`): If `true`, throws an error if no anchor elements are found or if any item violates its own `required` constraints.
 
-For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not reserved keywords (like `selector`, `attribute`, `type`, etc.), it is treated as an object schema where keys are property names.
+###### 5.1 Advanced: Handling Repeating Tags (`relativeTo`)
+
+When a segment contains multiple identical tags (e.g., several `<p>` tags in a row) representing different fields, use `relativeTo: "previous"` to "consume" them one by one.
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": "#container",
+    "mode": {
+      "type": "segmented",
+      "anchor": ".item-start",
+      "relativeTo": "previous"
+    },
+    "items": {
+      "type": "object",
+      "order": ["id", "desc", "extra"],
+      "properties": {
+        "id": "h1",
+        "desc": "p",
+        "extra": "p"
+      }
+    }
+  }
+}
+```
+
+* **`relativeTo: "previous"`**: After finding `id` (h1), the search for `desc` starts *after* that h1. After finding `desc` (the first p), the search for `extra` starts *after* that p, successfully picking up the second `<p>`.
+* **`order`**: Defines the sequence of consumption. Highly recommended with `relativeTo: "previous"`.
+
+###### 6. Quality Control: `required` and `strict`
+
+- **`required`**: Marks a field as mandatory.
+  - **In Objects**: If any required field is `null`, the entire object returns `null`.
+  - **In Arrays**: Items missing a required field are automatically skipped.
+  - **Null Propagation**: For implicit objects without a `selector`, if ALL sub-properties are `null`, the object itself becomes `null`, triggering parent-level required or skip logic.
+- **`strict`**:
+  - `false` (Default): Silently skip or ignore incomplete data.
+  - `true`: Throw an error on any missing required field or alignment mismatch.
+  - **Inheritance**: Setting `strict: true` at the array level automatically propagates to all nested children.
+
+**Example: Ignoring items with missing mandatory fields**
+
+```json
+{
+  "id": "extract",
+  "params": {
+    "type": "array",
+    "selector": ".product-list",
+    "mode": "columnar",
+    "items": {
+      "name": { "selector": ".title", "required": true },
+      "price": { "selector": ".price", "required": true },
+      "discount": ".promo"
+    }
+  }
+}
+```
+
+> In this example, if a product lacks either a `name` or a `price`, it will be completely omitted from the result array. The optional `discount` field doesn't affect the item's inclusion.
+
+###### 7. Implicit Object Extraction (Simplest Syntax)
+
+For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`, `required`, `strict`, `depth`), it is treated as an object schema where keys are property names.
+
+> **Keyword Collision Handling:** You can safely extract a data field named `type` as long as its value is not a reserved schema type (like `"string"`, `"object"`, `"array"`, etc.).
 
 ```json
 {
   "id": "extract",
   "params": {
     "selector": ".author-bio",
-    "name": { "selector": ".author-name" },
-    "email": { "selector": "a.email", "attribute": "href" }
+    "name": ".author-name",
+    "type": ".author-rank",
+    "items": { "type": "array", "selector": "li" }
   }
 }
 ```
 
-> This is equivalent to Example 2 but more concise.
+> **Key features of implicit objects:**
+>
+> 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present. Configuration keywords like `required`, `strict`, and `depth` are also handled as context defining keys.
+> 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
+> 3. **Context Separation**: Only `selector`, `has`, `exclude`, `required`, `strict`, and `depth` are used to define the context and validation for the implicit object; all other keys are treated as data to be extracted.
+> 4. **Null Propagation**: If an implicit object has no `selector` and ALL of its sub-properties extract to `null`, the object itself returns `null`. This is crucial for `required` validation on the parent object or for skipping items in an array.
 
-###### 6. Precise Filtering: `has` and `exclude`
+###### 8. Advanced Filtering: `has` and `exclude`
 
 You can use the `has` and `exclude` fields in any schema that includes a `selector` to precisely control element selection.
 
@@ -546,3 +765,97 @@ The `FetchAction` base class provides lifecycle hooks that allow injecting custo
 * `protected onAfterExec?()`: Called after `onExecute`.
 
 For Actions that need to manage complex state or resources, you can implement these hooks. Generally, for composite actions, writing the logic directly in `onExecute` is sufficient.
+
+---
+
+## 💎 7. Action Return Types & State Management (Advanced)
+
+In `@isdk/web-fetcher`, an Action's `static returnType` is more than a type hint. It defines how the framework manages the **session state** and automates data synchronization after execution.
+
+### 7.1 Detailed Type Breakdown
+
+#### 🟢 `response` (Page Response)
+
+* **Definition**: A `FetchResponse` object containing HTTP status, headers, body, and cookies.
+* **Purpose**: To synchronize the latest page content and state with the session.
+* **Usage**: Used by actions that navigate, refresh, or capture the current page state.
+* **System Behavior**: The framework automatically updates `context.lastResponse` with this result in the `afterExec` phase. Subsequent actions can access this via the context.
+* **Typical Actions**: `goto`, `getContent`, `fill` (in some engines).
+* **Example**:
+
+  ```typescript
+  export class MyNavigateAction extends FetchAction {
+    static override id = 'myGoto';
+    static override returnType = 'response' as const;
+
+    async onExecute(context, options) {
+      // Logic that returns a FetchResponse
+      return await this.delegateToEngine(context, 'goto', options.params.url);
+    }
+  }
+  ```
+
+#### 🟡 `any` (Generic Data - Default)
+
+* **Definition**: Any serializable data structure (Object, Array, string, etc.).
+* **Purpose**: Primary mechanism for business data extraction.
+* **Usage**: Use this when your action produces processed data that doesn't represent the whole page or system state.
+* **System Behavior**: If the action configuration includes `storeAs: "key"`, the framework automatically saves the `result` into `context.outputs["key"]`.
+* **Typical Actions**: `extract`.
+* **Example**:
+
+  ```typescript
+  static override returnType = 'any' as const;
+  async onExecute(context, options) {
+    return { title: 'Hello', price: 99 }; // Saved to outputs if storeAs is set
+  }
+  ```
+
+#### ⚪ `none` (No Return)
+
+* **Definition**: `void`.
+* **Purpose**: Pure interaction/side-effects without data output.
+* **Usage**: Actions that perform UI interactions or timing controls.
+* **Typical Actions**: `click`, `submit`, `pause`, `trim`, `waitFor`.
+* **Example**:
+
+  ```typescript
+  static override returnType = 'none' as const;
+  async onExecute(context, options) {
+    await this.delegateToEngine(context, 'click', options.params.selector);
+    // No return value needed
+  }
+  ```
+
+#### 🔵 `outputs` (Accumulated Results)
+
+* **Definition**: The entire `context.outputs` record (`Record<string, any>`).
+* **Purpose**: To retrieve all data extracted and stored during the current session.
+* **Usage**: Typically used as a "summary" action at the end of a chain or for debugging.
+* **Typical Actions**: Custom data summary actions.
+
+#### 🟣 `context` (Session Snapshot)
+
+* **Definition**: The full `FetchContext` object.
+* **Purpose**: Meta-programming and deep debugging.
+* **Usage**: Allows the caller to inspect current session configurations (timeouts, proxies, headers) and internal engine metadata.
+
+---
+
+### 7.2 Result Wrapping (`FetchActionResult`)
+
+Every value returned by `onExecute` is automatically wrapped by the `FetchAction.execute` method into a `FetchActionResult` object. This ensures consistent error handling and metadata tracking across all actions.
+
+**Structure of `FetchActionResult`:**
+
+* `status`: `Success`, `Failed`, or `Skipped`.
+* `returnType`: Matches the action's `static returnType`.
+* `result`: The raw data returned by `onExecute`.
+* `error`: Captured error if the action failed.
+* `meta`: Diagnostic information including execution time, engine type, and retry counts.
+
+### 7.3 Developer Best Practices
+
+1. **Choose `response` for Navigation**: Always use `response` for actions that land on a new URL to ensure the session's "current page" is kept in sync.
+2. **Leverage `any` + `storeAs`**: For data extraction, return the data as `any` and let the user decide the storage key via `storeAs` in the JSON script.
+3. **Be Explicit with `none`**: Using `none` clearly signals that the action is used for its side effects (like clicking or waiting), making the workflow easier to understand.
