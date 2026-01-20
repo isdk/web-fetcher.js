@@ -90,6 +90,8 @@ export class FillAction extends FetchAction {
   * ...其他导航选项，如 **`waitUntil`**, **`timeout`**，这些选项会传递给引擎。
 * **`returns`**: `response`
 
+> **注意**：此 Action 可以在单个会话脚本中多次调用。引擎确保每次导航都已完成且其对应的 Action 循环已稳定，然后再处理序列中的下一个 Action。
+
 #### `click`
 
 点击由 **`selector`** (CSS 选择器) 指定的元素。

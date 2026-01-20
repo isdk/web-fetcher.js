@@ -133,6 +133,7 @@ await session.executeAll([
     * 页面上下文用于解析 `goto()` 调用返回的 `Promise`。
     * 页面被标记为“活动”状态 (`isPageActive = true`)。
     * 至关重要的是，在 `requestHandler` 返回之前，它会启动一个**动作循环** (`_executePendingActions`)。此循环通过监听 `EventEmitter` 上的事件，有效地**暂停 `requestHandler`**，从而保持页面上下文的存活。
+    * **严格顺序执行与重入保护**：循环使用内部队列确保所有动作按分发顺序执行。同时包含重入保护，允许组合动作调用原子动作而不产生死锁。
 5. **交互式动作 (`click`, `fill` 等)**：消费者现在可以调用 `await engine.click(...)`。此方法将一个动作分派到 `EventEmitter` 并返回一个新的 `Promise`。
 6. **动作执行**：仍在原始 `requestHandler` 作用域内运行的动作循环，会监听到该事件。
     * **统一处理的动作**：像 `extract`、`pause` 和 `getContent` 这样的动作会直接由 `FetchEngine` 基类使用统一的逻辑进行处理。
@@ -155,6 +156,7 @@ await session.executeAll([
 * **机制**: 使用 `CheerioCrawler` 通过原始 HTTP 请求抓取页面并解析静态 HTML。
 * **行为**:
   * ✅ **快速轻量**：非常适合追求速度和低资源消耗的场景。
+  * ✅ **符合 HTTP 标准的重定向**：正确处理 301-303 和 307/308 重定向，按照 HTTP 规范保留方法/正文或转换为 GET。
   * ❌ **无 JavaScript 执行**：无法与客户端渲染的内容交互。
   * ⚙️ **模拟交互**：像 `click` 和 `submit` 这样的动作是通过发起新的 HTTP 请求来模拟的。
 * **用例**: 抓取静态网站、服务器渲染页面或 API。
