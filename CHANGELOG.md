@@ -2,6 +2,60 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.3.0](https://github.com/isdk/web-fetcher.js/compare/v0.2.12...v0.3.0) (2026-01-20)
+
+
+### ⚠ BREAKING CHANGES
+
+* **extract:** major extraction logic refactoring and anchor tracking fix
+
+### Features
+
+* **action:** add evaluate action support for dual engines ([27fd209](https://github.com/isdk/web-fetcher.js/commit/27fd209383bd3de51f2b6449a96305dd6a3ae257))
+* **action:** add trim action for DOM cleanup and enhance test runner ([0bf438e](https://github.com/isdk/web-fetcher.js/commit/0bf438ed99111567806842fce88253ad726dc47c))
+* **action:** refactor 'evaluate' for better safety and navigation ([5939e48](https://github.com/isdk/web-fetcher.js/commit/5939e48b5d554ac90513839c38296c1ef0b97d4e))
+* add centralized debug logging and enhance session diagnostics ([c5d13c5](https://github.com/isdk/web-fetcher.js/commit/c5d13c52f9457ee5152dee1cdb0cf562dae33995))
+* **debug:** enhance _logDebug with category support and flexible configuration ([6e52127](https://github.com/isdk/web-fetcher.js/commit/6e5212742c622e6b40bc947be56a42e8a1e52283))
+* **extract:** add 'depth' parameter for bubble-up traversal and enhance cross-engine consistency ([de3720e](https://github.com/isdk/web-fetcher.js/commit/de3720e9925cb230a4913e6e08fe796ef7d374da))
+* **extract:** add relativeTo: 'previous' and order support for segmented extraction ([7a91b7a](https://github.com/isdk/web-fetcher.js/commit/7a91b7ab6cde38f40078bb9d3e4f5d02283cfa49))
+* **extract:** enhance extraction with anchor-based arbitrary jumps ([5c9b481](https://github.com/isdk/web-fetcher.js/commit/5c9b481b9c66e623f33e82e9d2abbbc3908fd42a))
+* **extract:** enhance segmented extraction with 'Bubble Up' strategy and multi-container support ([1afd917](https://github.com/isdk/web-fetcher.js/commit/1afd917b7f2d504dc5ab0091fbf254445e5d41c5))
+* **extract:** enhance segmented mode and strictness propagation ([1e8280e](https://github.com/isdk/web-fetcher.js/commit/1e8280e827ae505a4ce8d40663999af1bb7feea1))
+* **extract:** implement 'required' and 'strict' for data quality control ([17f6867](https://github.com/isdk/web-fetcher.js/commit/17f6867e63e70cd4639af266dbe36b0d24260e4e))
+* **extract:** implement "Try-And-Bubble" strategy for object extraction ([626d35f](https://github.com/isdk/web-fetcher.js/commit/626d35f295fe74f84798e0cc716ccd3ca145e821))
+* **extract:** improve implicit object extraction and add debug tracing ([06e9756](https://github.com/isdk/web-fetcher.js/commit/06e975637aa1ad372c7affbf1b8a024e57cf564c))
+* **extract:** support segmented extraction across multiple containers ([a87fe0e](https://github.com/isdk/web-fetcher.js/commit/a87fe0e7bc65ad32fcceadb4ac157b138bc31de5))
+* **test:** enable fastify server log if options.debug ([0bc9f5c](https://github.com/isdk/web-fetcher.js/commit/0bc9f5c79890ad5214fba03e8097fea665bda16e))
+* **utils:** improve getInnerText and normalizeHtml in cheerio-helpers ([7f03896](https://github.com/isdk/web-fetcher.js/commit/7f03896899c6d2969517de07f350b08c0ef48841))
+
+
+### Bug Fixes
+
+* **build:** only use current tsconfig.spec.json to test ([9cb0add](https://github.com/isdk/web-fetcher.js/commit/9cb0addcafb0a8f0564a56876d235e7ae1309b7f))
+* duplication BaseExtractSchema interface ([2b274ee](https://github.com/isdk/web-fetcher.js/commit/2b274eee5c8701b925567e967a1114e111682a1b))
+* **engine:** resolve TypeScript tuple typing error in evaluate action ([9649393](https://github.com/isdk/web-fetcher.js/commit/9649393c1815b9759fa140f454c2fdb49c5b6f13))
+* ensure strict sequential action execution and fix cheerio redirects ([448ecfd](https://github.com/isdk/web-fetcher.js/commit/448ecfd0d5390f8047935b4ef129b447a9e68998))
+* **extract:** enable sequential scanning for single-element scopes and improve array anchors ([fdc78fb](https://github.com/isdk/web-fetcher.js/commit/fdc78fb5262a7c84e516bc1e6d90fe22e5d0ae06))
+* **normalizeExtractSchema:** should process string shorthand for ExtractSchema ([dc4465a](https://github.com/isdk/web-fetcher.js/commit/dc4465a6a0ed061f8a20b8dd74372bb511191e95))
+
+
+### Refactor
+
+* clean up unused code and remove debug prints in tests ([f4fc3fb](https://github.com/isdk/web-fetcher.js/commit/f4fc3fb24a465b86ff1c73ba6909d85ac5049a9e))
+* **core:** move and enhance schema normalization ([55b8ccd](https://github.com/isdk/web-fetcher.js/commit/55b8ccd134dd031bf380a10f993884fdd060e6a0))
+* extract the normalizeExtractSchema as function to schema-normalization.ts ([3da6dd4](https://github.com/isdk/web-fetcher.js/commit/3da6dd438d57ca2083a3cf759e7c46df51e0ba2d))
+* **extract:** decouple core extraction logic into three-layer architecture ([b2242b1](https://github.com/isdk/web-fetcher.js/commit/b2242b197b49aeede32d732225f0616815030198))
+* **extract:** major extraction logic refactoring and anchor tracking fix ([1ceab8e](https://github.com/isdk/web-fetcher.js/commit/1ceab8e13418fea10d713d34218267fba398f2e6))
+* **extract:** unify schema normalization and enhance implicit object logic ([d3a7d47](https://github.com/isdk/web-fetcher.js/commit/d3a7d4744dea71a999e11c33485ce9608ec0db07))
+* unify action dispatching and refine extraction architecture ([a1357f7](https://github.com/isdk/web-fetcher.js/commit/a1357f7b713234fe73b24b9964a824f3e1956339))
+
+
+### Performance
+
+* **engine:** optimize tree traversal with LCA and container child lookups ([0580d5c](https://github.com/isdk/web-fetcher.js/commit/0580d5c0176f9f061ce4e3b9724e9a0e7079ec8d))
+* **extract:** minimize RPC calls and pre-calculate broadcast flags in columnar mode ([525534d](https://github.com/isdk/web-fetcher.js/commit/525534d3488241ec8c4770081f09acdad98db45b))
+* **extract:** optimize segmented extraction performance ([7111c16](https://github.com/isdk/web-fetcher.js/commit/7111c163353446b3ec0159bdeb0d40bf048a5ae0))
+
 ## [0.2.12](https://github.com/isdk/web-fetcher.js/compare/v0.2.11...v0.2.12) (2026-01-11)
 
 
