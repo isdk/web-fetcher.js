@@ -387,9 +387,17 @@ export abstract class FetchEngine<
   protected lastResponse?: FetchResponse
   protected blockedTypes = new Set<string>()
 
-  public _logDebug(...args: any[]) {
-    if (this.opts?.debug) {
-      console.log(`[FetchEngine:${this.id}]`, ...args)
+  public _logDebug(category: string, ...args: any[]) {
+    const debug = this.opts?.debug
+    if (!debug) return
+
+    const shouldLog =
+      debug === true ||
+      debug === category ||
+      (Array.isArray(debug) && debug.includes(category))
+
+    if (shouldLog) {
+      console.log(`[FetchEngine:${this.id}:${category}]`, ...args)
     }
   }
 
@@ -1018,6 +1026,7 @@ export abstract class FetchEngine<
     context: TContext,
     action: FetchEngineAction
   ): Promise<any> {
+    this._logDebug(action.type, 'Executing action:', action)
     switch (action.type) {
       case 'extract':
         return extract.call(
@@ -1120,7 +1129,7 @@ export abstract class FetchEngine<
 
   protected async _sharedRequestHandler(context: TContext): Promise<void> {
     const { request } = context
-    this._logDebug(`Processing request: ${request.url}`)
+    this._logDebug('request', `Processing request: ${request.url}`)
     try {
       this.currentSession = context.session
       this.isPageActive = true

@@ -362,7 +362,7 @@ const engineTestSuite = (
           } else if (fixture.options?.debug) {
             // Default check if debug is on but no specific logs expected
             const debugLogs = consoleSpy.mock.calls.filter((call: any[]) =>
-              String(call[0]).includes(`[FetchEngine:${engineName}]`)
+              String(call[0]).includes(`[FetchEngine:${engineName}`)
             );
             expect(debugLogs.length).toBeGreaterThan(0);
           }
