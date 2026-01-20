@@ -157,7 +157,7 @@ const FIXTURES_DIR = resolve(__dirname, 'fixtures');
 
 // 1. 本地测试服务器
 const createTestServer = async (fixtureDir: string, fixtureConfig?: Fixture): Promise<FastifyInstance> => {
-  const server = fastify({ logger: false });
+  const server = fastify({ logger: !!fixtureConfig?.options?.debug });
 
   // Load custom server setup from server.mjs if it exists
   const serverScript = join(fixtureDir, 'server.mjs');
