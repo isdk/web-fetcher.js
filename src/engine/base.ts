@@ -47,6 +47,7 @@ import {
 import { normalizeHeaders } from '../utils/headers'
 import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
 import { normalizeExtractSchema } from '../core/normalize-extract-schema'
+import { logDebug } from '../core/utils'
 
 Configuration.getGlobalConfig().set('persistStorage', false)
 
@@ -392,17 +393,7 @@ export abstract class FetchEngine<
   protected blockedTypes = new Set<string>()
 
   public _logDebug(category: string, ...args: any[]) {
-    const debug = this.opts?.debug
-    if (!debug) return
-
-    const shouldLog =
-      debug === true ||
-      debug === category ||
-      (Array.isArray(debug) && debug.includes(category))
-
-    if (shouldLog) {
-      console.log(`[FetchEngine:${this.id}:${category}]`, ...args)
-    }
+    logDebug(this.opts?.debug, { prefix: 'FetchEngine', id: this.id, category }, ...args)
   }
 
   protected _cleanup?(): Promise<void>
