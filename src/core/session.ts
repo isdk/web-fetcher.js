@@ -69,8 +69,13 @@ export class FetchSession {
     actionOptions: FetchActionOptions,
     context: FetchContext = this.context
   ): Promise<FetchActionResult<R>> {
-    const actionId = actionOptions.id || actionOptions.name || actionOptions.action
-    this._logDebug('execute', `Executing action: ${actionId}`, actionOptions.params)
+    const actionId =
+      actionOptions.id || actionOptions.name || actionOptions.action
+    this._logDebug(
+      'execute',
+      `Executing action: ${actionId}`,
+      actionOptions.params
+    )
 
     const index = actionOptions.index ?? (context.internal.actionIndex || 0)
     context.internal.actionIndex = index + 1
