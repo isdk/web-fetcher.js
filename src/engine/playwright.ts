@@ -441,7 +441,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
         })
         if (response) {
           context = { ...context, response }
-          this._logDebug('navigate', `Navigation status: ${response.status()} for ${response.url()}`)
+          this._logDebug(
+            'navigate',
+            `Navigation status: ${response.status()} for ${response.url()}`
+          )
         }
         const fetchResponse = await this.buildResponse(context)
         this.lastResponse = fetchResponse
@@ -665,6 +668,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
       ],
     }
 
+    const userLaunchOptions = ctx.browser?.launchOptions || {}
+
     if (this.opts?.antibot) {
       crawlerOptions.browserPoolOptions = {
         useFingerprints: false,
@@ -673,6 +678,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
       const { launchOptions } = await import('camoufox-js')
       const lo = await launchOptions({
         headless,
+        ...userLaunchOptions,
       })
 
       crawlerOptions.launchContext = {
@@ -685,6 +691,12 @@ export class PlaywrightFetchEngine extends FetchEngine<
           await handleCloudflareChallenge()
         },
       ]
+    } else {
+      if (Object.keys(userLaunchOptions).length > 0) {
+        crawlerOptions.launchContext = {
+          launchOptions: userLaunchOptions,
+        }
+      }
     }
 
     return crawlerOptions

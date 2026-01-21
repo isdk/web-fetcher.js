@@ -145,6 +145,9 @@ searchGoogle('gemini');
 * `output` (object): 控制 `FetchResponse` 中的输出字段。
   * `cookies` (boolean): 是否在响应中包含 Cookie（默认：`true`）。
   * `sessionState` (boolean): 是否在响应中包含会话状态（默认：`true`）。
+* `browser` (object): 浏览器引擎配置。
+  * `headless` (boolean): 是否以无头模式运行（默认：`true`）。
+  * `launchOptions` (object): Playwright 启动选项（例如 `{ slowMo: 50, args: [...] }`）。
 * `sessionPoolOptions` (SessionPoolOptions): 底层 Crawlee SessionPool 的高级配置。
 * ...以及许多其他用于代理、重试等的选项。
 

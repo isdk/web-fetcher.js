@@ -183,6 +183,27 @@ await session.executeAll([
 * **用例**: 抓取受 Cloudflare 或其他高级机器人检测系统保护的网站。
 * **注意**: 此功能需要额外的依赖项（`camoufox-js`, `firefox`），并可能带来性能开销。
 
+#### 配置 (Configuration)
+
+您可以通过选项中的 `browser` 属性来配置浏览器引擎：
+
+*   `headless` (boolean): 是否以无头模式运行浏览器（默认：`true`）。
+*   `launchOptions` (object): 原生 Playwright [LaunchOptions](https://playwright.dev/docs/api/class-browsertype#browser-type-launch)，直接传递给浏览器启动器（例如 `slowMo`, `args`, `devtools`）。
+
+    ```typescript
+    const result = await fetchWeb({
+      url: 'https://example.com',
+      engine: 'browser',
+      browser: {
+        headless: false,
+        launchOptions: {
+          slowMo: 100, // 将操作减慢 100ms
+          args: ['--start-maximized'] // 传递自定义参数
+        }
+      }
+    });
+    ```
+
 ---
 
 ## 📊 5. 使用 `extract()` 进行数据提取
