@@ -145,6 +145,9 @@ This is the main entry point for the library.
 * `output` (object): Controls the output fields in `FetchResponse`.
   * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
   * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
+* `browser` (object): Browser engine configuration.
+  * `headless` (boolean): Run in headless mode (default: `true`).
+  * `launchOptions` (object): Playwright launch options (e.g., `{ slowMo: 50, args: [...] }`).
 * `sessionPoolOptions` (SessionPoolOptions): Advanced configuration for the underlying Crawlee SessionPool.
 * ...and many other options for proxy, retries, etc.
 

@@ -183,6 +183,27 @@ To combat sophisticated anti-bot measures, the `PlaywrightFetchEngine` offers an
 * **Use Case**: Scraping websites protected by services like Cloudflare or other advanced bot-detection systems.
 * **Note**: This feature requires additional dependencies (`camoufox-js`, `firefox`) and may have a performance overhead.
 
+#### Configuration
+
+You can configure the browser engine via the `browser` property in options:
+
+*   `headless` (boolean): Whether to run browser in headless mode (default: `true`).
+*   `launchOptions` (object): Native Playwright [LaunchOptions](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) passed directly to the browser launcher (e.g., `slowMo`, `args`, `devtools`).
+
+    ```typescript
+    const result = await fetchWeb({
+      url: 'https://example.com',
+      engine: 'browser',
+      browser: {
+        headless: false,
+        launchOptions: {
+          slowMo: 100, // Slow down operations by 100ms
+          args: ['--start-maximized'] // Pass custom arguments
+        }
+      }
+    });
+    ```
+
 ---
 
 ## 📊 5. Data Extraction with `extract()`

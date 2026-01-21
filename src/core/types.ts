@@ -108,6 +108,7 @@ export interface BaseFetcherProperties {
     engine?: BrowserEngine
     headless?: boolean
     waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit'
+    launchOptions?: Record<string, any>
   }
 
   http?: {
