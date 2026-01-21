@@ -393,7 +393,11 @@ export abstract class FetchEngine<
   protected blockedTypes = new Set<string>()
 
   public _logDebug(category: string, ...args: any[]) {
-    logDebug(this.opts?.debug, { prefix: 'FetchEngine', id: this.id, category }, ...args)
+    logDebug(
+      this.opts?.debug,
+      { prefix: 'FetchEngine', id: this.id, category },
+      ...args
+    )
   }
 
   protected _cleanup?(): Promise<void>
@@ -1094,7 +1098,11 @@ export abstract class FetchEngine<
       if (this.isProcessingActionLoop) return
       this.isProcessingActionLoop = true
       try {
-        while (this.actionQueue.length > 0 && this.isPageActive && !this.isEngineDisposed) {
+        while (
+          this.actionQueue.length > 0 &&
+          this.isPageActive &&
+          !this.isEngineDisposed
+        ) {
           const item = this.actionQueue.shift()!
           try {
             if (item.action.type === 'dispose') {

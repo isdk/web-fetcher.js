@@ -346,7 +346,10 @@ export class CheerioFetchEngine extends FetchEngine<
               selector: $form,
             })
 
-          this._logDebug('click', 'Button/input clicked but no form found and no JS support in http mode. Ignoring.')
+          this._logDebug(
+            'click',
+            'Button/input clicked but no form found and no JS support in http mode. Ignoring.'
+          )
           return
         } else {
           throw new CommonError(
@@ -480,7 +483,11 @@ export class CheerioFetchEngine extends FetchEngine<
         }
 
         await this._updateStateAfterNavigation(context, loadedRequest)
-        this._logDebug('submit', 'Submit finished. Current URL:', context.request.loadedUrl || context.request.url)
+        this._logDebug(
+          'submit',
+          'Submit finished. Current URL:',
+          context.request.loadedUrl || context.request.url
+        )
         return
       }
       case 'evaluate': {
@@ -631,7 +638,11 @@ export class CheerioFetchEngine extends FetchEngine<
         redirectCount++
 
         if ([301, 302, 303].includes(statusCode)) {
-          this._logDebug('http', `Redirect ${statusCode} (method conversion to GET):`, url)
+          this._logDebug(
+            'http',
+            `Redirect ${statusCode} (method conversion to GET):`,
+            url
+          )
           method = 'GET'
           body = undefined
           // Remove content-type and content-length as we are switching to GET
@@ -644,7 +655,11 @@ export class CheerioFetchEngine extends FetchEngine<
           } = headers
           headers = remainingHeaders
         } else {
-          this._logDebug('http', `Redirect ${statusCode} (method preserved):`, url)
+          this._logDebug(
+            'http',
+            `Redirect ${statusCode} (method preserved):`,
+            url
+          )
         }
         continue
       }
