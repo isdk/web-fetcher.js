@@ -1,0 +1,34 @@
+{
+  "title": "segmented extraction with container anchor",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    {
+      "action": "extract",
+      "params": {
+        "type": "array",
+        "selector": "#list-container",
+        "mode": {
+          "type": "segmented",
+          "anchor": ".product-card"
+        },
+        "items": {
+          "type": "object",
+          "properties": {
+            "name": { "selector": ".name" },
+            "price": { "selector": ".price", "type": "number" },
+            "description": { "selector": ".info p" }
+          }
+        }
+      },
+      "storeAs": "products"
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "products": [
+        { "name": "Laptop Pro", "price": 999.99, "description": "High performance laptop." },
+        { "name": "Smartphone X", "price": 699, "description": "Next gen smartphone." }
+      ]
+    }
+  }
+}
