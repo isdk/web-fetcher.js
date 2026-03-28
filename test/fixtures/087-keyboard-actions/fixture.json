@@ -1,0 +1,23 @@
+{
+  "name": "087-keyboard-actions",
+  "title": "Verify keyboardType and keyboardPress actions in browser mode",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "keyboardType", "params": { "text": "Hello World", "delay": 10 } },
+    { "action": "keyboardPress", "params": { "key": "Enter" } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" },
+        "lastKey": { "selector": "#last-key" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Enter Pressed",
+      "lastKey": "Key: Enter"
+    }
+  }
+}

@@ -1,0 +1,27 @@
+{
+  "name": "093-advanced-clicks",
+  "title": "Verify mouseClick with clickCount (double) and button (right)",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseMove", "params": { "selector": "#click-target", "steps": 5 } },
+    { "action": "mouseClick", "params": { "clickCount": 2 } },
+    {
+      "action": "extract",
+      "storeAs": "res1",
+      "params": { "status": { "selector": "#status" } }
+    },
+    { "action": "mouseClick", "params": { "button": "right" } },
+    {
+      "action": "extract",
+      "storeAs": "res2",
+      "params": { "status": { "selector": "#status" } }
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "res1": { "status": "Double Clicked" },
+      "res2": { "status": "Right Clicked" }
+    }
+  }
+}

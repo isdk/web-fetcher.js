@@ -82,6 +82,7 @@ export interface GotoActionOptions {
   headers?: Record<string, string>
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit'
   timeoutMs?: number
+  simulate?: boolean
 }
 
 /**
@@ -209,6 +210,22 @@ export interface EvaluateActionOptions {
 export type FetchEngineAction =
   | { type: 'click'; selector: string }
   | { type: 'fill'; selector: string; value: string }
+  | {
+      type: 'mouseMove'
+      params: { x?: number; y?: number; selector?: string; steps?: number }
+    }
+  | {
+      type: 'mouseClick'
+      params: {
+        x?: number
+        y?: number
+        button?: 'left' | 'right' | 'middle'
+        clickCount?: number
+        delay?: number
+      }
+    }
+  | { type: 'keyboardType'; params: { text: string; delay?: number } }
+  | { type: 'keyboardPress'; params: { key: string; delay?: number } }
   | { type: 'waitFor'; options?: WaitForActionOptions }
   | { type: 'submit'; selector?: any; options?: SubmitActionOptions }
   | { type: 'getContent' }
@@ -738,6 +755,58 @@ export abstract class FetchEngine<
   }
 
   /**
+   * Moves mouse to specified position or element.
+   *
+   * @param params - Move parameters (x, y, selector, steps)
+   */
+  mouseMove(params: {
+    x?: number
+    y?: number
+    selector?: string
+    steps?: number
+  }): Promise<void> {
+    return this.dispatchAction({ type: 'mouseMove', params })
+  }
+
+  /**
+   * Clicks at current position or specified position.
+   *
+   * @param params - Click parameters (x, y, button, clickCount, delay)
+   */
+  mouseClick(params: {
+    x?: number
+    y?: number
+    button?: 'left' | 'right' | 'middle'
+    clickCount?: number
+    delay?: number
+  }): Promise<void> {
+    return this.dispatchAction({ type: 'mouseClick', params })
+  }
+
+  /**
+   * Types text into current focused element.
+   *
+   * @param text - Text to type
+   * @param delay - Delay between key presses
+   */
+  keyboardType(text: string, delay?: number): Promise<void> {
+    return this.dispatchAction({ type: 'keyboardType', params: { text, delay } })
+  }
+
+  /**
+   * Presses specified key.
+   *
+   * @param key - Key to press
+   * @param delay - Delay after key press
+   */
+  keyboardPress(key: string, delay?: number): Promise<void> {
+    return this.dispatchAction({
+      type: 'keyboardPress',
+      params: { key, delay },
+    })
+  }
+
+  /**
    * Fills input element with specified value.
    *
    * @param selector - CSS selector of input element
@@ -1097,6 +1166,7 @@ export abstract class FetchEngine<
     const processQueue = async () => {
       if (this.isProcessingActionLoop) return
       this.isProcessingActionLoop = true
+      this._logDebug('action-loop', `Action loop started. Current queue size: ${this.actionQueue.length}`)
       try {
         while (
           this.actionQueue.length > 0 &&
@@ -1104,6 +1174,7 @@ export abstract class FetchEngine<
           !this.isEngineDisposed
         ) {
           const item = this.actionQueue.shift()!
+          this._logDebug('action-loop', `Processing action: ${item.action.type}`, item.action)
           try {
             if (item.action.type === 'dispose') {
               this.actionEmitter.emit('dispose')
@@ -1112,15 +1183,20 @@ export abstract class FetchEngine<
             }
             this.isExecutingAction = true
             const result = await this._processAction(context, item.action)
+            this._logDebug('action-loop', `Action completed: ${item.action.type}`)
             item.resolve(result)
           } catch (error) {
+            this._logDebug('action-loop', `Action failed: ${item.action.type}`, error)
             item.reject(error)
           } finally {
             this.isExecutingAction = false
+            // Yield control back to event loop briefly
+            await new Promise((resolve) => setImmediate(resolve))
           }
         }
       } finally {
         this.isProcessingActionLoop = false
+        this._logDebug('action-loop', 'Action loop paused/finished.')
       }
     }
 
@@ -1465,3 +1541,4 @@ export abstract class FetchEngine<
   // 能力协商（动作层可打标：native/simulate/noop）
   // abstract capabilityOf(actionName: string): FetchActionCapabilityMode;
 }
+

@@ -1,0 +1,23 @@
+{
+  "name": "089-mouse-keyboard-degrade",
+  "title": "Verify mouse and keyboard actions degrade to noop in cheerio mode",
+  "engine": "cheerio",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseMove", "params": { "selector": "#status" } },
+    { "action": "mouseClick", "params": { "x": 0, "y": 0 } },
+    { "action": "keyboardType", "params": { "text": "noop" } },
+    { "action": "keyboardPress", "params": { "key": "Enter" } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Ready"
+    }
+  }
+}

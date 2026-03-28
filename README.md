@@ -159,6 +159,10 @@ The library provides a set of powerful built-in actions, many of which are engin
 * `click`: Clicks on an element (Engine-specific).
 * `fill`: Fills an input field (Engine-specific).
 * `submit`: Submits a form (Engine-specific).
+* `mouseMove`: Moves the mouse cursor to a specific coordinate or element (Bézier curve supported).
+* `mouseClick`: Triggers a mouse click at the current position or specified coordinates.
+* `keyboardType`: Simulates human-like typing into the currently focused element.
+* `keyboardPress`: Simulates pressing a single key or a key combination.
 * `trim`: Removes elements from the DOM to clean up the page.
 * `waitFor`: Pauses execution to wait for a specific condition (Supports fixed timeouts centrally).
 * `pause`: Pauses execution for manual intervention (Handled centrally).

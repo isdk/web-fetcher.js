@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Coordinates Test</title>
+    <style>
+        #clickable-area {
+            width: 200px;
+            height: 200px;
+            background: #eee;
+            border: 1px solid #ccc;
+        }
+    </style>
+</head>
+<body>
+    <div id="clickable-area">Click me</div>
+    <div id="coords">No click recorded</div>
+    <script>
+        const area = document.getElementById('clickable-area');
+        const coords = document.getElementById('coords');
+
+        area.addEventListener('mousedown', (e) => {
+            const rect = area.getBoundingClientRect();
+            // 记录相对于 viewport 的绝对坐标
+            coords.innerText = `X: ${Math.round(e.clientX)}, Y: ${Math.round(e.clientY)}`;
+        });
+    </script>
+</body>
+</html>

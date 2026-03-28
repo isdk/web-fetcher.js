@@ -37,15 +37,15 @@
   },
   "dependencies": {
     "@isdk/common-error": "^0.2.0",
-    "camoufox-js": "^0.7.0",
-    "cheerio": "^1.1.2",
-    "crawlee": "^3.15.1",
-    "events-ex": "^2.1.1",
-    "jsdom": "^27.0.0",
-    "lodash-es": "^4.17.21",
-    "nanoid": "^5.1.6",
-    "playwright": "^1.57.0",
-    "util-ex": "^2.5.0"
+    "camoufox-js": "^0.9.3",
+    "cheerio": "^1.2.0",
+    "crawlee": "^3.16.0",
+    "events-ex": "^2.2.0",
+    "jsdom": "^29.0.1",
+    "lodash-es": "^4.17.23",
+    "nanoid": "^5.1.7",
+    "playwright": "^1.58.2",
+    "util-ex": "^2.5.2"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.7.3",

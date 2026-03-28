@@ -1,0 +1,24 @@
+{
+  "name": "090-complex-interaction",
+  "title": "Verify sequential mouse and keyboard interaction flow",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseMove", "params": { "selector": "#search-input", "steps": 5 } },
+    { "action": "mouseClick", "params": {} },
+    { "action": "keyboardType", "params": { "text": "AI Tools", "delay": 50 } },
+    { "action": "mouseMove", "params": { "selector": "#search-button", "steps": 5 } },
+    { "action": "mouseClick", "params": {} },
+    {
+      "action": "extract",
+      "params": {
+        "result": { "selector": "#result" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "result": "Search Result Found"
+    }
+  }
+}

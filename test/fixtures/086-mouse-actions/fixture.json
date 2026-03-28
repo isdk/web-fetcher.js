@@ -1,0 +1,23 @@
+{
+  "name": "086-mouse-actions",
+  "title": "Verify mouseMove and mouseClick actions in browser mode",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseMove", "params": { "selector": "#target", "steps": 5 } },
+    { "action": "mouseClick", "params": { "button": "left" } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" },
+        "clicks": { "selector": "body", "attribute": "data-clicks" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Target Clicked",
+      "clicks": "1"
+    }
+  }
+}

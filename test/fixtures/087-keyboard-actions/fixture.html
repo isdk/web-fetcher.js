@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Keyboard Actions Test</title>
+</head>
+<body>
+    <input type="text" id="input" placeholder="Type here...">
+    <div id="status">No input</div>
+    <div id="last-key">None</div>
+    <script>
+        const input = document.getElementById('input');
+        const status = document.getElementById('status');
+        const lastKey = document.getElementById('last-key');
+
+        input.addEventListener('input', (e) => {
+            status.innerText = `Value: ${e.target.value}`;
+        });
+
+        input.addEventListener('keydown', (e) => {
+            lastKey.innerText = `Key: ${e.key}`;
+            if (e.key === 'Enter') {
+                status.innerText = 'Enter Pressed';
+            }
+        });
+
+        // 自动聚焦，以便键盘输入能直接输入
+        input.focus();
+    </script>
+</body>
+</html>

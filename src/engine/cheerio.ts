@@ -306,6 +306,12 @@ export class CheerioFetchEngine extends FetchEngine<
         await this._updateStateAfterNavigation(context, loadedRequest)
         return this.lastResponse
       }
+      case 'mouseMove':
+      case 'mouseClick':
+      case 'keyboardType':
+      case 'keyboardPress':
+        // No-op for cheerio
+        return
       case 'click': {
         if (!$)
           throw new CommonError(
