@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Hover Test</title>
+    <style>
+        #hover-area {
+            width: 100px;
+            height: 100px;
+            background: blue;
+            color: white;
+        }
+        #hover-area:hover {
+            background: green;
+        }
+    </style>
+</head>
+<body>
+    <div id="hover-area">Normal State</div>
+    <div id="status">No Hover</div>
+    <script>
+        const area = document.getElementById('hover-area');
+        const status = document.getElementById('status');
+
+        area.addEventListener('mouseenter', () => {
+            status.innerText = 'Mouse Entered';
+            area.innerText = 'Hovered State';
+        });
+    </script>
+</body>
+</html>

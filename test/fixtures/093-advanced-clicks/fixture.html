@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Advanced Clicks Test</title>
+    <style>
+        #click-target {
+            width: 150px;
+            height: 150px;
+            background: orange;
+            text-align: center;
+            line-height: 150px;
+        }
+    </style>
+</head>
+<body>
+    <div id="click-target">Action Area</div>
+    <div id="status">No specialized click</div>
+    <script>
+        const target = document.getElementById('click-target');
+        const status = document.getElementById('status');
+
+        target.addEventListener('dblclick', () => {
+            status.innerText = 'Double Clicked';
+        });
+
+        target.addEventListener('contextmenu', (e) => {
+            e.preventDefault(); // 阻止原生菜单
+            status.innerText = 'Right Clicked';
+        });
+    </script>
+</body>
+</html>

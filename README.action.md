@@ -247,6 +247,51 @@ Retrieves the full content of the current page state.
 * **`params`**: (none)
 * **`returns`**: `response`
 
+#### `mouseMove`
+
+Moves the mouse cursor to a specific coordinate or element. In `browser` mode, it uses a **Bézier curve** to simulate a human-like non-linear trajectory.
+
+* **`id`**: `mouseMove`
+* **`params`**:
+  * `x` (number, optional): The absolute X coordinate.
+  * `y` (number, optional): The absolute Y coordinate.
+  * `selector` (string, optional): A CSS selector. If provided, the mouse moves to the center of the element.
+  * `steps` (number, optional): The number of intermediate steps for the trajectory (default: 10).
+* **`returns`**: `none`
+
+#### `mouseClick`
+
+Triggers a mouse click at the current position or specified coordinates.
+
+* **`id`**: `mouseClick`
+* **`params`**:
+  * `x` (number, optional): The absolute X coordinate to click.
+  * `y` (number, optional): The absolute Y coordinate to click.
+  * `button` (string, optional): The mouse button to use (`left`, `right`, or `middle`). Default is `left`.
+  * `clickCount` (number, optional): The number of clicks (e.g., 2 for double-click). Default is 1.
+  * `delay` (number, optional): Delay between mousedown and mouseup in milliseconds.
+* **`returns`**: `none`
+
+#### `keyboardType`
+
+Simulates a person typing text into the currently focused element.
+
+* **`id`**: `keyboardType`
+* **`params`**:
+  * `text` (string): The text to type.
+  * `delay` (number, optional): The delay between key presses in milliseconds (default: 100).
+* **`returns`**: `none`
+
+#### `keyboardPress`
+
+Simulates pressing a single key or a key combination (e.g., `Enter`, `Control+A`).
+
+* **`id`**: `keyboardPress`
+* **`params`**:
+  * `key` (string): The name of the key to press (e.g., `Enter`, `Tab`, `Backspace`, `ArrowUp`).
+  * `delay` (number, optional): The delay after the key press in milliseconds.
+* **`returns`**: `none`
+
 #### `evaluate`
 
 Executes custom JavaScript code or an expression within the page context.

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Complex Interaction Test</title>
+</head>
+<body>
+    <input type="text" id="search-input" placeholder="Search...">
+    <button id="search-button">Search</button>
+    <div id="result">Waiting...</div>
+    <script>
+        const input = document.getElementById('search-input');
+        const button = document.getElementById('search-button');
+        const result = document.getElementById('result');
+
+        let isFocused = false;
+        input.addEventListener('focus', () => { isFocused = true; });
+
+        button.addEventListener('click', () => {
+            if (isFocused && input.value === 'AI Tools') {
+                result.innerText = 'Search Result Found';
+            } else if (!isFocused) {
+                result.innerText = 'Click to focus first!';
+            } else {
+                result.innerText = 'Incorrect value: ' + input.value;
+            }
+        });
+    </script>
+</body>
+</html>

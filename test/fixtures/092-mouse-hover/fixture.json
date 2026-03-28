@@ -1,0 +1,22 @@
+{
+  "name": "092-mouse-hover",
+  "title": "Verify mouseMove triggers hover state and mouseenter event",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseMove", "params": { "selector": "#hover-area", "steps": 5 } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" },
+        "text": { "selector": "#hover-area" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Mouse Entered",
+      "text": "Hovered State"
+    }
+  }
+}

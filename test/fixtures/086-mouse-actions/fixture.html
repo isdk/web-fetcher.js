@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Actions Test</title>
+    <style>
+        #target {
+            width: 100px;
+            height: 100px;
+            background: red;
+            margin: 50px;
+        }
+        #status { font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div id="target">Target Box</div>
+    <div id="status">Ready</div>
+    <div id="coord">X: 0, Y: 0</div>
+    <script>
+        const target = document.getElementById('target');
+        const status = document.getElementById('status');
+        const coord = document.getElementById('coord');
+
+        target.addEventListener('mousemove', (e) => {
+            coord.innerText = `X: ${e.clientX}, Y: ${e.clientY}`;
+            status.innerText = 'Mouse Moved Over Target';
+        });
+
+        target.addEventListener('click', (e) => {
+            status.innerText = 'Target Clicked';
+        });
+
+        // 记录点击次数
+        let clicks = 0;
+        document.addEventListener('mousedown', () => {
+          clicks++;
+          document.body.dataset.clicks = clicks;
+        });
+    </script>
+</body>
+</html>

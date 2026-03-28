@@ -245,6 +245,51 @@ await fetchWeb({
 * **`params`**: (无)
 * **`returns`**: `response`
 
+#### `mouseMove`
+
+将鼠标指针移动到指定的坐标或元素。在 `browser` 模式下，它使用 **贝塞尔曲线 (Bézier curve)** 来模拟真实人类的非线性移动轨迹。
+
+* **`id`**: `mouseMove`
+* **`params`**:
+  * `x` (number, 可选): 绝对 X 坐标。
+  * `y` (number, 可选): 绝对 Y 坐标。
+  * `selector` (string, 可选): CSS 选择器。如果提供，鼠标将移动到该元素的中心。
+  * `steps` (number, 可选): 轨迹的中间步数（默认：10）。
+* **`returns`**: `none`
+
+#### `mouseClick`
+
+在当前位置或指定坐标触发鼠标点击。
+
+* **`id`**: `mouseClick`
+* **`params`**:
+  * `x` (number, 可选): 点击的绝对 X 坐标。
+  * `y` (number, 可选): 点击的绝对 Y 坐标。
+  * `button` (string, 可选): 使用的鼠标按键 (`left`, `right`, 或 `middle`)。默认为 `left`。
+  * `clickCount` (number, 可选): 点击次数（例如：2 表示双击）。默认为 1。
+  * `delay` (number, 可选): mousedown 和 mouseup 之间的延迟（毫秒）。
+* **`returns`**: `none`
+
+#### `keyboardType`
+
+模拟真人在当前获得焦点的元素中输入文本。
+
+* **`id`**: `keyboardType`
+* **`params`**:
+  * `text` (string): 要输入的文本。
+  * `delay` (number, 可选): 按键之间的延迟（毫秒，默认：100）。
+* **`returns`**: `none`
+
+#### `keyboardPress`
+
+模拟按下单个按键或组合键（例如：`Enter`, `Control+A`）。
+
+* **`id`**: `keyboardPress`
+* **`params`**:
+  * `key` (string): 按键名称（例如：`Enter`, `Tab`, `Backspace`, `ArrowUp`）。
+  * `delay` (number, 可选): 按键后的延迟（毫秒）。
+* **`returns`**: `none`
+
 #### `evaluate`
 
 在页面上下文中执行 JavaScript 函数或表达式。这是一个强大的 Action，用于执行内置 Action 未涵盖的自定义逻辑。
