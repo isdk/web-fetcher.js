@@ -432,53 +432,134 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return Math.floor(Math.random() * (max - min + 1) + min)
   }
 
+  protected async _sharedRequestHandler(
+    context: PlaywrightCrawlingContext
+  ): Promise<void> {
+    const { page } = context
+    if (page && !this.mouseInitialized) {
+      await this._initializeMousePos(page)
+    }
+    return super._sharedRequestHandler(context)
+  }
+
+  protected mouseInitialized = false
+
+  protected async _initializeMousePos(page: Page) {
+    if (this.mouseInitialized) return
+
+    let size = page.viewportSize()
+    if (!size) {
+      try {
+        size = await page.evaluate(() => ({
+          width: window.innerWidth,
+          height: window.innerHeight,
+        }))
+      } catch {
+        size = { width: 1280, height: 720 }
+      }
+    }
+
+    const edge = Math.floor(Math.random() * 4) // 0: top, 1: right, 2: bottom, 3: left
+    let x = 0
+    let y = 0
+
+    switch (edge) {
+      case 0: // Top
+        x = Math.random() * size.width
+        y = -20
+        break
+      case 1: // Right
+        x = size.width + 20
+        y = Math.random() * size.height
+        break
+      case 2: // Bottom
+        x = Math.random() * size.width
+        y = size.height + 20
+        break
+      case 3: // Left
+        x = -20
+        y = Math.random() * size.height
+        break
+    }
+
+    this.currentMousePos = { x, y }
+    // Teleport to initial edge position silently before the page is fully interacted with
+    try {
+      await page.mouse.move(x, y)
+      this.mouseInitialized = true
+    } catch (e) {
+      // Page might be navigating, retry later or ignore
+    }
+  }
+
   protected _getTrajectory(
     start: { x: number; y: number },
     end: { x: number; y: number },
     steps = -1
   ) {
     const trajectory = []
+    const distance = Math.sqrt(
+      Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
+    )
 
     if (steps === -1) {
-      const distance = Math.sqrt(
-        Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
-      )
-      // Human mouse speed is roughly 500-2000 px/s.
-      // We aim for a step every 5-15 pixels.
-      const pixelsPerStep = Math.random() * 10 + 5
-      steps = Math.max(5, Math.floor(distance / pixelsPerStep))
+      // More key points for a smoother Bezier and easing curve
+      steps = Math.max(15, Math.min(30, Math.floor(distance / 40) + 10))
     }
 
-    // Quadratic Bézier curve for more human-like movement
-    // Control point with randomness to avoid mechanical straight lines
+    // Quadratic Bézier curve (subtle 0.1 intensity)
     const midX = start.x + (end.x - start.x) / 2
     const midY = start.y + (end.y - start.y) / 2
     const cp = {
-      x: midX + (Math.random() - 0.5) * 100,
-      y: midY + (Math.random() - 0.5) * 100,
+      x: midX + (Math.random() - 0.5) * distance * 0.1,
+      y: midY + (Math.random() - 0.5) * distance * 0.1,
     }
 
-    this._logDebug(
-      'mouseMove',
-      `Trajectory: start(${start.x},${start.y}) -> end(${end.x},${end.y}), cp(${cp.x},${cp.y}), steps: ${steps}`
-    )
+    const easeInOutCubic = (t: number): number =>
+      t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2
 
     for (let i = 1; i <= steps; i++) {
-      const t = i / steps
-      let x =
+      const t = easeInOutCubic(i / steps)
+      const x =
         (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * cp.x + t * t * end.x
-      let y =
+      const y =
         (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * cp.y + t * t * end.y
-
-      // Add Jitter (slight trembling)
-      if (i < steps) {
-        x += (Math.random() - 0.5) * 1.5
-        y += (Math.random() - 0.5) * 1.5
-      }
-
       trajectory.push({ x, y })
     }
     return trajectory
+  }
+
+  protected async _moveToPos(
+    context: PlaywrightCrawlingContext,
+    target: { x: number; y: number },
+    steps: number = -1
+  ): Promise<{ x: number; y: number }> {
+    const { page } = context
+    const startPos = { ...this.currentMousePos }
+    const trajectory = this._getTrajectory(startPos, target, steps)
+
+    let lastPos = startPos
+    for (const pos of trajectory) {
+      const dx = pos.x - lastPos.x
+      const dy = pos.y - lastPos.y
+      const segmentDist = Math.sqrt(dx * dx + dy * dy)
+
+      // PIXEL-PER-STEP:
+      // Ensure the browser moves through every single pixel between key points.
+      const internalSteps = Math.max(1, Math.floor(segmentDist))
+
+      await page.mouse.move(pos.x, pos.y, { steps: internalSteps })
+
+      // Extremely short pause to allow Playwright and the browser to sync,
+      // but without causing a visible stop.
+      // if (steps > 1 || steps === -1) {
+      //   await page.waitForTimeout(this._getRandomDelay(2, 0.5))
+      // }
+      lastPos = pos
+    }
+
+    this.currentMousePos = target
+    return this.currentMousePos
   }
 
   protected async _moveToSelector(
@@ -499,22 +580,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const targetX = box.x + box.width / 2
     const targetY = box.y + box.height / 2
 
-    const trajectory = this._getTrajectory(
-      this.currentMousePos,
-      { x: targetX, y: targetY },
-      steps
-    )
-
-    for (const pos of trajectory) {
-      await page.mouse.move(pos.x, pos.y)
-      if (steps > 1 || steps === -1) {
-        // Random delay between 5ms and 20ms
-        await page.waitForTimeout(Math.random() * 15 + 5)
-      }
-    }
-
-    this.currentMousePos = { x: targetX, y: targetY }
-    return this.currentMousePos
+    return this._moveToPos(context, { x: targetX, y: targetY }, steps)
   }
 
   protected async executeAction(
@@ -548,18 +614,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
         if (selector) {
           await this._moveToSelector(context, selector, steps)
         } else if (x !== undefined && y !== undefined) {
-          const trajectory = this._getTrajectory(
-            this.currentMousePos,
-            { x, y },
-            steps
-          )
-          for (const pos of trajectory) {
-            await page.mouse.move(pos.x, pos.y)
-            if (steps > 1 || steps === -1) {
-              await page.waitForTimeout(Math.random() * 15 + 5)
-            }
-          }
-          this.currentMousePos = { x, y }
+          await this._moveToPos(context, { x, y }, steps)
         }
         return
       }
@@ -571,28 +626,19 @@ export class PlaywrightFetchEngine extends FetchEngine<
           button = 'left',
           clickCount = 1,
           delay = 0,
+          steps = -1,
         } = action.params as any
         if (selector) {
-          await this._moveToSelector(context, selector, -1)
-          await page.mouse.click(this.currentMousePos.x, this.currentMousePos.y, {
-            button,
-            clickCount,
-            delay: this._getRandomDelay(delay || 50, 0.2),
-          })
+          await this._moveToSelector(context, selector, steps)
         } else if (x !== undefined && y !== undefined) {
-          await page.mouse.click(x, y, {
-            button,
-            clickCount,
-            delay: this._getRandomDelay(delay || 50, 0.2),
-          })
-          this.currentMousePos = { x, y }
-        } else {
-          await page.mouse.click(this.currentMousePos.x, this.currentMousePos.y, {
-            button,
-            clickCount,
-            delay: this._getRandomDelay(delay || 50, 0.2),
-          })
+          await this._moveToPos(context, { x, y }, steps)
         }
+
+        await page.mouse.click(this.currentMousePos.x, this.currentMousePos.y, {
+          button,
+          clickCount,
+          delay: this._getRandomDelay(delay || 50, 0.2),
+        })
         // Small delay to allow DOM updates to settle
         await page.waitForTimeout(this._getRandomDelay(100, 0.5))
         this.lastResponse = await this.buildResponse(context)
