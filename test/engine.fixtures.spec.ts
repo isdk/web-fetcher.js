@@ -352,6 +352,7 @@ const engineTestSuite = (
           result = res.result;
         }
         // console.log('🚀 ~ file: engine.fixtures.spec.ts:354 ~ res.outputs:', JSON.stringify(res.outputs, null, 2))
+        // console.log('🚀 ~ file: engine.fixtures.spec.ts:355 ~ result:', JSON.stringify(result, null, 2))
 
         if (consoleSpy) {
           if (fixture.expected?.logs) {
