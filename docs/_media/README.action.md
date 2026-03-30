@@ -247,6 +247,52 @@ Retrieves the full content of the current page state.
 * **`params`**: (none)
 * **`returns`**: `response`
 
+#### `mouseMove`
+
+Moves the mouse cursor to a specific coordinate or element. In `browser` mode, it uses a **Bézier curve** to simulate a human-like non-linear trajectory with slight jitter for realism.
+
+* **`id`**: `mouseMove`
+* **`params`**:
+  * `x` (number, optional): The absolute X coordinate.
+  * `y` (number, optional): The absolute Y coordinate.
+  * `selector` (string, optional): A CSS selector. If provided, the mouse moves to the center of the element.
+  * `steps` (number, optional): The number of intermediate steps for the trajectory (default: `-1`). Set to `-1` to calculate steps automatically based on distance (simulating natural speed).
+* **`returns`**: `none`
+
+#### `mouseClick`
+
+Triggers a mouse click at the current position or specified coordinates. If a `selector` is provided, the cursor will first move smoothly to the target element (using dynamic steps) before clicking.
+
+* **`id`**: `mouseClick`
+* **`params`**:
+  * `x` (number, optional): The absolute X coordinate to click.
+  * `y` (number, optional): The absolute Y coordinate to click.
+  * `selector` (string, optional): A CSS selector. If provided, moves the mouse to the element first.
+  * `button` (string, optional): The mouse button to use (`left`, `right`, or `middle`). Default is `left`.
+  * `clickCount` (number, optional): The number of clicks (e.g., 2 for double-click). Default is 1.
+  * `delay` (number, optional): Delay between mousedown and mouseup in milliseconds.
+* **`returns`**: `none`
+
+#### `keyboardType`
+
+Simulates a person typing text into the currently focused element.
+
+* **`id`**: `keyboardType`
+* **`params`**:
+  * `text` (string): The text to type.
+  * `delay` (number, optional): The delay between key presses in milliseconds (default: 100).
+* **`returns`**: `none`
+
+#### `keyboardPress`
+
+Simulates pressing a single key or a key combination (e.g., `Enter`, `Control+A`).
+
+* **`id`**: `keyboardPress`
+* **`params`**:
+  * `key` (string): The name of the key to press (e.g., `Enter`, `Tab`, `Backspace`, `ArrowUp`).
+  * `delay` (number, optional): The delay after the key press in milliseconds.
+* **`returns`**: `none`
+
 #### `evaluate`
 
 Executes custom JavaScript code or an expression within the page context.
@@ -306,321 +352,17 @@ $`).
 
 #### `extract`
 
-Extracts structured data from the page using a powerful and declarative Schema. This is the core Action for data collection.
+Extracts structured data from the page using a powerful and declarative Schema.
 
 * **`id`**: `extract`
-* **`params`**: An `ExtractSchema` object that defines the extraction rules.
-* **`returns`**: `any` (the extracted data)
+* **`params`**: An `ExtractSchema` object.
+* **`returns`**: The extracted structured data.
 
-##### Detailed Explanation of Extraction Schema
-
-The `params` object itself is a Schema that describes the data structure you want to extract.
-
-###### 1. Extracting a Single Value
-
-The most basic extraction. You can specify a `selector` (CSS selector), an `attribute` (the name of the attribute to extract), a `type` (string, number, boolean, html), and a `mode` (text, innerText).
-
-* **`depth`** (number, optional): After matching the element with `selector`, it bubbles up the DOM tree by the specified number of levels. The resulting ancestor element becomes the actual target for value extraction (e.g., to extract an attribute from a parent wrapper).
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "selector": "h1.main-title",
-    "type": "string",
-    "mode": "innerText"
-  }
-}
-```
-
-> **Extraction Modes:**
+> **📚 Detailed Manual**: Because `extract` is very rich in features (including array modes, scope control, anchor jumping, etc.), we have prepared a dedicated detailed manual:
 >
-> * **`text`** (default): Extracts the `textContent` of the element.
-> * **`innerText`**: Extracts the rendered text, respecting CSS styling and line breaks.
-> * **`html`**: Returns the `innerHTML` of the element.
-> * **`outerHTML`**: Returns the HTML including the tag itself. Useful for preserving the full element structure.
-> The example above will extract the text content of the `<h1>` tag with the class `main-title` using the `innerText` mode.
+> 👉 **[Click to View Extract Action Deep Dive](./README.action.extract.md)**
 
-###### 2. Extracting an Object
-
-Define a structured object using `type: 'object'` and the `properties` field.
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "type": "object",
-    "selector": ".author-bio",
-    "properties": {
-      "name": { "selector": ".author-name" },
-      "email": { "selector": "a.email", "attribute": "href" }
-    }
-  }
-}
-```
-
-* **`depth`** (number, optional): Enables "Try-And-Bubble" strategy. If a `required` field is missing in the matched element, the engine attempts to bubble up the DOM tree (up to `depth` levels) to find an ancestor where the required field exists. This is useful when the selector matches a descendant (e.g., an inner `span`) but the data resides on a parent container.
-
-**Advanced Object Features:**
-
-* **Anchor Jumping (`anchor`)**: Specifies a starting reference point for a field.
-  * **Field Reference**: Use the DOM element of a previously extracted field.
-  * **CSS Selector**: Query an anchor element on the fly within the object's scope.
-  * **`depth`** (number, optional): When using an anchor, defines how many parent levels to traverse upwards to collect following siblings.
-    * **Note**: If omitted, the engine defaults to maximum depth (up to the object's root) for backward compatibility. To strictly limit the search to the anchor's own siblings, set `depth: 0`.
-  * **Effect**: Once an anchor is set, the search scope for that field becomes the siblings **following** the anchor (and its ancestors, depending on `depth`). This allows for non-linear "jumping" extraction in flat structures.
-* **Sequential Consumption (`relativeTo: "previous"`)**:
-  * Combined with the `order` property, this ensures each field's search scope starts *after* the previous field's match.
-  * Essential for extracting from lists composed of identical tags (e.g., consecutive `<p>` tags with different meanings).
-
-###### 3. Extracting an Array (Convenient Usage)
-
-Extract a list using `type: 'array'`. To make the most common operations simpler, we provide some convenient usages.
-
-* **Extracting an Array of Texts (Default Behavior)**: When you want to extract a list of text, just provide the selector and omit `items`. This is the most common usage.
-
-    ```json
-    {
-      "id": "extract",
-      "params": {
-        "type": "array",
-        "selector": ".tags li"
-      }
-    }
-    ```
-
-    > The example above will return an array of the text from all `<li>` tags, e.g., `["tech", "news"]`.
-
-* **Extracting an Array of Attributes (Shortcut)**: When you only want to extract a list of attributes (e.g., all `href`s from links), there's no need to nest `items` either. Just declare `attribute` directly in the `array` definition.
-
-    ```json
-    {
-      "id": "extract",
-      "params": {
-        "type": "array",
-        "selector": ".gallery img",
-        "attribute": "src"
-      }
-    }
-    ```
-
-    > The example above will return an array of the `src` attributes from all `<img>` tags.
-
-* **Array Extraction Modes**: When extracting an array, the engine supports different modes to handle various DOM structures.
-
-  * **`nested`** (Default): The `selector` matches individual item wrappers.
-  * **`columnar`** (formerly Zip): The `selector` matches a **container**, and fields in `items` are parallel columns stitched together by index.
-  * **`segmented`**: The `selector` matches a **container**, and items are segmented by an "anchor" field.
-
-###### 4. Columnar Mode (formerly Zip Strategy)
-
-This mode is used when the `selector` points to a **container** (like a results list) and item data is scattered as separate columns. It is highly optimized for performance, especially in browser mode, by minimizing the number of DOM queries and RPC calls.
-
-> **💡 Broadcasting & Performance**: If a property matches the container element itself (e.g. by omitting a selector or matching the container's own attributes), its value is **broadcasted** to every row. This is not only a feature but also a major performance optimization: the value is extracted **once** and reused across all rows, avoiding thousands of redundant engine calls.
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "type": "array",
-    "selector": "#search-results",
-    "mode": "columnar",
-    "items": {
-      "title": { "selector": ".item-title" },
-      "link": { "selector": "a.item-link", "attribute": "href" }
-    }
-  }
-}
-```
-
-> **Heuristic Detection:** If `mode` is omitted and the `selector` matches exactly one element while `items` contains nested selectors, the engine automatically uses **columnar** mode.
-
-**Example: Columnar Broadcasting**
-
-When you have a list where the category is on the container, but items are inside.
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "type": "array",
-    "selector": "#book-category",
-    "mode": "columnar",
-    "items": {
-      "category": { "attribute": "data-category" },
-      "title": { "selector": ".book-title" }
-    }
-  }
-}
-```
-
-> If `#book-category` has `data-category="Sci-Fi"` and contains 3 books, the result will be 3 items, each having `"category": "Sci-Fi"`.
-
-**Columnar Configuration:**
-
-* **`strict`** (boolean, default: `true`): If `true`, throws an error if fields have different match counts.
-* **`inference`** (boolean, default: `false`): If `true`, tries to automatically find the "item wrapper" elements to fix misaligned lists. It uses an **optimized ancestor search** that is significantly faster in browser mode than manual traversal.
-* **Performance Note**: The engine automatically detects shared structures and pre-calculates alignment to ensure O(N) performance even in complex DOM trees. In browser mode, it minimizes IPC round-trips by pre-calculating "broadcast" flags.
-
-###### 5. Segmented Mode (Anchor-based Scanning)
-
-Ideal for "flat" structures where there are no item wrappers. It uses a specified `anchor` to segment the container's content.
-
-**Core Feature: Automatic Container Detection (Bubble Up)**
-
-To handle structures that appear flat but have subtle containers, the engine uses a bubble-up strategy:
-
-- **Smart Bubble Up**: When an anchor is nested deep (e.g., `div.card > h3.title`), the engine automatically crawls up the DOM to find the largest "safe container" (e.g., `div.card`) that doesn't overlap with neighbors.
-- **Logical Isolation**: If a container is found, it becomes the scope for that segment. This allows you to extract any content within that container using simple relative selectors, even if it's "above" or deep alongside the anchor.
-- **Flat Fallback**: If no container isolation is possible, it automatically falls back to classic sibling scanning.
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "type": "array",
-    "selector": "#flat-container",
-    "mode": { "type": "segmented", "anchor": "h3.item-title" },
-    "items": {
-      "title": { "selector": "h3" },
-      "desc": { "selector": "p" }
-    }
-  }
-}
-```
-
-**Segmented Configuration:**
-
-* **`anchor`** (string):
-  * Can be a **field name** defined in `items` (e.g., `"title"`).
-  * Can be a **direct CSS selector** (e.g., `"h3.item-title"`).
-  * Defaults to the selector of the first field in `items`.
-* **`depth`** (number, optional): The maximum number of levels to bubble up from the anchor to find a segment container. If omitted, it bubbles up as high as possible without conflicting with neighboring segments.
-* **`strict`** (boolean, default: `false`): If `true`, throws an error if no anchor elements are found or if any item violates its own `required` constraints.
-
-###### 5.1 Advanced: Handling Repeating Tags (`relativeTo`)
-
-When a segment contains multiple identical tags (e.g., several `<p>` tags in a row) representing different fields, use `relativeTo: "previous"` to "consume" them one by one.
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "type": "array",
-    "selector": "#container",
-    "mode": {
-      "type": "segmented",
-      "anchor": ".item-start",
-      "relativeTo": "previous"
-    },
-    "items": {
-      "type": "object",
-      "order": ["id", "desc", "extra"],
-      "properties": {
-        "id": "h1",
-        "desc": "p",
-        "extra": "p"
-      }
-    }
-  }
-}
-```
-
-* **`relativeTo: "previous"`**: After finding `id` (h1), the search for `desc` starts *after* that h1. After finding `desc` (the first p), the search for `extra` starts *after* that p, successfully picking up the second `<p>`.
-* **`order`**: Defines the sequence of consumption. Highly recommended with `relativeTo: "previous"`.
-
-###### 6. Quality Control: `required` and `strict`
-
-- **`required`**: Marks a field as mandatory.
-  - **In Objects**: If any required field is `null`, the entire object returns `null`.
-  - **In Arrays**: Items missing a required field are automatically skipped.
-  - **Null Propagation**: For implicit objects without a `selector`, if ALL sub-properties are `null`, the object itself becomes `null`, triggering parent-level required or skip logic.
-- **`strict`**:
-  - `false` (Default): Silently skip or ignore incomplete data.
-  - `true`: Throw an error on any missing required field or alignment mismatch.
-  - **Inheritance**: Setting `strict: true` at the array level automatically propagates to all nested children.
-
-**Example: Ignoring items with missing mandatory fields**
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "type": "array",
-    "selector": ".product-list",
-    "mode": "columnar",
-    "items": {
-      "name": { "selector": ".title", "required": true },
-      "price": { "selector": ".price", "required": true },
-      "discount": ".promo"
-    }
-  }
-}
-```
-
-> In this example, if a product lacks either a `name` or a `price`, it will be completely omitted from the result array. The optional `discount` field doesn't affect the item's inclusion.
-
-###### 7. Implicit Object Extraction (Simplest Syntax)
-
-For simpler object extraction, you can omit `type: 'object'` and `properties`. If the schema object contains keys that are not context-defining keywords (like `selector`, `has`, `exclude`, `required`, `strict`, `depth`), it is treated as an object schema where keys are property names.
-
-> **Keyword Collision Handling:** You can safely extract a data field named `type` as long as its value is not a reserved schema type (like `"string"`, `"object"`, `"array"`, etc.).
-
-```json
-{
-  "id": "extract",
-  "params": {
-    "selector": ".author-bio",
-    "name": ".author-name",
-    "type": ".author-rank",
-    "items": { "type": "array", "selector": "li" }
-  }
-}
-```
-
-> **Key features of implicit objects:**
->
-> 1. **Keyword Handling**: Common configuration keywords like `items`, `attribute`, or `mode` **can be used as property names** within an implicit object. They are only treated as configuration when a `type` (like `array`) is explicitly present. Configuration keywords like `required`, `strict`, and `depth` are also handled as context defining keys.
-> 2. **String Shorthand**: You can use a simple string as a property value (e.g., `"email": "a.email"`), which is automatically expanded to `{ "selector": "a.email" }`.
-> 3. **Context Separation**: Only `selector`, `has`, `exclude`, `required`, `strict`, and `depth` are used to define the context and validation for the implicit object; all other keys are treated as data to be extracted.
-> 4. **Null Propagation**: If an implicit object has no `selector` and ALL of its sub-properties extract to `null`, the object itself returns `null`. This is crucial for `required` validation on the parent object or for skipping items in an array.
-
-###### 8. Advanced Filtering: `has` and `exclude`
-
-You can use the `has` and `exclude` fields in any schema that includes a `selector` to precisely control element selection.
-
-* `has`: A CSS selector to ensure the selected element **must contain** a descendant matching this selector.
-* `exclude`: A CSS selector to **exclude** elements matching this selector from the results.
-
-**Complete Example: Extracting links of articles that have an image and are not marked as "draft"**
-
-```json
-{
-  "actions": [
-    { "id": "goto", "params": { "url": "https://example.com/articles" } },
-    {
-      "id": "extract",
-      "params": {
-        "type": "array",
-        "selector": "div.article-card",
-        "has": "img.cover-image",
-        "exclude": ".draft",
-        "items": {
-          "selector": "a.title-link",
-          "attribute": "href"
-        }
-      }
-    }
-  ]
-}
-```
-
-> The `extract` action above will:
->
-> 1. Find all `div.article-card` elements.
-> 2. Filter them to only include those that contain an `<img class="cover-image">`.
-> 3. Further filter the results to exclude any that also have the `.draft` class.
-> 4. For each of the remaining `div.article-card` elements, find its descendant `a.title-link` and extract the `href` attribute.
+---
 
 ### Building High-Level Semantic Actions via "Composition"
 
@@ -800,7 +542,7 @@ In `@isdk/web-fetcher`, an Action's `static returnType` is more than a type hint
 * **Definition**: Any serializable data structure (Object, Array, string, etc.).
 * **Purpose**: Primary mechanism for business data extraction.
 * **Usage**: Use this when your action produces processed data that doesn't represent the whole page or system state.
-* **System Behavior**: If the action configuration includes `storeAs: "key"`, the framework automatically saves the `result` into `context.outputs["key"]`.
+* **System Behavior**: If the action configuration includes `storeAs: "key"`, the framework automatically saves the `result` into `context.outputs["key"]`. If the target key already contains an object and the new result is also an object, they will be merged (shallow merge) instead of overwritten. This allows multiple `extract` actions to accumulate data into the same output key.
 * **Typical Actions**: `extract`.
 * **Example**:
 

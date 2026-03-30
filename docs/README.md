@@ -149,6 +149,9 @@ This is the main entry point for the library.
 * `output` (object): Controls the output fields in `FetchResponse`.
   * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
   * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
+* `browser` (object): Browser engine configuration.
+  * `headless` (boolean): Run in headless mode (default: `true`).
+  * `launchOptions` (object): Playwright launch options (e.g., `{ slowMo: 50, args: [...] }`).
 * `sessionPoolOptions` (SessionPoolOptions): Advanced configuration for the underlying Crawlee SessionPool.
 * ...and many other options for proxy, retries, etc.
 
@@ -160,6 +163,10 @@ The library provides a set of powerful built-in actions, many of which are engin
 * `click`: Clicks on an element (Engine-specific).
 * `fill`: Fills an input field (Engine-specific).
 * `submit`: Submits a form (Engine-specific).
+* `mouseMove`: Moves the mouse cursor to a specific coordinate or element (Bézier curve supported).
+* `mouseClick`: Triggers a mouse click at the current position or specified coordinates.
+* `keyboardType`: Simulates human-like typing into the currently focused element.
+* `keyboardPress`: Simulates pressing a single key or a key combination.
 * `trim`: Removes elements from the DOM to clean up the page.
 * `waitFor`: Pauses execution to wait for a specific condition (Supports fixed timeouts centrally).
 * `pause`: Pauses execution for manual intervention (Handled centrally).
@@ -178,7 +185,7 @@ The `fetchWeb` function returns an object containing:
   * `cookies`: Array of cookies.
   * `sessionState`: Crawlee session state.
   * `text`, `html`: Page content.
-* `outputs` (Record<string, any>): Data extracted and stored via `storeAs`.
+* `outputs` (Record<string, any>): Data extracted and stored via `storeAs`. Note: When multiple actions store objects into the same key, they are merged instead of overwritten.
 
 ---
 

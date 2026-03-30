@@ -6,7 +6,7 @@
 
 # Class: WebFetcher
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:17](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/core/web-fetcher.ts#L17)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:17](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/core/web-fetcher.ts#L17)
 
 High-level entry point for the Web Fetcher library.
 
@@ -28,7 +28,7 @@ const { result } = await fetcher.fetch('https://example.com');
 
 > **new WebFetcher**(`defaults`): `WebFetcher`
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:23](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/core/web-fetcher.ts#L23)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:23](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/core/web-fetcher.ts#L23)
 
 Creates a new WebFetcher with default options.
 
@@ -50,7 +50,7 @@ Default configuration options applied to all sessions and requests.
 
 > **createSession**(`options?`): `Promise`\<[`FetchSession`](FetchSession.md)\>
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:31](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/core/web-fetcher.ts#L31)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:31](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/core/web-fetcher.ts#L31)
 
 Creates a new FetchSession.
 
@@ -76,7 +76,7 @@ A promise resolving to a new FetchSession instance.
 
 > **fetch**(`url`, `options?`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: [`FetchResponse`](../interfaces/FetchResponse.md) \| `undefined`; \}\>
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:47](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/core/web-fetcher.ts#L47)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:47](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/core/web-fetcher.ts#L47)
 
 Fetches content from a URL or executes a complex action script.
 
@@ -109,7 +109,7 @@ retrieves the content, and disposes of the session.
 
 > **fetch**(`options`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: [`FetchResponse`](../interfaces/FetchResponse.md) \| `undefined`; \}\>
 
-Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:54](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/core/web-fetcher.ts#L54)
+Defined in: [packages/web-fetcher/src/core/web-fetcher.ts:54](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/core/web-fetcher.ts#L54)
 
 Fetches content from a URL or executes a complex action script.
 
