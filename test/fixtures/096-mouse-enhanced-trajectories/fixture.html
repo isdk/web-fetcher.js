@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { width: 1000px; height: 1000px; margin: 0; padding: 0; position: relative; }
+    #target {
+      position: absolute;
+      top: 200px;
+      left: 300px;
+      width: 100px;
+      height: 100px;
+      background: red;
+    }
+  </style>
+</head>
+<body>
+  <div id="target">Target Box</div>
+  <script>
+    window.mousePath = [];
+    window.lastClick = null;
+    window.hovered = false;
+
+    document.addEventListener('mousemove', (e) => {
+      window.mousePath.push({ x: e.clientX, y: e.clientY });
+    });
+
+    // Record clicks on the entire document
+    document.addEventListener('click', (e) => {
+      window.lastClick = { x: e.clientX, y: e.clientY };
+    });
+
+    const target = document.getElementById('target');
+    target.addEventListener('mouseenter', () => { window.hovered = true; });
+  </script>
+</body>
+</html>
