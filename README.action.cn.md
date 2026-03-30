@@ -247,24 +247,25 @@ await fetchWeb({
 
 #### `mouseMove`
 
-将鼠标指针移动到指定的坐标或元素。在 `browser` 模式下，它使用 **贝塞尔曲线 (Bézier curve)** 来模拟真实人类的非线性移动轨迹。
+将鼠标指针移动到指定的坐标或元素。在 `browser` 模式下，它使用 **贝塞尔曲线 (Bézier curve)** 来模拟真实人类的非线性移动轨迹，并带有轻微的抖动以增加真实感。
 
 * **`id`**: `mouseMove`
 * **`params`**:
   * `x` (number, 可选): 绝对 X 坐标。
   * `y` (number, 可选): 绝对 Y 坐标。
   * `selector` (string, 可选): CSS 选择器。如果提供，鼠标将移动到该元素的中心。
-  * `steps` (number, 可选): 轨迹的中间步数（默认：10）。
+  * `steps` (number, 可选): 轨迹的中间步数（默认：`-1`）。设置为 `-1` 可根据距离动态计算步数（模拟自然移动速度）。
 * **`returns`**: `none`
 
 #### `mouseClick`
 
-在当前位置或指定坐标触发鼠标点击。
+在当前位置或指定坐标触发鼠标点击。如果提供了 `selector`，光标会先平滑地移动到目标元素（使用动态步数），然后再执行点击。
 
 * **`id`**: `mouseClick`
 * **`params`**:
   * `x` (number, 可选): 点击的绝对 X 坐标。
   * `y` (number, 可选): 点击的绝对 Y 坐标。
+  * `selector` (string, 可选): CSS 选择器。如果提供，鼠标会先移动到该元素。
   * `button` (string, 可选): 使用的鼠标按键 (`left`, `right`, 或 `middle`)。默认为 `left`。
   * `clickCount` (number, 可选): 点击次数（例如：2 表示双击）。默认为 1。
   * `delay` (number, 可选): mousedown 和 mouseup 之间的延迟（毫秒）。
@@ -527,7 +528,7 @@ await fetchWeb({
 * **定义**: 任何可序列化的数据结构（对象、数组、字符串等）。
 * **用途**: 业务数据提取的主要机制。
 * **用法**: 当你的动作产生处理后的业务数据（而不是代表整个页面或系统状态）时使用。
-* **系统行为**: 如果 Action 配置包含 `storeAs: "key"`，框架会自动将 `result` 保存到 `context.outputs["key"]` 中。
+* **系统行为**: 如果 Action 配置包含 `storeAs: "key"`，框架会自动将 `result` 保存到 `context.outputs["key"]` 中。如果目标键已包含一个对象且新结果也是一个对象，它们将被合并（浅合并）而不是覆盖。这允许通过多个 `extract` 动作将数据累积到同一个输出键中。
 * **典型 Action**: `extract`。
 * **示例**:
 

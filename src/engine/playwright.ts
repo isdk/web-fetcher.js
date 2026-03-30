@@ -426,28 +426,95 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
   protected currentMousePos = { x: 0, y: 0 }
 
+  protected _getRandomDelay(base: number, variance: number = 0.3): number {
+    const min = base * (1 - variance)
+    const max = base * (1 + variance)
+    return Math.floor(Math.random() * (max - min + 1) + min)
+  }
+
   protected _getTrajectory(
     start: { x: number; y: number },
     end: { x: number; y: number },
-    steps = 10
+    steps = -1
   ) {
     const trajectory = []
-    // Quadratic Bézier curve for more human-like movement
-    // Control point with some randomness
-    const cp = {
-      x: start.x + (end.x - start.x) / 2 + (Math.random() - 0.5) * 100,
-      y: start.y + (end.y - start.y) / 2 + (Math.random() - 0.5) * 100,
+
+    if (steps === -1) {
+      const distance = Math.sqrt(
+        Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2)
+      )
+      // Human mouse speed is roughly 500-2000 px/s.
+      // We aim for a step every 5-15 pixels.
+      const pixelsPerStep = Math.random() * 10 + 5
+      steps = Math.max(5, Math.floor(distance / pixelsPerStep))
     }
+
+    // Quadratic Bézier curve for more human-like movement
+    // Control point with randomness to avoid mechanical straight lines
+    const midX = start.x + (end.x - start.x) / 2
+    const midY = start.y + (end.y - start.y) / 2
+    const cp = {
+      x: midX + (Math.random() - 0.5) * 100,
+      y: midY + (Math.random() - 0.5) * 100,
+    }
+
+    this._logDebug(
+      'mouseMove',
+      `Trajectory: start(${start.x},${start.y}) -> end(${end.x},${end.y}), cp(${cp.x},${cp.y}), steps: ${steps}`
+    )
 
     for (let i = 1; i <= steps; i++) {
       const t = i / steps
-      const x =
+      let x =
         (1 - t) * (1 - t) * start.x + 2 * (1 - t) * t * cp.x + t * t * end.x
-      const y =
+      let y =
         (1 - t) * (1 - t) * start.y + 2 * (1 - t) * t * cp.y + t * t * end.y
+
+      // Add Jitter (slight trembling)
+      if (i < steps) {
+        x += (Math.random() - 0.5) * 1.5
+        y += (Math.random() - 0.5) * 1.5
+      }
+
       trajectory.push({ x, y })
     }
     return trajectory
+  }
+
+  protected async _moveToSelector(
+    context: PlaywrightCrawlingContext,
+    selector: string,
+    steps: number = -1
+  ): Promise<{ x: number; y: number }> {
+    const { page } = context
+    const loc = page.locator(selector).first()
+    const box = await loc.boundingBox()
+    if (!box) {
+      throw new CommonError(
+        `Selector not found or not visible for mouse movement: ${selector}`,
+        'mouseMove'
+      )
+    }
+
+    const targetX = box.x + box.width / 2
+    const targetY = box.y + box.height / 2
+
+    const trajectory = this._getTrajectory(
+      this.currentMousePos,
+      { x: targetX, y: targetY },
+      steps
+    )
+
+    for (const pos of trajectory) {
+      await page.mouse.move(pos.x, pos.y)
+      if (steps > 1 || steps === -1) {
+        // Random delay between 5ms and 20ms
+        await page.waitForTimeout(Math.random() * 15 + 5)
+      }
+    }
+
+    this.currentMousePos = { x: targetX, y: targetY }
+    return this.currentMousePos
   }
 
   protected async executeAction(
@@ -477,58 +544,69 @@ export class PlaywrightFetchEngine extends FetchEngine<
         return fetchResponse
       }
       case 'mouseMove': {
-        const { x, y, selector, steps = 10 } = action.params
-        let targetX = x || 0
-        let targetY = y || 0
-
+        const { x, y, selector, steps = -1 } = action.params
         if (selector) {
-          const loc = page.locator(selector).first()
-          const box = await loc.boundingBox()
-          if (box) {
-            targetX = box.x + box.width / 2
-            targetY = box.y + box.height / 2
+          await this._moveToSelector(context, selector, steps)
+        } else if (x !== undefined && y !== undefined) {
+          const trajectory = this._getTrajectory(
+            this.currentMousePos,
+            { x, y },
+            steps
+          )
+          for (const pos of trajectory) {
+            await page.mouse.move(pos.x, pos.y)
+            if (steps > 1 || steps === -1) {
+              await page.waitForTimeout(Math.random() * 15 + 5)
+            }
           }
+          this.currentMousePos = { x, y }
         }
-
-        const trajectory = this._getTrajectory(
-          this.currentMousePos,
-          { x: targetX, y: targetY },
-          steps
-        )
-        for (const pos of trajectory) {
-          await page.mouse.move(pos.x, pos.y)
-          // Random small delay between steps
-          if (steps > 1) {
-            await page.waitForTimeout(Math.random() * 20 + 5)
-          }
-        }
-        this.currentMousePos = { x: targetX, y: targetY }
         return
       }
       case 'mouseClick': {
-        const { x, y, button = 'left', clickCount = 1, delay = 0 } = action.params
-        if (x !== undefined && y !== undefined) {
-          await page.mouse.click(x, y, { button, clickCount, delay })
+        const {
+          x,
+          y,
+          selector,
+          button = 'left',
+          clickCount = 1,
+          delay = 0,
+        } = action.params as any
+        if (selector) {
+          await this._moveToSelector(context, selector, -1)
+          await page.mouse.click(this.currentMousePos.x, this.currentMousePos.y, {
+            button,
+            clickCount,
+            delay: this._getRandomDelay(delay || 50, 0.2),
+          })
+        } else if (x !== undefined && y !== undefined) {
+          await page.mouse.click(x, y, {
+            button,
+            clickCount,
+            delay: this._getRandomDelay(delay || 50, 0.2),
+          })
           this.currentMousePos = { x, y }
         } else {
           await page.mouse.click(this.currentMousePos.x, this.currentMousePos.y, {
             button,
             clickCount,
-            delay,
+            delay: this._getRandomDelay(delay || 50, 0.2),
           })
         }
+        // Small delay to allow DOM updates to settle
+        await page.waitForTimeout(this._getRandomDelay(100, 0.5))
         this.lastResponse = await this.buildResponse(context)
         return
       }
       case 'keyboardType': {
-        const { text, delay = 100 } = action.params
-        await page.keyboard.type(text, { delay })
+        const { text, delay = 150 } = action.params
+        await page.keyboard.type(text, { delay: this._getRandomDelay(delay) })
         this.lastResponse = await this.buildResponse(context)
         return
       }
       case 'keyboardPress': {
-        const { key, delay = 0 } = action.params
-        await page.keyboard.press(key, { delay })
+        const { key, delay = 50 } = action.params
+        await page.keyboard.press(key, { delay: this._getRandomDelay(delay) })
         this.lastResponse = await this.buildResponse(context)
         return
       }
@@ -595,15 +673,15 @@ export class PlaywrightFetchEngine extends FetchEngine<
               timeout: defaultTimeout,
             })
           }
+          if (action.options?.ms) {
+            await page.waitForTimeout(this._getRandomDelay(action.options.ms, 0.1))
+          }
         } catch (e) {
           if (action.options?.failOnTimeout === false) {
             // ignore error
           } else {
             throw e
           }
-        }
-        if (action.options?.ms) {
-          await page.waitForTimeout(action.options.ms)
         }
         return
       case 'submit': {

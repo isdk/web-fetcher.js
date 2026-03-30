@@ -158,7 +158,7 @@ There are two primary engine implementations:
   * ✅ **Fast and Lightweight**: Ideal for speed and low resource consumption.
   * ✅ **HTTP-Compliant Redirects**: Correctly handles 301-303 and 307/308 redirects, preserving methods/bodies or converting to GET as per HTTP specifications.
   * ❌ **No JavaScript Execution**: Cannot interact with client-side rendered content.
-  * ⚙️ **Simulated Interaction**: Actions like `click` and `submit` are simulated by making new HTTP requests.
+  * ⚙️ **Simulated Interaction**: Actions like `click` and `submit` are simulated by making new HTTP requests. **Browser-only actions** (e.g., `mouseMove`, `keyboardType`) will throw a `not_supported` error.
 * **Use Case**: Scraping static websites, server-rendered pages, or APIs.
 
 ### `PlaywrightFetchEngine` (browser mode)

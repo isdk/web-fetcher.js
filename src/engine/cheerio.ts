@@ -310,8 +310,11 @@ export class CheerioFetchEngine extends FetchEngine<
       case 'mouseClick':
       case 'keyboardType':
       case 'keyboardPress':
-        // No-op for cheerio
-        return
+        throw new CommonError(
+          `Action "${action.type}" is only supported in browser engine mode.`,
+          action.type,
+          'not_supported'
+        )
       case 'click': {
         if (!$)
           throw new CommonError(

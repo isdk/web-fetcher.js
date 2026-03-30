@@ -406,7 +406,20 @@ export abstract class FetchAction {
       }
 
       if (options?.storeAs) {
-        context.outputs[options.storeAs] = result?.result
+        const prev = context.outputs[options.storeAs]
+        const current = result?.result
+        if (
+          typeof prev === 'object' &&
+          prev !== null &&
+          typeof current === 'object' &&
+          current !== null &&
+          !Array.isArray(prev) &&
+          !Array.isArray(current)
+        ) {
+          context.outputs[options.storeAs] = { ...prev, ...current }
+        } else {
+          context.outputs[options.storeAs] = current
+        }
       }
       if (result?.error) {
         context.currentAction!.error = result.error

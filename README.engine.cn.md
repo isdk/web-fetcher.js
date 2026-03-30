@@ -158,7 +158,7 @@ await session.executeAll([
   * ✅ **快速轻量**：非常适合追求速度和低资源消耗的场景。
   * ✅ **符合 HTTP 标准的重定向**：正确处理 301-303 和 307/308 重定向，按照 HTTP 规范保留方法/正文或转换为 GET。
   * ❌ **无 JavaScript 执行**：无法与客户端渲染的内容交互。
-  * ⚙️ **模拟交互**：像 `click` 和 `submit` 这样的动作是通过发起新的 HTTP 请求来模拟的。
+  * ⚙️ **模拟交互**：像 `click` 和 `submit` 这样的动作是通过发起新的 HTTP 请求来模拟的。**仅浏览器支持的动作**（如 `mouseMove`, `keyboardType`）将抛出 `not_supported` 错误。
 * **用例**: 抓取静态网站、服务器渲染页面或 API。
 
 ### `PlaywrightFetchEngine` (browser 模式)
