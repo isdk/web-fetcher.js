@@ -222,6 +222,7 @@ export type FetchEngineAction =
         button?: 'left' | 'right' | 'middle'
         clickCount?: number
         delay?: number
+        steps?: number
       }
     }
   | { type: 'keyboardType'; params: { text: string; delay?: number } }
