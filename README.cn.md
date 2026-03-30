@@ -182,7 +182,7 @@ searchGoogle('gemini');
   * `cookies`: Cookie 数组。
   * `sessionState`: Crawlee 会话状态。
   * `text`, `html`: 页面内容。
-* `outputs` (Record<string, any>): 通过 `storeAs` 提取并存储的数据。
+* `outputs` (Record<string, any>): 通过 `storeAs` 提取并存储的数据。注意：当多个动作将对象存储到同一个键时，它们将被合并而不再是覆盖。
 
 ---
 

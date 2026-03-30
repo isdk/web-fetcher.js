@@ -249,24 +249,25 @@ Retrieves the full content of the current page state.
 
 #### `mouseMove`
 
-Moves the mouse cursor to a specific coordinate or element. In `browser` mode, it uses a **Bézier curve** to simulate a human-like non-linear trajectory.
+Moves the mouse cursor to a specific coordinate or element. In `browser` mode, it uses a **Bézier curve** to simulate a human-like non-linear trajectory with slight jitter for realism.
 
 * **`id`**: `mouseMove`
 * **`params`**:
   * `x` (number, optional): The absolute X coordinate.
   * `y` (number, optional): The absolute Y coordinate.
   * `selector` (string, optional): A CSS selector. If provided, the mouse moves to the center of the element.
-  * `steps` (number, optional): The number of intermediate steps for the trajectory (default: 10).
+  * `steps` (number, optional): The number of intermediate steps for the trajectory (default: `-1`). Set to `-1` to calculate steps automatically based on distance (simulating natural speed).
 * **`returns`**: `none`
 
 #### `mouseClick`
 
-Triggers a mouse click at the current position or specified coordinates.
+Triggers a mouse click at the current position or specified coordinates. If a `selector` is provided, the cursor will first move smoothly to the target element (using dynamic steps) before clicking.
 
 * **`id`**: `mouseClick`
 * **`params`**:
   * `x` (number, optional): The absolute X coordinate to click.
   * `y` (number, optional): The absolute Y coordinate to click.
+  * `selector` (string, optional): A CSS selector. If provided, moves the mouse to the element first.
   * `button` (string, optional): The mouse button to use (`left`, `right`, or `middle`). Default is `left`.
   * `clickCount` (number, optional): The number of clicks (e.g., 2 for double-click). Default is 1.
   * `delay` (number, optional): Delay between mousedown and mouseup in milliseconds.
@@ -541,7 +542,7 @@ In `@isdk/web-fetcher`, an Action's `static returnType` is more than a type hint
 * **Definition**: Any serializable data structure (Object, Array, string, etc.).
 * **Purpose**: Primary mechanism for business data extraction.
 * **Usage**: Use this when your action produces processed data that doesn't represent the whole page or system state.
-* **System Behavior**: If the action configuration includes `storeAs: "key"`, the framework automatically saves the `result` into `context.outputs["key"]`.
+* **System Behavior**: If the action configuration includes `storeAs: "key"`, the framework automatically saves the `result` into `context.outputs["key"]`. If the target key already contains an object and the new result is also an object, they will be merged (shallow merge) instead of overwritten. This allows multiple `extract` actions to accumulate data into the same output key.
 * **Typical Actions**: `extract`.
 * **Example**:
 

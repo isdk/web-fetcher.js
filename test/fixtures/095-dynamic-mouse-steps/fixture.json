@@ -1,0 +1,26 @@
+{
+  "name": "095-dynamic-mouse-steps",
+  "title": "Verify dynamic mouse steps (-1) works for different distances",
+  "engine": "browser",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseMove", "params": { "selector": "#near", "steps": -1 } },
+    { "action": "mouseClick", "params": {} },
+    {
+      "action": "extract",
+      "params": { "status1": { "selector": "#status" } }
+    },
+    { "action": "mouseMove", "params": { "selector": "#far", "steps": -1 } },
+    { "action": "mouseClick", "params": {} },
+    {
+      "action": "extract",
+      "params": { "status2": { "selector": "#status" } }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status1": "Near Clicked",
+      "status2": "Far Clicked"
+    }
+  }
+}

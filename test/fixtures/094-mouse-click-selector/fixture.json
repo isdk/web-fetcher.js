@@ -1,0 +1,20 @@
+{
+  "name": "094-mouse-click-selector",
+  "title": "Verify mouseClick supports selector directly",
+  "engine": "browser",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseClick", "params": { "selector": "#btn" } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Clicked"
+    }
+  }
+}

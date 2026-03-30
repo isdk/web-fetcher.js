@@ -181,7 +181,7 @@ The `fetchWeb` function returns an object containing:
   * `cookies`: Array of cookies.
   * `sessionState`: Crawlee session state.
   * `text`, `html`: Page content.
-* `outputs` (Record<string, any>): Data extracted and stored via `storeAs`.
+* `outputs` (Record<string, any>): Data extracted and stored via `storeAs`. Note: When multiple actions store objects into the same key, they are merged instead of overwritten.
 
 ---
 
