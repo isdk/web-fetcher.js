@@ -1,0 +1,78 @@
+{
+  "title": "should support enhanced mouse trajectories with steps and selectors",
+  "engine": "browser",
+  "actions": [
+    {
+      "action": "goto",
+      "params": { "url": "/" }
+    },
+    {
+      "action": "mouseMove",
+      "params": {
+        "selector": "#target",
+        "steps": 20
+      }
+    },
+    {
+      "action": "evaluate",
+      "storeAs": "moveResult",
+      "params": {
+        "fn": "() => ({ pathLength: window.mousePath.length, hovered: window.hovered })"
+      }
+    },
+    {
+      "action": "evaluate",
+      "params": {
+        "fn": "() => { window.mousePath = []; window.hovered = false; }"
+      }
+    },
+    {
+      "action": "mouseClick",
+      "params": {
+        "x": 100,
+        "y": 100,
+        "steps": 10
+      }
+    },
+    {
+      "action": "evaluate",
+      "storeAs": "clickResult",
+      "params": {
+        "fn": "() => ({ pathLength: window.mousePath.length, lastClick: window.lastClick })"
+      }
+    },
+    {
+      "action": "evaluate",
+      "params": {
+        "fn": "() => { window.mousePath = []; window.lastClick = null; }"
+      }
+    },
+    {
+      "action": "mouseClick",
+      "params": {
+        "selector": "#target",
+        "steps": 15
+      }
+    },
+    {
+      "action": "evaluate",
+      "storeAs": "selectorClickResult",
+      "params": {
+        "fn": "() => ({ pathLength: window.mousePath.length, lastClick: window.lastClick })"
+      }
+    }
+  ],
+  "expected": {
+    "outputs": {
+      "moveResult": {
+        "hovered": true
+      },
+      "clickResult": {
+        "lastClick": { "x": 100, "y": 100 }
+      },
+      "selectorClickResult": {
+        "lastClick": { "x": 350, "y": 250 }
+      }
+    }
+  }
+}
