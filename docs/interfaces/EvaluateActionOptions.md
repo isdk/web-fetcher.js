@@ -6,7 +6,7 @@
 
 # Interface: EvaluateActionOptions
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:178](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/engine/base.ts#L178)
+Defined in: [packages/web-fetcher/src/engine/base.ts:179](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L179)
 
 Options for the [FetchEngine.evaluate](../classes/FetchEngine.md#evaluate) action, specifying the function to execute and its arguments.
 
@@ -51,7 +51,7 @@ automatically detect the change, trigger a navigation, and wait for the new page
 
 > `optional` **args**: `any`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:199](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/engine/base.ts#L199)
+Defined in: [packages/web-fetcher/src/engine/base.ts:200](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L200)
 
 Data to pass to the function.
 
@@ -66,7 +66,7 @@ Recommended to use an array or object for multiple values.
 
 > **fn**: `string` \| (...`args`) => `any`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:191](https://github.com/isdk/web-fetcher.js/blob/1f80c3c783d0455bd4ff73248c57c2c39ab9f7c9/src/engine/base.ts#L191)
+Defined in: [packages/web-fetcher/src/engine/base.ts:192](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L192)
 
 The function or expression to execute.
 

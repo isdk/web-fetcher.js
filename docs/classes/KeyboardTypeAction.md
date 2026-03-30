@@ -2,11 +2,11 @@
 
 ***
 
-[@isdk/web-fetcher](../globals.md) / GotoAction
+[@isdk/web-fetcher](../globals.md) / KeyboardTypeAction
 
-# Class: GotoAction
+# Class: KeyboardTypeAction
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L10)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:9](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/keyboard.ts#L9)
 
 ## Extends
 
@@ -16,11 +16,11 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://git
 
 ### Constructor
 
-> **new GotoAction**(): `GotoAction`
+> **new KeyboardTypeAction**(): `KeyboardTypeAction`
 
 #### Returns
 
-`GotoAction`
+`KeyboardTypeAction`
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://git
 
 > `static` **capabilities**: `object`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L13)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:12](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/keyboard.ts#L12)
 
 #### browser
 
@@ -40,7 +40,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://git
 
 #### http
 
-> **http**: `"native"`
+> **http**: `"noop"`
 
 #### Overrides
 
@@ -50,9 +50,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://git
 
 ### id
 
-> `static` **id**: `string` = `'goto'`
+> `static` **id**: `string` = `'keyboardType'`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:11](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L11)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:10](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/keyboard.ts#L10)
 
 #### Overrides
 
@@ -62,9 +62,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:11](https://git
 
 ### returnType
 
-> `static` **returnType**: `"response"`
+> `static` **returnType**: `"none"`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:12](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L12)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:11](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/keyboard.ts#L11)
 
 #### Overrides
 
@@ -362,9 +362,9 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github
 
 ### onExecute()
 
-> **onExecute**(`context`, `options?`, `eventPayload?`): `Promise`\<`void` \| [`FetchResponse`](../interfaces/FetchResponse.md)\>
+> **onExecute**(`context`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:18](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L18)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:17](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/keyboard.ts#L17)
 
 #### Parameters
 
@@ -376,13 +376,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:18](https://git
 
 [`BaseFetchActionProperties`](../interfaces/BaseFetchActionProperties.md)
 
-##### eventPayload?
-
-`any`
-
 #### Returns
 
-`Promise`\<`void` \| [`FetchResponse`](../interfaces/FetchResponse.md)\>
+`Promise`\<`void`\>
 
 #### Overrides
 

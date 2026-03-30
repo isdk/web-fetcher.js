@@ -158,7 +158,7 @@ There are two primary engine implementations:
   * ✅ **Fast and Lightweight**: Ideal for speed and low resource consumption.
   * ✅ **HTTP-Compliant Redirects**: Correctly handles 301-303 and 307/308 redirects, preserving methods/bodies or converting to GET as per HTTP specifications.
   * ❌ **No JavaScript Execution**: Cannot interact with client-side rendered content.
-  * ⚙️ **Simulated Interaction**: Actions like `click` and `submit` are simulated by making new HTTP requests.
+  * ⚙️ **Simulated Interaction**: Actions like `click` and `submit` are simulated by making new HTTP requests. **Browser-only actions** (e.g., `mouseMove`, `keyboardType`) will throw a `not_supported` error.
 * **Use Case**: Scraping static websites, server-rendered pages, or APIs.
 
 ### `PlaywrightFetchEngine` (browser mode)
@@ -182,6 +182,27 @@ To combat sophisticated anti-bot measures, the `PlaywrightFetchEngine` offers an
 * **How to enable**: Set the `antibot: true` option when creating the fetcher properties.
 * **Use Case**: Scraping websites protected by services like Cloudflare or other advanced bot-detection systems.
 * **Note**: This feature requires additional dependencies (`camoufox-js`, `firefox`) and may have a performance overhead.
+
+#### Configuration
+
+You can configure the browser engine via the `browser` property in options:
+
+*   `headless` (boolean): Whether to run browser in headless mode (default: `true`).
+*   `launchOptions` (object): Native Playwright [LaunchOptions](https://playwright.dev/docs/api/class-browsertype#browser-type-launch) passed directly to the browser launcher (e.g., `slowMo`, `args`, `devtools`).
+
+    ```typescript
+    const result = await fetchWeb({
+      url: 'https://example.com',
+      engine: 'browser',
+      browser: {
+        headless: false,
+        launchOptions: {
+          slowMo: 100, // Slow down operations by 100ms
+          args: ['--start-maximized'] // Pass custom arguments
+        }
+      }
+    });
+    ```
 
 ---
 

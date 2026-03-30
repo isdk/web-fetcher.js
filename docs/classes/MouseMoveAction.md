@@ -2,11 +2,11 @@
 
 ***
 
-[@isdk/web-fetcher](../globals.md) / GotoAction
+[@isdk/web-fetcher](../globals.md) / MouseMoveAction
 
-# Class: GotoAction
+# Class: MouseMoveAction
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L10)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:11](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/mouse.ts#L11)
 
 ## Extends
 
@@ -16,11 +16,11 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://git
 
 ### Constructor
 
-> **new GotoAction**(): `GotoAction`
+> **new MouseMoveAction**(): `MouseMoveAction`
 
 #### Returns
 
-`GotoAction`
+`MouseMoveAction`
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:10](https://git
 
 > `static` **capabilities**: `object`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L13)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:14](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/mouse.ts#L14)
 
 #### browser
 
@@ -40,7 +40,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://git
 
 #### http
 
-> **http**: `"native"`
+> **http**: `"noop"`
 
 #### Overrides
 
@@ -50,9 +50,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:13](https://git
 
 ### id
 
-> `static` **id**: `string` = `'goto'`
+> `static` **id**: `string` = `'mouseMove'`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:11](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L11)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:12](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/mouse.ts#L12)
 
 #### Overrides
 
@@ -62,9 +62,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:11](https://git
 
 ### returnType
 
-> `static` **returnType**: `"response"`
+> `static` **returnType**: `"none"`
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:12](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L12)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:13](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/mouse.ts#L13)
 
 #### Overrides
 
@@ -362,9 +362,9 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github
 
 ### onExecute()
 
-> **onExecute**(`context`, `options?`, `eventPayload?`): `Promise`\<`void` \| [`FetchResponse`](../interfaces/FetchResponse.md)\>
+> **onExecute**(`context`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:18](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/goto.ts#L18)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:19](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/definitions/mouse.ts#L19)
 
 #### Parameters
 
@@ -376,13 +376,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/goto.ts:18](https://git
 
 [`BaseFetchActionProperties`](../interfaces/BaseFetchActionProperties.md)
 
-##### eventPayload?
-
-`any`
-
 #### Returns
 
-`Promise`\<`void` \| [`FetchResponse`](../interfaces/FetchResponse.md)\>
+`Promise`\<`void`\>
 
 #### Overrides
 
