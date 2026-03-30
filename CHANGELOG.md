@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.3.1](https://github.com/isdk/web-fetcher.js/compare/v0.3.0...v0.3.1) (2026-03-30)
+
+
+### Features
+
+* add mouse and keyboard simulation actions with human-like trajectory support ([9e4efef](https://github.com/isdk/web-fetcher.js/commit/9e4efefc0bc4d0e482dbd3bcac65cb9ee3a70cab))
+* **engine:** add support for passing browser launchOptions to Playwright ([a3830ed](https://github.com/isdk/web-fetcher.js/commit/a3830ed1c4a34132f21dbd11919116c4993ad6c8))
+* enhance mouse simulation and optimize data extraction logic ([e691a23](https://github.com/isdk/web-fetcher.js/commit/e691a2370f59d15979b47994c8ca14d7b7d2edd3))
+
 ## [0.3.0](https://github.com/isdk/web-fetcher.js/compare/v0.2.12...v0.3.0) (2026-01-20)
 
 
