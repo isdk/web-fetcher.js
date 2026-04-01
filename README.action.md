@@ -273,6 +273,20 @@ Triggers a mouse click at the current position or specified coordinates. If a `s
   * `delay` (number, optional): Delay between mousedown and mouseup in milliseconds.
 * **`returns`**: `none`
 
+#### `mouseWheel`
+
+Simulates a mouse wheel scroll event. If a `selector` or coordinates (`x`, `y`) are provided, the cursor will first move to the target position (using dynamic steps) before scrolling.
+
+* **`id`**: `mouseWheel`
+* **`params`**:
+  * `x` (number, optional): The absolute X coordinate to scroll at.
+  * `y` (number, optional): The absolute Y coordinate to scroll at.
+  * `selector` (string, optional): A CSS selector. If provided, moves the mouse to the element first.
+  * `deltaX` (number, optional): The horizontal scroll amount. Default is 0.
+  * `deltaY` (number, optional): The vertical scroll amount. Default is 0.
+  * `steps` (number, optional): The number of intermediate steps for the trajectory if moving to a target (default: `-1`).
+* **`returns`**: `none`
+
 #### `keyboardType`
 
 Simulates a person typing text into the currently focused element.

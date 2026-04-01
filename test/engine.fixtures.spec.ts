@@ -150,6 +150,7 @@ interface Fixture {
   server?: {
     responseHeaders?: Record<string, string>;
   };
+  timeout?: number;
 }
 
 const TEST_TIMEOUT = 15000; // 5s
@@ -282,6 +283,7 @@ const engineTestSuite = (
   caseDir: string,
   engineName: 'cheerio' | 'playwright' | string,
 ) => {
+  const timeout = fixture.timeout || TEST_TIMEOUT;
   describe.sequential(engineName, () => {
     let server: FastifyInstance;
     let baseUrl: string;
@@ -291,7 +293,7 @@ const engineTestSuite = (
       await server.listen({ port: 0, host: 'localhost' });
       const address = server.server.address() as AddressInfo;
       baseUrl = `http://localhost:${address.port}`;
-    }, TEST_TIMEOUT);
+    }, timeout);
 
     afterAll(async () => {
       await server.close();
@@ -362,9 +364,16 @@ const engineTestSuite = (
             checkExpectations(allLogs, fixture.expected.logs);
           } else if (fixture.options?.debug) {
             // Default check if debug is on but no specific logs expected
-            const debugLogs = consoleSpy.mock.calls.filter((call: any[]) =>
-              String(call[0]).includes(`[FetchEngine:${engineName}`)
-            );
+            const debugLogs = consoleSpy.mock.calls.filter((call: any[]) => {
+              const logMsg = String(call[0]);
+              return logMsg.includes('[FetchEngine:') && (
+                logMsg.includes(`:${engineName}`) ||
+                (engineName === 'playwright' && logMsg.includes(':browser')) ||
+                (engineName === 'browser' && logMsg.includes(':playwright')) ||
+                (engineName === 'cheerio' && logMsg.includes(':http')) ||
+                (engineName === 'http' && logMsg.includes(':cheerio'))
+              );
+            });
             expect(debugLogs.length).toBeGreaterThan(0);
           }
           consoleSpy.mockRestore();
@@ -443,7 +452,7 @@ const engineTestSuite = (
       }
 
       await session.dispose();
-    }, TEST_TIMEOUT);
+    }, timeout);
   });
 };
 

@@ -308,6 +308,7 @@ export class CheerioFetchEngine extends FetchEngine<
       }
       case 'mouseMove':
       case 'mouseClick':
+      case 'mouseWheel':
       case 'keyboardType':
       case 'keyboardPress':
         throw new CommonError(

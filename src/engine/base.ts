@@ -225,6 +225,17 @@ export type FetchEngineAction =
         steps?: number
       }
     }
+  | {
+      type: 'mouseWheel'
+      params: {
+        x?: number
+        y?: number
+        selector?: string
+        deltaX?: number
+        deltaY?: number
+        steps?: number
+      }
+    }
   | { type: 'keyboardType'; params: { text: string; delay?: number } }
   | { type: 'keyboardPress'; params: { key: string; delay?: number } }
   | { type: 'waitFor'; options?: WaitForActionOptions }
@@ -782,6 +793,22 @@ export abstract class FetchEngine<
     delay?: number
   }): Promise<void> {
     return this.dispatchAction({ type: 'mouseClick', params })
+  }
+
+  /**
+   * Scrolls the mouse wheel.
+   *
+   * @param params - Wheel parameters (x, y, selector, deltaX, deltaY, steps)
+   */
+  mouseWheel(params: {
+    x?: number
+    y?: number
+    selector?: string
+    deltaX?: number
+    deltaY?: number
+    steps?: number
+  }): Promise<void> {
+    return this.dispatchAction({ type: 'mouseWheel', params })
   }
 
   /**

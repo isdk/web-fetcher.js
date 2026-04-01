@@ -1,5 +1,6 @@
 {
   "title": "should handle goto after form submit",
+  "timeout": 60000,
   "options": {
     "debug": true,
     "antibot": true

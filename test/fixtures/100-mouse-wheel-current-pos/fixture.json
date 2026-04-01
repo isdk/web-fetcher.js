@@ -1,0 +1,21 @@
+{
+  "name": "100-mouse-wheel-current-pos",
+  "title": "Verify mouseWheel at current mouse position",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseMove", "params": { "selector": "#target", "steps": 1 } },
+    { "action": "mouseWheel", "params": { "deltaY": 40 } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "DeltaY: 40"
+    }
+  }
+}

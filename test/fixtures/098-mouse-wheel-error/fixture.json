@@ -1,0 +1,14 @@
+{
+  "name": "098-mouse-wheel-error",
+  "title": "Verify mouseWheel throws error in http engine",
+  "engine": "http",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseWheel", "params": { "deltaY": 100 } }
+  ],
+  "expected": {
+    "error": {
+      "message": "Action \"mouseWheel\" is only supported in browser engine mode."
+    }
+  }
+}

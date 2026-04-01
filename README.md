@@ -161,6 +161,7 @@ The library provides a set of powerful built-in actions, many of which are engin
 * `submit`: Submits a form (Engine-specific).
 * `mouseMove`: Moves the mouse cursor to a specific coordinate or element (Bézier curve supported).
 * `mouseClick`: Triggers a mouse click at the current position or specified coordinates.
+* `mouseWheel`: Simulates a mouse wheel scroll event with horizontal and vertical deltas at a target position.
 * `keyboardType`: Simulates human-like typing into the currently focused element.
 * `keyboardPress`: Simulates pressing a single key or a key combination.
 * `trim`: Removes elements from the DOM to clean up the page.
