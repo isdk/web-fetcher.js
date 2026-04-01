@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Wheel Coordinates Test</title>
+    <style>
+        .scroll-area {
+            width: 200px;
+            height: 200px;
+            overflow: auto;
+            background: #eee;
+            border: 1px solid #ccc;
+            position: absolute;
+        }
+        #area1 { top: 50px; left: 50px; }
+        #area2 { top: 300px; left: 300px; }
+        .spacer {
+            height: 500px;
+            width: 500px;
+            background: linear-gradient(to bottom right, #fff, #ccc);
+        }
+    </style>
+</head>
+<body>
+    <div id="area1" class="scroll-area"><div class="spacer">Area 1</div></div>
+    <div id="area2" class="scroll-area"><div class="spacer">Area 2</div></div>
+    <div id="status1">No wheel in 1</div>
+    <div id="status2">No wheel in 2</div>
+    <script>
+        const a1 = document.getElementById('area1');
+        const a2 = document.getElementById('area2');
+        const s1 = document.getElementById('status1');
+        const s2 = document.getElementById('status2');
+
+        a1.addEventListener('wheel', (e) => {
+            s1.innerText = `DeltaY: ${Math.round(e.deltaY)}`;
+        });
+        a2.addEventListener('wheel', (e) => {
+            s2.innerText = `DeltaY: ${Math.round(e.deltaY)}`;
+        });
+    </script>
+</body>
+</html>

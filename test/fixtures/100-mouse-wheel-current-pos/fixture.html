@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Wheel Current Position Test</title>
+    <style>
+        .scroll-area {
+            width: 200px;
+            height: 200px;
+            overflow: auto;
+            background: #eee;
+            border: 1px solid #ccc;
+        }
+        .spacer {
+            height: 500px;
+            width: 500px;
+            background: linear-gradient(to bottom right, #fff, #ccc);
+        }
+    </style>
+</head>
+<body>
+    <div id="target" class="scroll-area"><div class="spacer">Scroll me</div></div>
+    <div id="status">No wheel</div>
+    <script>
+        const target = document.getElementById('target');
+        const status = document.getElementById('status');
+
+        target.addEventListener('wheel', (e) => {
+            status.innerText = `DeltaY: ${Math.round(e.deltaY)}`;
+        });
+    </script>
+</body>
+</html>

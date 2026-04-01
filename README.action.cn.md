@@ -271,6 +271,20 @@ await fetchWeb({
   * `delay` (number, 可选): mousedown 和 mouseup 之间的延迟（毫秒）。
 * **`returns`**: `none`
 
+#### `mouseWheel`
+
+模拟鼠标滚轮滚动事件。如果提供了 `selector` 或坐标 (`x`, `y`)，光标会先平滑地移动到目标位置（使用动态步数），然后再执行滚动。
+
+* **`id`**: `mouseWheel`
+* **`params`**:
+  * `x` (number, 可选): 滚动的绝对 X 坐标。
+  * `y` (number, 可选): 滚动的绝对 Y 坐标。
+  * `selector` (string, 可选): CSS 选择器。如果提供，鼠标会先移动到该元素。
+  * `deltaX` (number, 可选): 水平滚动量。默认为 0。
+  * `deltaY` (number, 可选): 垂直滚动量。默认为 0。
+  * `steps` (number, 可选): 移动到目标位置时的中间步数（默认：`-1`）。
+* **`returns`**: `none`
+
 #### `keyboardType`
 
 模拟真人在当前获得焦点的元素中输入文本。

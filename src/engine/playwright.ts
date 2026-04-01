@@ -445,50 +445,29 @@ export class PlaywrightFetchEngine extends FetchEngine<
   protected mouseInitialized = false
 
   protected async _initializeMousePos(page: Page) {
-    if (this.mouseInitialized) return
-
-    let size = page.viewportSize()
-    if (!size) {
-      try {
-        size = await page.evaluate(() => ({
-          width: window.innerWidth,
-          height: window.innerHeight,
-        }))
-      } catch {
-        size = { width: 1280, height: 720 }
-      }
+    if (this.mouseInitialized || this.currentMousePos.x !== 0 || this.currentMousePos.y !== 0) {
+      this.mouseInitialized = true
+      return
     }
 
-    const edge = Math.floor(Math.random() * 4) // 0: top, 1: right, 2: bottom, 3: left
+    const startOnLeftEdge = Math.random() > 0.5
     let x = 0
     let y = 0
 
-    switch (edge) {
-      case 0: // Top
-        x = Math.random() * size.width
-        y = -20
-        break
-      case 1: // Right
-        x = size.width + 20
-        y = Math.random() * size.height
-        break
-      case 2: // Bottom
-        x = Math.random() * size.width
-        y = size.height + 20
-        break
-      case 3: // Left
-        x = -20
-        y = Math.random() * size.height
-        break
+    if (startOnLeftEdge) {
+      x = 0
+      y = Math.floor(Math.random() * 600) + 100
+    } else {
+      x = Math.floor(Math.random() * 800) + 100
+      y = 0
     }
 
     this.currentMousePos = { x, y }
-    // Teleport to initial edge position silently before the page is fully interacted with
     try {
       await page.mouse.move(x, y)
       this.mouseInitialized = true
     } catch (e) {
-      // Page might be navigating, retry later or ignore
+      // Ignore if page is navigating
     }
   }
 
@@ -503,8 +482,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
     )
 
     if (steps === -1) {
-      // More key points for a smoother Bezier and easing curve
-      steps = Math.max(15, Math.min(30, Math.floor(distance / 40) + 10))
+      // Use 2-5 segments for the curve. Browser handles the pixel-level smoothing.
+      steps = Math.max(2, Math.min(3, Math.floor(distance / 400) + 2))
     }
 
     // Quadratic Bézier curve (subtle 0.1 intensity)
@@ -535,27 +514,39 @@ export class PlaywrightFetchEngine extends FetchEngine<
     steps: number = -1
   ): Promise<{ x: number; y: number }> {
     const { page } = context
+    const viewport = page.viewportSize()
+    if (viewport) {
+      target.x = Math.max(0, Math.min(target.x, viewport.width - 1))
+      target.y = Math.max(0, Math.min(target.y, viewport.height - 1))
+    }
+
     const startPos = { ...this.currentMousePos }
     const trajectory = this._getTrajectory(startPos, target, steps)
 
-    let lastPos = startPos
+    const totalDistance = Math.sqrt(
+      Math.pow(target.x - startPos.x, 2) + Math.pow(target.y - startPos.y, 2)
+    )
+
+    // Global pixel-per-step density (1 to 3 pixels per step)
+    const pixelsPerStep = Math.max(1, Math.min(3, totalDistance / 500 + 1))
+
+    // Find the longest segment to ensure it's smooth
+    let maxSegmentDist = 0
+    let lastP = startPos
+    for (const p of trajectory) {
+      const d = Math.sqrt(Math.pow(p.x - lastP.x, 2) + Math.pow(p.y - lastP.y, 2))
+      if (d > maxSegmentDist) maxSegmentDist = d
+      lastP = p
+    }
+
+    // IMPORTANT: Use the same number of steps for EVERY segment.
+    // Since segments are spatially eased (closer at ends, further in middle),
+    // using constant steps/time per segment creates natural acceleration/deceleration.
+    const stepsPerSegment = Math.max(5, Math.floor(maxSegmentDist / pixelsPerStep))
+
     for (const pos of trajectory) {
-      const dx = pos.x - lastPos.x
-      const dy = pos.y - lastPos.y
-      const segmentDist = Math.sqrt(dx * dx + dy * dy)
-
-      // PIXEL-PER-STEP:
-      // Ensure the browser moves through every single pixel between key points.
-      const internalSteps = Math.max(1, Math.floor(segmentDist))
-
-      await page.mouse.move(pos.x, pos.y, { steps: internalSteps })
-
-      // Extremely short pause to allow Playwright and the browser to sync,
-      // but without causing a visible stop.
-      // if (steps > 1 || steps === -1) {
-      //   await page.waitForTimeout(this._getRandomDelay(2, 0.5))
-      // }
-      lastPos = pos
+      // Browser-side interpolation handles the smooth movement within each eased segment
+      await page.mouse.move(pos.x, pos.y, { steps: stepsPerSegment })
     }
 
     this.currentMousePos = target
@@ -611,8 +602,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
       }
       case 'mouseMove': {
         const { x, y, selector, steps = -1 } = action.params
+        this._logDebug('mouseMove', `Moving to: ${selector || `(${x}, ${y})`}`)
         if (selector) {
           await this._moveToSelector(context, selector, steps)
+          this.lastResponse = await this.buildResponse(context)
         } else if (x !== undefined && y !== undefined) {
           await this._moveToPos(context, { x, y }, steps)
         }
@@ -628,6 +621,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
           delay = 0,
           steps = -1,
         } = action.params as any
+        this._logDebug('mouseClick', `Clicking at: ${selector || `(${x}, ${y})`}`)
         if (selector) {
           await this._moveToSelector(context, selector, steps)
         } else if (x !== undefined && y !== undefined) {
@@ -640,6 +634,28 @@ export class PlaywrightFetchEngine extends FetchEngine<
           delay: this._getRandomDelay(delay || 50, 0.2),
         })
         // Small delay to allow DOM updates to settle
+        await page.waitForTimeout(this._getRandomDelay(100, 0.5))
+        this.lastResponse = await this.buildResponse(context)
+        return
+      }
+      case 'mouseWheel': {
+        const {
+          x,
+          y,
+          selector,
+          deltaX = 0,
+          deltaY = 0,
+          steps = -1,
+        } = action.params as any
+        this._logDebug('mouseWheel', `Scrolling at: ${selector || `(${x}, ${y})`} deltaX: ${deltaX} deltaY: ${deltaY}`)
+        if (selector) {
+          await this._moveToSelector(context, selector, steps)
+        } else if (x !== undefined && y !== undefined) {
+          await this._moveToPos(context, { x, y }, steps)
+        }
+
+        await page.mouse.wheel(deltaX, deltaY)
+        // Small delay to allow potential scroll-triggered updates to settle
         await page.waitForTimeout(this._getRandomDelay(100, 0.5))
         this.lastResponse = await this.buildResponse(context)
         return

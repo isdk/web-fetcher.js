@@ -1,0 +1,22 @@
+{
+  "name": "101-mouse-wheel-multiple",
+  "title": "Verify multiple sequential mouseWheel actions",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseWheel", "params": { "deltaY": 10 } },
+    { "action": "mouseWheel", "params": { "deltaY": 20 } },
+    { "action": "mouseWheel", "params": { "deltaY": 30 } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Total DeltaY: 60"
+    }
+  }
+}

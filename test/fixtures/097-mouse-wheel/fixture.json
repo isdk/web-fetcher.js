@@ -1,0 +1,20 @@
+{
+  "name": "097-mouse-wheel",
+  "title": "Verify mouseWheel with deltaX and deltaY",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseWheel", "params": { "selector": "#scroll-area", "deltaX": 10, "deltaY": 20, "steps": 1 } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "DeltaX: 10, DeltaY: 20"
+    }
+  }
+}

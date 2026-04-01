@@ -1,0 +1,23 @@
+{
+  "name": "099-mouse-wheel-coordinates",
+  "title": "Verify mouseWheel at specific coordinates",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseWheel", "params": { "x": 100, "y": 100, "deltaY": 50, "steps": 1 } },
+    { "action": "mouseWheel", "params": { "x": 350, "y": 350, "deltaY": 100, "steps": 1 } },
+    {
+      "action": "extract",
+      "params": {
+        "status1": { "selector": "#status1" },
+        "status2": { "selector": "#status2" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status1": "DeltaY: 50",
+      "status2": "DeltaY: 100"
+    }
+  }
+}

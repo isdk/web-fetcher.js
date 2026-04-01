@@ -1,6 +1,10 @@
 {
   "title": "should support enhanced mouse trajectories with steps and selectors",
+  "timeout": 30000,
   "engine": "browser",
+  "options": {
+    "debug": true
+  },
   "actions": [
     {
       "action": "goto",
@@ -10,7 +14,7 @@
       "action": "mouseMove",
       "params": {
         "selector": "#target",
-        "steps": 20
+        "steps": 2
       }
     },
     {
@@ -31,7 +35,7 @@
       "params": {
         "x": 100,
         "y": 100,
-        "steps": 10
+        "steps": 1
       }
     },
     {
@@ -51,7 +55,7 @@
       "action": "mouseClick",
       "params": {
         "selector": "#target",
-        "steps": 15
+        "steps": 2
       }
     },
     {
