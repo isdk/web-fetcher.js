@@ -251,8 +251,8 @@ await fetchWeb({
 
 * **`id`**: `mouseMove`
 * **`params`**:
-  * `x` (number, 可选): 绝对 X 坐标。
-  * `y` (number, 可选): 绝对 Y 坐标。
+  * `x` (number, 可选): 绝对 X 坐标。如果为负数，则被视为相对于当前位置的随机偏移。
+  * `y` (number, 可选): 绝对 Y 坐标。如果为负数，则被视为相对于当前位置的随机偏移。
   * `selector` (string, 可选): CSS 选择器。如果提供，鼠标将移动到该元素的中心。
   * `steps` (number, 可选): 轨迹的中间步数（默认：`-1`）。设置为 `-1` 可根据距离动态计算步数（模拟自然移动速度）。
 * **`returns`**: `none`
@@ -263,8 +263,9 @@ await fetchWeb({
 
 * **`id`**: `mouseClick`
 * **`params`**:
-  * `x` (number, 可选): 点击的绝对 X 坐标。
-  * `y` (number, 可选): 点击的绝对 Y 坐标。
+  * `x` (number, 可选): 要点击的绝对 X 坐标。如果为负数，则被视为相对于当前位置的随机偏移。
+  * `y` (number, 可选): 要点击的绝对 Y 坐标。如果为负数，则被视为相对于当前位置的随机偏移。
+
   * `selector` (string, 可选): CSS 选择器。如果提供，鼠标会先移动到该元素。
   * `button` (string, 可选): 使用的鼠标按键 (`left`, `right`, 或 `middle`)。默认为 `left`。
   * `clickCount` (number, 可选): 点击次数（例如：2 表示双击）。默认为 1。
@@ -273,19 +274,29 @@ await fetchWeb({
 
 #### `mouseWheel`
 
-模拟鼠标滚轮滚动事件。如果提供了 `selector` 或坐标 (`x`, `y`)，光标会先平滑地移动到目标位置（使用动态步数），然后再执行滚动。
+模拟鼠标滚轮滚动事件。如果提供了 `selector`，元素会自动滚动到视口中，并且在滚动前将鼠标指针移动到其中心。如果提供了 `steps`，滚动增量将被拆分为多个步骤，以模拟真实的滚动行为。
 
 * **`id`**: `mouseWheel`
 * **`params`**:
-  * `x` (number, 可选): 滚动的绝对 X 坐标。
-  * `y` (number, 可选): 滚动的绝对 Y 坐标。
-  * `selector` (string, 可选): CSS 选择器。如果提供，鼠标会先移动到该元素。
-  * `deltaX` (number, 可选): 水平滚动量。默认为 0。
-  * `deltaY` (number, 可选): 垂直滚动量。默认为 0。
-  * `steps` (number, 可选): 移动到目标位置时的中间步数（默认：`-1`）。
+  * `x` (number, 可选): 滚动的绝对 X 坐标。如果为负数，则被视为相对于当前位置的随机偏移。
+  * `y` (number, 可选): 滚动的绝对 Y 坐标。如果为负数，则被视为相对于当前位置的随机偏移。
+  * `selector` (string, 可选): CSS 选择器。如果提供，则确保元素可见并先将鼠标移动到其中心。
+  * `deltaX` (number, 可选): 水平滚动量。默认值为 0。
+  * `deltaY` (number, 可选): 垂直滚动量。默认值为 0。
+  * `steps` (number, 可选): 将滚动拆分为多少步执行（默认值：`1`）。
+* **`returns`**: `none`
+
+#### `scrollIntoView`
+
+滚动页面或可滚动容器，使特定元素在视口中可见。
+
+* **`id`**: `scrollIntoView`
+* **`params`**:
+  * `selector` (string): 要滚动到视口可见的元素的 CSS 选择器。
 * **`returns`**: `none`
 
 #### `keyboardType`
+
 
 模拟真人在当前获得焦点的元素中输入文本。
 

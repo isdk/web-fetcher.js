@@ -1,0 +1,20 @@
+{
+  "name": "103-mouse-wheel-steps",
+  "title": "Verify mouseWheel splits delta into steps",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "mouseWheel", "params": { "selector": "#scroll-area", "deltaY": 100, "steps": 5 } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Count: 5, DeltaY: 100"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Wheel Ensure Visible Test</title>
+    <style>
+        #top-spacer {
+            height: 2000px;
+        }
+        #scroll-area {
+            width: 200px;
+            height: 200px;
+            overflow: auto;
+            border: 2px solid red;
+        }
+        #inner-spacer {
+            height: 1000px;
+        }
+    </style>
+</head>
+<body>
+    <div id="top-spacer">Scroll down to find the area</div>
+    <div id="scroll-area">
+        <div id="inner-spacer">Target Area</div>
+    </div>
+    <div id="status">No activity</div>
+    <script>
+        const area = document.getElementById('scroll-area');
+        area.addEventListener('wheel', (e) => {
+            document.getElementById('status').innerText = `Wheeled DeltaY: ${Math.round(e.deltaY)}`;
+        });
+    </script>
+</body>
+</html>

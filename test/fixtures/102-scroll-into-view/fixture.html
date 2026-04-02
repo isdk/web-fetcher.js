@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Scroll Into View Test</title>
+    <style>
+        #spacer {
+            height: 2000px;
+            background: #f0f0f0;
+        }
+        #target {
+            margin: 20px;
+            padding: 10px;
+            background: #ffcc00;
+        }
+    </style>
+</head>
+<body>
+    <div id="spacer">Scroll down to see the target</div>
+    <div id="status">Not Clicked</div>
+    <button id="target" onclick="document.getElementById('status').innerText = 'Clicked Target'">Target Button</button>
+</body>
+</html>

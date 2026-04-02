@@ -311,6 +311,7 @@ export class CheerioFetchEngine extends FetchEngine<
       case 'mouseWheel':
       case 'keyboardType':
       case 'keyboardPress':
+      case 'scrollIntoView':
         throw new CommonError(
           `Action "${action.type}" is only supported in browser engine mode.`,
           action.type,

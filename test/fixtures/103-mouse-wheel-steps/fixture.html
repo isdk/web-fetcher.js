@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Mouse Wheel Steps Test</title>
+    <style>
+        #scroll-area {
+            width: 200px;
+            height: 200px;
+            overflow: auto;
+            border: 1px solid black;
+        }
+        #spacer {
+            height: 1000px;
+        }
+    </style>
+</head>
+<body>
+    <div id="scroll-area">
+        <div id="spacer">Scroll me</div>
+    </div>
+    <div id="status">Count: 0, DeltaY: 0</div>
+    <script>
+        let count = 0;
+        let totalDeltaY = 0;
+        const area = document.getElementById('scroll-area');
+        area.addEventListener('wheel', (e) => {
+            count++;
+            totalDeltaY += e.deltaY;
+            document.getElementById('status').innerText = `Count: ${count}, DeltaY: ${Math.round(totalDeltaY)}`;
+        });
+    </script>
+</body>
+</html>
