@@ -238,6 +238,7 @@ export type FetchEngineAction =
     }
   | { type: 'keyboardType'; params: { text: string; delay?: number } }
   | { type: 'keyboardPress'; params: { key: string; delay?: number } }
+  | { type: 'scrollIntoView'; params: { selector: string } }
   | { type: 'waitFor'; options?: WaitForActionOptions }
   | { type: 'submit'; selector?: any; options?: SubmitActionOptions }
   | { type: 'getContent' }
@@ -809,6 +810,15 @@ export abstract class FetchEngine<
     steps?: number
   }): Promise<void> {
     return this.dispatchAction({ type: 'mouseWheel', params })
+  }
+
+  /**
+   * Scrolls the element into view.
+   *
+   * @param params - Scroll parameters (selector)
+   */
+  scrollIntoView(params: { selector: string }): Promise<void> {
+    return this.dispatchAction({ type: 'scrollIntoView', params })
   }
 
   /**
@@ -1568,5 +1578,11 @@ export abstract class FetchEngine<
 
   // 能力协商（动作层可打标：native/simulate/noop）
   // abstract capabilityOf(actionName: string): FetchActionCapabilityMode;
+}
+
+export function getRandomDelay(base: number, variance: number = 0.3): number {
+  const min = base * (1 - variance)
+  const max = base * (1 + variance)
+  return Math.floor(Math.random() * (max - min + 1) + min)
 }
 

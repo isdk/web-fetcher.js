@@ -4,7 +4,7 @@ import type {
   PlaywrightCrawlerOptions,
 } from 'crawlee'
 import { firefox } from 'playwright'
-import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base'
+import { FetchEngine, type GotoActionOptions, FetchEngineAction, getRandomDelay } from './base'
 import { FetchResponse } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
@@ -426,12 +426,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
   protected currentMousePos = { x: 0, y: 0 }
 
-  protected _getRandomDelay(base: number, variance: number = 0.3): number {
-    const min = base * (1 - variance)
-    const max = base * (1 + variance)
-    return Math.floor(Math.random() * (max - min + 1) + min)
-  }
-
   protected async _sharedRequestHandler(
     context: PlaywrightCrawlingContext
   ): Promise<void> {
@@ -514,13 +508,19 @@ export class PlaywrightFetchEngine extends FetchEngine<
     steps: number = -1
   ): Promise<{ x: number; y: number }> {
     const { page } = context
+    const startPos = { ...this.currentMousePos }
+    if (target.x < 0) {
+      target.x = Math.floor(Math.random() * getRandomDelay(Math.abs(target.x))) + (startPos.x || 0)
+    }
+    if (target.y < 0) {
+      target.y = Math.floor(Math.random() * getRandomDelay(Math.abs(target.y))) + (startPos.y || 0)
+    }
     const viewport = page.viewportSize()
     if (viewport) {
       target.x = Math.max(0, Math.min(target.x, viewport.width - 1))
       target.y = Math.max(0, Math.min(target.y, viewport.height - 1))
     }
 
-    const startPos = { ...this.currentMousePos }
     const trajectory = this._getTrajectory(startPos, target, steps)
 
     const totalDistance = Math.sqrt(
@@ -553,25 +553,34 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return this.currentMousePos
   }
 
+  protected async _ensureVisible(
+    context: PlaywrightCrawlingContext,
+    selector: string
+  ): Promise<{ x: number; y: number }> {
+    const { page } = context
+    const loc = page.locator(selector).first()
+    await loc.scrollIntoViewIfNeeded()
+    const box = await loc.boundingBox()
+    if (!box) {
+      throw new CommonError(
+        `Selector not found or not visible: ${selector}`,
+        'ensureVisible'
+      )
+    }
+
+    return {
+      x: box.x + box.width / 2,
+      y: box.y + box.height / 2,
+    }
+  }
+
   protected async _moveToSelector(
     context: PlaywrightCrawlingContext,
     selector: string,
     steps: number = -1
   ): Promise<{ x: number; y: number }> {
-    const { page } = context
-    const loc = page.locator(selector).first()
-    const box = await loc.boundingBox()
-    if (!box) {
-      throw new CommonError(
-        `Selector not found or not visible for mouse movement: ${selector}`,
-        'mouseMove'
-      )
-    }
-
-    const targetX = box.x + box.width / 2
-    const targetY = box.y + box.height / 2
-
-    return this._moveToPos(context, { x: targetX, y: targetY }, steps)
+    const pos = await this._ensureVisible(context, selector)
+    return this._moveToPos(context, pos, steps)
   }
 
   protected async executeAction(
@@ -584,7 +593,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
       case 'dispose':
         return
       case 'navigate': {
-        this._logDebug('navigate', `Navigating to: ${action.url}`)
         const response = await page.goto(action.url, {
           waitUntil: action.opts?.waitUntil || 'domcontentloaded',
           timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
@@ -602,7 +610,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
       }
       case 'mouseMove': {
         const { x, y, selector, steps = -1 } = action.params
-        this._logDebug('mouseMove', `Moving to: ${selector || `(${x}, ${y})`}`)
         if (selector) {
           await this._moveToSelector(context, selector, steps)
           this.lastResponse = await this.buildResponse(context)
@@ -621,7 +628,6 @@ export class PlaywrightFetchEngine extends FetchEngine<
           delay = 0,
           steps = -1,
         } = action.params as any
-        this._logDebug('mouseClick', `Clicking at: ${selector || `(${x}, ${y})`}`)
         if (selector) {
           await this._moveToSelector(context, selector, steps)
         } else if (x !== undefined && y !== undefined) {
@@ -631,10 +637,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
         await page.mouse.click(this.currentMousePos.x, this.currentMousePos.y, {
           button,
           clickCount,
-          delay: this._getRandomDelay(delay || 50, 0.2),
+          delay: getRandomDelay(delay || 50, 0.2),
         })
         // Small delay to allow DOM updates to settle
-        await page.waitForTimeout(this._getRandomDelay(100, 0.5))
+        await page.waitForTimeout(getRandomDelay(100, 0.5))
         this.lastResponse = await this.buildResponse(context)
         return
       }
@@ -645,35 +651,50 @@ export class PlaywrightFetchEngine extends FetchEngine<
           selector,
           deltaX = 0,
           deltaY = 0,
-          steps = -1,
+          steps = 1,
         } = action.params as any
-        this._logDebug('mouseWheel', `Scrolling at: ${selector || `(${x}, ${y})`} deltaX: ${deltaX} deltaY: ${deltaY}`)
         if (selector) {
-          await this._moveToSelector(context, selector, steps)
+          const pos = await this._ensureVisible(context, selector)
+          await page.mouse.move(pos.x, pos.y)
+          this.currentMousePos = pos
         } else if (x !== undefined && y !== undefined) {
-          await this._moveToPos(context, { x, y }, steps)
+          await this._moveToPos(context, { x, y })
         }
 
-        await page.mouse.wheel(deltaX, deltaY)
+        if (steps > 1) {
+          const stepDeltaX = deltaX / steps
+          const stepDeltaY = deltaY / steps
+          for (let i = 0; i < steps; i++) {
+            await page.mouse.wheel(stepDeltaX, stepDeltaY)
+          }
+        } else {
+          await page.mouse.wheel(deltaX, deltaY)
+        }
+
         // Small delay to allow potential scroll-triggered updates to settle
-        await page.waitForTimeout(this._getRandomDelay(100, 0.5))
+        await page.waitForTimeout(getRandomDelay(100, 0.5))
+        this.lastResponse = await this.buildResponse(context)
+        return
+      }
+      case 'scrollIntoView': {
+        const { selector } = action.params
+        await this._ensureVisible(context, selector)
         this.lastResponse = await this.buildResponse(context)
         return
       }
       case 'keyboardType': {
         const { text, delay = 150 } = action.params
-        await page.keyboard.type(text, { delay: this._getRandomDelay(delay) })
+        await page.keyboard.type(text, { delay: getRandomDelay(delay) })
         this.lastResponse = await this.buildResponse(context)
         return
       }
       case 'keyboardPress': {
         const { key, delay = 50 } = action.params
-        await page.keyboard.press(key, { delay: this._getRandomDelay(delay) })
+        await page.keyboard.press(key, { delay: getRandomDelay(delay) })
         this.lastResponse = await this.buildResponse(context)
         return
       }
       case 'click': {
-        this._logDebug('click', 'Clicking selector:', action.selector)
         const oldUrl = page.url()
         await page.click(action.selector, { timeout: defaultTimeout })
         await this._waitForNavigation(context, oldUrl, 'click')
@@ -736,7 +757,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
             })
           }
           if (action.options?.ms) {
-            await page.waitForTimeout(this._getRandomDelay(action.options.ms, 0.1))
+            await page.waitForTimeout(getRandomDelay(action.options.ms, 0.1))
           }
         } catch (e) {
           if (action.options?.failOnTimeout === false) {
@@ -800,7 +821,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
           this.lastResponse = result
           return
         } else {
-          this._logDebug('submit', 'Submitting form...')
+          this._logDebug('submit', 'Submitting form by form.submit()...')
           const oldUrl = page.url()
 
           await el.evaluate((form: HTMLFormElement) => form.submit())

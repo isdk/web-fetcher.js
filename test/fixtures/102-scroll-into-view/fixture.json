@@ -1,0 +1,21 @@
+{
+  "name": "102-scroll-into-view",
+  "title": "Verify scrollIntoView makes element clickable",
+  "engine": "playwright",
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "scrollIntoView", "params": { "selector": "#target" } },
+    { "action": "click", "params": { "selector": "#target" } },
+    {
+      "action": "extract",
+      "params": {
+        "status": { "selector": "#status" }
+      }
+    }
+  ],
+  "expected": {
+    "data": {
+      "status": "Clicked Target"
+    }
+  }
+}
