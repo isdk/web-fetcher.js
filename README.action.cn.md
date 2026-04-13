@@ -297,7 +297,6 @@ await fetchWeb({
 
 #### `keyboardType`
 
-
 模拟真人在当前获得焦点的元素中输入文本。
 
 * **`id`**: `keyboardType`
