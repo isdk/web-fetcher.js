@@ -1,6 +1,6 @@
 import { defaultsDeep, merge } from 'lodash-es'
 import { EventEmitter } from 'events-ex'
-import { CommonError } from '@isdk/common-error'
+import { CommonError, ErrorCode } from '@isdk/common-error'
 import {
   Configuration,
   KeyValueStore,
@@ -1313,10 +1313,14 @@ export abstract class FetchEngine<
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
       this.pendingRequests.delete(request.userData.requestId)
       const response = (error as any).response
-      const statusCode = response?.statusCode || 500
+      const statusCode = response?.statusCode || (error.message.includes('timed out') ? ErrorCode.RequestTimeout : ErrorCode.InternalError)
       const url = response?.url ? response.url : request.url
+      const message = statusCode === ErrorCode.RequestTimeout ?
+        url + ' ' + error.message :
+        `Request${url ? ' for ' + url : ''} failed: ${error.message}`
+      ;
       const finalError = new CommonError(
-        `Request${url ? ' for ' + url : ''} failed: ${error.message}`,
+        message,
         'request',
         statusCode
       )
