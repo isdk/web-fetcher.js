@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.3.2](https://github.com/isdk/web-fetcher.js/compare/v0.3.1...v0.3.2) (2026-05-03)
+
+
+### Features
+
+* add mouseWheel action and optimize browser interaction performance ([2ebbbfb](https://github.com/isdk/web-fetcher.js/commit/2ebbbfb3e111eed525155bab9c1666c4cb34e530))
+* add steps to mouseClick ([36da1c1](https://github.com/isdk/web-fetcher.js/commit/36da1c1a17ca035971971d195aa6790d16669364))
+* refactor mouseWheel and add scrollIntoView with enhanced visibility logic ([2e72c8a](https://github.com/isdk/web-fetcher.js/commit/2e72c8ad5711dc6498e65a4024b5b89f7040a1f2))
+
+
+### Bug Fixes
+
+* **session:** executeAll should use defaultsDeep merege options ([65ab550](https://github.com/isdk/web-fetcher.js/commit/65ab5500b355c69b13e50e6c5787424ee7b1e1f4))
+* statusCode not work ([1a26b97](https://github.com/isdk/web-fetcher.js/commit/1a26b9765c1b5ea369f3e4ed2afa1cd69998e73d))
+
+
+### Refactor
+
+* add steps to mouseClick and refactor to moveToPos ([c5a5b97](https://github.com/isdk/web-fetcher.js/commit/c5a5b97d78ac133e87a45a7265e1253891432da6))
+
 ## [0.3.1](https://github.com/isdk/web-fetcher.js/compare/v0.3.0...v0.3.1) (2026-03-30)
 
 
