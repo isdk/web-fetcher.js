@@ -37,14 +37,14 @@
   },
   "dependencies": {
     "@isdk/common-error": "^0.2.0",
-    "camoufox-js": "^0.9.3",
+    "camoufox-js": "^0.10.2",
     "cheerio": "^1.2.0",
     "crawlee": "^3.16.0",
-    "events-ex": "^2.2.0",
-    "jsdom": "^29.0.1",
-    "lodash-es": "^4.17.23",
-    "nanoid": "^5.1.7",
-    "playwright": "^1.58.2",
+    "events-ex": "^2.3.1",
+    "jsdom": "^29.1.1",
+    "lodash-es": "^4.18.1",
+    "nanoid": "^5.1.11",
+    "playwright": "^1.59.1",
     "util-ex": "^2.5.2"
   },
   "devDependencies": {
