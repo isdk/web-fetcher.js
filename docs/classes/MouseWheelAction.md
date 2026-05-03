@@ -2,11 +2,11 @@
 
 ***
 
-[@isdk/web-fetcher](../globals.md) / PauseAction
+[@isdk/web-fetcher](../globals.md) / MouseWheelAction
 
-# Class: PauseAction
+# Class: MouseWheelAction
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/pause.ts#L4)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:101](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L101)
 
 ## Extends
 
@@ -16,11 +16,11 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://git
 
 ### Constructor
 
-> **new PauseAction**(): `PauseAction`
+> **new MouseWheelAction**(): `MouseWheelAction`
 
 #### Returns
 
-`PauseAction`
+`MouseWheelAction`
 
 #### Inherited from
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:4](https://git
 
 > `static` **capabilities**: `object`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/pause.ts#L7)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:104](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L104)
 
 #### browser
 
@@ -40,7 +40,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://git
 
 #### http
 
-> **http**: `"native"`
+> **http**: `"noop"`
 
 #### Overrides
 
@@ -50,9 +50,9 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:7](https://git
 
 ### id
 
-> `static` **id**: `string` = `'pause'`
+> `static` **id**: `string` = `'mouseWheel'`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:5](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/pause.ts#L5)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:102](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L102)
 
 #### Overrides
 
@@ -64,7 +64,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:5](https://git
 
 > `static` **returnType**: `"none"`
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:12](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/pause.ts#L12)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:103](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L103)
 
 #### Overrides
 
@@ -364,7 +364,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github
 
 > **onExecute**(`context`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/action/definitions/pause.ts:14](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/pause.ts#L14)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:109](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L109)
 
 #### Parameters
 

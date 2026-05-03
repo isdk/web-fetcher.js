@@ -253,8 +253,8 @@ Moves the mouse cursor to a specific coordinate or element. In `browser` mode, i
 
 * **`id`**: `mouseMove`
 * **`params`**:
-  * `x` (number, optional): The absolute X coordinate.
-  * `y` (number, optional): The absolute Y coordinate.
+  * `x` (number, optional): The absolute X coordinate. If negative, it's treated as a relative random offset from current position.
+  * `y` (number, optional): The absolute Y coordinate. If negative, it's treated as a relative random offset from current position.
   * `selector` (string, optional): A CSS selector. If provided, the mouse moves to the center of the element.
   * `steps` (number, optional): The number of intermediate steps for the trajectory (default: `-1`). Set to `-1` to calculate steps automatically based on distance (simulating natural speed).
 * **`returns`**: `none`
@@ -265,12 +265,35 @@ Triggers a mouse click at the current position or specified coordinates. If a `s
 
 * **`id`**: `mouseClick`
 * **`params`**:
-  * `x` (number, optional): The absolute X coordinate to click.
-  * `y` (number, optional): The absolute Y coordinate to click.
+  * `x` (number, optional): The absolute X coordinate to click. If negative, it's treated as a relative random offset from current position.
+  * `y` (number, optional): The absolute Y coordinate to click. If negative, it's treated as a relative random offset from current position.
   * `selector` (string, optional): A CSS selector. If provided, moves the mouse to the element first.
   * `button` (string, optional): The mouse button to use (`left`, `right`, or `middle`). Default is `left`.
   * `clickCount` (number, optional): The number of clicks (e.g., 2 for double-click). Default is 1.
   * `delay` (number, optional): Delay between mousedown and mouseup in milliseconds.
+* **`returns`**: `none`
+
+#### `mouseWheel`
+
+Simulates a mouse wheel scroll event. If a `selector` is provided, the element is automatically scrolled into view, and the cursor is moved to its center before scrolling. If `steps` is provided, the scroll delta is split into multiple steps for realistic simulation.
+
+* **`id`**: `mouseWheel`
+* **`params`**:
+  * `x` (number, optional): The absolute X coordinate to scroll at. If negative, it's treated as a relative random offset from current position.
+  * `y` (number, optional): The absolute Y coordinate to scroll at. If negative, it's treated as a relative random offset from current position.
+  * `selector` (string, optional): A CSS selector. If provided, ensures the element is visible and moves the mouse to its center first.
+  * `deltaX` (number, optional): The horizontal scroll amount. Default is 0.
+  * `deltaY` (number, optional): The vertical scroll amount. Default is 0.
+  * `steps` (number, optional): The number of steps to split the scroll into (default: `1`).
+* **`returns`**: `none`
+
+#### `scrollIntoView`
+
+Scrolls the page or a scrollable container to make a specific element visible in the viewport.
+
+* **`id`**: `scrollIntoView`
+* **`params`**:
+  * `selector` (string): The CSS selector of the element to scroll into view.
 * **`returns`**: `none`
 
 #### `keyboardType`
