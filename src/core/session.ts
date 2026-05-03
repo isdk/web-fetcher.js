@@ -141,17 +141,17 @@ export class FetchSession {
       `Total actions: ${actions.length}`,
       actions.map((a) => a.id || a.name || a.action)
     )
+    const internal = this.context.internal
     const runContext: FetchContext = options
-      ? {
-          ...this.context,
-          ...options,
+      ? defaultsDeep({
           // Preserve critical session state
           id: this.context.id,
           eventBus: this.context.eventBus,
           outputs: this.context.outputs,
           execute: this.context.execute,
           action: this.context.action,
-        }
+          internal,
+        }, options, this.context)
       : this.context
 
     let i = options?.index ?? 0
