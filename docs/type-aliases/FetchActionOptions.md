@@ -8,4 +8,4 @@
 
 > **FetchActionOptions** = `RequireAtLeastOne`\<[`FetchActionProperties`](../interfaces/FetchActionProperties.md), `"id"` \| `"name"` \| `"action"`\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:90](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L90)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:90](https://github.com/isdk/web-fetcher.js/blob/ff2bf8a6938cad6b2dc7c85fb1380de226cb3724/src/action/fetch-action.ts#L90)
