@@ -8,6 +8,6 @@
 
 > **TrimPreset** = `"scripts"` \| `"styles"` \| `"svgs"` \| `"images"` \| `"comments"` \| `"hidden"` \| `"all"`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:117](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L117)
+Defined in: [packages/web-fetcher/src/engine/base.ts:117](https://github.com/isdk/web-fetcher.js/blob/ff2bf8a6938cad6b2dc7c85fb1380de226cb3724/src/engine/base.ts#L117)
 
 Predefined cleanup groups for the [FetchEngine.trim](../classes/FetchEngine.md#trim) action.
