@@ -1,0 +1,533 @@
+[**@isdk/web-fetcher**](../README.md)
+
+***
+
+[@isdk/web-fetcher](../globals.md) / ScrollIntoViewAction
+
+# Class: ScrollIntoViewAction
+
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:57](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L57)
+
+## Extends
+
+- [`FetchAction`](FetchAction.md)
+
+## Constructors
+
+### Constructor
+
+> **new ScrollIntoViewAction**(): `ScrollIntoViewAction`
+
+#### Returns
+
+`ScrollIntoViewAction`
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`constructor`](FetchAction.md#constructor)
+
+## Properties
+
+### capabilities
+
+> `static` **capabilities**: `object`
+
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:60](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L60)
+
+#### browser
+
+> **browser**: `"native"`
+
+#### http
+
+> **http**: `"noop"`
+
+#### Overrides
+
+[`FetchAction`](FetchAction.md).[`capabilities`](FetchAction.md#capabilities)
+
+***
+
+### id
+
+> `static` **id**: `string` = `'scrollIntoView'`
+
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:58](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L58)
+
+#### Overrides
+
+[`FetchAction`](FetchAction.md).[`id`](FetchAction.md#id)
+
+***
+
+### returnType
+
+> `static` **returnType**: `"none"`
+
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:59](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L59)
+
+#### Overrides
+
+[`FetchAction`](FetchAction.md).[`returnType`](FetchAction.md#returntype)
+
+## Accessors
+
+### capabilities
+
+#### Get Signature
+
+> **get** **capabilities**(): [`FetchActionCapabilities`](../type-aliases/FetchActionCapabilities.md)
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:163](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L163)
+
+##### Returns
+
+[`FetchActionCapabilities`](../type-aliases/FetchActionCapabilities.md)
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`capabilities`](FetchAction.md#capabilities-1)
+
+***
+
+### id
+
+#### Get Signature
+
+> **get** **id**(): `string`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:155](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L155)
+
+##### Returns
+
+`string`
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`id`](FetchAction.md#id-1)
+
+***
+
+### returnType
+
+#### Get Signature
+
+> **get** **returnType**(): [`FetchReturnType`](../type-aliases/FetchReturnType.md)
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:159](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L159)
+
+##### Returns
+
+[`FetchReturnType`](../type-aliases/FetchReturnType.md)
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`returnType`](FetchAction.md#returntype-1)
+
+## Methods
+
+### afterExec()
+
+> **afterExec**(`context`, `options?`, `result?`, `scope?`): `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:391](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L391)
+
+Action 结束生命周期
+负责：调用钩子、赋值lastResult, 触发事件、清理 stack、恢复 currentAction
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### options?
+
+[`BaseFetchCollectorActionProperties`](../interfaces/BaseFetchCollectorActionProperties.md)
+
+##### result?
+
+[`FetchActionResult`](../interfaces/FetchActionResult.md)\<[`FetchReturnType`](../type-aliases/FetchReturnType.md)\>
+
+##### scope?
+
+###### collectors?
+
+`CollectorsRuntime`
+
+###### entry
+
+[`FetchActionInContext`](../interfaces/FetchActionInContext.md)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`afterExec`](FetchAction.md#afterexec)
+
+***
+
+### beforeExec()
+
+> **beforeExec**(`context`, `options?`): `Promise`\<\{ `collectors`: `CollectorsRuntime` \| `undefined`; `entry`: [`FetchActionInContext`](../interfaces/FetchActionInContext.md); \}\>
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:347](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L347)
+
+Action 开始生命周期
+负责：初始化 stack、设置 currentAction、触发事件、调用钩子
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### options?
+
+[`FetchActionProperties`](../interfaces/FetchActionProperties.md)
+
+#### Returns
+
+`Promise`\<\{ `collectors`: `CollectorsRuntime` \| `undefined`; `entry`: [`FetchActionInContext`](../interfaces/FetchActionInContext.md); \}\>
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`beforeExec`](FetchAction.md#beforeexec)
+
+***
+
+### delegateToEngine()
+
+> `protected` **delegateToEngine**(`context`, `method`, ...`args`): `Promise`\<`any`\>
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:184](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L184)
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### method
+
+keyof [`FetchEngine`](FetchEngine.md)\<`any`, `any`, `any`\>
+
+##### args
+
+...`any`[]
+
+#### Returns
+
+`Promise`\<`any`\>
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`delegateToEngine`](FetchAction.md#delegatetoengine)
+
+***
+
+### execute()
+
+> **execute**\<`R`\>(`context`, `options?`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:461](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L461)
+
+#### Type Parameters
+
+##### R
+
+`R` *extends* [`FetchReturnType`](../type-aliases/FetchReturnType.md) = `"any"`
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### options?
+
+[`FetchActionProperties`](../interfaces/FetchActionProperties.md)
+
+#### Returns
+
+`Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`execute`](FetchAction.md#execute)
+
+***
+
+### getCapability()
+
+> **getCapability**(`mode?`): [`FetchActionCapabilityMode`](../type-aliases/FetchActionCapabilityMode.md)
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:150](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L150)
+
+#### Parameters
+
+##### mode?
+
+[`FetchEngineType`](../type-aliases/FetchEngineType.md)
+
+#### Returns
+
+[`FetchActionCapabilityMode`](../type-aliases/FetchActionCapabilityMode.md)
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`getCapability`](FetchAction.md#getcapability)
+
+***
+
+### installCollectors()
+
+> `protected` **installCollectors**(`context`, `options?`): `CollectorsRuntime` \| `undefined`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:201](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L201)
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### options?
+
+[`FetchActionProperties`](../interfaces/FetchActionProperties.md)
+
+#### Returns
+
+`CollectorsRuntime` \| `undefined`
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`installCollectors`](FetchAction.md#installcollectors)
+
+***
+
+### onAfterExec()?
+
+> `protected` `optional` **onAfterExec**(`context`, `options?`): `void` \| `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:172](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L172)
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### options?
+
+[`FetchActionProperties`](../interfaces/FetchActionProperties.md)
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`onAfterExec`](FetchAction.md#onafterexec)
+
+***
+
+### onBeforeExec()?
+
+> `protected` `optional` **onBeforeExec**(`context`, `options?`): `void` \| `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:168](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L168)
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### options?
+
+[`FetchActionProperties`](../interfaces/FetchActionProperties.md)
+
+#### Returns
+
+`void` \| `Promise`\<`void`\>
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`onBeforeExec`](FetchAction.md#onbeforeexec)
+
+***
+
+### onExecute()
+
+> **onExecute**(`context`, `options?`): `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:65](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/definitions/mouse.ts#L65)
+
+#### Parameters
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+##### options?
+
+[`BaseFetchActionProperties`](../interfaces/BaseFetchActionProperties.md)
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Overrides
+
+[`FetchAction`](FetchAction.md).[`onExecute`](FetchAction.md#onexecute)
+
+***
+
+### create()
+
+#### Call Signature
+
+> `static` **create**(`id`): [`FetchAction`](FetchAction.md) \| `undefined`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:113](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L113)
+
+##### Parameters
+
+###### id
+
+`_RequireAtLeastOne`
+
+##### Returns
+
+[`FetchAction`](FetchAction.md) \| `undefined`
+
+##### Inherited from
+
+[`FetchAction`](FetchAction.md).[`create`](FetchAction.md#create)
+
+#### Call Signature
+
+> `static` **create**(`id`): [`FetchAction`](FetchAction.md) \| `undefined`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:114](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L114)
+
+##### Parameters
+
+###### id
+
+`string`
+
+##### Returns
+
+[`FetchAction`](FetchAction.md) \| `undefined`
+
+##### Inherited from
+
+[`FetchAction`](FetchAction.md).[`create`](FetchAction.md#create)
+
+***
+
+### get()
+
+> `static` **get**(`id`): *typeof* [`FetchAction`](FetchAction.md) \| `undefined`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:109](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L109)
+
+#### Parameters
+
+##### id
+
+`string`
+
+#### Returns
+
+*typeof* [`FetchAction`](FetchAction.md) \| `undefined`
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`get`](FetchAction.md#get)
+
+***
+
+### getCapability()
+
+> `static` **getCapability**(`mode?`): [`FetchActionCapabilityMode`](../type-aliases/FetchActionCapabilityMode.md)
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:146](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L146)
+
+#### Parameters
+
+##### mode?
+
+[`FetchEngineType`](../type-aliases/FetchEngineType.md)
+
+#### Returns
+
+[`FetchActionCapabilityMode`](../type-aliases/FetchActionCapabilityMode.md)
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`getCapability`](FetchAction.md#getcapability-2)
+
+***
+
+### has()
+
+> `static` **has**(`name`): `boolean`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:130](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L130)
+
+#### Parameters
+
+##### name
+
+`string`
+
+#### Returns
+
+`boolean`
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`has`](FetchAction.md#has)
+
+***
+
+### list()
+
+> `static` **list**(): `string`[]
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:134](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L134)
+
+#### Returns
+
+`string`[]
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`list`](FetchAction.md#list)
+
+***
+
+### register()
+
+> `static` **register**(`actionClass`): `void`
+
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:103](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L103)
+
+#### Parameters
+
+##### actionClass
+
+*typeof* [`FetchAction`](FetchAction.md)
+
+#### Returns
+
+`void`
+
+#### Inherited from
+
+[`FetchAction`](FetchAction.md).[`register`](FetchAction.md#register)

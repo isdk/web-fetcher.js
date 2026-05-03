@@ -24,8 +24,10 @@
 - [KeyboardTypeAction](classes/KeyboardTypeAction.md)
 - [MouseClickAction](classes/MouseClickAction.md)
 - [MouseMoveAction](classes/MouseMoveAction.md)
+- [MouseWheelAction](classes/MouseWheelAction.md)
 - [PauseAction](classes/PauseAction.md)
 - [PlaywrightFetchEngine](classes/PlaywrightFetchEngine.md)
+- [ScrollIntoViewAction](classes/ScrollIntoViewAction.md)
 - [SubmitAction](classes/SubmitAction.md)
 - [TrimAction](classes/TrimAction.md)
 - [WaitForAction](classes/WaitForAction.md)
@@ -55,7 +57,9 @@
 - [KeyboardTypeParams](interfaces/KeyboardTypeParams.md)
 - [MouseClickParams](interfaces/MouseClickParams.md)
 - [MouseMoveParams](interfaces/MouseMoveParams.md)
+- [MouseWheelParams](interfaces/MouseWheelParams.md)
 - [PendingEngineRequest](interfaces/PendingEngineRequest.md)
+- [ScrollIntoViewParams](interfaces/ScrollIntoViewParams.md)
 - [StorageOptions](interfaces/StorageOptions.md)
 - [SubmitActionOptions](interfaces/SubmitActionOptions.md)
 - [TrimActionOptions](interfaces/TrimActionOptions.md)
@@ -86,3 +90,4 @@
 ## Functions
 
 - [fetchWeb](functions/fetchWeb.md)
+- [getRandomDelay](functions/getRandomDelay.md)

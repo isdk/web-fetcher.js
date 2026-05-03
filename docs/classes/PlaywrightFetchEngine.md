@@ -6,7 +6,7 @@
 
 # Class: PlaywrightFetchEngine
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:19](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L19)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:19](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L19)
 
 ## Extends
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/engine/playwright.ts:19](https://github.co
 
 > `protected` `optional` **\_initialCookies**: [`Cookie`](../interfaces/Cookie.md)[]
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:396](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L396)
+Defined in: [packages/web-fetcher/src/engine/base.ts:409](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L409)
 
 #### Inherited from
 
@@ -44,7 +44,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:396](https://github.com/isd
 
 > `protected` **\_initializedSessions**: `Set`\<`string`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:397](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L397)
+Defined in: [packages/web-fetcher/src/engine/base.ts:410](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L410)
 
 #### Inherited from
 
@@ -56,7 +56,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:397](https://github.com/isd
 
 > `protected` **actionEmitter**: `EventEmitter`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:401](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L401)
+Defined in: [packages/web-fetcher/src/engine/base.ts:414](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L414)
 
 #### Inherited from
 
@@ -68,7 +68,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:401](https://github.com/isd
 
 > `protected` **actionQueue**: [`DispatchedEngineAction`](../interfaces/DispatchedEngineAction.md)[] = `[]`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:408](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L408)
+Defined in: [packages/web-fetcher/src/engine/base.ts:421](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L421)
 
 #### Inherited from
 
@@ -80,7 +80,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:408](https://github.com/isd
 
 > `protected` `optional` **activeContext**: `PlaywrightCrawlingContext`\<`Dictionary`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:405](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L405)
+Defined in: [packages/web-fetcher/src/engine/base.ts:418](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L418)
 
 #### Inherited from
 
@@ -92,7 +92,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:405](https://github.com/isd
 
 > `protected` **blockedTypes**: `Set`\<`string`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:410](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L410)
+Defined in: [packages/web-fetcher/src/engine/base.ts:423](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L423)
 
 #### Inherited from
 
@@ -104,7 +104,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:410](https://github.com/isd
 
 > `protected` `optional` **config**: `Configuration`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:390](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L390)
+Defined in: [packages/web-fetcher/src/engine/base.ts:403](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L403)
 
 #### Inherited from
 
@@ -116,7 +116,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:390](https://github.com/isd
 
 > `protected` `optional` **crawler**: `PlaywrightCrawler`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:387](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L387)
+Defined in: [packages/web-fetcher/src/engine/base.ts:400](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L400)
 
 #### Inherited from
 
@@ -128,7 +128,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:387](https://github.com/isd
 
 > `protected` `optional` **crawlerRunPromise**: `Promise`\<`FinalStatistics`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:389](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L389)
+Defined in: [packages/web-fetcher/src/engine/base.ts:402](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L402)
 
 #### Inherited from
 
@@ -140,7 +140,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:389](https://github.com/isd
 
 > `protected` `optional` **ctx**: [`FetchEngineContext`](../interfaces/FetchEngineContext.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:385](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L385)
+Defined in: [packages/web-fetcher/src/engine/base.ts:398](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L398)
 
 #### Inherited from
 
@@ -152,7 +152,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:385](https://github.com/isd
 
 > `protected` **currentMousePos**: `object`
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:427](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L427)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:427](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L427)
 
 #### x
 
@@ -168,7 +168,7 @@ Defined in: [packages/web-fetcher/src/engine/playwright.ts:427](https://github.c
 
 > `protected` `optional` **currentSession**: `Session`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:398](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L398)
+Defined in: [packages/web-fetcher/src/engine/base.ts:411](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L411)
 
 #### Inherited from
 
@@ -180,7 +180,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:398](https://github.com/isd
 
 > `protected` **hdrs**: `Record`\<`string`, `string`\> = `{}`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:395](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L395)
+Defined in: [packages/web-fetcher/src/engine/base.ts:408](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L408)
 
 #### Inherited from
 
@@ -192,7 +192,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:395](https://github.com/isd
 
 > `protected` `optional` **isCrawlerReady**: `boolean`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:388](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L388)
+Defined in: [packages/web-fetcher/src/engine/base.ts:401](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L401)
 
 #### Inherited from
 
@@ -204,7 +204,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:388](https://github.com/isd
 
 > `protected` **isEngineDisposed**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:403](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L403)
+Defined in: [packages/web-fetcher/src/engine/base.ts:416](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L416)
 
 #### Inherited from
 
@@ -216,7 +216,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:403](https://github.com/isd
 
 > `protected` **isExecutingAction**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:406](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L406)
+Defined in: [packages/web-fetcher/src/engine/base.ts:419](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L419)
 
 #### Inherited from
 
@@ -228,7 +228,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:406](https://github.com/isd
 
 > `protected` **isPageActive**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:402](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L402)
+Defined in: [packages/web-fetcher/src/engine/base.ts:415](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L415)
 
 #### Inherited from
 
@@ -240,7 +240,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:402](https://github.com/isd
 
 > `protected` **isProcessingActionLoop**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:409](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L409)
+Defined in: [packages/web-fetcher/src/engine/base.ts:422](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L422)
 
 #### Inherited from
 
@@ -252,7 +252,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:409](https://github.com/isd
 
 > `protected` `optional` **kvStore**: `KeyValueStore`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:392](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L392)
+Defined in: [packages/web-fetcher/src/engine/base.ts:405](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L405)
 
 #### Inherited from
 
@@ -264,7 +264,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:392](https://github.com/isd
 
 > `protected` `optional` **lastResponse**: [`FetchResponse`](../interfaces/FetchResponse.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:407](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L407)
+Defined in: [packages/web-fetcher/src/engine/base.ts:420](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L420)
 
 #### Inherited from
 
@@ -272,11 +272,19 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:407](https://github.com/isd
 
 ***
 
+### mouseInitialized
+
+> `protected` **mouseInitialized**: `boolean` = `false`
+
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:439](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L439)
+
+***
+
 ### navigationLock
 
 > `protected` **navigationLock**: `PromiseLock`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:404](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L404)
+Defined in: [packages/web-fetcher/src/engine/base.ts:417](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L417)
 
 #### Inherited from
 
@@ -288,7 +296,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:404](https://github.com/isd
 
 > `protected` `optional` **opts**: [`BaseFetcherProperties`](../interfaces/BaseFetcherProperties.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:386](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L386)
+Defined in: [packages/web-fetcher/src/engine/base.ts:399](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L399)
 
 #### Inherited from
 
@@ -300,7 +308,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:386](https://github.com/isd
 
 > `protected` **pendingRequests**: `Map`\<`string`, [`PendingEngineRequest`](../interfaces/PendingEngineRequest.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:399](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L399)
+Defined in: [packages/web-fetcher/src/engine/base.ts:412](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L412)
 
 #### Inherited from
 
@@ -312,7 +320,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:399](https://github.com/isd
 
 > `protected` `optional` **proxyConfiguration**: `ProxyConfiguration`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:393](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L393)
+Defined in: [packages/web-fetcher/src/engine/base.ts:406](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L406)
 
 #### Inherited from
 
@@ -324,7 +332,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:393](https://github.com/isd
 
 > `protected` **requestCounter**: `number` = `0`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:400](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L400)
+Defined in: [packages/web-fetcher/src/engine/base.ts:413](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L413)
 
 #### Inherited from
 
@@ -336,7 +344,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:400](https://github.com/isd
 
 > `protected` `optional` **requestQueue**: `RequestQueue`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:391](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L391)
+Defined in: [packages/web-fetcher/src/engine/base.ts:404](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L404)
 
 #### Inherited from
 
@@ -348,7 +356,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:391](https://github.com/isd
 
 > `readonly` `static` **id**: `"playwright"` = `'playwright'`
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:24](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L24)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:24](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L24)
 
 Unique identifier for the engine implementation.
 
@@ -366,7 +374,7 @@ Must be defined by concrete implementations. Used for registration and lookup in
 
 > `readonly` `static` **mode**: `"browser"` = `'browser'`
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:25](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L25)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:25](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L25)
 
 Execution mode of the engine (`'http'` or `'browser'`).
 
@@ -386,7 +394,7 @@ Must be defined by concrete implementations. Indicates whether engine operates a
 
 > **get** **context**(): [`FetchEngineContext`](../interfaces/FetchEngineContext.md) \| `undefined`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:919](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L919)
+Defined in: [packages/web-fetcher/src/engine/base.ts:957](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L957)
 
 Gets the fetch engine context associated with this instance.
 
@@ -406,7 +414,7 @@ Gets the fetch engine context associated with this instance.
 
 > **get** **id**(): `string`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:894](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L894)
+Defined in: [packages/web-fetcher/src/engine/base.ts:932](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L932)
 
 Gets the unique identifier of this engine implementation.
 
@@ -426,7 +434,7 @@ Gets the unique identifier of this engine implementation.
 
 > **get** **mode**(): [`FetchEngineType`](../type-aliases/FetchEngineType.md)
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:912](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L912)
+Defined in: [packages/web-fetcher/src/engine/base.ts:950](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L950)
 
 Gets the execution mode of this engine (`'http'` or `'browser'`).
 
@@ -444,7 +452,7 @@ Gets the execution mode of this engine (`'http'` or `'browser'`).
 
 > `protected` **\_buildResponse**(`context`): `Promise`\<[`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:27](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L27)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:27](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L27)
 
 **`Internal`**
 
@@ -478,7 +486,7 @@ Converts implementation-specific context (Playwright `page` or Cheerio `$`) to s
 
 > `protected` `optional` **\_cleanup**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:420](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L420)
+Defined in: [packages/web-fetcher/src/engine/base.ts:433](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L433)
 
 #### Returns
 
@@ -494,7 +502,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:420](https://github.com/isd
 
 > `protected` **\_commonCleanup**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1321](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1321)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1363](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1363)
 
 #### Returns
 
@@ -510,7 +518,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1321](https://github.com/is
 
 > **\_contains**(`container`, `element`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:199](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L199)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:199](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L199)
 
 **`Internal`**
 
@@ -550,7 +558,7 @@ IExtractEngine.\_contains for implementation details.
 
 > `protected` **\_createCrawler**(`options`, `config?`): `PlaywrightCrawler`
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:796](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L796)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:879](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L879)
 
 **`Internal`**
 
@@ -578,11 +586,33 @@ The final crawler options.
 
 ***
 
+### \_ensureVisible()
+
+> `protected` **\_ensureVisible**(`context`, `selector`): `Promise`\<\{ `x`: `number`; `y`: `number`; \}\>
+
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:556](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L556)
+
+#### Parameters
+
+##### context
+
+`PlaywrightCrawlingContext`
+
+##### selector
+
+`string`
+
+#### Returns
+
+`Promise`\<\{ `x`: `number`; `y`: `number`; \}\>
+
+***
+
 ### \_executePendingActions()
 
 > `protected` **\_executePendingActions**(`context`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1162](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1162)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1200](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1200)
 
 **`Internal`**
 
@@ -635,7 +665,7 @@ If called outside valid page context window (`!this.isPageActive`)
 
 > `protected` **\_extract**(`schema`, `scope`, `parentStrict?`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:563](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L563)
+Defined in: [packages/web-fetcher/src/engine/base.ts:576](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L576)
 
 #### Parameters
 
@@ -665,7 +695,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:563](https://github.com/isd
 
 > `protected` **\_extractColumnar**(`schema`, `container`, `opts?`): `Promise`\<`any`[] \| `null`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:605](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L605)
+Defined in: [packages/web-fetcher/src/engine/base.ts:618](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L618)
 
 **`Internal`**
 
@@ -707,7 +737,7 @@ An array of extracted items, or null if requirements aren't met.
 
 > `protected` **\_extractNested**(`items`, `elements`, `opts?`): `Promise`\<`any`[]\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:588](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L588)
+Defined in: [packages/web-fetcher/src/engine/base.ts:601](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L601)
 
 **`Internal`**
 
@@ -747,7 +777,7 @@ The list of item elements.
 
 > `protected` **\_extractSegmented**(`schema`, `container`, `opts?`): `Promise`\<`any`[] \| `null`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:622](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L622)
+Defined in: [packages/web-fetcher/src/engine/base.ts:635](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L635)
 
 **`Internal`**
 
@@ -789,7 +819,7 @@ An array of extracted items.
 
 > **\_extractValue**(`schema`, `scope`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:352](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L352)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:352](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L352)
 
 **`Internal`**
 
@@ -829,7 +859,7 @@ IExtractEngine.\_extractValue for behavior contract.
 
 > **\_findClosestAncestor**(`scope`, `candidates`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:163](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L163)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:163](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L163)
 
 **`Internal`**
 
@@ -869,7 +899,7 @@ IExtractEngine.\_findClosestAncestor for implementation details.
 
 > **\_findCommonAncestor**(`scope1`, `scope2`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:211](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L211)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:211](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L211)
 
 **`Internal`**
 
@@ -905,7 +935,7 @@ A promise resolving to the LCA element scope, or `null` if none found.
 
 > **\_findContainerChild**(`element`, `container`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:284](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L284)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:284](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L284)
 
 **`Internal`**
 
@@ -941,7 +971,7 @@ The child element of container, or null.
 
 > `protected` **\_getInitialElementScope**(`context`): `any`
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:396](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L396)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:396](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L396)
 
 **`Internal`**
 
@@ -965,33 +995,11 @@ Crawlee crawling context
 
 ***
 
-### \_getRandomDelay()
-
-> `protected` **\_getRandomDelay**(`base`, `variance`): `number`
-
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:429](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L429)
-
-#### Parameters
-
-##### base
-
-`number`
-
-##### variance
-
-`number` = `0.3`
-
-#### Returns
-
-`number`
-
-***
-
 ### \_getSpecificCrawlerOptions()
 
 > `protected` **\_getSpecificCrawlerOptions**(`ctx`): `Promise`\<`Partial`\<`PlaywrightCrawlerOptions`\>\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:803](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L803)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:886](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L886)
 
 **`Internal`**
 
@@ -1019,7 +1027,7 @@ The fetch engine context.
 
 > `protected` **\_getTrajectory**(`start`, `end`, `steps`): `object`[]
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:435](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L435)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:468](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L468)
 
 #### Parameters
 
@@ -1057,7 +1065,7 @@ Defined in: [packages/web-fetcher/src/engine/playwright.ts:435](https://github.c
 
 > `protected` **\_getTrimInfo**(`options`): `object`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:422](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L422)
+Defined in: [packages/web-fetcher/src/engine/base.ts:435](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L435)
 
 #### Parameters
 
@@ -1091,7 +1099,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:422](https://github.com/isd
 
 > `protected` **\_handlePause**(`action`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1122](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1122)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1160](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1160)
 
 #### Parameters
 
@@ -1111,11 +1119,29 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1122](https://github.com/is
 
 ***
 
+### \_initializeMousePos()
+
+> `protected` **\_initializeMousePos**(`page`): `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:441](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L441)
+
+#### Parameters
+
+##### page
+
+`Page`
+
+#### Returns
+
+`Promise`\<`void`\>
+
+***
+
 ### \_isSameElement()
 
 > **\_isSameElement**(`scope1`, `scope2`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:150](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L150)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:150](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L150)
 
 **`Internal`**
 
@@ -1151,7 +1177,7 @@ True if they are the same DOM node.
 
 > **\_logDebug**(`category`, ...`args`): `void`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:412](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L412)
+Defined in: [packages/web-fetcher/src/engine/base.ts:425](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L425)
 
 Logs debug information if debug mode is enabled.
 
@@ -1179,11 +1205,43 @@ Arguments to log.
 
 ***
 
+### \_moveToPos()
+
+> `protected` **\_moveToPos**(`context`, `target`, `steps`): `Promise`\<\{ `x`: `number`; `y`: `number`; \}\>
+
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:505](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L505)
+
+#### Parameters
+
+##### context
+
+`PlaywrightCrawlingContext`
+
+##### target
+
+###### x
+
+`number`
+
+###### y
+
+`number`
+
+##### steps
+
+`number` = `-1`
+
+#### Returns
+
+`Promise`\<\{ `x`: `number`; `y`: `number`; \}\>
+
+***
+
 ### \_moveToSelector()
 
 > `protected` **\_moveToSelector**(`context`, `selector`, `steps`): `Promise`\<\{ `x`: `number`; `y`: `number`; \}\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:484](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L484)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:577](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L577)
 
 #### Parameters
 
@@ -1209,7 +1267,7 @@ Defined in: [packages/web-fetcher/src/engine/playwright.ts:484](https://github.c
 
 > **\_nextSiblingsUntil**(`scope`, `untilSelector?`): `Promise`\<`any`[]\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:127](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L127)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:127](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L127)
 
 **`Internal`**
 
@@ -1246,7 +1304,7 @@ List of sibling elements between anchor and untilSelector.
 
 > `protected` **\_normalizeArrayMode**(`mode?`): `any`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:576](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L576)
+Defined in: [packages/web-fetcher/src/engine/base.ts:589](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L589)
 
 **`Internal`**
 
@@ -1274,7 +1332,7 @@ The mode string or options object.
 
 > **\_parentElement**(`scope`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:144](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L144)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:144](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L144)
 
 **`Internal`**
 
@@ -1304,7 +1362,7 @@ Parent element or null.
 
 > `protected` **\_processAction**(`context`, `action`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1093](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1093)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1131](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1131)
 
 **`Internal`**
 
@@ -1338,7 +1396,7 @@ Action to execute
 
 > **\_querySelectorAll**(`scope`, `selector`): `Promise`\<`any`[]\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:87](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L87)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:87](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L87)
 
 **`Internal`**
 
@@ -1378,7 +1436,7 @@ IExtractEngine.\_querySelectorAll for behavior contract.
 
 > `protected` **\_sharedFailedRequestHandler**(`context`, `error?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1269](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1269)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1307](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1307)
 
 #### Parameters
 
@@ -1404,7 +1462,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1269](https://github.com/is
 
 > `protected` **\_sharedRequestHandler**(`context`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1228](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1228)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:429](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L429)
 
 #### Parameters
 
@@ -1416,7 +1474,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1228](https://github.com/is
 
 `Promise`\<`void`\>
 
-#### Inherited from
+#### Overrides
 
 [`FetchEngine`](FetchEngine.md).[`_sharedRequestHandler`](FetchEngine.md#_sharedrequesthandler)
 
@@ -1426,7 +1484,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1228](https://github.com/is
 
 > `protected` **\_waitForNavigation**(`context`, `oldUrl`, `actionType`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:404](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L404)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:404](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L404)
 
 #### Parameters
 
@@ -1452,7 +1510,7 @@ Defined in: [packages/web-fetcher/src/engine/playwright.ts:404](https://github.c
 
 > **blockResources**(`types`, `overwrite?`): `Promise`\<`number`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1385](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1385)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1427](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1427)
 
 Blocks specified resource types from loading.
 
@@ -1493,7 +1551,7 @@ await engine.blockResources(['script'], true); // Replace existing
 
 > `protected` **buildResponse**(`context`): `Promise`\<[`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:659](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L659)
+Defined in: [packages/web-fetcher/src/engine/base.ts:672](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L672)
 
 #### Parameters
 
@@ -1515,7 +1573,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:659](https://github.com/isd
 
 > **cleanup**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1065](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1065)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1103](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1103)
 
 #### Returns
 
@@ -1531,7 +1589,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1065](https://github.com/is
 
 > **click**(`selector`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:753](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L753)
+Defined in: [packages/web-fetcher/src/engine/base.ts:766](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L766)
 
 Clicks on element matching selector.
 
@@ -1565,7 +1623,7 @@ When no active page context exists
 
 > **cookies**(): `Promise`\<[`Cookie`](../interfaces/Cookie.md)[]\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1501](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1501)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1543](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1543)
 
 Manages cookies for current session with multiple overloads.
 
@@ -1594,7 +1652,7 @@ await engine.cookies([{ name: 'session', value: '123' }]);
 
 > **cookies**(`cookies`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1502](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1502)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1544](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1544)
 
 Manages cookies for current session with multiple overloads.
 
@@ -1633,7 +1691,7 @@ await engine.cookies([{ name: 'session', value: '123' }]);
 
 > `protected` **dispatchAction**\<`T`\>(`action`): `Promise`\<`T`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1292](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1292)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1334](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1334)
 
 #### Type Parameters
 
@@ -1661,7 +1719,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1292](https://github.com/is
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1537](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1537)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1579](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1579)
 
 Disposes of engine, cleaning up all resources.
 
@@ -1681,7 +1739,7 @@ Promise resolving when disposal completes
 
 > **evaluate**(`params`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:873](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L873)
+Defined in: [packages/web-fetcher/src/engine/base.ts:911](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L911)
 
 Executes a custom function or expression within the current page context.
 
@@ -1727,7 +1785,7 @@ If no active page context exists or if execution fails.
 
 > `protected` **executeAction**(`context`, `action`): `Promise`\<`any`\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:520](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L520)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:586](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L586)
 
 **`Internal`**
 
@@ -1767,7 +1825,7 @@ Handles specific user interactions using underlying technology (Playwright/Cheer
 
 > **extract**\<`T`\>(`schema`): `Promise`\<`T`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:883](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L883)
+Defined in: [packages/web-fetcher/src/engine/base.ts:921](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L921)
 
 Extracts structured data from the current page content.
 
@@ -1801,7 +1859,7 @@ A promise that resolves to an object with the extracted data.
 
 > **fill**(`selector`, `value`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:817](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L817)
+Defined in: [packages/web-fetcher/src/engine/base.ts:855](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L855)
 
 Fills input element with specified value.
 
@@ -1839,7 +1897,7 @@ When no active page context exists
 
 > **getContent**(): `Promise`\<[`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1399](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1399)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1441](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1441)
 
 Gets content of current page.
 
@@ -1863,7 +1921,7 @@ When no content has been fetched yet
 
 > **getState**(): `Promise`\<\{ `cookies`: [`Cookie`](../interfaces/Cookie.md)[]; `sessionState?`: `any`; \}\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:902](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L902)
+Defined in: [packages/web-fetcher/src/engine/base.ts:940](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L940)
 
 Returns the current state of the engine (cookies)
 that can be used to restore the session later.
@@ -1882,7 +1940,7 @@ that can be used to restore the session later.
 
 > **goto**(`url`, `opts?`): `Promise`\<[`FetchResponse`](../interfaces/FetchResponse.md)\>
 
-Defined in: [packages/web-fetcher/src/engine/playwright.ts:865](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/playwright.ts#L865)
+Defined in: [packages/web-fetcher/src/engine/playwright.ts:948](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/playwright.ts#L948)
 
 Navigates to the specified URL.
 
@@ -1922,7 +1980,7 @@ await engine.goto('https://example.com');
 
 > **headers**(): `Promise`\<`Record`\<`string`, `string`\>\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1440](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1440)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1482](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1482)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -1953,7 +2011,7 @@ await engine.headers('auth', 'token');
 
 > **headers**(`name`): `Promise`\<`string`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1441](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1441)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1483](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1483)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -1992,7 +2050,7 @@ await engine.headers('auth', 'token');
 
 > **headers**(`headers`, `replaced?`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1442](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1442)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1484](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1484)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -2037,7 +2095,7 @@ await engine.headers('auth', 'token');
 
 > **headers**(`name`, `value`): `Promise`\<`boolean`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1446](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L1446)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1488](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L1488)
 
 Manages HTTP headers for requests with multiple overloads.
 
@@ -2084,7 +2142,7 @@ await engine.headers('auth', 'token');
 
 > **initialize**(`context`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:934](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L934)
+Defined in: [packages/web-fetcher/src/engine/base.ts:972](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L972)
 
 Initializes the fetch engine with provided context and options.
 
@@ -2123,7 +2181,7 @@ Automatically called when creating engine via `FetchEngine.create()`.
 
 > **keyboardPress**(`key`, `delay?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:802](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L802)
+Defined in: [packages/web-fetcher/src/engine/base.ts:840](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L840)
 
 Presses specified key.
 
@@ -2155,7 +2213,7 @@ Delay after key press
 
 > **keyboardType**(`text`, `delay?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:792](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L792)
+Defined in: [packages/web-fetcher/src/engine/base.ts:830](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L830)
 
 Types text into current focused element.
 
@@ -2187,7 +2245,7 @@ Delay between key presses
 
 > **mouseClick**(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:776](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L776)
+Defined in: [packages/web-fetcher/src/engine/base.ts:789](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L789)
 
 Clicks at current position or specified position.
 
@@ -2231,7 +2289,7 @@ Click parameters (x, y, button, clickCount, delay)
 
 > **mouseMove**(`params`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:762](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L762)
+Defined in: [packages/web-fetcher/src/engine/base.ts:775](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L775)
 
 Moves mouse to specified position or element.
 
@@ -2267,11 +2325,59 @@ Move parameters (x, y, selector, steps)
 
 ***
 
+### mouseWheel()
+
+> **mouseWheel**(`params`): `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/engine/base.ts:804](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L804)
+
+Scrolls the mouse wheel.
+
+#### Parameters
+
+##### params
+
+Wheel parameters (x, y, selector, deltaX, deltaY, steps)
+
+###### deltaX?
+
+`number`
+
+###### deltaY?
+
+`number`
+
+###### selector?
+
+`string`
+
+###### steps?
+
+`number`
+
+###### x?
+
+`number`
+
+###### y?
+
+`number`
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`FetchEngine`](FetchEngine.md).[`mouseWheel`](FetchEngine.md#mousewheel)
+
+***
+
 ### pause()
 
 > **pause**(`message?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:851](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L851)
+Defined in: [packages/web-fetcher/src/engine/base.ts:889](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L889)
 
 Pauses execution, allowing for manual intervention or inspection.
 
@@ -2299,11 +2405,39 @@ When no active page context exists
 
 ***
 
+### scrollIntoView()
+
+> **scrollIntoView**(`params`): `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/engine/base.ts:820](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L820)
+
+Scrolls the element into view.
+
+#### Parameters
+
+##### params
+
+Scroll parameters (selector)
+
+###### selector
+
+`string`
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Inherited from
+
+[`FetchEngine`](FetchEngine.md).[`scrollIntoView`](FetchEngine.md#scrollintoview)
+
+***
+
 ### submit()
 
 > **submit**(`selector?`, `options?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:829](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L829)
+Defined in: [packages/web-fetcher/src/engine/base.ts:867](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L867)
 
 Submits a form.
 
@@ -2341,7 +2475,7 @@ When no active page context exists
 
 > **trim**(`options`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:840](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L840)
+Defined in: [packages/web-fetcher/src/engine/base.ts:878](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L878)
 
 Removes elements from the DOM based on selectors and presets.
 
@@ -2373,7 +2507,7 @@ When no active page context exists
 
 > **waitFor**(`params?`): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:742](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L742)
+Defined in: [packages/web-fetcher/src/engine/base.ts:755](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L755)
 
 Waits for specified condition before continuing.
 
@@ -2408,7 +2542,7 @@ await engine.waitFor({ selector: '#content' }); // Wait for element
 
 > `static` **create**(`ctx`, `options?`): `Promise`\<`AnyFetchEngine` \| `undefined`\>
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:349](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L349)
+Defined in: [packages/web-fetcher/src/engine/base.ts:362](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L362)
 
 Factory method to create and initialize a fetch engine instance.
 
@@ -2450,7 +2584,7 @@ Primary entry point for engine creation. Selects appropriate implementation base
 
 > `static` **get**(`id`): `AnyFetchEngineCtor` \| `undefined`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:322](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L322)
+Defined in: [packages/web-fetcher/src/engine/base.ts:335](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L335)
 
 Retrieves a fetch engine implementation by its unique ID.
 
@@ -2478,7 +2612,7 @@ Engine class if found, otherwise `undefined`
 
 > `static` **getByMode**(`mode`): `AnyFetchEngineCtor` \| `undefined`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:332](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L332)
+Defined in: [packages/web-fetcher/src/engine/base.ts:345](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L345)
 
 Retrieves a fetch engine implementation by execution mode.
 
@@ -2506,7 +2640,7 @@ Engine class if found, otherwise `undefined`
 
 > `static` **register**(`engineClass`): `void`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:309](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/engine/base.ts#L309)
+Defined in: [packages/web-fetcher/src/engine/base.ts:322](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/engine/base.ts#L322)
 
 Registers a fetch engine implementation with the global registry.
 

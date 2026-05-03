@@ -6,7 +6,7 @@
 
 # Enumeration: FetchActionResultStatus
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:7](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/fetch-action.ts#L7)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:7](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L7)
 
 ## Enumeration Members
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:7](https://github.c
 
 > **Failed**: `0`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:11](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/fetch-action.ts#L11)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:11](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L11)
 
 动作执行失败但未抛出（通常因 failOnError=false）；错误信息在 error 字段
 
@@ -24,7 +24,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:11](https://github.
 
 > **Skipped**: `2`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:20](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/fetch-action.ts#L20)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:20](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L20)
 
 动作被判定为不执行/降级为 noop（比如引擎不支持且 degradeTo='noop'）
 能力不支持且 degradeTo='noop' 时：status='skipped'，warnings 增加 { code:'capability-not-supported' }
@@ -35,6 +35,6 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:20](https://github.
 
 > **Success**: `1`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:15](https://github.com/isdk/web-fetcher.js/blob/e691a2370f59d15979b47994c8ca14d7b7d2edd3/src/action/fetch-action.ts#L15)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:15](https://github.com/isdk/web-fetcher.js/blob/65ab5500b355c69b13e50e6c5787424ee7b1e1f4/src/action/fetch-action.ts#L15)
 
 动作按预期完成（即便产生 warnings）
