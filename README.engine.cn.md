@@ -64,7 +64,13 @@ const session = new FetchSession({ engine: 'browser' });
 1. **显式选项**: 如果在 `FetchSession` 的 `options.engine`（或 `executeAll` 的临时上下文覆盖）中提供了引擎且不为 `'auto'`。
     * ⚠️ **快速失败 (Fail-Fast)**: 如果请求的引擎不可用（例如缺少依赖），将立即抛出错误。
 2. **站点注册表 (Site Registry)**: 如果设置为 `'auto'`（默认），系统会尝试根据目标 URL 匹配 `sites` 注册表。
-3. **智能升级 (Smart Upgrade)**: 如果启用，系统可能会根据响应特征（如机器人检测或大量 JS）动态从 `http` 升级到 `browser`。
+3. **智能升级 (Smart Upgrade)**:
+   - 当 `enableSmart: true` 时，系统会在以下情况自动从 `http` 升级到 `browser`：
+     - 返回 `401 / 403 / 500 / 429`
+     - HTML 内容被识别为“高度动态”（大量 JS）
+     - `Retry-After` 超过 `upgradeThresholdMs`
+   - 升级时可选择是否同步 Cookies / Session（`syncStateOnUpgrade`）
+   - 升级失败或仍不满足需求时，可继续抛出原始错误
 4. **默认**: 回退到 `'http'` (Cheerio)。
 
 #### 带有覆盖的批量执行 (Batch Execution with Overrides)
@@ -81,6 +87,20 @@ await session.executeAll([
   timeoutMs: 30000
 });
 ```
+
+#### 智能升级与重试
+
+在 `executeAll` 执行过程中，如果某个 Action 抛出 `ENGINE_UPGRADE_REQUIRED`：
+
+- 系统会尝试释放当前引擎
+- 创建新的 browser 引擎
+- **自动从头重新执行动作列表**
+- 已成功执行的副作用（如 Cookie 写入）可根据配置保留
+
+此外，对于 `429` 响应：
+
+- 若 `Retry-After` 存在且小于 `upgradeThresholdMs`
+- 系统会在同一引擎内自动重试，而不会触发升级
 
 ### 会话管理与状态持久化
 
@@ -109,6 +129,16 @@ await session.executeAll([
 2. 然后在之上应用显式的 `cookies`。
    * **结果**：`sessionState` 中任何冲突的 Cookie 都会被显式的 `cookies` **覆盖**。
    * 如果两者同时存在，系统将记录一条警告日志，以提醒用户这种覆盖行为。
+
+---
+
+### 错误增强与 Retry-After 支持
+
+- 所有 HTTP 错误现在都会将原始 `FetchResponse` 附加到错误对象（`error.response`）
+- 支持解析 HTTP `Retry-After` 头：
+  - 支持整数（秒）
+  - 支持 HTTP 日期格式
+- 错误信息中会包含重试等待时间提示
 
 ---
 
@@ -187,8 +217,8 @@ await session.executeAll([
 
 您可以通过选项中的 `browser` 属性来配置浏览器引擎：
 
-*   `headless` (boolean): 是否以无头模式运行浏览器（默认：`true`）。
-*   `launchOptions` (object): 原生 Playwright [LaunchOptions](https://playwright.dev/docs/api/class-browsertype#browser-type-launch)，直接传递给浏览器启动器（例如 `slowMo`, `args`, `devtools`）。
+* `headless` (boolean): 是否以无头模式运行浏览器（默认：`true`）。
+* `launchOptions` (object): 原生 Playwright [LaunchOptions](https://playwright.dev/docs/api/class-browsertype#browser-type-launch)，直接传递给浏览器启动器（例如 `slowMo`, `args`, `devtools`）。
 
     ```typescript
     const result = await fetchWeb({
@@ -246,9 +276,7 @@ await session.executeAll([
   - 支持可选的 `depth` 参数来限制向上遍历的层级。
   - 必须包含最大深度限制 (默认 1000) 以防止无限循环。
 
-这种架构确保了诸如 **列对齐 (Columnar Alignment)**、**分段扫描 (Segmented Scanning)** 以及 **属性锚点跳转 (Anchor Jumping)** 等复杂功能在不同引擎下表现高度一致。
-
-这种解耦确保了诸如 **列对齐 (Columnar Alignment)**、**分段扫描 (Segmented Scanning)** 以及 **属性锚点跳转 (Anchor Jumping)** 等复杂功能,无论是在快速的 Cheerio 引擎还是完整的 Playwright 浏览器中,其行为都完全一致。
+这种架构确保了诸如 **列对齐 (Columnar Alignment)**、**分段扫描 (Segmented Scanning)** 以及 **属性锚点跳转 (Anchor Jumping)** 等复杂功能，无论是在快速的 Cheerio 引擎还是完整的 Playwright 浏览器中，其行为都完全一致。
 
 ### Schema 规范化
 

@@ -27,6 +27,19 @@
 
 ---
 
+### 智能升级与重试策略
+
+当 `enableSmart` 开启时，系统会根据响应特征自动判断是否需要升级引擎：
+
+- 触发升级的条件包括：
+  - HTTP 状态码：`401 / 403 / 500 / 429`
+  - 页面疑似动态渲染（HTML 中检测到典型 JS 框架特征）
+  - `Retry-After` 超过 `upgradeThresholdMs`
+- 升级过程中可选择是否同步 Cookies / Session 状态（`syncStateOnUpgrade`）
+- 对于 `429` 响应，若 `Retry-After` 小于`upgradeThresholdMs`阈值，系统会优先重试而非升级
+
+---
+
 ## 📦 安装
 
 1. **安装依赖包:**
@@ -150,6 +163,12 @@ searchGoogle('gemini');
   * `headless` (boolean): 是否以无头模式运行（默认：`true`）。
   * `launchOptions` (object): Playwright 启动选项（例如 `{ slowMo: 50, args: [...] }`）。
 * `sessionPoolOptions` (SessionPoolOptions): 底层 Crawlee SessionPool 的高级配置。
+* `enableSmart` (boolean): 是否启用智能探测与自动引擎升级（默认：`true`）。
+* `syncStateOnUpgrade` (boolean): 当从 http 升级到 browser 引擎时，是否同步 Cookies / Session 状态（默认：`false`）。
+* `upgradeThresholdMs` (number): 触发引擎升级的等待时间阈值（毫秒），超过该时间或无明确重试信息则升级（默认：`5000`）。
+* `maxRetries` (number): 单个 Action 的最大重试次数（默认：`0`）。
+* `failOnError` (boolean): Action 失败时是否抛出异常（默认：主流程 `true`，collector `false`）。
+* `failOnTimeout` (boolean): 超时是否视为失败（默认：`false`）。
 * ...以及许多其他用于代理、重试等的选项。
 
 ### 内置动作 (Built-in Actions)
