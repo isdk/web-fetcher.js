@@ -24,9 +24,23 @@ English | [简体中文](_media/README.cn.md)
 * **📜 Declarative Action Scripts**: Define multi-step workflows (like logging in, filling forms, and clicking buttons) in a simple, readable JSON format.
 * **📊 Powerful and Flexible Data Extraction**: Easily extract all kinds of structured data, from simple text to complex nested objects, through an intuitive and powerful declarative Schema.
 * **🧠 Smart Engine Selection**: Automatically detects dynamic sites and can upgrade the engine from `http` to `browser` on the fly.
+* **🛡️ Anti-Bot Evasion**: In `browser` mode, an optional `antibot` flag helps to bypass common anti-bot measures like Cloudflare challenges.
+* **🕹️ High-Fidelity Interaction Simulation**: Supports Bézier curve-based mouse trajectory movement, realistic typing delay simulation, and complex keyboard interactions to significantly improve anti-bot evasion.
 * **🧩 Extensible**: Easily create custom, high-level "composite" actions to encapsulate reusable business logic (e.g., a `login` action).
 * **🧲 Advanced Collectors**: Asynchronously collect data in the background, triggered by events during the execution of a main action.
-* **🛡️ Anti-Bot Evasion**: In `browser` mode, an optional `antibot` flag helps to bypass common anti-bot measures like Cloudflare challenges.
+
+---
+
+### Smart Upgrade and Retry Strategy
+
+When `enableSmart` is enabled, the system automatically determines whether an engine upgrade is needed based on response characteristics:
+
+- Triggers for upgrade include:
+  - HTTP status codes: `401 / 403 / 500 / 429`
+  - Page appears to be dynamically rendered (detected typical JS framework signatures in HTML)
+  - `Retry-After` exceeds `upgradeThresholdMs`
+- During upgrade, you can choose whether to sync Cookies / Session state (`syncStateOnUpgrade`)
+- For `429` responses, if `Retry-After` is less than the `upgradeThresholdMs` threshold, the system will prioritize retry over upgrade
 
 ---
 
@@ -153,6 +167,12 @@ This is the main entry point for the library.
   * `headless` (boolean): Run in headless mode (default: `true`).
   * `launchOptions` (object): Playwright launch options (e.g., `{ slowMo: 50, args: [...] }`).
 * `sessionPoolOptions` (SessionPoolOptions): Advanced configuration for the underlying Crawlee SessionPool.
+* `enableSmart` (boolean): Enable smart detection and automatic engine upgrade (default: `true`).
+* `syncStateOnUpgrade` (boolean): Whether to sync Cookies / Session state when upgrading from http to browser engine (default: `false`).
+* `upgradeThresholdMs` (number): Wait time threshold in milliseconds to trigger engine upgrade; upgrades if exceeded or no explicit retry info (default: `5000`).
+* `maxRetries` (number): Maximum retry attempts for a single Action (default: `0`).
+* `failOnError` (boolean): Whether to throw an exception when an Action fails (default: `true` for main flow, `false` for collector).
+* `failOnTimeout` (boolean): Whether to treat timeout as failure (default: `false`).
 * ...and many other options for proxy, retries, etc.
 
 ### Built-in Actions

@@ -8,4 +8,4 @@
 
 > **BaseFetchCollectorOptions** = `RequireAtLeastOne`\<[`BaseFetchCollectorActionProperties`](../interfaces/BaseFetchCollectorActionProperties.md), `"id"` \| `"name"` \| `"action"`\>
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:81](https://github.com/isdk/web-fetcher.js/blob/ff2bf8a6938cad6b2dc7c85fb1380de226cb3724/src/action/fetch-action.ts#L81)
+Defined in: [packages/web-fetcher/src/core/types.ts:81](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L81)

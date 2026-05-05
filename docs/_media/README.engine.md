@@ -64,8 +64,26 @@ The engine is initialized lazily upon the first action execution and remains fix
 1. **Explicit Option**: If `options.engine` (or temporary context override in `executeAll`) is provided and NOT set to `'auto'`.
     * ⚠️ **Fail-Fast**: If the requested engine is unavailable (e.g., missing dependencies), an error is thrown immediately.
 2. **Site Registry**: If set to `'auto'` (default), the system attempts to match the target URL against the `sites` registry.
-3. **Smart Upgrade**: If enabled, the engine may be dynamically upgraded from `http` to `browser` based on response characteristics (e.g., bot detection or heavy JS).
+3. **Smart Upgrade**: If `enableSmart: true`, the system will automatically upgrade from `http` to `browser` under the following conditions:
+   - Returns `401 / 403 / 500 / 429`
+   - HTML content is identified as "highly dynamic" (heavy JS)
+   - `Retry-After` exceeds `upgradeThresholdMs`
+   - You can optionally sync Cookies/Session during upgrade (`syncStateOnUpgrade`)
+   - If upgrade fails or still doesn't meet requirements, the original error is thrown
 4. **Default**: Falls back to `'http'` (Cheerio).
+
+#### Smart Upgrade & Retry
+
+During `executeAll`, if an Action throws `ENGINE_UPGRADE_REQUIRED`:
+
+- The system attempts to release the current engine
+- Creates a new browser engine
+- **Automatically re-executes the action list from the beginning**
+- Side effects of successfully executed actions (e.g., cookie writes) can be preserved based on configuration
+
+For `429` responses:
+- If `Retry-After` exists and is less than `upgradeThresholdMs`
+- The system will automatically retry within the same engine without triggering an upgrade
 
 #### Batch Execution with Overrides
 
@@ -109,6 +127,16 @@ If both `sessionState` and `cookies` are provided, the engine adopts a **"Merge 
 2. The explicit `cookies` are then applied on top.
    * **Result:** Any conflicting cookies in `sessionState` will be **overwritten** by the explicit `cookies`.
    * A warning will be logged if both are present to alert the user of this override behavior.
+
+---
+
+### Error Enhancement & Retry-After Support
+
+- All HTTP errors now attach the original `FetchResponse` to the error object (`error.response`)
+- Support for parsing HTTP `Retry-After` header:
+  - Integer (seconds) format
+  - HTTP date format
+- Retry wait time hints are included in error messages
 
 ---
 
