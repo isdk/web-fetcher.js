@@ -1,0 +1,15 @@
+{
+  "name": "No Sync State on Upgrade (Default)",
+  "engine": "http",
+  "options": {
+    "enableSmart": true,
+    "syncStateOnUpgrade": false
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "html": "Cookie: none"
+  }
+}

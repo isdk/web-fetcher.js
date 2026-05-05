@@ -18,8 +18,7 @@ import { FetchSession } from './session'
 
 // Dependencies for testing
 import '../action/definitions' // to register all actions
-import { FetcherOptions } from './types'
-import { FetchActionResultStatus } from '../action/fetch-action'
+import { FetchActionResultStatus, FetcherOptions } from './types'
 
 const TEST_TIMEOUT = 10000 // 10s, increased for playwright
 

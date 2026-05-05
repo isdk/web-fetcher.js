@@ -1,12 +1,11 @@
 import { EventEmitter } from 'events-ex'
-import { FetchEngine } from '../engine/base'
-import {
-  FetchActionOptions,
-  FetchActionProperties,
-  FetchActionResult,
-} from '../action/fetch-action'
 import { FetchReturnType } from './fetch-return-type'
-import { BaseFetcherProperties, FetchResponse } from './types'
+import {
+  BaseFetcherProperties,
+  FetchResponse,
+  FetchActionOptions,
+  FetchActionResult,
+} from './types'
 
 /**
  * Represents the state of an action being executed within a context.
@@ -15,7 +14,9 @@ import { BaseFetcherProperties, FetchResponse } from './types'
  * Extends the basic action properties with runtime metadata like execution index,
  * nesting depth, and any errors encountered during execution.
  */
-export interface FetchActionInContext extends FetchActionProperties {
+export interface FetchActionInContext
+  extends FetchActionOptions,
+    Record<string, any> {
   /**
    * The 0-based index of the action in the execution sequence.
    */
@@ -40,7 +41,7 @@ interface BaseFetchContextInteralState {
    * The active engine instance (e.g., CheerioFetchEngine or PlaywrightFetchEngine)
    * associated with this context.
    */
-  engine?: FetchEngine
+  engine?: any
   /**
    * Additional implementation-specific internal state.
    */
@@ -135,7 +136,7 @@ export interface FetchContext extends FetchEngineContext {
    * @param name - The registered name or ID of the action.
    * @param params - Parameters specific to the action type.
    * @param options - Additional execution options (e.g., storeAs, failOnError).
-   * @returns A promise that resolves to the action's result.
+   * @returns A promise that resolves to a result.
    */
   action<R extends FetchReturnType = 'any'>(
     name: string,

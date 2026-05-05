@@ -1,15 +1,16 @@
 import type { FetchContext } from './context'
 import {
   FetchAction,
-  FetchActionOptions,
-  FetchActionResult,
 } from '../action/fetch-action'
-import { Cookie, DefaultFetcherProperties, FetcherOptions } from './types'
+import { Cookie, DefaultFetcherProperties, FetchActionOptions, FetcherOptions, FetchActionResult, EngineUpgradeError } from './types'
 import { FetchReturnType } from './fetch-return-type'
 import { createEvent } from '../event/create-event'
 import { defaultsDeep } from 'lodash-es'
 import { generateId, logDebug } from './utils'
-import { maybeCreateEngine } from './select-engine'
+import {
+  ensureSmartUpgradeIfNeeded,
+  maybeCreateEngine,
+} from './select-engine'
 
 /**
  * Represents a stateful web fetching session.
@@ -143,39 +144,61 @@ export class FetchSession {
     )
     const internal = this.context.internal
     const runContext: FetchContext = options
-      ? defaultsDeep({
-          // Preserve critical session state
-          id: this.context.id,
-          eventBus: this.context.eventBus,
-          outputs: this.context.outputs,
-          execute: this.context.execute,
-          action: this.context.action,
-          internal,
-        }, options, this.context)
+      ? defaultsDeep(
+          {
+            // Preserve critical session state
+            id: this.context.id,
+            eventBus: this.context.eventBus,
+            outputs: this.context.outputs,
+            execute: this.context.execute,
+            action: this.context.action,
+            internal,
+          },
+          options,
+          this.context
+        )
       : this.context
 
-    let i = options?.index ?? 0
-    try {
-      while (i < actions.length) {
-        const actionOptions = actions[i]
-        await this.execute({ ...actionOptions, index: i }, runContext)
-        i++
-      }
+    let upgraded = false
+    while (true) {
+      let i = options?.index ?? 0
+      try {
+        while (i < actions.length) {
+          const actionOptions = actions[i]
+          await this.execute({ ...actionOptions, index: i }, runContext)
+          i++
+        }
 
-      const response = await this.execute(
-        {
-          id: 'getContent',
-          index: i,
-        },
-        runContext
-      )
-      return {
-        result: response?.result,
-        outputs: this.getOutputs(),
+        const response = await this.execute(
+          {
+            id: 'getContent',
+            index: i,
+          },
+          runContext
+        )
+        return {
+          result: response?.result,
+          outputs: this.getOutputs(),
+        }
+      } catch (error: any) {
+        if (
+          !upgraded &&
+          (error instanceof EngineUpgradeError ||
+            error.code === 'ENGINE_UPGRADE_REQUIRED')
+        ) {
+          this._logDebug(
+            'executeAll',
+            'Engine upgrade signaled, restarting session...',
+            error.res.statusCode
+          )
+          await ensureSmartUpgradeIfNeeded(runContext, error.res)
+          upgraded = true
+          // Restart from index 0 (or original start index)
+          continue
+        }
+        error.actionIndex = i
+        throw error
       }
-    } catch (error: any) {
-      error.actionIndex = i
-      throw error
     }
   }
 

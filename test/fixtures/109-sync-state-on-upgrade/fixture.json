@@ -1,0 +1,16 @@
+{
+  "name": "Sync State on Upgrade",
+  "engine": "http",
+  "debug": true,
+  "options": {
+    "enableSmart": true,
+    "syncStateOnUpgrade": true
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "html": "Cookie: test-value"
+  }
+}

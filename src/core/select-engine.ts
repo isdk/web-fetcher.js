@@ -1,6 +1,10 @@
 import { FetchEngine } from '../engine/base'
 import { FetchContext } from './context'
-import { FetchResponse, FetchSite } from './types'
+import {
+  FetchResponse,
+  FetchSite,
+} from './types'
+import { getRetryAfter } from './utils'
 
 export async function maybeCreateEngine(
   ctx: FetchContext,
@@ -47,13 +51,27 @@ export async function ensureSmartUpgradeIfNeeded(
   if (!ctx.enableSmart) return false
   // already browser engine
   if (ctx.internal.engine?.mode === 'browser') return true
-  // 简单规则：403/401/5xx 或 明显需要JS，触发升级
-  if (smartShouldUseBrowser(res)) {
-    // 释放旧引擎，切换浏览器引擎并重试
-    await ctx.internal.engine?.dispose?.()
+
+  if (smartShouldUseBrowser(res, ctx.upgradeThresholdMs)) {
+    // 释放旧引擎
+    const oldEngine = ctx.internal.engine
+    if (oldEngine) {
+      if (!ctx.syncStateOnUpgrade) {
+        // 如果不要求同步状态，升级前清除上下文中的 cookies，确保新引擎是干净的
+        ctx.cookies = []
+      } else {
+        // 如果要求同步，确保最新状态已同步到 context
+        ctx.cookies = (await oldEngine.cookies()) || []
+      }
+      await oldEngine.dispose()
+      ctx.internal.engine = undefined
+    }
+
     const engine = await FetchEngine.create(ctx, { engine: 'browser' })
-    ctx.eventBus.emit('context:engine:upgraded', { to: 'browser' })
-    return engine
+    if (engine) {
+      ctx.eventBus.emit('context:engine:upgraded', { to: 'browser' })
+      return engine
+    }
   }
   return false
 }
@@ -79,13 +97,26 @@ export function isProbablyDynamicHtml(body: string) {
   return patterns.some((p) => body.includes(p))
 }
 
-export function smartShouldUseBrowser(res: FetchResponse) {
+export function smartShouldUseBrowser(
+  res: FetchResponse,
+  upgradeThresholdMs: number = 5000
+) {
   if (
     res.statusCode! >= 500 ||
     res.statusCode! === 401 ||
     res.statusCode! === 403
   )
     return true
+
+  if (res.statusCode === 429) {
+    const retryAfter = getRetryAfter(res.headers)
+    // 如果没有 Retry-After 或者等待时间过长 (>阈值)，则升级到浏览器
+    if (retryAfter === null || retryAfter > upgradeThresholdMs) {
+      return true
+    }
+    return false // 时间短，建议重试而不是升级
+  }
+
   if (!res.contentType) return false
   if (res.contentType.includes('text/html')) {
     if (isProbablyDynamicHtml(res.html!)) return true

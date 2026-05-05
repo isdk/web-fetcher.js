@@ -1,21 +1,104 @@
 import type { Cookie, SessionPoolOptions } from 'crawlee'
-import { FetchActionOptions } from '../action/fetch-action'
+import type { RequireAtLeastOne } from 'type-fest'
+import { FetchReturnType, FetchReturnTypeFor } from './fetch-return-type'
 
 export type { Cookie } from 'crawlee'
 
-// Cookie 定义
-/*
-export interface Cookie {
-  name: string;
-  value: string;
-  domain?: string;
-  path?: string;
-  expires?: number;
-  httpOnly?: boolean;
-  secure?: boolean;
-  sameSite?: 'Strict' | 'Lax' | 'None';
+export enum FetchActionResultStatus {
+  /**
+   * 动作执行失败但未抛出（通常因 failOnError=false）；错误信息在 error 字段
+   */
+  Failed,
+  /**
+   * 动作按预期完成（即便产生 warnings）
+   */
+  Success,
+  /**
+   * 动作被判定为不执行/降级为 noop（比如引擎不支持且 degradeTo='noop'）
+   * 能力不支持且 degradeTo='noop' 时：status='skipped'，warnings 增加 { code:'capability-not-supported' }
+   */
+  Skipped,
 }
-*/
+
+export type FetchActionCapabilityMode = 'native' | 'simulate' | 'noop'
+
+// 承载与诊断相关的信息（引擎、降级路径、时延、重试、HTTP 信息等）
+export interface FetchActionMeta {
+  id: string
+  index?: number
+  engineType?: FetchEngineType
+  capability?: FetchActionCapabilityMode
+  response?: FetchResponse
+  timings?: { start: number; total: number }
+  retries?: number // 实际重试次数
+}
+
+export interface FetchActionResult<
+  R extends FetchReturnType = FetchReturnType,
+> {
+  status: FetchActionResultStatus // 默认 'success'（未抛错且未标记跳过）
+  returnType?: R
+  result?: FetchReturnTypeFor<R>
+  error?: Error
+  meta?: FetchActionMeta // 便于审计与调试的元信息
+}
+
+export interface BaseFetchActionProperties {
+  id?: string
+  name?: string // action id 的别名
+  action?: string | any // action id 的别名
+  index?: number
+  params?: any
+  args?: any // params 的别名
+  // 如果设置则将结果存储到上下文的outputs[storeAs]
+  storeAs?: string
+  // defaults to true if in main action
+  // defaults to false if in collector action
+  failOnError?: boolean
+  // defaults to false
+  failOnTimeout?: boolean
+  timeoutMs?: number
+  maxRetries?: number
+  [key: string]: any
+}
+export type BaseFetchActionOptions = RequireAtLeastOne<
+  BaseFetchActionProperties,
+  'id' | 'name' | 'action'
+>
+
+export interface BaseFetchCollectorActionProperties
+  extends BaseFetchActionProperties {
+  // 启动事件，支持正则表达式，任意事件发生就启动`onStart`
+  activateOn?: string | RegExp | Array<string | RegExp>
+  // 结束事件，任意事件发生就结束`onEnd`
+  deactivateOn?: string | RegExp | Array<string | RegExp>
+  // 当指定事件发生时，执行收集`onExecute`
+  collectOn?: string | RegExp | Array<string | RegExp> // self, session, action, action:name
+  // 是否在后台运行（不等待 onExec 完成），defaults to true
+  background?: boolean
+}
+
+export type BaseFetchCollectorOptions = RequireAtLeastOne<
+  BaseFetchCollectorActionProperties,
+  'id' | 'name' | 'action'
+>
+
+export interface FetchActionProperties extends BaseFetchActionProperties {
+  collectors?: BaseFetchCollectorOptions[]
+}
+
+export type FetchActionOptions = RequireAtLeastOne<
+  FetchActionProperties,
+  'id' | 'name' | 'action'
+>
+
+export class EngineUpgradeError extends Error {
+  public code = 'ENGINE_UPGRADE_REQUIRED'
+  constructor(public res: FetchResponse) {
+    super(`Engine upgrade requested for status ${res.statusCode}`)
+    this.name = 'EngineUpgradeError'
+  }
+}
 
 export type FetchEngineType = 'http' | 'browser'
 export type BrowserEngine = 'playwright' | 'puppeteer'
@@ -70,6 +153,8 @@ export interface BaseFetcherProperties {
    */
   engine?: FetchEngineMode
   enableSmart?: boolean // 启用智能探测
+  syncStateOnUpgrade?: boolean // 升级引擎时是否同步状态（Cookies/Session），默认 false
+  upgradeThresholdMs?: number // 触发升级的等待时间阈值（毫秒），默认 5000ms。超过此时间或无信息则升级。
   useSiteRegistry?: boolean // 使用站点配置
   antibot?: boolean
   debug?: boolean | string | string[]
@@ -183,6 +268,8 @@ export interface FetchResponse {
 export const DefaultFetcherProperties: BaseFetcherProperties = {
   engine: 'auto',
   enableSmart: true,
+  syncStateOnUpgrade: false,
+  upgradeThresholdMs: 5000,
   useSiteRegistry: true,
   antibot: false,
   debug: false,
