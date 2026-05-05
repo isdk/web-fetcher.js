@@ -1,6 +1,5 @@
-import { FetchActionResult } from '../action/fetch-action'
 import { FetchContext } from './context'
-import { FetchResponse } from './types'
+import { FetchActionResult, FetchResponse } from './types'
 
 export type FetchReturnType =
   | 'response'

@@ -1,7 +1,6 @@
 import { GotoActionOptions } from '../../engine/base'
-import { FetchContext } from '../../core/context'
-import { FetchResponse } from '../../core/types'
-import { BaseFetchActionProperties, FetchAction } from '../fetch-action'
+import { BaseFetchActionProperties, FetchContext, FetchResponse } from '../../core'
+import { FetchAction } from '../fetch-action'
 
 interface GotoParams extends GotoActionOptions {
   url?: string

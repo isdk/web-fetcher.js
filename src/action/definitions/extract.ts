@@ -1,6 +1,6 @@
-import { FetchContext } from '../../core/context'
+import { BaseFetchActionProperties, FetchContext } from '../../core'
 import { ExtractSchema } from '../../core/extract'
-import { BaseFetchActionProperties, FetchAction } from '../fetch-action'
+import { FetchAction } from '../fetch-action'
 
 export interface ExtractActionProperties extends BaseFetchActionProperties {
   params: ExtractSchema

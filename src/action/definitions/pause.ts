@@ -1,5 +1,5 @@
-import { BaseFetchActionProperties, FetchAction } from '../fetch-action'
-import { FetchContext } from '../../core/context'
+import { BaseFetchActionProperties, FetchContext } from '../../core'
+import { FetchAction } from '../fetch-action'
 
 export class PauseAction extends FetchAction {
   static override id = 'pause'
@@ -28,7 +28,7 @@ export class PauseAction extends FetchAction {
     if (selector) {
       // Use `extract` with a simple schema to check for the element's existence.
       // We ask for a basic property like `tagName`. If the result is null or undefined, the element doesn't exist.
-      const tagName = await engine?.extract<string>({
+      const tagName = await engine?.extract({
         selector,
         attribute,
       })

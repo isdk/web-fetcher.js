@@ -14,9 +14,7 @@ import {
  * Extends the basic action properties with runtime metadata like execution index,
  * nesting depth, and any errors encountered during execution.
  */
-export interface FetchActionInContext
-  extends FetchActionOptions,
-    Record<string, any> {
+export type FetchActionInContext = FetchActionOptions & {
   /**
    * The 0-based index of the action in the execution sequence.
    */
