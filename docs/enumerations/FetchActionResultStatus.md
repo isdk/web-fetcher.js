@@ -6,7 +6,7 @@
 
 # Enumeration: FetchActionResultStatus
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:7](https://github.com/isdk/web-fetcher.js/blob/ff2bf8a6938cad6b2dc7c85fb1380de226cb3724/src/action/fetch-action.ts#L7)
+Defined in: [packages/web-fetcher/src/core/types.ts:7](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L7)
 
 ## Enumeration Members
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:7](https://github.c
 
 > **Failed**: `0`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:11](https://github.com/isdk/web-fetcher.js/blob/ff2bf8a6938cad6b2dc7c85fb1380de226cb3724/src/action/fetch-action.ts#L11)
+Defined in: [packages/web-fetcher/src/core/types.ts:11](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L11)
 
 动作执行失败但未抛出（通常因 failOnError=false）；错误信息在 error 字段
 
@@ -24,7 +24,7 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:11](https://github.
 
 > **Skipped**: `2`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:20](https://github.com/isdk/web-fetcher.js/blob/ff2bf8a6938cad6b2dc7c85fb1380de226cb3724/src/action/fetch-action.ts#L20)
+Defined in: [packages/web-fetcher/src/core/types.ts:20](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L20)
 
 动作被判定为不执行/降级为 noop（比如引擎不支持且 degradeTo='noop'）
 能力不支持且 degradeTo='noop' 时：status='skipped'，warnings 增加 { code:'capability-not-supported' }
@@ -35,6 +35,6 @@ Defined in: [packages/web-fetcher/src/action/fetch-action.ts:20](https://github.
 
 > **Success**: `1`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:15](https://github.com/isdk/web-fetcher.js/blob/ff2bf8a6938cad6b2dc7c85fb1380de226cb3724/src/action/fetch-action.ts#L15)
+Defined in: [packages/web-fetcher/src/core/types.ts:15](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L15)
 
 动作按预期完成（即便产生 warnings）
