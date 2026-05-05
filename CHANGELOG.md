@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.3.3](https://github.com/isdk/web-fetcher.js/compare/v0.3.2...v0.3.3) (2026-05-05)
+
+
+### Features
+
+* **core:** add smart engine upgrade and retry handling ([7c039f5](https://github.com/isdk/web-fetcher.js/commit/7c039f5f244f059ad1a480b27eef371cfdf7384f))
+
+
+### Refactor
+
+* consolidate imports from core module and improve type syntax ([4cd06ed](https://github.com/isdk/web-fetcher.js/commit/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8))
+
 ## [0.3.2](https://github.com/isdk/web-fetcher.js/compare/v0.3.1...v0.3.2) (2026-05-03)
 
 
