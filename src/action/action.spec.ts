@@ -13,7 +13,7 @@ import { AddressInfo } from 'net'
 import { EventEmitter } from 'events-ex'
 
 // The things to test
-import { FetchAction, FetchActionResultStatus } from './fetch-action'
+import { FetchAction } from './fetch-action'
 import './definitions' // to register all actions
 import { GotoAction } from './definitions/goto'
 import { FillAction } from './definitions/fill'
@@ -29,7 +29,7 @@ import { FetchEngine } from '../engine/base'
 import { CheerioFetchEngine } from '../engine/cheerio'
 import { PlaywrightFetchEngine } from '../engine/playwright'
 import { FetchContext, FetchEngineContext } from '../core/context'
-import { FetchResponse } from '../core/types'
+import { FetchActionResultStatus, FetchResponse } from '../core/types'
 
 const TEST_TIMEOUT = 5000 // 5s
 

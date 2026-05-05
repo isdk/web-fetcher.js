@@ -1,0 +1,17 @@
+{
+  "name": "Auto-Upgrade to Browser on JS Detection",
+  "engine": "http",
+  "options": {
+    "enableSmart": true
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "html": "Success on call 2",
+    "metadata": {
+      "mode": "browser"
+    }
+  }
+}

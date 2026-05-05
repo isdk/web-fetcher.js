@@ -1,96 +1,22 @@
-import type { RequireAtLeastOne } from 'type-fest'
 import { FetchActionInContext, FetchContext } from '../core/context'
-import { FetchReturnType, FetchReturnTypeFor } from '../core/fetch-return-type'
-import type { FetchEngineType, FetchResponse } from '../core/types'
-import type { FetchEngine } from '../engine/'
-
-export enum FetchActionResultStatus {
-  /**
-   * 动作执行失败但未抛出（通常因 failOnError=false）；错误信息在 error 字段
-   */
-  Failed,
-  /**
-   * 动作按预期完成（即便产生 warnings）
-   */
-  Success,
-  /**
-   * 动作被判定为不执行/降级为 noop（比如引擎不支持且 degradeTo='noop'）
-   * 能力不支持且 degradeTo='noop' 时：status='skipped'，warnings 增加 { code:'capability-not-supported' }
-   */
-  Skipped,
-}
-
-export type FetchActionCapabilityMode = 'native' | 'simulate' | 'noop'
-
-// 承载与诊断相关的信息（引擎、降级路径、时延、重试、HTTP 信息等）
-interface FetchActionMeta {
-  id: string
-  index?: number
-  engineType?: FetchEngineType
-  capability?: FetchActionCapabilityMode
-  response?: FetchResponse
-  timings?: { start: number; total: number }
-  retries?: number // 实际重试次数
-}
-
-export interface FetchActionResult<
-  R extends FetchReturnType = FetchReturnType,
-> {
-  status: FetchActionResultStatus // 默认 'success'（未抛错且未标记跳过）
-  returnType?: R
-  result?: FetchReturnTypeFor<R>
-  error?: Error
-  meta?: FetchActionMeta // 便于审计与调试的元信息
-}
-
-export interface BaseFetchActionProperties {
-  id?: string
-  name?: string // action id 的别名
-  action?: string | FetchAction // action id 的别名
-  index?: number
-  params?: any
-  args?: any // params 的别名
-  // 如果设置则将结果存储到上下文的outputs[storeAs]
-  storeAs?: string
-  // defaults to true if in main action
-  // defaults to false if in collector action
-  failOnError?: boolean
-  // defaults to false
-  failOnTimeout?: boolean
-  timeoutMs?: number
-  maxRetries?: number
-  [key: string]: any
-}
-export type BaseFetchActionOptions = RequireAtLeastOne<
-  BaseFetchActionProperties,
-  'id' | 'name' | 'action'
->
-
-export interface BaseFetchCollectorActionProperties
-  extends BaseFetchActionProperties {
-  // 启动事件，支持正则表达式，任意事件发生就启动`onStart`
-  activateOn?: string | RegExp | Array<string | RegExp>
-  // 结束事件，任意事件发生就结束`onEnd`
-  deactivateOn?: string | RegExp | Array<string | RegExp>
-  // 当指定事件发生时，执行收集`onExecute`
-  collectOn?: string | RegExp | Array<string | RegExp> // self, session, action, action:name
-  // 是否在后台运行（不等待 onExec 完成），defaults to true
-  background?: boolean
-}
-
-export type BaseFetchCollectorOptions = RequireAtLeastOne<
+import { FetchReturnType } from '../core/fetch-return-type'
+import {
+  smartShouldUseBrowser,
+} from '../core/select-engine'
+import {
+  FetchActionResultStatus,
+  FetchActionCapabilityMode,
+  FetchActionResult,
   BaseFetchCollectorActionProperties,
-  'id' | 'name' | 'action'
->
-
-export interface FetchActionProperties extends BaseFetchActionProperties {
-  collectors?: BaseFetchCollectorOptions[]
-}
-
-export type FetchActionOptions = RequireAtLeastOne<
+  BaseFetchCollectorOptions,
   FetchActionProperties,
-  'id' | 'name' | 'action'
->
+  FetchActionOptions,
+  EngineUpgradeError,
+  FetchEngineType,
+  FetchResponse,
+} from '../core/types'
+import { getRetryAfter } from '../core/utils'
+import type { FetchEngine } from '../engine/'
 
 export type FetchActionCapabilities = {
   [mode in FetchEngineType]?: FetchActionCapabilityMode
@@ -98,15 +24,15 @@ export type FetchActionCapabilities = {
 
 export abstract class FetchAction {
   // ===== 静态成员：注册管理 =====
-  private static registry = new Map<string, typeof FetchAction>()
+  private static registry = new Map<string, any>()
 
-  static register(actionClass: typeof FetchAction): void {
+  static register(actionClass: any): void {
     const id = (actionClass as any).id
     if (!id) throw new Error('FetchAction.register: actionClass.id is required')
     this.registry.set(id, actionClass)
   }
 
-  static get(id: string): typeof FetchAction | undefined {
+  static get(id: string): any | undefined {
     return this.registry.get(id)
   }
 
@@ -465,31 +391,87 @@ export abstract class FetchAction {
     if (options?.args && !options.params) options.params = options.args
     const scope = await this.beforeExec(context, options)
     const failOnError = options?.failOnError ?? true
+    const maxRetries = options?.maxRetries ?? context.retries ?? 0
+    let attempt = 0
     let result: FetchActionResult<R> | undefined
+
     try {
-      context.throwHttpErrors = failOnError
-      result = await this.onExecute(context, options)
-      if (!result || !result.returnType) {
-        result = {
-          status: FetchActionResultStatus.Success,
-          returnType: this.returnType ?? 'any',
-          result,
-        } as FetchActionResult<R>
+      while (true) {
+        try {
+          context.throwHttpErrors = failOnError
+          const res = await this.onExecute(context, options)
+
+          if (!res || !(res as any).returnType) {
+            result = {
+              status: FetchActionResultStatus.Success,
+              returnType: this.returnType ?? 'any',
+              result: res,
+            } as FetchActionResult<R>
+          } else {
+            result = res as FetchActionResult<R>
+          }
+
+          // Even on success, check if upgrade is needed (e.g. JS detection)
+          if (
+            context.enableSmart &&
+            result?.returnType === 'response' &&
+            result.result
+          ) {
+            const upgradeNeeded = smartShouldUseBrowser(
+              result.result,
+              context.upgradeThresholdMs
+            )
+            if (upgradeNeeded && context.internal.engine?.mode !== 'browser') {
+              throw new EngineUpgradeError(result.result)
+            }
+          }
+
+          return result
+        } catch (error: any) {
+          if (
+            error instanceof EngineUpgradeError ||
+            error.code === 'ENGINE_UPGRADE_REQUIRED'
+          ) {
+            throw error
+          }
+
+          const response = error.response as FetchResponse
+          if (response && context.enableSmart) {
+            const upgradeNeeded = smartShouldUseBrowser(
+              response,
+              context.upgradeThresholdMs
+            )
+            if (upgradeNeeded && context.internal.engine?.mode !== 'browser') {
+              throw new EngineUpgradeError(response)
+            }
+
+            const retryAfter = getRetryAfter(response.headers)
+            if (
+              retryAfter !== null &&
+              retryAfter <= (context.upgradeThresholdMs || 5000) &&
+              attempt < maxRetries
+            ) {
+              await new Promise((resolve) => setTimeout(resolve, retryAfter))
+              attempt++
+              continue
+            }
+          }
+
+          result = {
+            status: FetchActionResultStatus.Failed,
+            error,
+            meta: {
+              id: this.id,
+              retries: attempt,
+              engineType: context.engine as any,
+              capability: this.getCapability(context.engine as any),
+            },
+          }
+          if (!failOnError) {
+            return result
+          } else throw error
+        }
       }
-      return result
-    } catch (error: any) {
-      result = {
-        status: FetchActionResultStatus.Failed,
-        error,
-        meta: {
-          id: this.id,
-          engineType: context.engine as any,
-          capability: this.getCapability(context.engine as any),
-        },
-      }
-      if (!failOnError) {
-        return result
-      } else throw error
     } finally {
       await this.afterExec(context, options, result, scope)
     }

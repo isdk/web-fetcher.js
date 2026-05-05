@@ -1,0 +1,19 @@
+{
+  "name": "Retry in same engine on 429",
+  "engine": "http",
+  "options": {
+    "enableSmart": true,
+    "upgradeThresholdMs": 5000,
+    "retries": 1
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/retry" } }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "html": "Success on call 2",
+    "metadata": {
+      "mode": "http"
+    }
+  }
+}

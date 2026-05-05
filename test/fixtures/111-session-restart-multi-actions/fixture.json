@@ -1,0 +1,18 @@
+{
+  "name": "Session Restart on Late Upgrade",
+  "engine": "http",
+  "options": {
+    "enableSmart": true
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/step1" } },
+    { "action": "goto", "params": { "url": "/step2" } }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "html": "Step 2 Success",
+    "metadata": {
+      "mode": "browser"
+    }
+  }
+}

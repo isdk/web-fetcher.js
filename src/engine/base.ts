@@ -47,7 +47,7 @@ import {
 import { normalizeHeaders } from '../utils/headers'
 import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
 import { normalizeExtractSchema } from '../core/normalize-extract-schema'
-import { logDebug } from '../core/utils'
+import { getRetryAfter, logDebug } from '../core/utils'
 
 Configuration.getGlobalConfig().set('persistStorage', false)
 
@@ -675,7 +675,9 @@ export abstract class FetchEngine<
     result.contentType = contentTypeHeader.split(';')[0].trim()
     if (this.opts?.output?.cookies !== false) {
       if (!result.cookies && context.session) {
-        result.cookies = context.session.getCookies(context.request.url)
+        result.cookies = context.session.getCookies(
+          context.request.url || result.url
+        )
       }
     } else {
       delete result.cookies
@@ -689,11 +691,15 @@ export abstract class FetchEngine<
       delete result.sessionState
     }
 
+    result.metadata = {
+      ...result.metadata,
+      mode: this.mode,
+      engine: this.id as any,
+    }
+
     if (this.opts?.debug) {
       result.metadata = {
         ...result.metadata,
-        mode: this.mode,
-        engine: this.id as any,
         proxy:
           (context as any).proxyInfo?.url ||
           (typeof this.opts.proxy === 'string'
@@ -1278,11 +1284,17 @@ export abstract class FetchEngine<
         const isError =
           !fetchResponse.statusCode || fetchResponse.statusCode >= 400
         if (this.ctx?.throwHttpErrors && isError) {
+          let message = `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`
+          const retryAfter = getRetryAfter(fetchResponse.headers)
+          if (retryAfter) {
+            message += `. Retry after ${retryAfter}ms`
+          }
           const error = new CommonError(
-            `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`,
+            message,
             'request',
             fetchResponse.statusCode
-          )
+          ) as any
+          error.response = fetchResponse
           gotoPromise.reject(error)
         } else {
           this.lastResponse = fetchResponse
@@ -1305,7 +1317,7 @@ export abstract class FetchEngine<
   }
 
   protected async _sharedFailedRequestHandler(
-    context: TContext,
+    context: TContext & {response?: FetchResponse, body?: string | Buffer},
     error?: Error
   ): Promise<void> {
     const { request } = context
@@ -1313,17 +1325,37 @@ export abstract class FetchEngine<
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
       this.pendingRequests.delete(request.userData.requestId)
       const response = (error as any).response
-      const statusCode = response?.statusCode || (error.message.includes('timed out') ? ErrorCode.RequestTimeout : ErrorCode.InternalError)
+      if (response) {
+        context.session?.setCookiesFromResponse(response)
+        // Sync to context so buildResponse can use it
+        context.response = response
+        if (!context.body && (response as any).body) {
+          context.body = (response as any).body
+        }
+      }
+
+      const statusCode =
+        response?.statusCode ||
+        (error.message.includes('timed out')
+          ? ErrorCode.RequestTimeout
+          : ErrorCode.InternalError)
       const url = response?.url ? response.url : request.url
-      const message = statusCode === ErrorCode.RequestTimeout ?
-        url + ' ' + error.message :
-        `Request${url ? ' for ' + url : ''} failed: ${error.message}`
-      ;
-      const finalError = new CommonError(
-        message,
-        'request',
-        statusCode
-      )
+
+      let message =
+        statusCode === ErrorCode.RequestTimeout
+          ? url + ' ' + error.message
+          : `Request${url ? ' for ' + url : ''} failed: ${error.message}`
+
+      const retryAfter = response?.headers
+        ? getRetryAfter(response.headers as any)
+        : null
+      if (retryAfter) {
+        message += `. Retry after ${retryAfter}ms`
+      }
+
+      const finalError = new CommonError(message, 'request', statusCode) as any
+      // Ensure response is attached for upgrade/retry logic
+      finalError.response = await this.buildResponse(context)
       gotoPromise.reject(finalError)
     }
     // By calling the original handler, we ensure cleanup (e.g. lock release) happens.
@@ -1543,7 +1575,7 @@ export abstract class FetchEngine<
   async cookies(): Promise<Cookie[]>
   async cookies(cookies: Cookie[]): Promise<boolean>
   async cookies(a?: any): Promise<any> {
-    const url = this.lastResponse?.url || ''
+    const url = this.lastResponse?.url || this.ctx?.url || ''
     if (Array.isArray(a)) {
       if (this.currentSession) {
         this.currentSession.setCookies(a, url)
