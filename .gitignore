@@ -18,6 +18,7 @@ docs/
 dev.md
 *.db
 .npmrc
+temp
 
 # Editor directories and files
 .vscode/*
