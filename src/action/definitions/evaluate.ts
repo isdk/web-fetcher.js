@@ -1,6 +1,6 @@
-import { FetchContext } from '../../core/context'
+import { BaseFetchActionProperties, FetchContext } from '../../core'
 import { EvaluateActionOptions } from '../../engine/base'
-import { BaseFetchActionProperties, FetchAction } from '../fetch-action'
+import { FetchAction } from '../fetch-action'
 
 /**
  * Action that evaluates a JavaScript function or expression in the context of the page.

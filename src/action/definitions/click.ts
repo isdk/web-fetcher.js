@@ -1,5 +1,5 @@
-import { FetchContext } from '../../core/context'
-import { BaseFetchActionProperties, FetchAction } from '../fetch-action'
+import { BaseFetchActionProperties, FetchContext } from '../../core'
+import { FetchAction } from '../fetch-action'
 
 export class ClickAction extends FetchAction {
   static override id = 'click'
