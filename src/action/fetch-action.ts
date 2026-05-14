@@ -15,7 +15,7 @@ import {
   FetchEngineType,
   FetchResponse,
 } from '../core/types'
-import { getRetryAfter } from '../core/utils'
+import { getRetryAfter } from '../utils'
 import type { FetchEngine } from '../engine/'
 
 export type FetchActionCapabilities = {
