@@ -370,10 +370,10 @@ const engineTestSuite = (
 
         // Re-create engine with onPause handler for this test
         await engine.dispose() // Dispose the one from beforeEach
-        ;(context as any).onPause = async (params: { message?: string }) => {
-          pauseCalled = true
-          pauseMessage = params.message || ''
-        }
+          ; (context as any).onPause = async (params: { message?: string }) => {
+            pauseCalled = true
+            pauseMessage = params.message || ''
+          }
 
         engine = (await FetchEngine.create(context, {
           engine: engineName as any,
@@ -620,11 +620,11 @@ const engineTestSuite = (
       })
 
       it('should use firefox for camoufox-js to bypass bot detection when antibot is enabled', async () => {
-        await engine.dispose() // Dispose shared engine
-
         // 2. Test Case (antibot: true)
         const antibotContext: FetchEngineContext = {
           id: `test-antibot-${Date.now()}`,
+          // browser: { headless: false },
+          // debug: true,
         } as any
         const antibotEngine = (await FetchEngine.create(antibotContext, {
           engine: 'playwright',
@@ -632,22 +632,25 @@ const engineTestSuite = (
           // No custom headers to ensure we get the real browser UA
         })) as PlaywrightFetchEngine
 
-        // Check #1: Basic UA check
-        await antibotEngine.goto(`${baseUrl}/ua-check`)
-        let res = await antibotEngine.getContent()
-        let data = JSON.parse(res.text!)
-        expect(data.ua).toContain('Firefox')
+        try {
+          // Check #1: Basic UA check
+          await antibotEngine.goto(`${baseUrl}/ua-check`)
+          await antibotEngine.pause('Please check if the JSON Viewer is displayed, and manually check about:config for devtools.jsonview.enabled')
+          let res = await antibotEngine.getContent()
+          let data = JSON.parse(res.text!)
+          expect(data.ua).toContain('Firefox')
 
-        // Check #2: Webdriver property check
-        await antibotEngine.goto(`${baseUrl}/antibot-check`)
-        let content = await antibotEngine.extract<string>({
-          selector: '#results',
-        })
-        data = JSON.parse(content)
-        expect(data.webdriver).toBe(false)
-        expect(data.userAgent).toContain('Firefox')
-
-        await antibotEngine.dispose()
+          // Check #2: Webdriver property check
+          await antibotEngine.goto(`${baseUrl}/antibot-check`)
+          let content = await antibotEngine.extract<string>({
+            selector: '#results',
+          })
+          data = JSON.parse(content)
+          expect(data.webdriver).toBe(false)
+          expect(data.userAgent).toContain('Firefox')
+        } finally {
+          await antibotEngine.dispose()
+        }
       }, 20000) // Generous timeout for two separate engine launches
     }
   })

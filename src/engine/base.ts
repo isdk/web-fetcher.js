@@ -1,3 +1,4 @@
+import path from 'node:path'
 import { defaultsDeep, merge } from 'lodash-es'
 import { EventEmitter } from 'events-ex'
 import { CommonError, ErrorCode } from '@isdk/common-error'
@@ -9,6 +10,8 @@ import {
   Session,
   ProxyConfiguration,
 } from 'crawlee'
+import { SmartCache } from '@isdk/proxy'
+import { createCrawleeCacheHook } from '@isdk/proxy-crawlee'
 import type {
   BasicCrawler,
   BasicCrawlerOptions,
@@ -47,9 +50,16 @@ import {
 import { normalizeHeaders } from '../utils/headers'
 import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
 import { normalizeExtractSchema } from '../core/normalize-extract-schema'
-import { getRetryAfter, logDebug } from '../core/utils'
+import { logDebug } from '../core/utils'
+import { getRetryAfter } from '../utils'
 
-Configuration.getGlobalConfig().set('persistStorage', false)
+const crawleeGlobalConfig = Configuration.getGlobalConfig()
+crawleeGlobalConfig.set('persistStorage', false)
+// crawleeGlobalConfig.set('purgeOnStart', false)
+crawleeGlobalConfig.set('storageClientOptions', {
+  persistStorage: false,
+  // writeMetadata: false, // 如果这个不允许就会出错！
+});
 
 /**
  * Options for the {@link FetchEngine.goto}, allowing configuration of HTTP method, payload, headers, and navigation behavior.
@@ -303,8 +313,7 @@ export abstract class FetchEngine<
   TContext extends CrawlingContext = any,
   TCrawler extends BasicCrawler<TContext> = any,
   TOptions extends BasicCrawlerOptions<TContext> = any,
-> implements IExtractEngine
-{
+> implements IExtractEngine {
   // ===== 静态成员：注册管理 =====
   private static registry = new Map<string, AnyFetchEngineCtor>()
 
@@ -404,6 +413,7 @@ export abstract class FetchEngine<
   declare protected requestQueue?: RequestQueue
   protected kvStore?: KeyValueStore
   protected proxyConfiguration?: ProxyConfiguration
+  protected preNavigationHooks: any[] = []
 
   protected hdrs: Record<string, string> = {}
   protected _initialCookies?: Cookie[]
@@ -710,7 +720,23 @@ export abstract class FetchEngine<
       }
     }
 
+    const cacheStatus = result.headers['x-proxy-cache']
+    if (cacheStatus) {
+      result.metadata = {
+        ...result.metadata,
+        cache: cacheStatus,
+      }
+    }
+
     return result
+  }
+  protected async _applyPreNavigationHooks(
+    context: TContext,
+    gotOptions: any
+  ): Promise<void> {
+    for (const hook of this.preNavigationHooks) {
+      await hook(context, gotOptions)
+    }
   }
 
   /**
@@ -1080,6 +1106,35 @@ export abstract class FetchEngine<
       }
     )
 
+    const cacheOptions = context.cache || {}
+    if (cacheOptions.enabled) {
+      let storagePath = cacheOptions.storagePath
+
+      if (!storagePath) {
+        // Use the latest Crawlee API to get the local data directory
+        const localDataDir = (config.getStorageClient() as any).options
+          ?.localDataDirectory
+        if (localDataDir) {
+          storagePath = path.join(localDataDir, storeId, 'http-cache')
+        }
+      }
+
+      if (storagePath) {
+        const cache = new SmartCache({
+          ...cacheOptions,
+          storagePath,
+        })
+        const cacheHook = createCrawleeCacheHook({
+          cache,
+          config: cacheOptions,
+        })
+
+        finalCrawlerOptions.preNavigationHooks.unshift(cacheHook)
+      }
+    }
+
+    this.preNavigationHooks = [...(finalCrawlerOptions.preNavigationHooks || [])]
+
     const crawler = (this.crawler = this._createCrawler(
       finalCrawlerOptions as TOptions,
       config
@@ -1271,6 +1326,7 @@ export abstract class FetchEngine<
 
   protected async _sharedRequestHandler(context: TContext): Promise<void> {
     const { request } = context
+    const originalPage = (context as any).page
     this._logDebug('request', `Processing request: ${request.url}`)
     try {
       this.currentSession = context.session
@@ -1313,18 +1369,28 @@ export abstract class FetchEngine<
       }
       this.isPageActive = false
       this.navigationLock.release()
+
+      // Cleanup mechanism for the "Page Replacement" workaround (used by PlaywrightFetchEngine).
+      // If a sub-engine replaced `context.page` with a newly created page (e.g., to escape a
+      // deadlocked JSON context under camoufox-js), Crawlee's underlying RequestHandler will
+      // only automatically close the `originalPage` it originally instantiated.
+      // Therefore, we must manually close the newly spawned page here to prevent memory leaks.
+      const currentPage = (context as any).page
+      if (currentPage && currentPage !== originalPage) {
+        await currentPage.close().catch(() => { })
+      }
     }
   }
 
   protected async _sharedFailedRequestHandler(
-    context: TContext & {response?: FetchResponse, body?: string | Buffer},
+    context: TContext & { response?: FetchResponse, body?: string | Buffer },
     error?: Error
   ): Promise<void> {
     const { request } = context
     const gotoPromise = this.pendingRequests.get(request.userData.requestId)
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
       this.pendingRequests.delete(request.userData.requestId)
-      const response = (error as any).response
+      let response = (error as any).response
       if (response) {
         context.session?.setCookiesFromResponse(response)
         // Sync to context so buildResponse can use it
@@ -1332,6 +1398,8 @@ export abstract class FetchEngine<
         if (!context.body && (response as any).body) {
           context.body = (response as any).body
         }
+      } else {
+        response = await this.buildResponse(context)
       }
 
       const statusCode =
@@ -1355,7 +1423,7 @@ export abstract class FetchEngine<
 
       const finalError = new CommonError(message, 'request', statusCode) as any
       // Ensure response is attached for upgrade/retry logic
-      finalError.response = await this.buildResponse(context)
+      finalError.response = response
       gotoPromise.reject(finalError)
     }
     // By calling the original handler, we ensure cleanup (e.g. lock release) happens.

@@ -9,6 +9,7 @@ import { createPromiseLock } from './promise-lock'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
+import { normalizeHeaders } from '../utils'
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>
 type CheerioSelection = ReturnType<CheerioAPI>
@@ -34,7 +35,7 @@ export class CheerioFetchEngine extends FetchEngine<
       if (!text.trim().startsWith('<')) {
         text = `<html><body><pre>${text}</pre></body></html>`
       }
-      ;(context as any).$ = cheerio.load(text)
+      ; (context as any).$ = cheerio.load(text)
     }
   }
 
@@ -69,7 +70,7 @@ export class CheerioFetchEngine extends FetchEngine<
       finalUrl: request.loadedUrl || request.url,
       statusCode: response?.statusCode ?? 200,
       statusText: response?.statusMessage,
-      headers: headers || {}, // Use the newly constructed headers
+      headers: normalizeHeaders(headers || {}), // Normalize to lowercase keys
       body,
       html: normalizeHtml(text),
       text,
@@ -620,13 +621,15 @@ export class CheerioFetchEngine extends FetchEngine<
         }
       }
 
-      lastResponse = await context.sendRequest({
+      const gotOptions: any = {
         url,
         method: method as any,
         body,
         headers,
         followRedirect: false,
-      })
+      }
+      // await this._applyPreNavigationHooks(context, gotOptions)
+      lastResponse = await context.sendRequest(gotOptions)
 
       if (!lastResponse) break
 
@@ -688,8 +691,8 @@ export class CheerioFetchEngine extends FetchEngine<
     // Update the context with the new response and body
     context.response = response
     context.body = response.body
-    // Clear $ to force re-evaluation in _ensureCheerioContext/buildResponse
-    ;(context as any).$ = undefined
+      // Clear $ to force re-evaluation in _ensureCheerioContext/buildResponse
+      ; (context as any).$ = undefined
     if (response.url) {
       context.request.loadedUrl = response.url
     }

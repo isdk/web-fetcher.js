@@ -143,6 +143,61 @@ export interface StorageOptions {
   config?: Record<string, any>
 }
 
+export interface FetchCacheOptions {
+  /**
+   * Whether to enable caching.
+   */
+  enabled?: boolean
+  /**
+   * Explicit offline mode. If true, network requests are prohibited and MISS results will throw OfflineCacheMissError.
+   */
+  offline?: boolean
+  /**
+   * Custom storage path for the cache.
+   */
+  storagePath?: string
+  /**
+   * Allowed HTTP methods for caching. Default is ['GET', 'HEAD'].
+   */
+  methods?: string[]
+  /**
+   * Fine-grained cache interception rules.
+   */
+  cacheRules?: any[]
+  /**
+   * URL query parameter filtering.
+   */
+  query?: any
+  /**
+   * Request header filtering.
+   */
+  headers?: any
+  /**
+   * Cookie field filtering.
+   */
+  cookies?: any
+  /**
+   * JSON request body field filtering.
+   */
+  body?: any
+  /**
+   * Whether to force return stale cache if network request fails.
+   */
+  staleIfError?: boolean
+  /**
+   * Whether to ignore server directives and force caching.
+   */
+  forceCache?: boolean
+  /**
+   * Max memory size for a single file content in bytes.
+   */
+  maxMemorySize?: number
+  /**
+   * Max total memory size for the LRU cache in bytes.
+   */
+  maxTotalMemorySize?: number
+}
+
 export interface BaseFetcherProperties {
   /**
    * 抓取模式
@@ -179,6 +234,11 @@ export interface BaseFetcherProperties {
    * Storage configuration for session isolation and persistence.
    */
   storage?: StorageOptions
+
+  /**
+   * Cache configuration for persistent HTTP caching.
+   */
+  cache?: FetchCacheOptions
 
   // browser 模式下，没有对应的配置，需要根据浏览器类型去设置浏览器内部配置，也可能无法配置。
   ignoreSslErrors?: boolean
@@ -306,4 +366,5 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
 export const FetcherOptionKeys = Object.keys(DefaultFetcherProperties).concat([
   'actions',
   'onPause',
+  'cache',
 ])

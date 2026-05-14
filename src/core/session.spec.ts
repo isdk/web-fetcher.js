@@ -7,9 +7,12 @@ import {
   afterEach,
   vi,
 } from 'vitest'
+import os from 'os'
+import path from 'path'
+import fs from 'fs'
+import { AddressInfo } from 'net'
 import fastify, { FastifyInstance } from 'fastify'
 import formbody from '@fastify/formbody'
-import { AddressInfo } from 'net'
 import * as cheerio from 'cheerio'
 
 import '../engine'
@@ -21,6 +24,7 @@ import '../action/definitions' // to register all actions
 import { FetchActionResultStatus, FetcherOptions } from './types'
 
 const TEST_TIMEOUT = 10000 // 10s, increased for playwright
+const storageDir = path.join(os.tmpdir(), 'isdk-web-fetch-session-spec')
 
 // 1. 本地测试服务器 (copied from action.spec.ts)
 const createTestServer = async (): Promise<FastifyInstance> => {
@@ -70,6 +74,8 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
     let baseUrl: string
 
     beforeAll(async () => {
+      fs.rmSync(storageDir, { recursive: true, force: true})
+      fs.mkdirSync(storageDir, {recursive: true})
       server = await createTestServer()
       await server.listen({ port: 0 })
       const address = server.server.address() as AddressInfo
@@ -85,6 +91,9 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
       session = new FetchSession({
         engine: engineName, // Use the engine for the current test suite
         ...options,
+        storage: {
+          config: { localDataDirectory: storageDir },
+        },
       })
     }
 
