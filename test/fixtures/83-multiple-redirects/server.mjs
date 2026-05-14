@@ -1,4 +1,8 @@
+import formbody from '@fastify/formbody';
+
 export default async function (fastify) {
+  await fastify.register(formbody);
+
   fastify.post('/step2', async (req, reply) => {
     return reply.redirect(302, '/step2-a')
   })
