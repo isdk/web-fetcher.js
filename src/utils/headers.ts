@@ -11,6 +11,33 @@ export function normalizeHeaders(h?: Record<string, string>) {
   return ret
 }
 
+/**
+ * 从响应头中获取重试等待时间（毫秒）
+ *
+ * @param headers 响应头对象
+ * @returns 等待时间（ms），如果未找到或格式错误则返回 null
+ */
+export function getRetryAfter(headers: Record<string, string>): number | null {
+  const retryAfter =
+    headers['retry-after'] || headers['Retry-After'] || headers['RETRY-AFTER']
+  if (!retryAfter) return null
+
+  // 1. 尝试解析为秒数
+  const seconds = parseInt(retryAfter, 10)
+  if (!isNaN(seconds)) {
+    return seconds * 1000
+  }
+
+  // 2. 尝试解析为日期
+  const date = Date.parse(retryAfter)
+  if (!isNaN(date)) {
+    const delay = date - Date.now()
+    return delay > 0 ? delay : 0
+  }
+
+  return null
+}
+
 export function flattenHeaders(h: Record<string, HeaderValue> | undefined) {
   const out: Record<string, string> = {}
   if (!h) return out

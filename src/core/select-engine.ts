@@ -4,7 +4,7 @@ import {
   FetchResponse,
   FetchSite,
 } from './types'
-import { getRetryAfter } from './utils'
+import { getRetryAfter } from '../utils'
 
 export async function maybeCreateEngine(
   ctx: FetchContext,
