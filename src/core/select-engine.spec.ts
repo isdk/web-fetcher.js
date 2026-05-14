@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { smartShouldUseBrowser } from './select-engine'
-import { getRetryAfter } from './utils'
 import { FetchResponse } from './types'
+import { getRetryAfter } from '../utils/headers'
 
 describe('select-engine unit tests', () => {
   describe('getRetryAfter', () => {
@@ -28,24 +28,24 @@ describe('select-engine unit tests', () => {
     })
 
     it('should suggest upgrade for 429 with long delay', () => {
-      const res: Partial<FetchResponse> = { 
-        statusCode: 429, 
-        headers: { 'retry-after': '10' } 
+      const res: Partial<FetchResponse> = {
+        statusCode: 429,
+        headers: { 'retry-after': '10' }
       }
       expect(smartShouldUseBrowser(res as any, 5000)).toBe(true)
     })
 
     it('should NOT suggest upgrade for 429 with short delay', () => {
-      const res: Partial<FetchResponse> = { 
-        statusCode: 429, 
-        headers: { 'retry-after': '2' } 
+      const res: Partial<FetchResponse> = {
+        statusCode: 429,
+        headers: { 'retry-after': '2' }
       }
       expect(smartShouldUseBrowser(res as any, 5000)).toBe(false)
     })
 
     it('should suggest upgrade for JS detection', () => {
-      const res: Partial<FetchResponse> = { 
-        statusCode: 200, 
+      const res: Partial<FetchResponse> = {
+        statusCode: 200,
         contentType: 'text/html',
         html: '<div>window.__NEXT_DATA__ = {}</div>'
       }

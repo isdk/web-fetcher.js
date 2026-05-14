@@ -593,7 +593,22 @@ export class PlaywrightFetchEngine extends FetchEngine<
       case 'dispose':
         return
       case 'navigate': {
-        const response = await page.goto(action.url, {
+        // Workaround for a critical deadlock in camoufox-js/Firefox:
+        // When Firefox renders an 'application/json' response, it creates a synthetic JSON Viewer document.
+        // The injected evasions from camoufox-js poison this specific page's context.
+        // Any subsequent navigation away from this JSON document (even to about:blank) will
+        // cause the underlying Playwright renderer teardown process to hang indefinitely.
+        //
+        // To fix this with zero network intrusion (and avoid proxy-crawlee cache conflicts),
+        // we detect if the current page was poisoned by JSON, and if so, we create a fresh,
+        // unpolluted page in the same BrowserContext to handle the new navigation.
+        // The old page is safely closed by the _sharedRequestHandler finally block.
+        const isJson = this.lastResponse?.contentType === 'application/json';
+        if (this.opts?.antibot && isJson) {
+          context.page = await context.page.context().newPage();
+        }
+
+        const response = await context.page.goto(action.url, {
           waitUntil: action.opts?.waitUntil || 'domcontentloaded',
           timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
         })
