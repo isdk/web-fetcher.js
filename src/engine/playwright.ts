@@ -904,12 +904,19 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const headless = ctx.browser?.headless ?? true
 
     const crawlerOptions: Partial<PlaywrightCrawlerOptions> = {
-      maxRequestRetries: ctx.retries || 3,
+      maxRequestRetries: ctx.retries ?? 3,
       headless,
       proxyConfiguration: this.proxyConfiguration,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
+      navigationTimeoutSecs: this.opts?.timeoutMs
+        ? Math.ceil(this.opts.timeoutMs / 1000)
+        : undefined,
       preNavigationHooks: [
         async ({ page, request }) => {
+          if (this.opts?.timeoutMs) {
+            page.setDefaultTimeout(this.opts.timeoutMs)
+            page.setDefaultNavigationTimeout(this.opts.timeoutMs)
+          }
 
           const blockedTypes = this.blockedTypes
           if (blockedTypes.size > 0) {

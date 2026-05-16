@@ -68,7 +68,7 @@ export class CheerioFetchEngine extends FetchEngine<
     const result: FetchResponse = {
       url: request.url,
       finalUrl: request.loadedUrl || request.url,
-      statusCode: response?.statusCode ?? 200,
+      statusCode: response?.statusCode,
       statusText: response?.statusMessage,
       headers: normalizeHeaders(headers || {}), // Normalize to lowercase keys
       body,
@@ -712,7 +712,7 @@ export class CheerioFetchEngine extends FetchEngine<
   ): CheerioCrawlerOptions {
     const crawlerOptions: CheerioCrawlerOptions = {
       additionalMimeTypes: ['text/plain'],
-      maxRequestRetries: 1,
+      maxRequestRetries: ctx.retries ?? 1,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       proxyConfiguration: this.proxyConfiguration,
       preNavigationHooks: [

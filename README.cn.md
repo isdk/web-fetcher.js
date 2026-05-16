@@ -32,7 +32,7 @@
 当 `enableSmart` 开启时，系统会根据响应特征自动判断是否需要升级引擎：
 
 - 触发升级的条件包括：
-  - HTTP 状态码：`401 / 403 / 500 / 429`
+  - HTTP 状态码：`401 / 403 / 429 / 5xx` (包括被映射为 `408 / 503 / 504` 的网络层错误，如超时或连接失败)
   - 页面疑似动态渲染（HTML 中检测到典型 JS 框架特征）
   - `Retry-After` 超过 `upgradeThresholdMs`
 - 升级过程中可选择是否同步 Cookies / Session 状态（`syncStateOnUpgrade`）

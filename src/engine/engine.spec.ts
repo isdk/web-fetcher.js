@@ -290,6 +290,43 @@ const engineTestSuite = (
     )
 
     it(
+      'should handle request timeout and return 408',
+      async () => {
+        // 创建一个超时时间很短的引擎
+        const timeoutEngine = (await FetchEngine.create(context, {
+          engine: engineName as any,
+          timeoutMs: 500, // 设置 500ms 超时
+          throwHttpErrors: true,
+        })) as FetchEngine
+
+        let error: any
+        try {
+          // Pass a larger timeout to goto to avoid the watchdog timer in Cheerio,
+          // so we can test the network timeout handled by _sharedFailedRequestHandler.
+          await timeoutEngine.goto(`${baseUrl}/slow`, { timeoutMs: 2000 })
+        } catch (e) {
+          error = e
+        }
+
+        expect(error).toBeDefined()
+        // The error name from _sharedFailedRequestHandler is 'request'
+        expect(error.name).toBe('request')
+        expect(error.code).toBe(408) // 应该是我们映射后的 RequestTimeout
+
+        // 验证构造的极简 Response
+        const res = error.response
+        expect(res).toBeDefined()
+        expect(res.statusCode).toBe(408)
+        // Playwright might have different error code but our mapErrorCodeToStatus handles its message
+        expect(['ETIMEDOUT', 'ESOCKETTIMEDOUT', 'UNKNOWN_ERROR']).toContain(res.statusText)
+        expect(res.url).toContain('/slow')
+
+        await timeoutEngine.dispose()
+      },
+      TEST_TIMEOUT
+    )
+
+    it(
       'should manage headers',
       async () => {
         // 测试 User-Agent
