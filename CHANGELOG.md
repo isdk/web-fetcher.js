@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.0](https://github.com/isdk/web-fetcher.js/compare/v0.3.3...v0.4.0) (2026-05-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* remove getRetryAfter to utils/headers.ts
+
+### Features
+
+* **cache:** implement smart self-healing persistent cache and engine upgrade integration ([bbbc947](https://github.com/isdk/web-fetcher.js/commit/bbbc9476fc1a8798bf3663ac564e568cf08714d8))
+* **engine:** support robust HTTP persistent cache & fix Firefox JSON deadlock ([b17b0c9](https://github.com/isdk/web-fetcher.js/commit/b17b0c92479b00232605ccb2dcfea1465cf03f0c))
+
+
+### Bug Fixes
+
+* **build:** use nodenext and target es2022 ([fdeeaed](https://github.com/isdk/web-fetcher.js/commit/fdeeaedd70b522555e942bcf77d21f3299938f51))
+
+
+### Refactor
+
+* remove getRetryAfter to utils/headers.ts ([b6bf8bd](https://github.com/isdk/web-fetcher.js/commit/b6bf8bd15216e9bed2fcc56bb92a9086e9cea3b2))
+
 ## [0.3.3](https://github.com/isdk/web-fetcher.js/compare/v0.3.2...v0.3.3) (2026-05-05)
 
 
