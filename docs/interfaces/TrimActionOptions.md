@@ -6,7 +6,7 @@
 
 # Interface: TrimActionOptions
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:129](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/engine/base.ts#L129)
+Defined in: [packages/web-fetcher/src/engine/base.ts:169](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/engine/base.ts#L169)
 
 Options for the [FetchEngine.trim](../classes/FetchEngine.md#trim) action, specifying which elements to remove from the DOM.
 
@@ -16,7 +16,7 @@ Options for the [FetchEngine.trim](../classes/FetchEngine.md#trim) action, speci
 
 > `optional` **presets**: [`TrimPreset`](../type-aliases/TrimPreset.md) \| [`TrimPreset`](../type-aliases/TrimPreset.md)[]
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:131](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/engine/base.ts#L131)
+Defined in: [packages/web-fetcher/src/engine/base.ts:171](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/engine/base.ts#L171)
 
 ***
 
@@ -24,4 +24,4 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:131](https://github.com/isd
 
 > `optional` **selectors**: `string` \| `string`[]
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:130](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/engine/base.ts#L130)
+Defined in: [packages/web-fetcher/src/engine/base.ts:170](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/engine/base.ts#L170)

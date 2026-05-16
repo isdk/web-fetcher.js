@@ -160,6 +160,15 @@ This is the main entry point for the library.
   * `persist` (boolean): Whether to save data to disk.
   * `purge` (boolean): Whether to delete data on cleanup (defaults to `true`).
   * `config` (object): Raw Crawlee configuration (e.g., `{ localDataDirectory: './data' }`).
+* `cache` (FetchCacheOptions): Controls persistent HTTP caching with smart self-healing mechanisms.
+  * `enabled` (boolean): Whether to enable caching.
+  * `offline` (boolean): Enable offline mode (prohibit network requests, throw error on MISS).
+  * `storagePath` (string): Custom path for cache storage. Shared pools are managed automatically.
+  * `backgroundUpdate` (boolean): Whether to enable SWR (Stale-While-Revalidate) background updates. Default: `true`.
+  * `staleIfError` (boolean): Force return of stale cache if network request fails.
+  * `forceCache` (boolean): Ignore server directives and force caching.
+  * `refresh` (boolean): **Force Refresh**: Ignore existing cache to re-validate and "heal" the cache entry. Useful for bypassing blocks via manual verification.
+  * `methods`, `cacheRules`, `query`, `headers`, `cookies`, `body`: Fine-grained cache policy configuration. Supports `STALE_RESCUE` and `WAF_CHALLENGE` detection for automatic engine upgrade and cache healing when used with `enableSmart`.
 * `output` (object): Controls the output fields in `FetchResponse`.
   * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
   * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
