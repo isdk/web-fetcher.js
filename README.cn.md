@@ -156,13 +156,15 @@ searchGoogle('gemini');
   * `persist` (boolean): 是否将数据保存到磁盘。
   * `purge` (boolean): 是否在清理时删除数据（默认为 `true`）。
   * `config` (object): 原生 Crawlee 配置（例如 `{ localDataDirectory: './data' }`）。
-* `cache` (FetchCacheOptions): 控制 HTTP 持久化缓存。
+* `cache` (FetchCacheOptions): 控制 HTTP 持久化缓存。集成智能容灾与愈合机制。
   * `enabled` (boolean): 是否开启缓存。
   * `offline` (boolean): 开启离线模式（仅使用本地缓存，MISS 则抛错）。
-  * `storagePath` (string): 缓存存储路径。
+  * `storagePath` (string): 缓存存储路径。多实例自动共享缓存池，避免冲突。
+  * `backgroundUpdate` (boolean): 是否启用 SWR (Stale-While-Revalidate) 后台异步更新。默认：`true`。
   * `staleIfError` (boolean): 网络请求失败时是否强制返回本地过期缓存。
   * `forceCache` (boolean): 是否无视源站指令强制执行缓存。
-  * `methods`, `cacheRules`, `query`, `headers`, `cookies`, `body`: 精细化缓存策略配置。
+  * `refresh` (boolean): **强制刷新**：忽略现有缓存并重新验证以“愈合”缓存条目。常用于配合真人验证进行“穿透”。
+  * `methods`, `cacheRules`, `query`, `headers`, `cookies`, `body`: 精细化缓存策略配置。支持 `STALE_RESCUE` 容灾与 `WAF_CHALLENGE` 智能识别，当识别到人机挑战时可自动配合 `enableSmart` 升级引擎并强制刷新（愈合）缓存。
 * `output` (object): 控制 `FetchResponse` 中的输出字段。
   * `cookies` (boolean): 是否在响应中包含 Cookie（默认：`true`）。
   * `sessionState` (boolean): 是否在响应中包含会话状态（默认：`true`）。

@@ -398,7 +398,11 @@ export abstract class FetchAction {
     try {
       while (true) {
         try {
-          context.throwHttpErrors = failOnError
+          if (context.internal.engine?.mode === 'browser') {
+            context.throwHttpErrors = false
+          } else {
+            context.throwHttpErrors = failOnError
+          }
           const res = await this.onExecute(context, options)
 
           if (!res || !(res as any).returnType) {
@@ -409,6 +413,31 @@ export abstract class FetchAction {
             } as FetchActionResult<R>
           } else {
             result = res as FetchActionResult<R>
+          }
+
+          if (
+            failOnError &&
+            result?.status === FetchActionResultStatus.Success &&
+            result?.returnType === 'response' &&
+            result.result &&
+            result.result.statusCode >= 400
+          ) {
+            // In browser mode, we might have suppressed the error for smart upgrade
+            // But we should only continue if it's a potential solvable challenge (WAF, 403, 429).
+            // Generic 5xx or other errors should still fail if failOnError is true.
+            const cacheStatus = (result.result.headers?.['x-proxy-cache'] as string) || ''
+            const isChallenge = cacheStatus.includes('WAF_CHALLENGE') ||
+                               result.result.statusCode === 403 ||
+                               result.result.statusCode === 429
+
+            if (!isChallenge) {
+              const error = new Error(
+                `Request for ${result.result.finalUrl} failed with status ${result.result.statusCode}`
+              ) as any
+              error.response = result.result
+              error.statusCode = result.result.statusCode
+              throw error
+            }
           }
 
           // Even on success, check if upgrade is needed (e.g. JS detection)

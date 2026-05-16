@@ -173,6 +173,14 @@ export interface FetchCacheOptions {
    */
   headers?: any
   /**
+   * Whether to enable SWR background asynchronous update. Default is true.
+   */
+  backgroundUpdate?: boolean
+  /**
+   * Force refresh: ignore existing cache and re-validate/heal it.
+   */
+  refresh?: boolean
+  /**
    * Cookie field filtering.
    */
   cookies?: any
