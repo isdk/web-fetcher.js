@@ -457,6 +457,16 @@ export abstract class FetchAction {
 
           return result
         } catch (error: any) {
+          result = {
+            status: FetchActionResultStatus.Failed,
+            error,
+            meta: {
+              id: this.id,
+              retries: attempt,
+              engineType: context.engine as any,
+              capability: this.getCapability(context.engine as any),
+            },
+          }
           if (
             error instanceof EngineUpgradeError ||
             error.code === 'ENGINE_UPGRADE_REQUIRED'
@@ -486,16 +496,6 @@ export abstract class FetchAction {
             }
           }
 
-          result = {
-            status: FetchActionResultStatus.Failed,
-            error,
-            meta: {
-              id: this.id,
-              retries: attempt,
-              engineType: context.engine as any,
-              capability: this.getCapability(context.engine as any),
-            },
-          }
           if (!failOnError) {
             return result
           } else throw error

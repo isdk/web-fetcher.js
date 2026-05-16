@@ -272,25 +272,25 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
       'should handle action execution error',
       async () => {
         createSession()
-        const endListener = vi.fn()
+        let actObject: any
+        const endListener = vi.fn((args)=>{actObject = args})
         session.context.eventBus.on('action:end', endListener)
 
         const action = {
           name: 'goto',
           params: { url: 'http://localhost:9999/invalid' },
           failOnError: true,
+          maxRetries: 0,
         }
         await expect(session.execute(action)).rejects.toThrow()
 
         expect(endListener).toHaveBeenCalledOnce()
-        expect(endListener).toHaveBeenCalledWith(
-          expect.objectContaining({
-            context: expect.objectContaining({ id: session.id }),
-            action: expect.objectContaining({ id: 'goto' }),
-            result: expect.objectContaining({ error: expect.any(Error) }),
-            error: expect.any(Error),
-          })
-        )
+        expect(actObject).toMatchObject({
+          context: expect.objectContaining({ id: session.id }),
+          action: expect.objectContaining({ id: 'goto' }),
+          result: expect.objectContaining({ error: expect.any(Error) }),
+          error: expect.any(Error),
+        })
       },
       TEST_TIMEOUT
     )

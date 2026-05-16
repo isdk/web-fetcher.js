@@ -52,7 +52,7 @@ import { normalizeHeaders } from '../utils/headers'
 import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
 import { normalizeExtractSchema } from '../core/normalize-extract-schema'
 import { logDebug } from '../core/utils'
-import { getRetryAfter } from '../utils'
+import { getRetryAfter, mapErrorCodeToStatus } from '../utils'
 
 const crawleeGlobalConfig = Configuration.getGlobalConfig()
 crawleeGlobalConfig.set('persistStorage', false)
@@ -1385,6 +1385,9 @@ export abstract class FetchEngine<
       const gotoPromise = this.pendingRequests.get(request.userData.requestId)
       if (gotoPromise) {
         const fetchResponse = await this.buildResponse(context)
+        if (!fetchResponse.statusCode) {
+          fetchResponse.statusCode = 200
+        }
 
         // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
         const isError =
@@ -1433,30 +1436,44 @@ export abstract class FetchEngine<
   }
 
   protected async _sharedFailedRequestHandler(
-    context: TContext & { response?: FetchResponse, body?: string | Buffer },
+    context: TContext & { response?: FetchResponse; body?: string | Buffer },
     error?: Error
   ): Promise<void> {
     const { request } = context
     const gotoPromise = this.pendingRequests.get(request.userData.requestId)
     if (gotoPromise && error && this.ctx?.throwHttpErrors) {
       this.pendingRequests.delete(request.userData.requestId)
-      let response = (error as any).response
+      let response = (error as any).response || (context as any).response
+      let statusCode: number | undefined
       if (response) {
-        context.session?.setCookiesFromResponse(response)
-        // Sync to context so buildResponse can use it
-        context.response = response
-        if (!context.body && (response as any).body) {
-          context.body = (response as any).body
+        if ((error as any).response) {
+          context.session?.setCookiesFromResponse((error as any).response)
+          // Sync to context so buildResponse can use it
+          context.response = (error as any).response
+          if (!context.body && ((error as any).response as any).body) {
+            context.body = ((error as any).response as any).body
+          }
         }
-      } else {
         response = await this.buildResponse(context)
+        statusCode =
+          mapErrorCodeToStatus(error) ||
+          response.statusCode ||
+          ErrorCode.InternalError
+      } else {
+        statusCode = mapErrorCodeToStatus(error) || ErrorCode.InternalError
+        const errorCode = (error as any).code || 'UNKNOWN_ERROR'
+        response = {
+          url: request.url,
+          finalUrl: request.loadedUrl || request.url,
+          headers: {},
+          statusCode: statusCode,
+          statusText: errorCode,
+          body: '',
+          html: '',
+          text: '',
+        } as FetchResponse
       }
 
-      const statusCode =
-        response?.statusCode ||
-        (error.message.includes('timed out')
-          ? ErrorCode.RequestTimeout
-          : ErrorCode.InternalError)
       const url = response?.url ? response.url : request.url
 
       let message =

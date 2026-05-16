@@ -32,7 +32,7 @@ English | [简体中文](./README.cn.md)
 When `enableSmart` is enabled, the system automatically determines whether an engine upgrade is needed based on response characteristics:
 
 - Triggers for upgrade include:
-  - HTTP status codes: `401 / 403 / 500 / 429`
+  - HTTP status codes: `401 / 403 / 429 / 5xx` (including network-level errors like timeouts or connection failures mapped to `408 / 503 / 504`)
   - Page appears to be dynamically rendered (detected typical JS framework signatures in HTML)
   - `Retry-After` exceeds `upgradeThresholdMs`
 - During upgrade, you can choose whether to sync Cookies / Session state (`syncStateOnUpgrade`)
