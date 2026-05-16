@@ -37,6 +37,7 @@
     "release.alpha": "pnpm run release -- --prerelease alpha"
   },
   "dependencies": {
+    "@crawlee/memory-storage": "^3.16.0",
     "@isdk/common-error": "^0.2.0",
     "@isdk/proxy": "workspace:^",
     "@isdk/proxy-crawlee": "workspace:^",
@@ -49,7 +50,7 @@
     "lodash-es": "^4.18.1",
     "nanoid": "^5.1.11",
     "playwright": "^1.59.1",
-    "util-ex": "^2.5.2"
+    "util-ex": "^2.6.0"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.7.3",

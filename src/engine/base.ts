@@ -10,6 +10,7 @@ import {
   Session,
   ProxyConfiguration,
 } from 'crawlee'
+import { MemoryStorage } from '@crawlee/memory-storage'
 import { SmartCache } from '@isdk/proxy'
 import { createCrawleeCacheHook } from '@isdk/proxy-crawlee'
 import type {
@@ -55,11 +56,40 @@ import { getRetryAfter } from '../utils'
 
 const crawleeGlobalConfig = Configuration.getGlobalConfig()
 crawleeGlobalConfig.set('persistStorage', false)
-// crawleeGlobalConfig.set('purgeOnStart', false)
+crawleeGlobalConfig.set('purgeOnStart', false) // Disable global purge on start to avoid conflicts
 crawleeGlobalConfig.set('storageClientOptions', {
   persistStorage: false,
-  // writeMetadata: false, // 如果这个不允许就会出错！
 });
+
+const cachePool = new Map<string, { instance: SmartCache; refCount: number }>()
+
+function acquireCache(storagePath: string, options: any) {
+  let entry = cachePool.get(storagePath)
+  if (!entry) {
+    entry = {
+      instance: new SmartCache({ ...options, storagePath }),
+      refCount: 0,
+    }
+    cachePool.set(storagePath, entry)
+  }
+  entry.refCount++
+  return entry.instance
+}
+
+function releaseCache(storagePath: string) {
+  const entry = cachePool.get(storagePath)
+  if (entry) {
+    entry.refCount--
+    if (entry.refCount <= 0) {
+      // @ts-ignore
+      if (typeof entry.instance.free === 'function') {
+        // @ts-ignore
+        entry.instance.free()
+      }
+      cachePool.delete(storagePath)
+    }
+  }
+}
 
 /**
  * Options for the {@link FetchEngine.goto}, allowing configuration of HTTP method, payload, headers, and navigation behavior.
@@ -79,15 +109,15 @@ crawleeGlobalConfig.set('storageClientOptions', {
  */
 export interface GotoActionOptions {
   method?:
-    | 'GET'
-    | 'HEAD'
-    | 'POST'
-    | 'PUT'
-    | 'DELETE'
-    | 'TRACE'
-    | 'OPTIONS'
-    | 'CONNECT'
-    | 'PATCH'
+  | 'GET'
+  | 'HEAD'
+  | 'POST'
+  | 'PUT'
+  | 'DELETE'
+  | 'TRACE'
+  | 'OPTIONS'
+  | 'CONNECT'
+  | 'PATCH'
   payload?: any // POST
   headers?: Record<string, string>
   waitUntil?: 'load' | 'domcontentloaded' | 'networkidle' | 'commit'
@@ -116,9 +146,9 @@ export interface WaitForActionOptions {
  */
 export interface SubmitActionOptions {
   enctype?:
-    | 'application/x-www-form-urlencoded'
-    | 'application/json'
-    | 'multipart/form-data'
+  | 'application/x-www-form-urlencoded'
+  | 'application/json'
+  | 'multipart/form-data'
 }
 
 /**
@@ -221,31 +251,31 @@ export type FetchEngineAction =
   | { type: 'click'; selector: string }
   | { type: 'fill'; selector: string; value: string }
   | {
-      type: 'mouseMove'
-      params: { x?: number; y?: number; selector?: string; steps?: number }
-    }
+    type: 'mouseMove'
+    params: { x?: number; y?: number; selector?: string; steps?: number }
+  }
   | {
-      type: 'mouseClick'
-      params: {
-        x?: number
-        y?: number
-        button?: 'left' | 'right' | 'middle'
-        clickCount?: number
-        delay?: number
-        steps?: number
-      }
+    type: 'mouseClick'
+    params: {
+      x?: number
+      y?: number
+      button?: 'left' | 'right' | 'middle'
+      clickCount?: number
+      delay?: number
+      steps?: number
     }
+  }
   | {
-      type: 'mouseWheel'
-      params: {
-        x?: number
-        y?: number
-        selector?: string
-        deltaX?: number
-        deltaY?: number
-        steps?: number
-      }
+    type: 'mouseWheel'
+    params: {
+      x?: number
+      y?: number
+      selector?: string
+      deltaX?: number
+      deltaY?: number
+      steps?: number
     }
+  }
   | { type: 'keyboardType'; params: { text: string; delay?: number } }
   | { type: 'keyboardPress'; params: { key: string; delay?: number } }
   | { type: 'scrollIntoView'; params: { selector: string } }
@@ -430,6 +460,7 @@ export abstract class FetchEngine<
   protected lastResponse?: FetchResponse
   protected actionQueue: DispatchedEngineAction[] = []
   protected isProcessingActionLoop = false
+  protected cacheStoragePath?: string
   protected blockedTypes = new Set<string>()
 
   public _logDebug(category: string, ...args: any[]) {
@@ -1025,15 +1056,23 @@ export abstract class FetchEngine<
 
     const storage = context.storage || {}
     const persistStorage = storage.persist ?? false
+
+    const storeId = storage.id || context.id
+    const localDataDir =
+      storage.config?.localDataDirectory ||
+      path.join(process.cwd(), 'tmp', 'storage', storeId)
+
+    const storageClient = new MemoryStorage({
+      ...storage.config,
+      localDataDirectory: localDataDir,
+      persistStorage,
+    })
+
     const config = (this.config = new Configuration({
       persistStorage,
-      storageClientOptions: {
-        persistStorage,
-        ...storage.config,
-      },
       ...storage.config,
+      storageClient,
     }))
-    const storeId = storage.id || context.id
     this.requestQueue = await RequestQueue.open(storeId, { config })
 
     const proxyUrls = this.opts?.proxy
@@ -1120,17 +1159,28 @@ export abstract class FetchEngine<
       }
 
       if (storagePath) {
-        const cache = new SmartCache({
-          ...cacheOptions,
-          storagePath,
-        })
+        this.cacheStoragePath = storagePath
+        const cache = acquireCache(storagePath, cacheOptions)
         const cacheHook = createCrawleeCacheHook({
           cache,
           config: cacheOptions,
+          backgroundUpdate: cacheOptions.backgroundUpdate,
+          refresh: cacheOptions.refresh,
         })
 
         finalCrawlerOptions.preNavigationHooks.unshift(cacheHook)
       }
+    }
+
+    if (context.internal.isUpgraded) {
+      finalCrawlerOptions.preNavigationHooks.unshift(async ({ request }: any) => {
+        // 注入运行时动态配置，强制穿透并愈合缓存
+        ; (request as any).isdkProxy = {
+          refresh: true,
+        }
+      })
+      // 首次重试后清除标记，避免后续请求（如 AJAX）也强制刷新
+      context.internal.isUpgraded = false
     }
 
     this.preNavigationHooks = [...(finalCrawlerOptions.preNavigationHooks || [])]
@@ -1474,12 +1524,21 @@ export abstract class FetchEngine<
     }
 
     if (this.crawler) {
-      try {
-        await this.crawler.teardown?.()
-      } catch (error) {
-        console.error('crawler teardown error:', error)
-      }
+      const crawler = this.crawler
       this.crawler = undefined
+      try {
+        // @ts-ignore
+        if (typeof crawler.stop === 'function') {
+          // @ts-ignore
+          crawler.stop()
+        }
+        // BasicCrawler's teardown might throw if already stopping or uninitialized
+        if (typeof crawler.teardown === 'function') {
+          await crawler.teardown().catch(() => { })
+        }
+      } catch (error) {
+        // Ignore teardown errors during cleanup
+      }
     }
     this.crawlerRunPromise = undefined
     this.isCrawlerReady = undefined
@@ -1503,6 +1562,11 @@ export abstract class FetchEngine<
           .catch((err) => console.error('Error dropping kvStore:', err))
       }
       this.kvStore = undefined
+    }
+
+    if (this.cacheStoragePath) {
+      releaseCache(this.cacheStoragePath)
+      this.cacheStoragePath = undefined
     }
 
     this.actionEmitter.removeAllListeners()

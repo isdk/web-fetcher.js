@@ -909,8 +909,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
       proxyConfiguration: this.proxyConfiguration,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       preNavigationHooks: [
-        async ({ page, request }, gotOptions) => {
-          gotOptions.throwHttpErrors = ctx.throwHttpErrors
+        async ({ page, request }) => {
 
           const blockedTypes = this.blockedTypes
           if (blockedTypes.size > 0) {

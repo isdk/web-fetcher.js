@@ -67,6 +67,9 @@ export async function ensureSmartUpgradeIfNeeded(
       ctx.internal.engine = undefined
     }
 
+    // 标记当前为升级模式，后续请求应当穿透缓存以实现“愈合”
+    ctx.internal.isUpgraded = true
+
     const engine = await FetchEngine.create(ctx, { engine: 'browser' })
     if (engine) {
       ctx.eventBus.emit('context:engine:upgraded', { to: 'browser' })
@@ -101,6 +104,11 @@ export function smartShouldUseBrowser(
   res: FetchResponse,
   upgradeThresholdMs: number = 5000
 ) {
+  const cacheStatus = (res.headers?.['x-proxy-cache'] as string) || ''
+  if (cacheStatus.includes('WAF_CHALLENGE')) {
+    return true
+  }
+
   if (
     res.statusCode! >= 500 ||
     res.statusCode! === 401 ||
