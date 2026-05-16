@@ -6,7 +6,7 @@
 
 # Interface: FetchEngineContext
 
-Defined in: [packages/web-fetcher/src/core/context.ts:72](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/context.ts#L72)
+Defined in: [packages/web-fetcher/src/core/context.ts:72](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/context.ts#L72)
 
 Context provided to the Fetch Engine during navigation and request handling.
 
@@ -29,7 +29,7 @@ to perform a fetch operation and build a response.
 
 > `optional` **antibot**: `boolean`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:159](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L159)
+Defined in: [packages/web-fetcher/src/core/types.ts:222](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L222)
 
 #### Inherited from
 
@@ -41,7 +41,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:159](https://github.com/isdk
 
 > `optional` **blockResources**: `string`[]
 
-Defined in: [packages/web-fetcher/src/core/types.ts:176](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L176)
+Defined in: [packages/web-fetcher/src/core/types.ts:239](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L239)
 
 #### Inherited from
 
@@ -53,7 +53,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:176](https://github.com/isdk
 
 > `optional` **browser**: `object`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:186](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L186)
+Defined in: [packages/web-fetcher/src/core/types.ts:254](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L254)
 
 #### engine?
 
@@ -82,11 +82,25 @@ Defined in: [packages/web-fetcher/src/core/types.ts:186](https://github.com/isdk
 
 ***
 
+### cache?
+
+> `optional` **cache**: [`FetchCacheOptions`](FetchCacheOptions.md)
+
+Defined in: [packages/web-fetcher/src/core/types.ts:249](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L249)
+
+Cache configuration for persistent HTTP caching.
+
+#### Inherited from
+
+[`BaseFetcherProperties`](BaseFetcherProperties.md).[`cache`](BaseFetcherProperties.md#cache)
+
+***
+
 ### cookies?
 
 > `optional` **cookies**: [`Cookie`](Cookie.md)[]
 
-Defined in: [packages/web-fetcher/src/core/types.ts:163](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L163)
+Defined in: [packages/web-fetcher/src/core/types.ts:226](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L226)
 
 #### Inherited from
 
@@ -98,7 +112,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:163](https://github.com/isdk
 
 > `optional` **debug**: `string` \| `boolean` \| `string`[]
 
-Defined in: [packages/web-fetcher/src/core/types.ts:160](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L160)
+Defined in: [packages/web-fetcher/src/core/types.ts:223](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L223)
 
 #### Inherited from
 
@@ -110,7 +124,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:160](https://github.com/isdk
 
 > `optional` **delayBetweenRequestsMs**: `number`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:208](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L208)
+Defined in: [packages/web-fetcher/src/core/types.ts:276](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L276)
 
 #### Inherited from
 
@@ -122,7 +136,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:208](https://github.com/isdk
 
 > `optional` **enableSmart**: `boolean`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:155](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L155)
+Defined in: [packages/web-fetcher/src/core/types.ts:218](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L218)
 
 #### Inherited from
 
@@ -134,7 +148,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:155](https://github.com/isdk
 
 > `optional` **engine**: `string`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:154](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L154)
+Defined in: [packages/web-fetcher/src/core/types.ts:217](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L217)
 
 抓取模式
 
@@ -152,7 +166,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:154](https://github.com/isdk
 
 > `optional` **finalUrl**: `string`
 
-Defined in: [packages/web-fetcher/src/core/context.ts:84](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/context.ts#L84)
+Defined in: [packages/web-fetcher/src/core/context.ts:84](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/context.ts#L84)
 
 The final URL after all redirects have been followed.
 
@@ -162,7 +176,7 @@ The final URL after all redirects have been followed.
 
 > `optional` **headers**: `Record`\<`string`, `string`\>
 
-Defined in: [packages/web-fetcher/src/core/types.ts:162](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L162)
+Defined in: [packages/web-fetcher/src/core/types.ts:225](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L225)
 
 #### Inherited from
 
@@ -174,7 +188,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:162](https://github.com/isdk
 
 > `optional` **http**: `object`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:199](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L199)
+Defined in: [packages/web-fetcher/src/core/types.ts:267](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L267)
 
 #### body?
 
@@ -194,7 +208,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:199](https://github.com/isdk
 
 > **id**: `string`
 
-Defined in: [packages/web-fetcher/src/core/context.ts:76](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/context.ts#L76)
+Defined in: [packages/web-fetcher/src/core/context.ts:76](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/context.ts#L76)
 
 Unique identifier for the session or request batch.
 
@@ -204,7 +218,7 @@ Unique identifier for the session or request batch.
 
 > `optional` **ignoreSslErrors**: `boolean`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:184](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L184)
+Defined in: [packages/web-fetcher/src/core/types.ts:252](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L252)
 
 #### Inherited from
 
@@ -216,7 +230,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:184](https://github.com/isdk
 
 > **internal**: `BaseFetchContextInteralState`
 
-Defined in: [packages/web-fetcher/src/core/context.ts:98](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/context.ts#L98)
+Defined in: [packages/web-fetcher/src/core/context.ts:98](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/context.ts#L98)
 
 Engine-specific internal state.
 
@@ -226,7 +240,7 @@ Engine-specific internal state.
 
 > `optional` **lastResponse**: [`FetchResponse`](FetchResponse.md)
 
-Defined in: [packages/web-fetcher/src/core/context.ts:89](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/context.ts#L89)
+Defined in: [packages/web-fetcher/src/core/context.ts:89](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/context.ts#L89)
 
 The standardized response object from the most recent navigation.
 
@@ -236,7 +250,7 @@ The standardized response object from the most recent navigation.
 
 > `optional` **lastResult**: [`FetchActionResult`](FetchActionResult.md)\<[`FetchReturnType`](../type-aliases/FetchReturnType.md)\>
 
-Defined in: [packages/web-fetcher/src/core/context.ts:93](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/context.ts#L93)
+Defined in: [packages/web-fetcher/src/core/context.ts:93](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/context.ts#L93)
 
 The result object from the most recent action execution.
 
@@ -246,7 +260,7 @@ The result object from the most recent action execution.
 
 > `optional` **maxConcurrency**: `number`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:206](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L206)
+Defined in: [packages/web-fetcher/src/core/types.ts:274](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L274)
 
 #### Inherited from
 
@@ -258,7 +272,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:206](https://github.com/isdk
 
 > `optional` **maxRequestsPerMinute**: `number`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:207](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L207)
+Defined in: [packages/web-fetcher/src/core/types.ts:275](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L275)
 
 #### Inherited from
 
@@ -270,7 +284,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:207](https://github.com/isdk
 
 > `optional` **output**: `object`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:169](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L169)
+Defined in: [packages/web-fetcher/src/core/types.ts:232](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L232)
 
 #### cookies?
 
@@ -290,7 +304,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:169](https://github.com/isdk
 
 > `optional` **overrideSessionState**: `boolean`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:166](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L166)
+Defined in: [packages/web-fetcher/src/core/types.ts:229](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L229)
 
 #### Inherited from
 
@@ -302,7 +316,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:166](https://github.com/isdk
 
 > `optional` **proxy**: `string` \| `string`[]
 
-Defined in: [packages/web-fetcher/src/core/types.ts:174](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L174)
+Defined in: [packages/web-fetcher/src/core/types.ts:237](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L237)
 
 #### Inherited from
 
@@ -314,7 +328,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:174](https://github.com/isdk
 
 > `optional` **requestHandlerTimeoutSecs**: `number`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:205](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L205)
+Defined in: [packages/web-fetcher/src/core/types.ts:273](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L273)
 
 #### Inherited from
 
@@ -326,7 +340,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:205](https://github.com/isdk
 
 > `optional` **retries**: `number`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:209](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L209)
+Defined in: [packages/web-fetcher/src/core/types.ts:277](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L277)
 
 #### Inherited from
 
@@ -338,7 +352,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:209](https://github.com/isdk
 
 > `optional` **sessionPoolOptions**: `SessionPoolOptions`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:165](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L165)
+Defined in: [packages/web-fetcher/src/core/types.ts:228](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L228)
 
 #### Inherited from
 
@@ -350,7 +364,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:165](https://github.com/isdk
 
 > `optional` **sessionState**: `any`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:164](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L164)
+Defined in: [packages/web-fetcher/src/core/types.ts:227](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L227)
 
 #### Inherited from
 
@@ -362,7 +376,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:164](https://github.com/isdk
 
 > `optional` **sites**: [`FetchSite`](FetchSite.md)[]
 
-Defined in: [packages/web-fetcher/src/core/types.ts:211](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L211)
+Defined in: [packages/web-fetcher/src/core/types.ts:279](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L279)
 
 #### Inherited from
 
@@ -374,7 +388,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:211](https://github.com/isdk
 
 > `optional` **storage**: [`StorageOptions`](StorageOptions.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:181](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L181)
+Defined in: [packages/web-fetcher/src/core/types.ts:244](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L244)
 
 Storage configuration for session isolation and persistence.
 
@@ -388,7 +402,7 @@ Storage configuration for session isolation and persistence.
 
 > `optional` **syncStateOnUpgrade**: `boolean`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:156](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L156)
+Defined in: [packages/web-fetcher/src/core/types.ts:219](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L219)
 
 #### Inherited from
 
@@ -400,7 +414,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:156](https://github.com/isdk
 
 > `optional` **throwHttpErrors**: `boolean`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:167](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L167)
+Defined in: [packages/web-fetcher/src/core/types.ts:230](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L230)
 
 #### Inherited from
 
@@ -412,7 +426,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:167](https://github.com/isdk
 
 > `optional` **timeoutMs**: `number`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:204](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L204)
+Defined in: [packages/web-fetcher/src/core/types.ts:272](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L272)
 
 #### Inherited from
 
@@ -424,7 +438,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:204](https://github.com/isdk
 
 > `optional` **upgradeThresholdMs**: `number`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:157](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L157)
+Defined in: [packages/web-fetcher/src/core/types.ts:220](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L220)
 
 #### Inherited from
 
@@ -436,7 +450,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:157](https://github.com/isdk
 
 > `optional` **url**: `string`
 
-Defined in: [packages/web-fetcher/src/core/context.ts:80](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/context.ts#L80)
+Defined in: [packages/web-fetcher/src/core/context.ts:80](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/context.ts#L80)
 
 The target URL for the next navigation, if specified.
 
@@ -450,7 +464,7 @@ The target URL for the next navigation, if specified.
 
 > `optional` **useSiteRegistry**: `boolean`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:158](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/core/types.ts#L158)
+Defined in: [packages/web-fetcher/src/core/types.ts:221](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L221)
 
 #### Inherited from
 

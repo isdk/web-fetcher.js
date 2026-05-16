@@ -46,6 +46,7 @@
 - [FetchActionMeta](interfaces/FetchActionMeta.md)
 - [FetchActionProperties](interfaces/FetchActionProperties.md)
 - [FetchActionResult](interfaces/FetchActionResult.md)
+- [FetchCacheOptions](interfaces/FetchCacheOptions.md)
 - [FetchContext](interfaces/FetchContext.md)
 - [FetchEngineContext](interfaces/FetchEngineContext.md)
 - [FetcherOptions](interfaces/FetcherOptions.md)

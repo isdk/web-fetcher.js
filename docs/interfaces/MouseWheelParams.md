@@ -6,7 +6,7 @@
 
 # Interface: MouseWheelParams
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:74](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/action/definitions/mouse.ts#L74)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:74](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L74)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:74](https://gi
 
 > `optional` **deltaX**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:90](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/action/definitions/mouse.ts#L90)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:90](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L90)
 
 Horizontal scroll delta.
 
@@ -24,7 +24,7 @@ Horizontal scroll delta.
 
 > `optional` **deltaY**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:94](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/action/definitions/mouse.ts#L94)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:94](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L94)
 
 Vertical scroll delta.
 
@@ -34,7 +34,7 @@ Vertical scroll delta.
 
 > `optional` **selector**: `string`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:86](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/action/definitions/mouse.ts#L86)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:86](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L86)
 
 Selector for the element to scroll. If provided, mouse will move to this element before scrolling.
 
@@ -44,7 +44,7 @@ Selector for the element to scroll. If provided, mouse will move to this element
 
 > `optional` **steps**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:98](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/action/definitions/mouse.ts#L98)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:98](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L98)
 
 Number of steps to split the scroll into for simulating human-like behavior.
 
@@ -54,7 +54,7 @@ Number of steps to split the scroll into for simulating human-like behavior.
 
 > `optional` **x**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:78](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/action/definitions/mouse.ts#L78)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:78](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L78)
 
 Target X coordinate for the mouse wheel event.
 
@@ -64,6 +64,6 @@ Target X coordinate for the mouse wheel event.
 
 > `optional` **y**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:82](https://github.com/isdk/web-fetcher.js/blob/4cd06ed0bedeb2fc8c9242e05d3d068c125ab8a8/src/action/definitions/mouse.ts#L82)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:82](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L82)
 
 Target Y coordinate for the mouse wheel event.
