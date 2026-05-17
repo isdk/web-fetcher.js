@@ -11,7 +11,7 @@ import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 import { normalizeHtml } from '../utils/cheerio-helpers'
 
-const DefaultTimeoutMs = 30_000
+const DefaultTimeoutMs = 3_000
 
 type Page = NonNullable<PlaywrightCrawlingContext['page']>
 type Locator = ReturnType<Page['locator']>
