@@ -1162,10 +1162,9 @@ export abstract class FetchEngine<
         this.cacheStoragePath = storagePath
         const cache = acquireCache(storagePath, cacheOptions)
         const cacheHook = createCrawleeCacheHook({
+          ...cacheOptions,
           cache,
           config: cacheOptions,
-          backgroundUpdate: cacheOptions.backgroundUpdate,
-          refresh: cacheOptions.refresh,
         })
 
         finalCrawlerOptions.preNavigationHooks.unshift(cacheHook)
