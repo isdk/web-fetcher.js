@@ -448,7 +448,7 @@ export abstract class FetchAction {
           ) {
             const upgradeNeeded = smartShouldUseBrowser(
               result.result,
-              context.upgradeThresholdMs
+              context
             )
             if (upgradeNeeded && context.internal.engine?.mode !== 'browser') {
               throw new EngineUpgradeError(result.result)
@@ -478,7 +478,7 @@ export abstract class FetchAction {
           if (response && context.enableSmart) {
             const upgradeNeeded = smartShouldUseBrowser(
               response,
-              context.upgradeThresholdMs
+              context
             )
             if (upgradeNeeded && context.internal.engine?.mode !== 'browser') {
               throw new EngineUpgradeError(response)

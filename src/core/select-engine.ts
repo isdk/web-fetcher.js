@@ -52,7 +52,7 @@ export async function ensureSmartUpgradeIfNeeded(
   // already browser engine
   if (ctx.internal.engine?.mode === 'browser') return true
 
-  if (smartShouldUseBrowser(res, ctx.upgradeThresholdMs)) {
+  if (smartShouldUseBrowser(res, ctx)) {
     // 释放旧引擎
     const oldEngine = ctx.internal.engine
     if (oldEngine) {
@@ -102,8 +102,9 @@ export function isProbablyDynamicHtml(body: string) {
 
 export function smartShouldUseBrowser(
   res: FetchResponse,
-  upgradeThresholdMs: number = 5000
+  ctx: FetchContext,
 ) {
+  const upgradeThresholdMs = ctx.upgradeThresholdMs ?? 5000;
   const cacheStatus = (res.headers?.['x-proxy-cache'] as string) || ''
   if (cacheStatus.includes('WAF_CHALLENGE')) {
     return true
@@ -127,7 +128,7 @@ export function smartShouldUseBrowser(
 
   if (!res.contentType) return false
   if (res.contentType.includes('text/html')) {
-    if (isProbablyDynamicHtml(res.html!)) return true
+    if (ctx.upgradeOnJsContent && isProbablyDynamicHtml(res.html!)) return true
   }
   return false
 }

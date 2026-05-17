@@ -217,6 +217,7 @@ export interface BaseFetcherProperties {
   engine?: FetchEngineMode
   enableSmart?: boolean // 启用智能探测
   syncStateOnUpgrade?: boolean // 升级引擎时是否同步状态（Cookies/Session），默认 false
+  upgradeOnJsContent?: boolean // 如果html包含js内容就触发升级，默认 false
   upgradeThresholdMs?: number // 触发升级的等待时间阈值（毫秒），默认 5000ms。超过此时间或无信息则升级。
   useSiteRegistry?: boolean // 使用站点配置
   antibot?: boolean
