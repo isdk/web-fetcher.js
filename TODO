@@ -3,6 +3,13 @@ refactor:
     如何处理在导航内部的无关的动作，还是不允许无关的动作在里面？
     如果支持任意动作，是否允许嵌套？如何优雅的嵌套？
     是否需要在Engine层面支持？
+  ☐ 会话引擎升级后的切换，还比较混乱麻烦，需要重构
+    目前是通过标识（`context.internal.isUpgraded`）借助在每次执行动作前都要`ensureEngine`,在里面判断后，决定是否切换引擎。
+    这样使得我必须在session的执行中也要维护`internal.isUpgraded`状态，不然就会导致引擎不对：在`executeAll`执行过程中必须保持引擎一致，不能切换。如果切换，必须从头执行，切换后不能再次切换到原来的http引擎。
+    而用户每次重新执行`executeAll`应该总是以升级前的引擎开始。甚至暴露给用户的`execute`也要如此封装。
+    ☐ `ensureEngine`也应该重构，里面职能已经不单一了
+      本来只是一个简单引擎懒加载的，也就是如果引擎如果没有创建，就在这里创建，现在变成了还要检查引擎是否`isAlive`(页面是否close了)
+      还要检查是否处于升级状态。
 bug:
   ☐ 在 pause 期间，会受到 crawlee 的 requestHandlerTimeoutSecs 的限制。如果 pause 时间过长会导致 requestHandler 超时
     workaround: 设置 requestHandlerTimeoutSecs 更长的时间或禁用， 默认是60s
