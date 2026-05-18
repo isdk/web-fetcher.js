@@ -27,6 +27,7 @@ This approach allows users to describe a complete business process with intuitiv
 * `static returnType`: The type of the result returned after the Action executes, e.g., `'none'`, `'response'`.
 * `static capabilities`: Declares the capability level of this Action in different engines (`http`, `browser`), such as `native`, `simulate`, or `noop`.
 * `static register()`: A static method to register the Action class in a global registry, allowing it to be dynamically created by its `id`.
+* `static unregister(id)`: A static method to unregister an Action from the global registry by its `id`. Useful for removing built-in actions or replacing them with custom implementations.
 
 ### `onExecute` (Core Logic)
 

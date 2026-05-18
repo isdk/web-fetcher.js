@@ -463,6 +463,10 @@ export abstract class FetchEngine<
   protected cacheStoragePath?: string
   protected blockedTypes = new Set<string>()
 
+  public get isAlive() {
+    return !!this.isCrawlerReady
+  }
+
   public _logDebug(category: string, ...args: any[]) {
     logDebug(
       this.opts?.debug,
@@ -1041,7 +1045,11 @@ export abstract class FetchEngine<
     }
     // Deep merge the final resolved options back into the context,
     // so the context object always holds the most up-to-date data.
-    merge(context, options)
+    const { engine: _engine, ...otherOptions } = options || {}
+    merge(context, otherOptions)
+    if (_engine && context.engine !== 'auto') {
+      context.engine = _engine
+    }
 
     this.ctx = context
     this.opts = context // Use the merged context
@@ -1051,7 +1059,9 @@ export abstract class FetchEngine<
       context.internal = {}
     }
     context.internal.engine = this
-    context.engine = this.mode
+    if (context.engine !== 'auto') {
+      context.engine = this.mode
+    }
     this.actionEmitter.setMaxListeners(100) // Set a higher limit to prevent memory leak warnings
 
     const storage = context.storage || {}
@@ -1204,6 +1214,7 @@ export abstract class FetchEngine<
     this.crawlerRunPromise
       .finally(() => {
         this.isCrawlerReady = false
+        this.actionEmitter.emit('dispose')
       })
       .catch((error) => {
         console.error('Crawler background error:', error)
@@ -1231,6 +1242,8 @@ export abstract class FetchEngine<
   protected abstract _getInitialElementScope(
     context: TContext
   ): FetchElementScope
+
+  protected abstract isPageContextValid(context: TContext): boolean
 
   /**
    * Unified action processor that handles engine-agnostic actions.
@@ -1354,36 +1367,46 @@ export abstract class FetchEngine<
         processQueue()
       }
 
-      const onDispose = () => {
+      const onStop = () => {
         this.actionEmitter.removeListener('dispatch', listener)
+        this.actionEmitter.removeListener('dispose', onStop)
+        this.actionEmitter.removeListener('action-loop:stop', onStop)
         this.activeContext = undefined
         resolveLoop()
       }
 
       this.actionEmitter.on('dispatch', listener)
-      this.actionEmitter.once('dispose', onDispose)
+      this.actionEmitter.once('dispose', onStop)
+      this.actionEmitter.once('action-loop:stop', onStop)
 
       // Initial check if there are already items in the queue
       processQueue()
 
-      if (this.isEngineDisposed) {
-        onDispose()
-        this.actionEmitter.removeListener('dispose', onDispose)
+      if (this.isEngineDisposed || !this.isPageActive) {
+        onStop()
       }
     })
   }
 
   protected async _sharedRequestHandler(context: TContext): Promise<void> {
     const { request } = context
+    const requestId = request.userData.requestId
     const originalPage = (context as any).page
-    this._logDebug('request', `Processing request: ${request.url}`)
+    this._logDebug('request', `Processing request: ${request.url} (requestId: ${requestId})`)
     try {
       this.currentSession = context.session
       this.isPageActive = true
 
-      const gotoPromise = this.pendingRequests.get(request.userData.requestId)
+      let shouldExecuteActions = false
+      const gotoPromise = this.pendingRequests.get(requestId)
       if (gotoPromise) {
+        this._logDebug('request', `Found gotoPromise for requestId: ${requestId}`)
         const fetchResponse = await this.buildResponse(context)
+
+        const error = (context as any).error || (context as any).response?.error
+        if (!fetchResponse.statusCode && error) {
+          fetchResponse.statusCode = mapErrorCodeToStatus(error) || 500
+        }
         if (!fetchResponse.statusCode) {
           fetchResponse.statusCode = 200
         }
@@ -1391,27 +1414,65 @@ export abstract class FetchEngine<
         // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
         const isError =
           !fetchResponse.statusCode || fetchResponse.statusCode >= 400
-        if (this.ctx?.throwHttpErrors && isError) {
-          let message = `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`
-          const retryAfter = getRetryAfter(fetchResponse.headers)
-          if (retryAfter) {
-            message += `. Retry after ${retryAfter}ms`
-          }
-          const error = new CommonError(
-            message,
-            'request',
-            fetchResponse.statusCode
-          ) as any
-          error.response = fetchResponse
-          gotoPromise.reject(error)
+
+        const isRetryableError = fetchResponse.statusCode === 429 || (fetchResponse.statusCode >= 500 && fetchResponse.statusCode < 600)
+        const canRetry = (request.retryCount || 0) < (this.opts?.retries || 0)
+
+        if (isRetryableError && canRetry) {
+          this._logDebug('request', `Retryable error ${fetchResponse.statusCode} detected (retry ${request.retryCount}/${this.opts?.retries}), waiting for retry...`)
+          shouldExecuteActions = false
         } else {
-          this.lastResponse = fetchResponse
-          gotoPromise.resolve(fetchResponse)
+          let isContextValid = this.isPageContextValid(context)
+          this._logDebug('request', `isError: ${isError}, isContextValid: ${isContextValid}, status: ${fetchResponse.statusCode}`)
+
+          if (isError && !isContextValid) {
+            this._logDebug('request', `Context invalid for failed request, skipping action loop.`)
+            shouldExecuteActions = false
+          } else {
+            shouldExecuteActions = true
+          }
+
+          if (this.ctx?.throwHttpErrors && isError) {
+            let message = `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`
+            const retryAfter = getRetryAfter(fetchResponse.headers)
+            if (retryAfter) {
+              message += `. Retry after ${retryAfter}ms`
+            }
+            const finalError = new CommonError(
+              message,
+              'request',
+              fetchResponse.statusCode
+            ) as any
+            finalError.response = fetchResponse
+            this._logDebug('request', `Rejecting gotoPromise due to throwHttpErrors: ${message}`)
+            gotoPromise.reject(finalError)
+            shouldExecuteActions = false
+          } else if (!shouldExecuteActions && isError) {
+            const errorCode = (error as any)?.code || 'NAVIGATION_FAILED'
+            const finalError = new CommonError(
+              `Navigation to ${request.url} failed: ${errorCode}`,
+              'request',
+              fetchResponse.statusCode || 500
+            ) as any
+            finalError.response = fetchResponse
+            this._logDebug('request', `Rejecting gotoPromise due to invalid context: ${errorCode}`)
+            gotoPromise.reject(finalError)
+          } else {
+            this.lastResponse = fetchResponse
+            this._logDebug('request', `Resolving gotoPromise with status ${fetchResponse.statusCode}`)
+            gotoPromise.resolve(fetchResponse)
+          }
+          this.pendingRequests.delete(requestId)
         }
-        this.pendingRequests.delete(request.userData.requestId)
+      } else {
+        shouldExecuteActions = true
       }
 
-      await this._executePendingActions(context)
+      if (shouldExecuteActions) {
+        this._logDebug('request', `Entering action loop...`)
+        await this._executePendingActions(context)
+        this._logDebug('request', `Exited action loop.`)
+      }
     } finally {
       if (this.currentSession) {
         const cookies = this.currentSession.getCookies(request.url)
@@ -1420,6 +1481,10 @@ export abstract class FetchEngine<
         }
       }
       this.isPageActive = false
+      if (this.ctx) {
+        this.ctx.internal.isUpgraded = false
+      }
+      this.actionEmitter.emit('action-loop:stop')
       this.navigationLock.release()
 
       // Cleanup mechanism for the "Page Replacement" workaround (used by PlaywrightFetchEngine).

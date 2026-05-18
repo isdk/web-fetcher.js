@@ -50,7 +50,9 @@ export async function ensureSmartUpgradeIfNeeded(
 ) {
   if (!ctx.enableSmart) return false
   // already browser engine
-  if (ctx.internal.engine?.mode === 'browser') return true
+  if (ctx.internal.engine?.mode === 'browser') {
+    return true
+  }
 
   if (smartShouldUseBrowser(res, ctx)) {
     // 释放旧引擎
@@ -102,7 +104,7 @@ export function isProbablyDynamicHtml(body: string) {
 
 export function smartShouldUseBrowser(
   res: FetchResponse,
-  ctx: FetchContext,
+  ctx: FetchContext = {} as any,
 ) {
   const upgradeThresholdMs = ctx.upgradeThresholdMs ?? 5000;
   const cacheStatus = (res.headers?.['x-proxy-cache'] as string) || ''

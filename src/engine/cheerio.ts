@@ -287,6 +287,10 @@ export class CheerioFetchEngine extends FetchEngine<
     return { $, el: $.root() }
   }
 
+  protected isPageContextValid(context: CheerioCrawlingContext): boolean {
+    return !!context.$ || !!context.body
+  }
+
   protected async executeAction(
     context: CheerioCrawlingContext,
     action: FetchEngineAction

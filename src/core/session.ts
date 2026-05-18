@@ -11,6 +11,7 @@ import {
   ensureSmartUpgradeIfNeeded,
   maybeCreateEngine,
 } from './select-engine'
+import { FetchEngine } from '../engine'
 
 /**
  * Represents a stateful web fetching session.
@@ -137,6 +138,8 @@ export class FetchSession {
     actions: FetchActionOptions[],
     options?: Partial<FetcherOptions> & { index?: number }
   ) {
+    try {
+
     this._logDebug(
       'executeAll',
       `Total actions: ${actions.length}`,
@@ -191,7 +194,9 @@ export class FetchSession {
             'Engine upgrade signaled, restarting session...',
             error.res.statusCode
           )
-          await ensureSmartUpgradeIfNeeded(runContext, error.res)
+          if (await ensureSmartUpgradeIfNeeded(runContext, error.res)) {
+            this.context.internal.isUpgraded = true
+          }
           upgraded = true
           // Restart from index 0 (or original start index)
           continue
@@ -199,6 +204,9 @@ export class FetchSession {
         error.actionIndex = i
         throw error
       }
+    }
+    } finally {
+      this.context.internal.isUpgraded = false
     }
   }
 
@@ -250,13 +258,33 @@ export class FetchSession {
     if (this.closed) {
       throw new Error('Session is closed')
     }
-    if (!context.internal.engine) {
+    const engine: FetchEngine = context.internal.engine
+    const actionId = actionOptions?.id || actionOptions?.name || actionOptions?.action
+    const isNewNavigation = actionId === 'goto'
+    let shouldRecreate = !engine || (engine as any).isAlive === false
+
+    if (!shouldRecreate && isNewNavigation && context.engine === 'auto' && engine!.mode !== 'http') {
+      // If it's a new 'goto' in 'auto' mode, and we are NOT in http mode,
+      // we should consider resetting to http to see if we can handle it faster.
+      // But only if we are NOT already in the middle of a smart upgrade.
+      if (!context.internal.isUpgraded) {
+        this._logDebug('ensureEngine', 'Resetting auto engine to http for new navigation')
+        shouldRecreate = true
+      }
+    }
+
+    if (shouldRecreate) {
+      if (engine) {
+        this._logDebug('ensureEngine', 'Disposing old engine before recreation...')
+        await engine.dispose()
+        context.internal.engine = undefined
+      }
       const url = actionOptions?.params?.url ?? context.url
-      const engine = await maybeCreateEngine(context, { url })
-      if (!engine) {
+      const newEngine = await maybeCreateEngine(context, { url })
+      if (!newEngine) {
         throw new Error('No engine found')
       }
-      context.internal.engine = engine
+      context.internal.engine = newEngine
     }
   }
 

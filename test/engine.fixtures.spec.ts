@@ -299,7 +299,7 @@ const engineTestSuite = (
       await server.close();
     });
 
-    it(fixture.title ?? fixture.name, async () => {
+    it(fixture.title ?? fixture.name, {timeout}, async () => {
       let consoleSpy: any;
       if (fixture.options?.debug || fixture.expected?.logs) {
         consoleSpy = vi.spyOn(console, 'log');
@@ -307,6 +307,7 @@ const engineTestSuite = (
 
       const fetcher = new WebFetcher();
       const session = await fetcher.createSession({
+        debug: true,
         engine: engineName,
         retries: 0,
         // debug: fixture.options?.debug,
@@ -452,7 +453,7 @@ const engineTestSuite = (
       }
 
       await session.dispose();
-    }, timeout);
+    });
   });
 };
 
