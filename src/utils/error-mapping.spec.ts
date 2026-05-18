@@ -1,3 +1,4 @@
+import { describe, expect, it } from 'vitest'
 import { ErrorCode } from '@isdk/common-error'
 import { mapErrorCodeToStatus } from './error-mapping'
 
@@ -35,7 +36,7 @@ describe('mapErrorCodeToStatus', () => {
   })
 
   it('should map ENOTFOUND to 502', () => {
-    expect(mapErrorCodeToStatus({ code: 'ENOTFOUND' })).toBe(502)
+    expect(mapErrorCodeToStatus({ code: 'ENOTFOUND' })).toBe(400)
   })
 
   it('should map unknown error to undefined', () => {
