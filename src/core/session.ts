@@ -67,7 +67,7 @@ export class FetchSession {
    * await session.execute({ name: 'goto', params: { url: 'https://example.com' } });
    * ```
    */
-  async execute<R extends FetchReturnType = 'response'>(
+  protected async _execute<R extends FetchReturnType = 'response'>(
     actionOptions: FetchActionOptions,
     context: FetchContext = this.context
   ): Promise<FetchActionResult<R>> {
@@ -118,6 +118,18 @@ export class FetchSession {
     }
   }
 
+  async execute<R extends FetchReturnType = 'response'>(
+    actionOptions: FetchActionOptions,
+    context: FetchContext = this.context
+  ): Promise<FetchActionResult<R>> {
+    try {
+      return this._execute<R>(actionOptions, context)
+    } finally {
+      this.context.internal.isUpgraded = false
+    }
+  }
+
+
   /**
    * Executes a sequence of actions.
    *
@@ -138,75 +150,74 @@ export class FetchSession {
     actions: FetchActionOptions[],
     options?: Partial<FetcherOptions> & { index?: number }
   ) {
-    try {
-
-    this._logDebug(
-      'executeAll',
-      `Total actions: ${actions.length}`,
-      actions.map((a) => a.id || a.name || a.action)
-    )
     const internal = this.context.internal
-    const runContext: FetchContext = options
-      ? defaultsDeep(
-          {
-            // Preserve critical session state
-            id: this.context.id,
-            eventBus: this.context.eventBus,
-            outputs: this.context.outputs,
-            execute: this.context.execute,
-            action: this.context.action,
-            internal,
-          },
-          options,
-          this.context
-        )
-      : this.context
-
-    let upgraded = false
-    while (true) {
-      let i = options?.index ?? 0
-      try {
-        while (i < actions.length) {
-          const actionOptions = actions[i]
-          await this.execute({ ...actionOptions, index: i }, runContext)
-          i++
-        }
-
-        const response = await this.execute(
-          {
-            id: 'getContent',
-            index: i,
-          },
-          runContext
-        )
-        return {
-          result: response?.result,
-          outputs: this.getOutputs(),
-        }
-      } catch (error: any) {
-        if (
-          !upgraded &&
-          (error instanceof EngineUpgradeError ||
-            error.code === 'ENGINE_UPGRADE_REQUIRED')
-        ) {
-          this._logDebug(
-            'executeAll',
-            'Engine upgrade signaled, restarting session...',
-            error.res.statusCode
+    try {
+      this._logDebug(
+        'executeAll',
+        `Total actions: ${actions.length}`,
+        actions.map((a) => a.id || a.name || a.action)
+      )
+      const runContext: FetchContext = options
+        ? defaultsDeep(
+            {
+              // Preserve critical session state
+              id: this.context.id,
+              eventBus: this.context.eventBus,
+              outputs: this.context.outputs,
+              execute: this.context.execute,
+              action: this.context.action,
+              internal,
+            },
+            options,
+            this.context
           )
-          if (await ensureSmartUpgradeIfNeeded(runContext, error.res)) {
-            this.context.internal.isUpgraded = true
+        : this.context
+
+      let upgraded = false
+      while (true) {
+        let i = options?.index ?? 0
+        try {
+          while (i < actions.length) {
+            const actionOptions = actions[i]
+            await this._execute({ ...actionOptions, index: i }, runContext)
+            i++
           }
-          upgraded = true
-          // Restart from index 0 (or original start index)
-          continue
+
+          const response = await this._execute(
+            {
+              id: 'getContent',
+              index: i,
+            },
+            runContext
+          )
+          return {
+            result: response?.result,
+            outputs: this.getOutputs(),
+          }
+        } catch (error: any) {
+          if (
+            !upgraded &&
+            (error instanceof EngineUpgradeError ||
+              error.code === 'ENGINE_UPGRADE_REQUIRED')
+          ) {
+            this._logDebug(
+              'executeAll',
+              'Engine upgrade signaled, restarting session...',
+              error.res.statusCode
+            )
+            if (await ensureSmartUpgradeIfNeeded(runContext, error.res)) {
+              internal.isUpgraded = true
+            }
+            upgraded = true
+            // Restart from index 0 (or original start index)
+            continue
+          }
+          error.actionIndex = i
+          throw error
         }
-        error.actionIndex = i
-        throw error
       }
-    }
     } finally {
-      this.context.internal.isUpgraded = false
+      internal.isUpgraded = false
     }
   }
 
@@ -299,7 +310,7 @@ export class FetchSession {
         internal: {},
         execute: async <R extends FetchReturnType = 'any'>(
           actionOptions: FetchActionOptions
-        ) => this.execute<R>(actionOptions),
+        ) => this._execute<R>(actionOptions),
         action: async function <R extends FetchReturnType = 'any'>(
           this: FetchContext,
           name: string,
