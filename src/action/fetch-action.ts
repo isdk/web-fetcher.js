@@ -28,8 +28,13 @@ export abstract class FetchAction {
 
   static register(actionClass: any): void {
     const id = (actionClass as any).id
-    if (!id) throw new Error('FetchAction.register: actionClass.id is required')
+    if (!id) {throw new Error('FetchAction.register: actionClass.id is required')}
     this.registry.set(id, actionClass)
+  }
+
+  static unregister(id: string) {
+    if (!id) {throw new Error('FetchAction.unregister: actionClass.id is required')}
+    this.registry.delete(id)
   }
 
   static get(id: string): any | undefined {

@@ -401,6 +401,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return page.locator(':root')
   }
 
+  protected isPageContextValid(context: PlaywrightCrawlingContext): boolean {
+    return !!context.page && !context.page.isClosed()
+  }
+
   protected async _waitForNavigation(
     context: PlaywrightCrawlingContext,
     oldUrl: string,

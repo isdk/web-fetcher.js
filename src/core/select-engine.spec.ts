@@ -32,7 +32,7 @@ describe('select-engine unit tests', () => {
         statusCode: 429,
         headers: { 'retry-after': '10' }
       }
-      expect(smartShouldUseBrowser(res as any, 5000)).toBe(true)
+      expect(smartShouldUseBrowser(res as any, {upgradeThresholdMs: 5000} as any)).toBe(true)
     })
 
     it('should NOT suggest upgrade for 429 with short delay', () => {
@@ -40,7 +40,7 @@ describe('select-engine unit tests', () => {
         statusCode: 429,
         headers: { 'retry-after': '2' }
       }
-      expect(smartShouldUseBrowser(res as any, 5000)).toBe(false)
+      expect(smartShouldUseBrowser(res as any, {upgradeThresholdMs: 5000} as any)).toBe(false)
     })
 
     it('should suggest upgrade for JS detection', () => {
@@ -49,7 +49,7 @@ describe('select-engine unit tests', () => {
         contentType: 'text/html',
         html: '<div>window.__NEXT_DATA__ = {}</div>'
       }
-      expect(smartShouldUseBrowser(res as any)).toBe(true)
+      expect(smartShouldUseBrowser(res as any, {upgradeOnJsContent: true} as any)).toBe(true)
     })
   })
 })

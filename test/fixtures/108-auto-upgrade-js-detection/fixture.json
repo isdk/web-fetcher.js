@@ -2,7 +2,8 @@
   "name": "Auto-Upgrade to Browser on JS Detection",
   "engine": "http",
   "options": {
-    "enableSmart": true
+    "enableSmart": true,
+    "upgradeOnJsContent": true
   },
   "actions": [
     { "action": "goto", "params": { "url": "/" } }

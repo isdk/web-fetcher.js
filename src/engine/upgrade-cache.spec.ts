@@ -92,6 +92,7 @@ describe('FetchEngine Upgrade & Cache Healing Integration', () => {
 
     // 1. Attempt: Use fetchWeb with 'auto' engine
     const { result, outputs: finalOutputs } = await fetchWeb({
+      // debug: true,
       url: `${baseUrl}/waf-protected`,
       engine: 'auto',
       enableSmart: true,

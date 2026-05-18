@@ -44,7 +44,7 @@ import { ErrorCode } from '@isdk/common-error'
 
   // 3. Configuration/Addressing errors
   if (code === 'ENOTFOUND') {
-    return 502 // Bad Gateway
+    return 400 // 400 - Bad Request - 域名无法解析是客户端请求错误
   }
 
   // 4. Default fallback

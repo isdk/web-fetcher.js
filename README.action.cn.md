@@ -27,6 +27,7 @@ Action 脚本系统的核心目标是提供一个**声明式、引擎无关**的
 * `static returnType`: Action 执行后返回结果的类型，例如 `'none'`, `'response'`。
 * `static capabilities`: 声明此 Action 在不同引擎（`http`, `browser`）下的能力级别（`native`, `simulate`, `noop`）。
 * `static register()`: 一个静态方法，用于将 Action 类注册到全局注册表中，使其可以通过 `id` 被动态创建。
+* `static unregister(id)`: 一个静态方法，用于从全局注册表中注销指定 `id` 的 Action。常用于移除内置 Action 或用自定义实现替换。
 
 ### `onExecute` (核心执行逻辑)
 
