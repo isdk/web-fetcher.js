@@ -6,7 +6,7 @@
 
 # Enumeration: FetchActionResultStatus
 
-Defined in: [packages/web-fetcher/src/core/types.ts:7](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L7)
+Defined in: [packages/web-fetcher/src/core/types.ts:7](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L7)
 
 ## Enumeration Members
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:7](https://github.com/isdk/w
 
 > **Failed**: `0`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:11](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L11)
+Defined in: [packages/web-fetcher/src/core/types.ts:11](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L11)
 
 动作执行失败但未抛出（通常因 failOnError=false）；错误信息在 error 字段
 
@@ -24,7 +24,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:11](https://github.com/isdk/
 
 > **Skipped**: `2`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:20](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L20)
+Defined in: [packages/web-fetcher/src/core/types.ts:20](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L20)
 
 动作被判定为不执行/降级为 noop（比如引擎不支持且 degradeTo='noop'）
 能力不支持且 degradeTo='noop' 时：status='skipped'，warnings 增加 { code:'capability-not-supported' }
@@ -35,6 +35,6 @@ Defined in: [packages/web-fetcher/src/core/types.ts:20](https://github.com/isdk/
 
 > **Success**: `1`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:15](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/types.ts#L15)
+Defined in: [packages/web-fetcher/src/core/types.ts:15](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L15)
 
 动作按预期完成（即便产生 warnings）

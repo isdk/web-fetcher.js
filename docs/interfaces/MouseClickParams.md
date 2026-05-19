@@ -6,7 +6,7 @@
 
 # Interface: MouseClickParams
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:28](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L28)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:28](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/mouse.ts#L28)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:28](https://gi
 
 > `optional` **button**: `"left"` \| `"right"` \| `"middle"`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:31](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L31)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:31](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/mouse.ts#L31)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:31](https://gi
 
 > `optional` **clickCount**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:32](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L32)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:32](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/mouse.ts#L32)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:32](https://gi
 
 > `optional` **delay**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:33](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L33)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:33](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/mouse.ts#L33)
 
 ***
 
@@ -38,7 +38,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:33](https://gi
 
 > `optional` **x**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:29](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L29)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:29](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/mouse.ts#L29)
 
 ***
 
@@ -46,4 +46,4 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:29](https://gi
 
 > `optional` **y**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:30](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/mouse.ts#L30)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:30](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/mouse.ts#L30)
