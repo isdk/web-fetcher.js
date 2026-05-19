@@ -2,6 +2,26 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.1](https://github.com/isdk/web-fetcher.js/compare/v0.4.0...v0.4.1) (2026-05-19)
+
+
+### Features
+
+* add upgradeOnJsContent option to control browser engine upgrade for JS-heavy HTML ([e1880b0](https://github.com/isdk/web-fetcher.js/commit/e1880b0c7f4cdad507c14f4c668f8bf4850a20e6))
+* add upgradeOnJsContent, FetchAction.unregister and fix session rerun issues ([4241007](https://github.com/isdk/web-fetcher.js/commit/42410077cd54f32ec0da5529148abf4e70e0e0b7))
+* **error-handling:** implement robust status mapping and fix event loss on upgrade ([0a8f93e](https://github.com/isdk/web-fetcher.js/commit/0a8f93ec8a2018fbd3a08c8f2b5d2b47cfd3c819))
+
+
+### Bug Fixes
+
+* **session:** execute should restore upgrade status after too ([4671c6e](https://github.com/isdk/web-fetcher.js/commit/4671c6efc55a3d05458e8f3298983cf9eeaa2db5))
+* should pass all cache options ([0bfba1c](https://github.com/isdk/web-fetcher.js/commit/0bfba1c05ccb8481c04d9caf1a342710e24f8ab3))
+
+
+### Refactor
+
+* reduce DefaultTimeoutMs to 3_000 ([470d836](https://github.com/isdk/web-fetcher.js/commit/470d836c1d7963263ad1b0765e2336bea22b9935))
+
 ## [0.4.0](https://github.com/isdk/web-fetcher.js/compare/v0.3.3...v0.4.0) (2026-05-16)
 
 
