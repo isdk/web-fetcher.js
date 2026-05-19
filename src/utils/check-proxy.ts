@@ -83,10 +83,6 @@ export async function checkPort(host: string, port: number, timeout = 3000): Pro
     const socket = new net.Socket();
     socket.setTimeout(timeout);
 
-    // 在所有 socket 事件处理器之前声明状态变量
-    let expectAuthResponse = false;
-    let expectConnectResponse = false;
-
     socket.on('connect', () => {
       socket.destroy();
       resolve(true);
@@ -225,10 +221,6 @@ async function checkSocks4(
     };
 
     socket.setTimeout(timeout);
-
-    // 在所有 socket 事件处理器之前声明状态变量
-    let expectAuthResponse = false;
-    let expectConnectResponse = false;
 
     socket.on('connect', () => {
       // SOCKS4 请求格式:
