@@ -36,11 +36,18 @@ English | [简体中文](_media/README.cn.md)
 When `enableSmart` is enabled, the system automatically determines whether an engine upgrade is needed based on response characteristics:
 
 - Triggers for upgrade include:
-  - HTTP status codes: `401 / 403 / 500 / 429`
-  - Page appears to be dynamically rendered (detected typical JS framework signatures in HTML)
+  - HTTP status codes: `401 / 403 / 429 / 5xx` (including network-level errors like timeouts or connection failures mapped to `408 / 503 / 504`)
+  - Page appears to be dynamically rendered (detected typical JS framework signatures in HTML, controlled by `upgradeOnJsContent`)
   - `Retry-After` exceeds `upgradeThresholdMs`
 - During upgrade, you can choose whether to sync Cookies / Session state (`syncStateOnUpgrade`)
 - For `429` responses, if `Retry-After` is less than the `upgradeThresholdMs` threshold, the system will prioritize retry over upgrade
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `enableSmart` | boolean | `true` | Enable smart detection and automatic engine upgrade |
+| `upgradeOnJsContent` | boolean | `false` | Upgrade to browser engine when JS rendering signatures are detected (e.g., `window.__NEXT_DATA__`, `window.__NUXT__`) |
+| `upgradeThresholdMs` | number | `5000` | Response time threshold (ms) to trigger upgrade; also used for 429 `Retry-After` comparison |
+| `syncStateOnUpgrade` | boolean | `false` | Sync cookies/session state during engine upgrade |
 
 ---
 

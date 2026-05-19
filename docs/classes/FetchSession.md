@@ -6,7 +6,7 @@
 
 # Class: FetchSession
 
-Defined in: [packages/web-fetcher/src/core/session.ts:25](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L25)
+Defined in: [packages/web-fetcher/src/core/session.ts:26](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L26)
 
 Represents a stateful web fetching session.
 
@@ -24,7 +24,7 @@ Sessions are isolated; each has its own unique ID and (by default) its own stora
 
 > **new FetchSession**(`options`): `FetchSession`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:43](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L43)
+Defined in: [packages/web-fetcher/src/core/session.ts:44](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L44)
 
 Creates a new FetchSession.
 
@@ -46,7 +46,7 @@ Configuration options for the fetcher.
 
 > `protected` **closed**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:36](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L36)
+Defined in: [packages/web-fetcher/src/core/session.ts:37](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L37)
 
 ***
 
@@ -54,7 +54,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:36](https://github.com/isd
 
 > `readonly` **context**: [`FetchContext`](../interfaces/FetchContext.md)
 
-Defined in: [packages/web-fetcher/src/core/session.ts:33](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L33)
+Defined in: [packages/web-fetcher/src/core/session.ts:34](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L34)
 
 The execution context for this session, containing configurations, event bus, and shared state.
 
@@ -64,7 +64,7 @@ The execution context for this session, containing configurations, event bus, an
 
 > `readonly` **id**: `string`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:29](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L29)
+Defined in: [packages/web-fetcher/src/core/session.ts:30](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L30)
 
 Unique identifier for the session.
 
@@ -74,76 +74,17 @@ Unique identifier for the session.
 
 > `protected` **options**: [`FetcherOptions`](../interfaces/FetcherOptions.md) = `{}`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:43](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L43)
+Defined in: [packages/web-fetcher/src/core/session.ts:44](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L44)
 
 Configuration options for the fetcher.
 
 ## Methods
 
-### \_logDebug()
+### \_execute()
 
-> `protected` **\_logDebug**(`category`, ...`args`): `void`
+> `protected` **\_execute**\<`R`\>(`actionOptions`, `context`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:48](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L48)
-
-#### Parameters
-
-##### category
-
-`string`
-
-##### args
-
-...`any`[]
-
-#### Returns
-
-`void`
-
-***
-
-### createContext()
-
-> `protected` **createContext**(`options`): [`FetchContext`](../interfaces/FetchContext.md)
-
-Defined in: [packages/web-fetcher/src/core/session.ts:263](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L263)
-
-#### Parameters
-
-##### options
-
-[`FetcherOptions`](../interfaces/FetcherOptions.md) = `...`
-
-#### Returns
-
-[`FetchContext`](../interfaces/FetchContext.md)
-
-***
-
-### dispose()
-
-> **dispose**(): `Promise`\<`void`\>
-
-Defined in: [packages/web-fetcher/src/core/session.ts:232](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L232)
-
-Disposes of the session and its associated engine.
-
-#### Returns
-
-`Promise`\<`void`\>
-
-#### Remarks
-
-This method should be called when the session is no longer needed to free up resources
-(e.g., closing browser instances, purging temporary storage).
-
-***
-
-### execute()
-
-> **execute**\<`R`\>(`actionOptions`, `context`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
-
-Defined in: [packages/web-fetcher/src/core/session.ts:69](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L69)
+Defined in: [packages/web-fetcher/src/core/session.ts:70](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L70)
 
 Executes a single action within the session.
 
@@ -183,11 +124,98 @@ await session.execute({ name: 'goto', params: { url: 'https://example.com' } });
 
 ***
 
+### \_logDebug()
+
+> `protected` **\_logDebug**(`category`, ...`args`): `void`
+
+Defined in: [packages/web-fetcher/src/core/session.ts:49](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L49)
+
+#### Parameters
+
+##### category
+
+`string`
+
+##### args
+
+...`any`[]
+
+#### Returns
+
+`void`
+
+***
+
+### createContext()
+
+> `protected` **createContext**(`options`): [`FetchContext`](../interfaces/FetchContext.md)
+
+Defined in: [packages/web-fetcher/src/core/session.ts:302](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L302)
+
+#### Parameters
+
+##### options
+
+[`FetcherOptions`](../interfaces/FetcherOptions.md) = `...`
+
+#### Returns
+
+[`FetchContext`](../interfaces/FetchContext.md)
+
+***
+
+### dispose()
+
+> **dispose**(): `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/core/session.ts:251](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L251)
+
+Disposes of the session and its associated engine.
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Remarks
+
+This method should be called when the session is no longer needed to free up resources
+(e.g., closing browser instances, purging temporary storage).
+
+***
+
+### execute()
+
+> **execute**\<`R`\>(`actionOptions`, `context`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
+
+Defined in: [packages/web-fetcher/src/core/session.ts:121](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L121)
+
+#### Type Parameters
+
+##### R
+
+`R` *extends* [`FetchReturnType`](../type-aliases/FetchReturnType.md) = `"response"`
+
+#### Parameters
+
+##### actionOptions
+
+`_RequireAtLeastOne`
+
+##### context
+
+[`FetchContext`](../interfaces/FetchContext.md) = `...`
+
+#### Returns
+
+`Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
+
+***
+
 ### executeAll()
 
 > **executeAll**(`actions`, `options?`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: [`FetchResponse`](../interfaces/FetchResponse.md) \| `undefined`; \}\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:136](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L136)
+Defined in: [packages/web-fetcher/src/core/session.ts:149](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L149)
 
 Executes a sequence of actions.
 
@@ -227,7 +255,7 @@ const { result, outputs } = await session.executeAll([
 
 > **getOutputs**(): `Record`\<`string`, `any`\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:210](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L210)
+Defined in: [packages/web-fetcher/src/core/session.ts:229](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L229)
 
 Retrieves all outputs accumulated during the session.
 
@@ -243,7 +271,7 @@ A record of stored output data.
 
 > **getState**(): `Promise`\<\{ `cookies`: [`Cookie`](../interfaces/Cookie.md)[]; `sessionState?`: `any`; \} \| `undefined`\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:219](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/core/session.ts#L219)
+Defined in: [packages/web-fetcher/src/core/session.ts:238](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/session.ts#L238)
 
 Gets the current state of the session, including cookies and engine-specific state.
 

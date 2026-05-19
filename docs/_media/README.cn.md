@@ -32,11 +32,18 @@
 当 `enableSmart` 开启时，系统会根据响应特征自动判断是否需要升级引擎：
 
 - 触发升级的条件包括：
-  - HTTP 状态码：`401 / 403 / 500 / 429`
-  - 页面疑似动态渲染（HTML 中检测到典型 JS 框架特征）
+  - HTTP 状态码：`401 / 403 / 429 / 5xx` (包括被映射为 `408 / 503 / 504` 的网络层错误，如超时或连接失败)
+  - 页面疑似动态渲染（HTML 中检测到典型 JS 框架特征，由 `upgradeOnJsContent` 控制）
   - `Retry-After` 超过 `upgradeThresholdMs`
 - 升级过程中可选择是否同步 Cookies / Session 状态（`syncStateOnUpgrade`）
 - 对于 `429` 响应，若 `Retry-After` 小于`upgradeThresholdMs`阈值，系统会优先重试而非升级
+
+| 选项 | 类型 | 默认值 | 说明 |
+|------|------|--------|------|
+| `enableSmart` | boolean | `true` | 启用智能探测与自动引擎升级 |
+| `upgradeOnJsContent` | boolean | `false` | 检测到 JS 渲染特征时升级到浏览器引擎（如 `window.__NEXT_DATA__`、`window.__NUXT__` 等） |
+| `upgradeThresholdMs` | number | `5000` | 触发升级的响应时间阈值（毫秒），也用于 429 `Retry-After` 比较 |
+| `syncStateOnUpgrade` | boolean | `false` | 引擎升级时同步 cookies/session 状态 |
 
 ---
 

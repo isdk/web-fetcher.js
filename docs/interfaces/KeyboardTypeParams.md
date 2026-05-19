@@ -6,7 +6,7 @@
 
 # Interface: KeyboardTypeParams
 
-Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:4](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/keyboard.ts#L4)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:4](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/keyboard.ts#L4)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:4](https://
 
 > `optional` **delay**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:6](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/keyboard.ts#L6)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:6](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/keyboard.ts#L6)
 
 ***
 
@@ -22,4 +22,4 @@ Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:6](https://
 
 > **text**: `string`
 
-Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:5](https://github.com/isdk/web-fetcher.js/blob/bbbc9476fc1a8798bf3663ac564e568cf08714d8/src/action/definitions/keyboard.ts#L5)
+Defined in: [packages/web-fetcher/src/action/definitions/keyboard.ts:5](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/action/definitions/keyboard.ts#L5)
