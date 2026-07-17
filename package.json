@@ -44,7 +44,7 @@
     "camoufox-js": "^0.10.2",
     "cheerio": "^1.2.0",
     "crawlee": "^3.16.0",
-    "events-ex": "^2.3.1",
+    "events-ex": "^2.4.3",
     "got-scraping": "^4.2.1",
     "jsdom": "^29.1.1",
     "lodash-es": "^4.18.1",
