@@ -25,7 +25,8 @@ import { ErrorCode } from '@isdk/common-error'
   if (
     code === 'ETIMEDOUT' ||
     code === 'ESOCKETTIMEDOUT' ||
-    message.includes('timed out')
+    message.includes('timed out') ||
+    /\btimeout\b/i.test(message)
   ) {
     return ErrorCode.RequestTimeout
   }
