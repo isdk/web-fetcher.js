@@ -55,8 +55,8 @@ describe('checkPort - integration', () => {
     expect(result).toBe(false)
   }, 5000)
 
-  it('should timeout for unreachable host', async () => {
-    const result = await checkPort('192.0.2.1', 80, 500) // TEST-NET-1
+  it('should return false for closed port', async () => {
+    const result = await checkPort('127.0.0.1', 19990, 500)
     expect(result).toBe(false)
   }, 3000)
 })
