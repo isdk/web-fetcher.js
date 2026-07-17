@@ -360,7 +360,7 @@ async function checkSocks5(
           if (data[1] === 0x00) {
             done({ working: true, latency });
           } else {
-            done({ working: false, error: getSocks5Error(data[1]) });
+            done({ working: false, error: getSocks5Error(data[1] as number) });
           }
         } else {
           done({ working: false, error: '认证失败' });
@@ -375,7 +375,7 @@ async function checkSocks5(
         if (data[0] === 0x05 && data[1] === 0x00) {
           done({ working: true, latency });
         } else {
-          const errorMsg = data[0] === 0x05 ? getSocks5Error(data[1]) : `SOCKS5 错误: ${data[1]}`;
+          const errorMsg = data[0] === 0x05 ? getSocks5Error(data[1] as number) : `SOCKS5 错误: ${data[1]}`;
           done({ working: false, error: errorMsg });
         }
         return;
