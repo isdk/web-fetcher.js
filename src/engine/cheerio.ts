@@ -645,7 +645,12 @@ export class CheerioFetchEngine extends FetchEngine<
         {}
 
       if (context.session && respHeaders['set-cookie']) {
-        context.session.setCookies(respHeaders['set-cookie'], url)
+        // Normalize to array: Node HTTP returns a single string for one cookie,
+        // but an array for multiple. crawlee's session.setCookies expects an array.
+        const setCookie = Array.isArray(respHeaders['set-cookie'])
+          ? respHeaders['set-cookie']
+          : [respHeaders['set-cookie']]
+        context.session.setCookies(setCookie, url)
       }
 
       if ([301, 302, 303, 307, 308].includes(statusCode)) {
