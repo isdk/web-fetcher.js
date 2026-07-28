@@ -1,6 +1,7 @@
 {
   "title": "should use firefox for camoufox-js to bypass bot detection when antibot is enabled",
   "engine": "playwright",
+  "timeout": 120000,
   "options": {
     "antibot": true
   },

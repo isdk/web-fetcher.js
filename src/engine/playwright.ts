@@ -431,13 +431,14 @@ export class PlaywrightFetchEngine extends FetchEngine<
   protected currentMousePos = { x: 0, y: 0 }
 
   protected async _sharedRequestHandler(
-    context: PlaywrightCrawlingContext
+    context: PlaywrightCrawlingContext,
+    error?: Error
   ): Promise<void> {
     const { page } = context
     if (page && !this.mouseInitialized) {
       await this._initializeMousePos(page)
     }
-    return super._sharedRequestHandler(context)
+    return super._sharedRequestHandler(context, error)
   }
 
   protected mouseInitialized = false
@@ -951,7 +952,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
       crawlerOptions.launchContext = {
         launcher: firefox,
-        launchOptions: lo,
+        launchOptions: {
+          ...lo,
+          viewport: null,
+        },
       }
 
       crawlerOptions.postNavigationHooks = [

@@ -37,20 +37,20 @@
     "release.alpha": "pnpm run release -- --prerelease alpha"
   },
   "dependencies": {
-    "@crawlee/memory-storage": "^3.16.0",
+    "@crawlee/memory-storage": "^3.17.0",
     "@isdk/common-error": "^0.2.0",
     "@isdk/proxy": "workspace:^",
     "@isdk/proxy-crawlee": "workspace:^",
-    "camoufox-js": "^0.10.2",
+    "camoufox-js": "^0.11.5",
     "cheerio": "^1.2.0",
-    "crawlee": "^3.16.0",
+    "crawlee": "^3.17.0",
     "events-ex": "^2.4.3",
     "got-scraping": "^4.2.1",
-    "jsdom": "^29.1.1",
+    "jsdom": "^30.0.0",
     "lodash-es": "^4.18.1",
-    "nanoid": "^5.1.11",
-    "playwright": "^1.59.1",
-    "util-ex": "^2.6.0"
+    "nanoid": "^6.0.0",
+    "playwright": "^1.53.1",
+    "util-ex": "^2.7.1"
   },
   "devDependencies": {
     "@antfu/eslint-config": "^6.7.3",
