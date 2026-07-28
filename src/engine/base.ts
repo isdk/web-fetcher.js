@@ -1388,7 +1388,7 @@ export abstract class FetchEngine<
     })
   }
 
-  protected async _sharedRequestHandler(context: TContext): Promise<void> {
+  protected async _sharedRequestHandler(context: TContext, error?: Error): Promise<void> {
     const { request } = context
     const requestId = request.userData.requestId
     const originalPage = (context as any).page
@@ -1401,67 +1401,88 @@ export abstract class FetchEngine<
       const gotoPromise = this.pendingRequests.get(requestId)
       if (gotoPromise) {
         this._logDebug('request', `Found gotoPromise for requestId: ${requestId}`)
-        const fetchResponse = await this.buildResponse(context)
+        try {
+          const fetchResponse = await this.buildResponse(context)
 
-        const error = (context as any).error || (context as any).response?.error
-        if (!fetchResponse.statusCode && error) {
-          fetchResponse.statusCode = mapErrorCodeToStatus(error) || 500
-        }
-        if (!fetchResponse.statusCode) {
-          fetchResponse.statusCode = 200
-        }
-
-        // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
-        const isError =
-          !fetchResponse.statusCode || fetchResponse.statusCode >= 400
-
-        const isRetryableError = fetchResponse.statusCode === 429 || (fetchResponse.statusCode >= 500 && fetchResponse.statusCode < 600)
-        const canRetry = (request.retryCount || 0) < (this.opts?.retries || 0)
-
-        if (isRetryableError && canRetry) {
-          this._logDebug('request', `Retryable error ${fetchResponse.statusCode} detected (retry ${request.retryCount}/${this.opts?.retries}), waiting for retry...`)
-          shouldExecuteActions = false
-        } else {
-          let isContextValid = this.isPageContextValid(context)
-          this._logDebug('request', `isError: ${isError}, isContextValid: ${isContextValid}, status: ${fetchResponse.statusCode}`)
-
-          if (isError && !isContextValid) {
-            this._logDebug('request', `Context invalid for failed request, skipping action loop.`)
-            shouldExecuteActions = false
-          } else {
-            shouldExecuteActions = true
+          error = error || (context as any).response?.error
+          if (!fetchResponse.statusCode && error) {
+            fetchResponse.statusCode = mapErrorCodeToStatus(error) || 500
+          }
+          if (!fetchResponse.statusCode) {
+            fetchResponse.statusCode = 200
           }
 
-          if (this.ctx?.throwHttpErrors && isError) {
-            let message = `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`
-            const retryAfter = getRetryAfter(fetchResponse.headers)
-            if (retryAfter) {
-              message += `. Retry after ${retryAfter}ms`
+          // If throwHttpErrors is enabled, check for failure conditions and reject if necessary.
+          const isError =
+            !fetchResponse.statusCode || fetchResponse.statusCode >= 400
+
+          const isRetryableError = fetchResponse.statusCode === 429 || (fetchResponse.statusCode >= 500 && fetchResponse.statusCode < 600)
+          const canRetry = (request.retryCount || 0) < (this.opts?.retries || 0)
+
+          if (isRetryableError && canRetry) {
+            this._logDebug('request', `Retryable error ${fetchResponse.statusCode} detected (retry ${request.retryCount}/${this.opts?.retries}), waiting for retry...`)
+            shouldExecuteActions = false
+          } else {
+            let isContextValid = this.isPageContextValid(context)
+            this._logDebug('request', `isError: ${isError}, isContextValid: ${isContextValid}, status: ${fetchResponse.statusCode}`)
+
+            if (isError && !isContextValid) {
+              this._logDebug('request', `Context invalid for failed request, skipping action loop.`)
+              shouldExecuteActions = false
+            } else {
+              shouldExecuteActions = true
             }
-            const finalError = new CommonError(
-              message,
-              'request',
-              fetchResponse.statusCode
-            ) as any
-            finalError.response = fetchResponse
-            this._logDebug('request', `Rejecting gotoPromise due to throwHttpErrors: ${message}`)
-            gotoPromise.reject(finalError)
-            shouldExecuteActions = false
-          } else if (!shouldExecuteActions && isError) {
-            const errorCode = (error as any)?.code || 'NAVIGATION_FAILED'
-            const finalError = new CommonError(
-              `Navigation to ${request.url} failed: ${errorCode}`,
-              'request',
-              fetchResponse.statusCode || 500
-            ) as any
-            finalError.response = fetchResponse
-            this._logDebug('request', `Rejecting gotoPromise due to invalid context: ${errorCode}`)
-            gotoPromise.reject(finalError)
-          } else {
-            this.lastResponse = fetchResponse
-            this._logDebug('request', `Resolving gotoPromise with status ${fetchResponse.statusCode}`)
-            gotoPromise.resolve(fetchResponse)
+
+            if (this.ctx?.throwHttpErrors && isError) {
+              let message = `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`
+              const retryAfter = getRetryAfter(fetchResponse.headers)
+              if (retryAfter) {
+                message += `. Retry after ${retryAfter}ms`
+              }
+              const finalError = new CommonError(
+                message,
+                'request',
+                fetchResponse.statusCode
+              ) as any
+              finalError.response = fetchResponse
+              this._logDebug('request', `Rejecting gotoPromise due to throwHttpErrors: ${message}`)
+              gotoPromise.reject(finalError)
+              shouldExecuteActions = false
+            } else if (!shouldExecuteActions && isError) {
+              const errorCode = (error as any)?.code || 'NAVIGATION_FAILED'
+              const finalError = new CommonError(
+                `Navigation to ${request.url} failed: ${errorCode}`,
+                'request',
+                fetchResponse.statusCode || 500
+              ) as any
+              finalError.response = fetchResponse
+              this._logDebug('request', `Rejecting gotoPromise due to invalid context: ${errorCode}`)
+              gotoPromise.reject(finalError)
+            } else {
+              this.lastResponse = fetchResponse
+              this._logDebug('request', `Resolving gotoPromise with status ${fetchResponse.statusCode}`)
+              gotoPromise.resolve(fetchResponse)
+            }
+            this.pendingRequests.delete(requestId)
           }
+        } catch (err) {
+          this._logDebug('request', `Failed to build response for requestId: ${requestId}:`, err)
+          const finalError = new CommonError(
+            `Failed to process request for ${request.url}: ${(err as Error).message}`,
+            'request',
+            ErrorCode.InternalError
+          ) as any
+          finalError.response = {
+            url: request.url,
+            finalUrl: request.loadedUrl || request.url,
+            headers: {},
+            statusCode: ErrorCode.InternalError,
+            statusText: (err as any)?.code || 'BUILD_RESPONSE_FAILURE',
+            body: '',
+            html: '',
+            text: '',
+          }
+          gotoPromise.reject(finalError)
           this.pendingRequests.delete(requestId)
         }
       } else {
@@ -1518,11 +1539,28 @@ export abstract class FetchEngine<
             context.body = ((error as any).response as any).body
           }
         }
-        response = await this.buildResponse(context)
-        statusCode =
-          mapErrorCodeToStatus(error) ||
-          response.statusCode ||
-          ErrorCode.InternalError
+        try {
+          response = await this.buildResponse(context)
+        } catch (err) {
+          this._logDebug('request', `Failed to build response in error handler for ${request.url}:`, err)
+          statusCode = mapErrorCodeToStatus(error) || ErrorCode.InternalError
+          response = {
+            url: request.url,
+            finalUrl: request.loadedUrl || request.url,
+            headers: {},
+            statusCode: statusCode,
+            statusText: (err as any)?.code || 'BUILD_RESPONSE_FAILURE',
+            body: '',
+            html: '',
+            text: '',
+          } as FetchResponse
+        }
+        if (!statusCode) {
+          statusCode =
+            mapErrorCodeToStatus(error) ||
+            (response as FetchResponse).statusCode ||
+            ErrorCode.InternalError
+        }
       } else {
         statusCode = mapErrorCodeToStatus(error) || ErrorCode.InternalError
         const errorCode = (error as any).code || 'UNKNOWN_ERROR'
@@ -1559,7 +1597,7 @@ export abstract class FetchEngine<
     }
     // By calling the original handler, we ensure cleanup (e.g. lock release) happens.
     // The original handler will not find the promise and that's OK.
-    return this._sharedRequestHandler(context)
+    return this._sharedRequestHandler(context, error)
   }
 
   protected async dispatchAction<T>(action: FetchEngineAction): Promise<T> {
@@ -1580,8 +1618,8 @@ export abstract class FetchEngine<
     })
   }
 
-  private async _requestHandler(context: TContext): Promise<void> {
-    await this._sharedRequestHandler(context)
+  private async _requestHandler(context: TContext, error?: Error): Promise<void> {
+    await this._sharedRequestHandler(context, error)
   }
 
   private async _failedRequestHandler(
