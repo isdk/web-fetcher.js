@@ -436,8 +436,10 @@ export abstract class FetchAction {
                                result.result.statusCode === 429
 
             if (!isChallenge) {
+              const statusText = result.result.statusText
               const error = new Error(
-                `Request for ${result.result.finalUrl} failed with status ${result.result.statusCode}`
+                `Request for ${result.result.finalUrl} failed with status ${result.result.statusCode}` +
+                (statusText ? `: ${statusText}` : '')
               ) as any
               error.response = result.result
               error.statusCode = result.result.statusCode
