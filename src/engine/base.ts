@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { defaultsDeep, merge } from 'lodash-es'
 import { EventEmitter } from 'events-ex'
-import { CommonError, ErrorCode } from '@isdk/common-error'
+import { ErrorCode } from '@isdk/common-error'
 import {
   Configuration,
   KeyValueStore,
