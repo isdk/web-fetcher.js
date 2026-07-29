@@ -53,6 +53,7 @@ import { PromiseLock, createResolvedPromiseLock } from './promise-lock'
 import { normalizeExtractSchema } from '../core/normalize-extract-schema'
 import { logDebug } from '../core/utils'
 import { getRetryAfter, mapErrorCodeToStatus } from '../utils'
+import { getCleanErrorMessage, createErrorResponse, createNavigationError } from './error-helpers'
 
 const crawleeGlobalConfig = Configuration.getGlobalConfig()
 crawleeGlobalConfig.set('persistStorage', false)
@@ -1435,29 +1436,25 @@ export abstract class FetchEngine<
 
             if (this.ctx?.throwHttpErrors && isError) {
               let message = `Request for ${fetchResponse.finalUrl} failed with status ${fetchResponse.statusCode || 'N/A'}`
+              let fullMessage: string | undefined
               if (error) {
-                message += `: ${error.message}`
+                const { clean, full } = getCleanErrorMessage(error.message)
+                message += `: ${clean}`
+                fullMessage = full
               }
               const retryAfter = getRetryAfter(fetchResponse.headers)
               if (retryAfter) {
                 message += `. Retry after ${retryAfter}ms`
               }
-              const finalError = new CommonError(
-                message,
-                'request',
-                fetchResponse.statusCode
-              ) as any
+              const finalError = createNavigationError(message, fetchResponse.statusCode, fullMessage)
               finalError.response = fetchResponse
               this._logDebug('request', `Rejecting gotoPromise due to throwHttpErrors: ${message}`)
               gotoPromise.reject(finalError)
               shouldExecuteActions = false
             } else if (!shouldExecuteActions && isError) {
               const errorMsg = error?.message || (error as any)?.code || 'NAVIGATION_FAILED'
-              const finalError = new CommonError(
-                `Navigation to ${request.url} failed: ${errorMsg}`,
-                'request',
-                fetchResponse.statusCode || 500
-              ) as any
+              const { clean: cleanMsg, full: fullMsg } = getCleanErrorMessage(errorMsg)
+              const finalError = createNavigationError(`Navigation to ${request.url} failed: ${cleanMsg}`, fetchResponse.statusCode || 500, fullMsg)
               finalError.response = fetchResponse
               this._logDebug('request', `Rejecting gotoPromise due to invalid context: ${errorMsg}`)
               gotoPromise.reject(finalError)
@@ -1474,33 +1471,24 @@ export abstract class FetchEngine<
           const statusCode = error ? (mapErrorCodeToStatus(error) || ErrorCode.InternalError) : ErrorCode.InternalError
           this._logDebug('request', `Failed to build response for requestId: ${requestId}:`, err, `Original error:`, error)
 
+          // Clean the error message: strip multi-line debug info (e.g. Playwright's "Call log")
+          const effectiveMsg = effectiveError?.message || ''
+          const { clean: cleanMsg, full: fullMsg } = getCleanErrorMessage(effectiveMsg)
+
           // Differentiate between navigation failure and content retrieval failure
           let message: string
           if (error) {
             // Case 1: Navigation itself failed (e.g. ERR_CONNECTION_REFUSED)
-            message = `Request for ${request.url} failed: ${effectiveError.message}`
+            message = `Request for ${request.url} failed: ${cleanMsg}`
           } else {
             // Case 2: Navigation completed but page content could not be retrieved
             // (e.g. page closed by antibot/page pool before buildResponse)
             const retryInfo = request.retryCount ? ` (retry ${request.retryCount})` : ''
-            message = `Navigation to ${request.url} completed${retryInfo}, but failed to retrieve page content: ${effectiveError.message}`
+            message = `Navigation to ${request.url} completed${retryInfo}, but failed to retrieve page content: ${cleanMsg}`
           }
 
-          const finalError = new CommonError(
-            message,
-            'request',
-            statusCode
-          ) as any
-          finalError.response = {
-            url: request.url,
-            finalUrl: request.loadedUrl || request.url,
-            headers: {},
-            statusCode: statusCode,
-            statusText: effectiveError.message || 'BUILD_RESPONSE_FAILURE',
-            body: '',
-            html: '',
-            text: '',
-          }
+          const finalError = createNavigationError(message, statusCode, fullMsg)
+          finalError.response = createErrorResponse(request.url, request.loadedUrl, statusCode, cleanMsg)
           gotoPromise.reject(finalError)
           this.pendingRequests.delete(requestId)
         }
@@ -1563,16 +1551,8 @@ export abstract class FetchEngine<
         } catch (err) {
           this._logDebug('request', `Failed to build response in error handler for ${request.url}:`, err)
           statusCode = mapErrorCodeToStatus(error) || ErrorCode.InternalError
-          response = {
-            url: request.url,
-            finalUrl: request.loadedUrl || request.url,
-            headers: {},
-            statusCode: statusCode,
-            statusText: error?.message || (err as any)?.code || 'BUILD_RESPONSE_FAILURE',
-            body: '',
-            html: '',
-            text: '',
-          } as FetchResponse
+          const { clean: cleanStatusText } = getCleanErrorMessage(error?.message || '')
+          response = createErrorResponse(request.url, request.loadedUrl, statusCode, cleanStatusText || (err as any)?.code || '')
         }
         if (!statusCode) {
           statusCode =
@@ -1583,24 +1563,16 @@ export abstract class FetchEngine<
       } else {
         statusCode = mapErrorCodeToStatus(error) || ErrorCode.InternalError
         const errorCode = (error as any).code || 'UNKNOWN_ERROR'
-        response = {
-          url: request.url,
-          finalUrl: request.loadedUrl || request.url,
-          headers: {},
-          statusCode: statusCode,
-          statusText: errorCode,
-          body: '',
-          html: '',
-          text: '',
-        } as FetchResponse
+        response = createErrorResponse(request.url, request.loadedUrl, statusCode, errorCode)
       }
 
       const url = response?.url ? response.url : request.url
 
+      const { clean: cleanMsg, full: fullMsg } = getCleanErrorMessage(error.message)
       let message =
         statusCode === ErrorCode.RequestTimeout
-          ? url + ' ' + error.message
-          : `Request${url ? ' for ' + url : ''} failed: ${error.message}`
+          ? url + ' ' + cleanMsg
+          : `Request${url ? ' for ' + url : ''} failed: ${cleanMsg}`
 
       const retryAfter = response?.headers
         ? getRetryAfter(response.headers as any)
@@ -1609,7 +1581,7 @@ export abstract class FetchEngine<
         message += `. Retry after ${retryAfter}ms`
       }
 
-      const finalError = new CommonError(message, 'request', statusCode) as any
+      const finalError = createNavigationError(message, statusCode, fullMsg)
       // Ensure response is attached for upgrade/retry logic
       finalError.response = response
       gotoPromise.reject(finalError)

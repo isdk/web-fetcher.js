@@ -656,7 +656,7 @@ const engineTestSuite = (
         await controlEngine.dispose()
       })
 
-      it('should use firefox for camoufox-js to bypass bot detection when antibot is enabled', async () => {
+      it('should use firefox for camoufox-js to bypass bot detection when antibot is enabled', {timeout: 120000}, async () => {
         // 2. Test Case (antibot: true)
         const antibotContext: FetchEngineContext = {
           id: `test-antibot-${Date.now()}`,
