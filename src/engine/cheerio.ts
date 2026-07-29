@@ -380,10 +380,8 @@ export class CheerioFetchEngine extends FetchEngine<
       }
       case 'fill': {
         if (!$)
-          throw (
-            new CommonError(
-              `Cheerio context not available for action: ${action.type}`
-            ),
+          throw new CommonError(
+            `Cheerio context not available for action: ${action.type}`,
             'fill'
           )
         const $input = $(action.selector).first()

@@ -184,6 +184,9 @@ describe('Error Handling: Original error preservation', () => {
         expect(e.message).not.toMatch(/^Failed to process request/)
         expect(e.message).not.toContain('Unable to retrieve content')
         expect(e.message).not.toContain('page.content')
+        // Should NOT contain Playwright Call log debug info (it goes into data.originalMessage)
+        expect(e.message).not.toContain('Call log')
+        expect(e.message).not.toContain('Call log:')
         // The original Playwright error should be reflected in message or statusText
         expect(e.message || e.response?.statusText).toBeTruthy()
 
@@ -191,6 +194,13 @@ describe('Error Handling: Original error preservation', () => {
         expect(e.response).toBeDefined()
         expect(e.response.statusCode).toBeGreaterThanOrEqual(400)
         expect(e.response.url).toContain('127.0.0.1')
+
+        // If the error had multi-line debug info, data.originalMessage should contain it
+        if (e.data?.originalMessage) {
+          expect(e.data.originalMessage).toBeTruthy()
+          // The full message should be longer than the clean message
+          expect(e.data.originalMessage.length).toBeGreaterThan(e.message.length)
+        }
       }
 
       await session.dispose()
@@ -208,6 +218,9 @@ describe('Error Handling: Original error preservation', () => {
         expect(e.response.statusText).not.toBe('BUILD_RESPONSE_FAILURE')
         expect(e.response.statusText).not.toContain('page.content')
         expect(e.response.statusText).not.toMatch(/^BUILD_RESPONSE_/)
+        // statusText should NOT contain Call log
+        expect(e.response.statusText).not.toContain('Call log')
+        expect(e.response.statusText).not.toContain('Call log:')
         // Positive assertion: statusText contains the original error text
         expect(e.response.statusText).toMatch(/(Connection Refused|ERR_|refused)/i)
       }
@@ -229,6 +242,9 @@ describe('Error Handling: Original error preservation', () => {
         expect(e.message).not.toMatch(/^Failed to process request/)
         expect(e.message).not.toContain('Unable to retrieve content')
         expect(e.message).not.toContain('page.content')
+        // Should NOT contain Call log
+        expect(e.message).not.toContain('Call log')
+        expect(e.message).not.toContain('Call log:')
         // Fix 3: message should contain error details (status code + error text)
         expect(e.message).toMatch(/failed with status \d+: /i)
 
@@ -237,8 +253,16 @@ describe('Error Handling: Original error preservation', () => {
         expect(e.response.statusText).not.toBe('BUILD_RESPONSE_FAILURE')
         expect(e.response.statusText).not.toContain('page.content')
         expect(e.response.statusText).not.toMatch(/^BUILD_RESPONSE_/)
+        // statusText should NOT contain Call log
+        expect(e.response.statusText).not.toContain('Call log')
+        expect(e.response.statusText).not.toContain('Call log:')
         // Positive assertion: statusText contains original error
         expect(e.response.statusText).toMatch(/(Connection Refused|ERR_|refused)/i)
+
+        // Check data.originalMessage if available
+        if (e.data?.originalMessage) {
+          expect(e.data.originalMessage).toBeTruthy()
+        }
       }
 
       await session.dispose()

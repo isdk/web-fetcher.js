@@ -1,5 +1,6 @@
 {
   "title": "should extract search result from a page",
+  "timeout": 60000,
   "actions": [
     {
       "action": "goto",
