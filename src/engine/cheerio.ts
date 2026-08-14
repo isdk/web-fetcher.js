@@ -9,7 +9,7 @@ import { createPromiseLock } from './promise-lock'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeHeaders, normalizeMimeTypes } from '../utils'
+import { normalizeHeaders, normalizeMimeTypes, isTextLikeMimeType } from '../utils'
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>
 type CheerioSelection = ReturnType<CheerioAPI>
@@ -58,7 +58,7 @@ export class CheerioFetchEngine extends FetchEngine<
     )?.['content-type']
     if (contentType) {
       const type = contentType.split(';')[0].trim().toLowerCase()
-      if (type && !this._isTextLikeMimeType(type)) return true
+      if (type && !isTextLikeMimeType(type)) return true
     }
     const body = context.body
     if (Buffer.isBuffer(body)) {
@@ -68,17 +68,6 @@ export class CheerioFetchEngine extends FetchEngine<
       }
     }
     return false
-  }
-
-  /** 文本类 MIME：可安全做 cheerio 解析/包装的类型。 */
-  private _isTextLikeMimeType(type: string): boolean {
-    return (
-      type.startsWith('text/') ||
-      type.includes('xml') ||
-      type.includes('json') ||
-      type.includes('javascript') ||
-      type.includes('html')
-    )
   }
 
   protected async _buildResponse(

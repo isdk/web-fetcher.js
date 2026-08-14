@@ -1,0 +1,29 @@
+{
+  "name": "Browser PDF Download via additionalMimeTypes",
+  "engine": "playwright",
+  "options": {
+    "additionalMimeTypes": [
+      "application/pdf"
+    ]
+  },
+  "actions": [
+    {
+      "action": "goto",
+      "params": {
+        "url": "/file.pdf"
+      }
+    }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "data": {
+      "contentType": {
+        "equals": "application/pdf"
+      },
+      "body": {
+        "isBuffer": true,
+        "contains": "%PDF"
+      }
+    }
+  }
+}

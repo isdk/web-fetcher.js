@@ -1,0 +1,22 @@
+{
+  "name": "Browser PDF Download via Click",
+  "engine": "playwright",
+  "options": {
+    "additionalMimeTypes": ["application/pdf"]
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/" } },
+    { "action": "click", "params": { "selector": "a#download" } },
+    { "action": "getContent" }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "data": {
+      "contentType": { "equals": "application/pdf" },
+      "body": {
+        "isBuffer": true,
+        "contains": "%PDF"
+      }
+    }
+  }
+}
