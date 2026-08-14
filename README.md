@@ -172,6 +172,7 @@ This is the main entry point for the library.
   * `forceCache` (boolean): Ignore server directives and force caching.
   * `refresh` (boolean): **Force Refresh**: Ignore existing cache to re-validate and "heal" the cache entry. Useful for bypassing blocks via manual verification.
   * `methods`, `cacheRules`, `query`, `headers`, `cookies`, `body`: Fine-grained cache policy configuration. Supports `STALE_RESCUE` and `WAF_CHALLENGE` detection for automatic engine upgrade and cache healing when used with `enableSmart`.
+* `additionalMimeTypes` (string[]): Additional MIME types allowed to be downloaded as a raw response body, e.g. `['application/pdf', 'text/csv']`. In the `http` (cheerio) engine it is passed to Crawlee's `CheerioCrawler.additionalMimeTypes`: Crawlee only keeps the body of HTML/XML/JSON responses by default, so responses outside that whitelist are aborted unless listed here. When listed, the raw body is preserved in `FetchResponse.body` (as a `Buffer` for binary content) and `contentType` is set accordingly. Values are normalized (lowercased, deduplicated) and merged with engine-built-in types (`text/plain`); the `*/*` wildcard is supported. Default: none (must be set explicitly to download non-HTML content). `browser` engine support is planned — see `TODO.additional-mime-types.md`.
 * `output` (object): Controls the output fields in `FetchResponse`.
   * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
   * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
@@ -216,9 +217,11 @@ The `fetchWeb` function returns an object containing:
   * `url`: The final URL.
   * `statusCode`: HTTP status code.
   * `headers`: HTTP headers.
+  * `contentType`: The normalized `Content-Type` of the response (e.g., `application/pdf`).
   * `cookies`: Array of cookies.
   * `sessionState`: Crawlee session state.
-  * `text`, `html`: Page content.
+  * `body`: Raw response body (string or `Buffer`). For non-HTML downloads (via `additionalMimeTypes`), this holds the raw binary content as a `Buffer`.
+  * `text`, `html`: Page content (for binary responses, the raw decoded text — not wrapped in a synthetic `<pre>` document).
 * `outputs` (Record<string, any>): Data extracted and stored via `storeAs`. Note: When multiple actions store objects into the same key, they are merged instead of overwritten.
 
 ---

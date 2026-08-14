@@ -14,7 +14,7 @@ const isConditionObject = (obj: any): boolean => {
     return false;
   }
   const keys = Object.keys(obj);
-  return keys.some(key => ['and', 'or', 'not', 'contains', 'equals'].includes(key));
+  return keys.some(key => ['and', 'or', 'not', 'contains', 'equals', 'isBuffer'].includes(key));
 };
 
 const checkExpectations = (value: any, expectations: any, path: string = 'root') => {
@@ -101,8 +101,11 @@ const checkExpectations = (value: any, expectations: any, path: string = 'root')
   // Matcher
   if ('contains' in expectations) {
     const { contains, caseInsensitive } = expectations;
-    let target = value;
-    if (typeof value === 'object' && value !== null) {
+    let target: string;
+    if (Buffer.isBuffer(value)) {
+      // 二进制响应体（如 PDF）按 utf-8 解码后匹配，避免被 JSON.stringify 成字节数组
+      target = value.toString();
+    } else if (typeof value === 'object' && value !== null) {
       target = JSON.stringify(value);
     } else {
       target = String(value);
@@ -116,6 +119,9 @@ const checkExpectations = (value: any, expectations: any, path: string = 'root')
   }
   if ('equals' in expectations) {
     expect(value, `at ${path}`).toEqual(expectations.equals);
+  }
+  if ('isBuffer' in expectations) {
+    expect(Buffer.isBuffer(value), `at ${path}`).toBe(expectations.isBuffer);
   }
 };
 

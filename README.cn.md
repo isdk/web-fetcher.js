@@ -172,6 +172,7 @@ searchGoogle('gemini');
   * `forceCache` (boolean): 是否无视源站指令强制执行缓存。
   * `refresh` (boolean): **强制刷新**：忽略现有缓存并重新验证以“愈合”缓存条目。常用于配合真人验证进行“穿透”。
   * `methods`, `cacheRules`, `query`, `headers`, `cookies`, `body`: 精细化缓存策略配置。支持 `STALE_RESCUE` 容灾与 `WAF_CHALLENGE` 智能识别，当识别到人机挑战时可自动配合 `enableSmart` 升级引擎并强制刷新（愈合）缓存。
+* `additionalMimeTypes` (string[]): 允许引擎下载并返回非 HTML 响应体的额外 MIME 类型，例如 `['application/pdf', 'text/csv']`。在 `http`（cheerio）引擎中透传给 Crawlee 的 `CheerioCrawler.additionalMimeTypes`：Crawlee 默认只保留 HTML/XML/JSON 类型的响应体，白名单之外的类型会被直接中止；配置后原始响应体会以 `Buffer` 形式保留在 `FetchResponse.body` 中，并正确设置 `contentType`。值会统一规范化为小写并去重，且与引擎内置类型（`text/plain`）合并；支持 `*/*` 通配符。默认不启用（需显式配置）。`browser` 引擎支持规划中 —— 见 `TODO.additional-mime-types.md`。
 * `output` (object): 控制 `FetchResponse` 中的输出字段。
   * `cookies` (boolean): 是否在响应中包含 Cookie（默认：`true`）。
   * `sessionState` (boolean): 是否在响应中包含会话状态（默认：`true`）。
@@ -216,9 +217,11 @@ searchGoogle('gemini');
   * `url`: 最终 URL。
   * `statusCode`: HTTP 状态码。
   * `headers`: HTTP 头信息。
+  * `contentType`: 响应的规范化 `Content-Type`（例如 `application/pdf`）。
   * `cookies`: Cookie 数组。
   * `sessionState`: Crawlee 会话状态。
-  * `text`, `html`: 页面内容。
+  * `body`: 原始响应体（字符串或 `Buffer`）。通过 `additionalMimeTypes` 下载非 HTML 内容时，这里保存原始的二进制内容（`Buffer`）。
+  * `text`, `html`: 页面内容（对二进制响应为原始解码文本，不再包裹合成 `<pre>` 文档）。
 * `outputs` (Record<string, any>): 通过 `storeAs` 提取并存储的数据。注意：当多个动作将对象存储到同一个键时，它们将被合并而不再是覆盖。
 
 ---

@@ -270,6 +270,20 @@ export interface BaseFetcherProperties {
     body?: any
   }
 
+  /**
+   * 额外的 MIME 类型，允许引擎下载并返回非 HTML 响应体，例如 `['application/pdf', 'text/csv']`。
+   *
+   * @remarks
+   * - `http`（cheerio）引擎：透传给 Crawlee 的 `CheerioCrawler.additionalMimeTypes`。Crawlee 默认只允许
+   *   HTML/XML/JSON 类型的响应体，白名单之外的类型会被直接跳过（请求报错）；配置后对应的响应体会
+   *   以原始 Buffer 保存在 `FetchResponse.body` 中。
+   * - `browser`（playwright）引擎：预留，用于捕获触发浏览器下载的响应（见 `TODO.additional-mime-types.md`）。
+   * - 值会统一规范化为小写并去重，且始终与引擎自身允许的类型（如 `text/plain`）合并。
+   * - 支持通配符（`*` 斜杠 `*` 表示允许所有类型）。
+   * - 默认不启用任何额外类型；需要下载非 HTML 内容时请显式配置。
+   */
+  additionalMimeTypes?: string[]
+
   timeoutMs?: number
   requestHandlerTimeoutSecs?: number
   maxConcurrency?: number
@@ -376,4 +390,6 @@ export const FetcherOptionKeys = Object.keys(DefaultFetcherProperties).concat([
   'actions',
   'onPause',
   'cache',
+  // 无默认值但仍属合法选项，需显式保留，否则外部按 FetcherOptionKeys 过滤选项时会丢失该配置。
+  'additionalMimeTypes',
 ])
