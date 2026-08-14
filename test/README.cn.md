@@ -112,7 +112,10 @@
 * **contains**: 检查值是否包含子字符串。
   * `{ "contains": "一些字符串" }`
   * `{ "contains": "一些字符串", "caseInsensitive": true }` (不区分大小写)
+  * 当值为 `Buffer` 时（例如下载的 PDF 响应体），会按 utf-8 解码后的字符串进行匹配，而不是其字节数组表示。
 * **equals**: 检查深度相等性。对于比较从 `extract` 操作返回的结构化数据很有用。
   * `{ "equals": { "key": "value" } }`
+* **isBuffer**: 检查值是否为 Node.js `Buffer`。用于断言非 HTML 下载（如通过 `additionalMimeTypes`）保留了原始二进制响应体。
+  * `{ "isBuffer": true }`
 * **string**: 普通字符串是 `contains` 检查的简写。
   * `"一些字符串"` 等效于 `{ "contains": "一些字符串" }`

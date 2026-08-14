@@ -9,11 +9,17 @@ import { createPromiseLock } from './promise-lock'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 import { getInnerText, normalizeHtml } from '../utils/cheerio-helpers'
-import { normalizeHeaders } from '../utils'
+import { normalizeHeaders, normalizeMimeTypes } from '../utils'
 
 type CheerioAPI = NonNullable<CheerioCrawlingContext['$']>
 type CheerioSelection = ReturnType<CheerioAPI>
 type CheerioNode = ReturnType<CheerioSelection['first']>
+
+/**
+ * cheerio(http) 引擎始终放行的额外 MIME 类型，会与用户配置的 `additionalMimeTypes` 合并。
+ * Crawlee 默认只允许 HTML/XML/JSON 类型的响应体，纯文本（如 API 返回的 text/plain）也需要放行才能拿到 body。
+ */
+const ALWAYS_ALLOWED_MIME_TYPES = ['text/plain'] as const
 
 export class CheerioFetchEngine extends FetchEngine<
   CheerioCrawlingContext,
@@ -25,6 +31,8 @@ export class CheerioFetchEngine extends FetchEngine<
 
   private _ensureCheerioContext(context: CheerioCrawlingContext) {
     if (!context.$ && context.body) {
+      // 二进制内容（PDF、图片、压缩包等）不做 cheerio 包装，避免把二进制解码文本包成 <pre> 垃圾 HTML。
+      if (this._isBinaryBody(context)) return
       let text =
         typeof context.body === 'string'
           ? context.body
@@ -37,6 +45,40 @@ export class CheerioFetchEngine extends FetchEngine<
       }
       ; (context as any).$ = cheerio.load(text)
     }
+  }
+
+  /**
+   * 判断响应体是否为二进制内容。
+   * 先依据 Content-Type 判断（非文本类 MIME 视为二进制）；
+   * 无 Content-Type 或声明为文本但实际含空字节（如被误标为 text/plain 的二进制）时，退化为空字节启发式。
+   */
+  private _isBinaryBody(context: CheerioCrawlingContext): boolean {
+    const contentType = (
+      context.response?.headers as Record<string, string> | undefined
+    )?.['content-type']
+    if (contentType) {
+      const type = contentType.split(';')[0].trim().toLowerCase()
+      if (type && !this._isTextLikeMimeType(type)) return true
+    }
+    const body = context.body
+    if (Buffer.isBuffer(body)) {
+      const len = Math.min(body.length, 4096)
+      for (let i = 0; i < len; i++) {
+        if (body[i] === 0) return true
+      }
+    }
+    return false
+  }
+
+  /** 文本类 MIME：可安全做 cheerio 解析/包装的类型。 */
+  private _isTextLikeMimeType(type: string): boolean {
+    return (
+      type.startsWith('text/') ||
+      type.includes('xml') ||
+      type.includes('json') ||
+      type.includes('javascript') ||
+      type.includes('html')
+    )
   }
 
   protected async _buildResponse(
@@ -718,7 +760,12 @@ export class CheerioFetchEngine extends FetchEngine<
     ctx: FetchEngineContext
   ): CheerioCrawlerOptions {
     const crawlerOptions: CheerioCrawlerOptions = {
-      additionalMimeTypes: ['text/plain'],
+      // 引擎始终允许的基线类型：Crawlee 默认只收 HTML/XML/JSON，纯文本响应体也需要额外放行。
+      // 与用户配置的 additionalMimeTypes 合并，并统一小写去重。
+      additionalMimeTypes: normalizeMimeTypes([
+        ...(ctx.additionalMimeTypes ?? []),
+        ...ALWAYS_ALLOWED_MIME_TYPES,
+      ]),
       maxRequestRetries: ctx.retries ?? 1,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       proxyConfiguration: this.proxyConfiguration,

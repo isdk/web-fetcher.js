@@ -1,0 +1,24 @@
+{
+  "name": "PDF Download via additionalMimeTypes",
+  "engine": "cheerio",
+  "options": {
+    "additionalMimeTypes": ["application/pdf"]
+  },
+  "actions": [
+    { "action": "goto", "params": { "url": "/file.pdf" } }
+  ],
+  "expected": {
+    "statusCode": 200,
+    "html": [
+      { "contains": "%PDF" },
+      { "not": { "contains": "<pre>" } }
+    ],
+    "data": {
+      "contentType": { "equals": "application/pdf" },
+      "body": {
+        "isBuffer": true,
+        "contains": "%PDF"
+      }
+    }
+  }
+}

@@ -112,7 +112,10 @@ Matchers are the basic building blocks of assertions.
 * **contains**: Checks if the value contains a substring.
   * `{ "contains": "some string" }`
   * `{ "contains": "some string", "caseInsensitive": true }`
+  * When the value is a `Buffer` (e.g. a downloaded PDF body), it is matched against the utf-8 decoded string instead of its byte array representation.
 * **equals**: Checks for deep equality. Useful for comparing the structured data returned from an `extract` action.
   * `{ "equals": { "key": "value" } }`
+* **isBuffer**: Checks whether the value is a Node.js `Buffer`. Useful for asserting that non-HTML downloads (e.g. via `additionalMimeTypes`) preserved the raw binary body.
+  * `{ "isBuffer": true }`
 * **string**: A plain string is a shorthand for a `contains` check.
   * `"some string"` is equivalent to `{ "contains": "some string" }`
