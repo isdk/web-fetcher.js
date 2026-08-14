@@ -10,6 +10,7 @@ import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
 import { ExtractValueSchema, FetchElementScope } from '../core/extract'
 import { normalizeHtml } from '../utils/cheerio-helpers'
+import { isDownloadAllowed } from '../utils'
 
 const DefaultTimeoutMs = 3_000
 
@@ -428,6 +429,101 @@ export class PlaywrightFetchEngine extends FetchEngine<
     this.lastResponse = await this.buildResponse(context)
   }
 
+  // ===== 下载捕获（Playwright download 事件）=====
+
+  /** 获取当前请求上下文捕获到的最近一个 download 对象（Crawlee 按请求隔离收集）。 */
+  private async _getCapturedDownload(
+    context: PlaywrightCrawlingContext
+  ): Promise<any | null> {
+    const listDownloads = (context as any).listDownloads as
+      | (() => Promise<any[]>)
+      | undefined
+    if (typeof listDownloads !== 'function') return null
+    const downloads = await listDownloads()
+    return downloads.length ? downloads[downloads.length - 1] : null
+  }
+
+  /** 将 Playwright Download 对象读取为 Buffer（等待下载完成后流式收集，注意大文件内存占用）。 */
+  private async _readDownload(download: any): Promise<Buffer> {
+    const stream = await download.createReadStream()
+    const chunks: Buffer[] = []
+    for await (const chunk of stream) {
+      chunks.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
+    }
+    return Buffer.concat(chunks)
+  }
+
+  /** 由 Playwright Download 对象构造标准 FetchResponse（body 为原始二进制 Buffer）。 */
+  private async _buildDownloadResponse(
+    context: PlaywrightCrawlingContext,
+    download: any
+  ): Promise<FetchResponse> {
+    const headers: Record<string, string> = {}
+    const contentType = this._getDownloadContentType(download)
+    if (contentType) headers['content-type'] = contentType
+    const body = await this._readDownload(download)
+    const result: FetchResponse = {
+      url: download.url() || context.request.url,
+      finalUrl:
+        download.url() || context.request.loadedUrl || context.request.url,
+      statusCode: 200,
+      headers,
+      body,
+      html: '',
+      text: '',
+    }
+    return this._enrichResponse(context, result)
+  }
+
+  /**
+   * 若当前上下文捕获了允许下载的 download，构造并返回响应；否则返回 null。
+   * 是否允许由 `additionalMimeTypes` 决定（文本类 MIME 始终允许），与 http 引擎语义一致。
+   */
+  private async _tryBuildDownloadResponse(
+    context: PlaywrightCrawlingContext
+  ): Promise<FetchResponse | null> {
+    const download = await this._getCapturedDownload(context)
+    if (!download) return null
+    const contentType = this._getDownloadContentType(download)
+    if (!isDownloadAllowed(contentType, this.opts?.additionalMimeTypes)) {
+      this._logDebug(
+        'download',
+        `Download content-type ${contentType || '(unknown)'} not allowed by additionalMimeTypes, skipping.`
+      )
+      return null
+    }
+    try {
+      const response = await this._buildDownloadResponse(context, download)
+      this._logDebug(
+        'download',
+        `Captured download: ${download.suggestedFilename()} (${response.contentType})`
+      )
+      return response
+    } catch (err) {
+      this._logDebug(
+        'download',
+        `Failed to read download ${download.suggestedFilename()}:`,
+        err
+      )
+      return null
+    }
+  }
+
+  /** goto 路径：若捕获了允许的下载，resolve gotoPromise 并返回 true。 */
+  private async _tryResolveDownload(
+    context: PlaywrightCrawlingContext
+  ): Promise<boolean> {
+    const requestId = context.request.userData.requestId
+    const gotoPromise = this.pendingRequests.get(requestId)
+    if (!gotoPromise) return false
+    const response = await this._tryBuildDownloadResponse(context)
+    if (!response) return false
+    this.pendingRequests.delete(requestId)
+    this.lastResponse = response
+    gotoPromise.resolve(response)
+    return true
+  }
+
   protected currentMousePos = { x: 0, y: 0 }
 
   protected async _sharedRequestHandler(
@@ -438,13 +534,62 @@ export class PlaywrightFetchEngine extends FetchEngine<
     if (page && !this.mouseInitialized) {
       await this._initializeMousePos(page)
     }
+    // 兜底：部分浏览器引擎在触发下载时不会中止导航（goto 正常返回），这里同样捕获下载。
+    // 若已 resolve gotoPromise，仍需调用 super 完成清理（释放锁、关闭页面等）。
+    if (await this._tryResolveDownload(context)) {
+      return super._sharedRequestHandler(context, error)
+    }
     return super._sharedRequestHandler(context, error)
+  }
+
+  protected async _sharedFailedRequestHandler(
+    context: PlaywrightCrawlingContext & {
+      response?: FetchResponse
+      body?: string | Buffer
+    },
+    error?: Error
+  ): Promise<void> {
+    // 导航因触发下载而中止（如 net::ERR_ABORTED）时，将 download 作为成功响应返回，
+    // 而不是报导航错误。随后仍调用共享 handler 完成清理。
+    if (await this._tryResolveDownload(context)) {
+      return this._sharedRequestHandler(context, error)
+    }
+    return super._sharedFailedRequestHandler(context, error)
   }
 
   protected mouseInitialized = false
 
+  // Playwright 的 Download 对象不提供 contentType()，需要跟踪页面响应头来确定下载文件类型。
+  private _instrumentedPages = new WeakSet<any>()
+  private _downloadContentTypes = new Map<string, string>()
+
+  /** 为页面挂载 response 监听，记录各 URL 的 Content-Type（每个页面只挂一次）。 */
+  private _instrumentPage(page: any) {
+    if (this._instrumentedPages.has(page)) return
+    this._instrumentedPages.add(page)
+    page.on('response', (response: any) => {
+      try {
+        const contentType = response.headers()['content-type']
+        if (contentType) {
+          this._downloadContentTypes.set(response.url(), contentType)
+        }
+      } catch {
+        // 忽略序列化/监听错误
+      }
+    })
+  }
+
+  /** 获取下载 URL 对应的 Content-Type（未捕获到时返回空串）。 */
+  private _getDownloadContentType(download: any): string {
+    return this._downloadContentTypes.get(download.url()) || ''
+  }
+
   protected async _initializeMousePos(page: Page) {
-    if (this.mouseInitialized || this.currentMousePos.x !== 0 || this.currentMousePos.y !== 0) {
+    if (
+      this.mouseInitialized ||
+      this.currentMousePos.x !== 0 ||
+      this.currentMousePos.y !== 0
+    ) {
       this.mouseInitialized = true
       return
     }
@@ -515,10 +660,14 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const { page } = context
     const startPos = { ...this.currentMousePos }
     if (target.x < 0) {
-      target.x = Math.floor(Math.random() * getRandomDelay(Math.abs(target.x))) + (startPos.x || 0)
+      target.x =
+        Math.floor(Math.random() * getRandomDelay(Math.abs(target.x))) +
+        (startPos.x || 0)
     }
     if (target.y < 0) {
-      target.y = Math.floor(Math.random() * getRandomDelay(Math.abs(target.y))) + (startPos.y || 0)
+      target.y =
+        Math.floor(Math.random() * getRandomDelay(Math.abs(target.y))) +
+        (startPos.y || 0)
     }
     const viewport = page.viewportSize()
     if (viewport) {
@@ -539,7 +688,9 @@ export class PlaywrightFetchEngine extends FetchEngine<
     let maxSegmentDist = 0
     let lastP = startPos
     for (const p of trajectory) {
-      const d = Math.sqrt(Math.pow(p.x - lastP.x, 2) + Math.pow(p.y - lastP.y, 2))
+      const d = Math.sqrt(
+        Math.pow(p.x - lastP.x, 2) + Math.pow(p.y - lastP.y, 2)
+      )
       if (d > maxSegmentDist) maxSegmentDist = d
       lastP = p
     }
@@ -547,7 +698,10 @@ export class PlaywrightFetchEngine extends FetchEngine<
     // IMPORTANT: Use the same number of steps for EVERY segment.
     // Since segments are spatially eased (closer at ends, further in middle),
     // using constant steps/time per segment creates natural acceleration/deceleration.
-    const stepsPerSegment = Math.max(5, Math.floor(maxSegmentDist / pixelsPerStep))
+    const stepsPerSegment = Math.max(
+      5,
+      Math.floor(maxSegmentDist / pixelsPerStep)
+    )
 
     for (const pos of trajectory) {
       // Browser-side interpolation handles the smooth movement within each eased segment
@@ -608,15 +762,26 @@ export class PlaywrightFetchEngine extends FetchEngine<
         // we detect if the current page was poisoned by JSON, and if so, we create a fresh,
         // unpolluted page in the same BrowserContext to handle the new navigation.
         // The old page is safely closed by the _sharedRequestHandler finally block.
-        const isJson = this.lastResponse?.contentType === 'application/json';
+        const isJson = this.lastResponse?.contentType === 'application/json'
         if (this.opts?.antibot && isJson) {
-          context.page = await context.page.context().newPage();
+          context.page = await context.page.context().newPage()
         }
 
-        const response = await context.page.goto(action.url, {
-          waitUntil: action.opts?.waitUntil || 'domcontentloaded',
-          timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
-        })
+        let response: Awaited<ReturnType<Page['goto']>> | null = null
+        try {
+          response = await context.page.goto(action.url, {
+            waitUntil: action.opts?.waitUntil || 'domcontentloaded',
+            timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
+          })
+        } catch (err) {
+          // 导航触发下载（ERR_ABORTED）→ 返回下载内容而非导航错误
+          const downloadResponse = await this._tryBuildDownloadResponse(context)
+          if (downloadResponse) {
+            this.lastResponse = downloadResponse
+            return downloadResponse
+          }
+          throw err
+        }
         if (response) {
           context = { ...context, response }
           this._logDebug(
@@ -625,6 +790,12 @@ export class PlaywrightFetchEngine extends FetchEngine<
           )
         }
         const fetchResponse = await this.buildResponse(context)
+        // 兜底：goto 未抛错但实际触发了下载
+        const downloadResponse = await this._tryBuildDownloadResponse(context)
+        if (downloadResponse) {
+          this.lastResponse = downloadResponse
+          return downloadResponse
+        }
         this.lastResponse = fetchResponse
         return fetchResponse
       }
@@ -718,6 +889,12 @@ export class PlaywrightFetchEngine extends FetchEngine<
         const oldUrl = page.url()
         await page.click(action.selector, { timeout: defaultTimeout })
         await this._waitForNavigation(context, oldUrl, 'click')
+        // 点击触发了下载 → 返回下载内容
+        const downloadResponse = await this._tryBuildDownloadResponse(context)
+        if (downloadResponse) {
+          this.lastResponse = downloadResponse
+          return downloadResponse
+        }
         return
       }
       case 'fill':
@@ -846,6 +1023,12 @@ export class PlaywrightFetchEngine extends FetchEngine<
 
           await el.evaluate((form: HTMLFormElement) => form.submit())
           await this._waitForNavigation(context, oldUrl, 'submit')
+          // 表单提交触发了下载 → 返回下载内容
+          const downloadResponse = await this._tryBuildDownloadResponse(context)
+          if (downloadResponse) {
+            this.lastResponse = downloadResponse
+            return downloadResponse
+          }
           return
         }
       }
@@ -922,6 +1105,9 @@ export class PlaywrightFetchEngine extends FetchEngine<
             page.setDefaultTimeout(this.opts.timeoutMs)
             page.setDefaultNavigationTimeout(this.opts.timeoutMs)
           }
+
+          // 跟踪响应头以便下载捕获时确定文件类型（必须在导航前挂载）。
+          this._instrumentPage(page)
 
           const blockedTypes = this.blockedTypes
           if (blockedTypes.size > 0) {

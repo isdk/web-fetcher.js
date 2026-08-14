@@ -717,6 +717,20 @@ export abstract class FetchEngine<
   protected abstract _buildResponse(context: TContext): Promise<FetchResponse>
   protected async buildResponse(context: TContext): Promise<FetchResponse> {
     const result = await this._buildResponse(context)
+    return this._enrichResponse(context, result)
+  }
+
+  /**
+   * 为 [FetchResponse] 补充统一字段：contentType、cookies、sessionState、metadata 等。
+   *
+   * @remarks
+   * 供各引擎构建响应后统一调用；非页面响应（如浏览器捕获的下载）也可复用。
+   * @internal
+   */
+  protected async _enrichResponse(
+    context: TContext,
+    result: FetchResponse
+  ): Promise<FetchResponse> {
     const contentTypeHeader = result.headers['content-type'] || ''
     result.contentType = contentTypeHeader.split(';')[0].trim()
     if (this.opts?.output?.cookies !== false) {

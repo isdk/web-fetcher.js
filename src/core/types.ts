@@ -277,7 +277,8 @@ export interface BaseFetcherProperties {
    * - `http`（cheerio）引擎：透传给 Crawlee 的 `CheerioCrawler.additionalMimeTypes`。Crawlee 默认只允许
    *   HTML/XML/JSON 类型的响应体，白名单之外的类型会被直接跳过（请求报错）；配置后对应的响应体会
    *   以原始 Buffer 保存在 `FetchResponse.body` 中。
-   * - `browser`（playwright）引擎：预留，用于捕获触发浏览器下载的响应（见 `TODO.additional-mime-types.md`）。
+   * - `browser`（playwright）引擎：通过 Playwright 的 `download` 事件捕获触发下载的响应（如 `Content-Disposition: attachment`），
+   *   读取原始二进制内容返回 `FetchResponse.body`；同样受该白名单约束（文本类 MIME 始终允许）。
    * - 值会统一规范化为小写并去重，且始终与引擎自身允许的类型（如 `text/plain`）合并。
    * - 支持通配符（`*` 斜杠 `*` 表示允许所有类型）。
    * - 默认不启用任何额外类型；需要下载非 HTML 内容时请显式配置。

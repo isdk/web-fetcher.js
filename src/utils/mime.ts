@@ -21,3 +21,42 @@ export function normalizeMimeTypes(types: string[]): string[] {
   }
   return result
 }
+
+/**
+ * 判断 MIME 类型是否为文本类（可安全按文本解析/包装的类型）。
+ *
+ * @param type - 已去除参数、小写化的 MIME 类型（如 `application/json`）。
+ */
+export function isTextLikeMimeType(type: string): boolean {
+  return (
+    type.startsWith('text/') ||
+    type.includes('xml') ||
+    type.includes('json') ||
+    type.includes('javascript') ||
+    type.includes('html')
+  )
+}
+
+/**
+ * 判断某个响应的 Content-Type 是否允许被下载并返回原始 body。
+ *
+ * @remarks
+ * - 文本类 MIME 始终允许（与 http 引擎始终放行 `text/plain` 等保持一致）；
+ * - `additionalMimeTypes` 中的 `*` 斜杠 `*` 通配允许所有类型；
+ * - 命中 `additionalMimeTypes`（已归一化小写）允许；
+ * - Content-Type 缺失或无法解析时视为允许，避免误阻塞下载。
+ *
+ * @param contentType - 响应的 Content-Type 头（可含 `; charset=...` 等参数）。
+ * @param additionalMimeTypes - 用户配置的额外 MIME 类型列表（可选）。
+ */
+export function isDownloadAllowed(
+  contentType: string | undefined,
+  additionalMimeTypes?: string[]
+): boolean {
+  if (!contentType) return true
+  const type = contentType.split(';')[0].trim().toLowerCase()
+  if (!type) return true
+  if (isTextLikeMimeType(type)) return true
+  const allowed = normalizeMimeTypes(additionalMimeTypes ?? [])
+  return allowed.includes('*/*') || allowed.includes(type)
+}
