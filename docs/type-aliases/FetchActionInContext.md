@@ -8,7 +8,7 @@
 
 > **FetchActionInContext** = [`FetchActionOptions`](FetchActionOptions.md) & `object`
 
-Defined in: [packages/web-fetcher/src/core/context.ts:17](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/context.ts#L17)
+Defined in: [packages/web-fetcher/src/core/context.ts:17](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/context.ts#L17)
 
 Represents the state of an action being executed within a context.
 
@@ -16,19 +16,19 @@ Represents the state of an action being executed within a context.
 
 ### depth?
 
-> `optional` **depth**: `number`
+> `optional` **depth?**: `number`
 
 The nesting depth of the action. Top-level actions (executed directly by the session) have a depth of 0.
 
 ### error?
 
-> `optional` **error**: `Error`
+> `optional` **error?**: `Error`
 
 Error encountered during action execution, if any.
 
 ### index?
 
-> `optional` **index**: `number`
+> `optional` **index?**: `number`
 
 The 0-based index of the action in the execution sequence.
 

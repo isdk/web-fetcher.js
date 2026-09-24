@@ -4,11 +4,11 @@
 
 [@isdk/web-fetcher](../globals.md) / OnFetchPauseCallback
 
-# Type Alias: OnFetchPauseCallback()
+# Type Alias: OnFetchPauseCallback
 
 > **OnFetchPauseCallback** = (`options`) => `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/core/types.ts:295](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L295)
+Defined in: [packages/web-fetcher/src/core/types.ts:310](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L310)
 
 ## Parameters
 

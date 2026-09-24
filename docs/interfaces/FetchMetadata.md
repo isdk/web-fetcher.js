@@ -6,19 +6,19 @@
 
 # Interface: FetchMetadata
 
-Defined in: [packages/web-fetcher/src/core/types.ts:304](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L304)
+Defined in: [packages/web-fetcher/src/core/types.ts:319](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L319)
 
 ## Indexable
 
-\[`key`: `string`\]: `any`
+> \[`key`: `string`\]: `any`
 
 ## Properties
 
 ### engine?
 
-> `optional` **engine**: [`BrowserEngine`](../type-aliases/BrowserEngine.md)
+> `optional` **engine?**: [`BrowserEngine`](../type-aliases/BrowserEngine.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:306](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L306)
+Defined in: [packages/web-fetcher/src/core/types.ts:321](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L321)
 
 ***
 
@@ -26,35 +26,35 @@ Defined in: [packages/web-fetcher/src/core/types.ts:306](https://github.com/isdk
 
 > **mode**: [`FetchEngineType`](../type-aliases/FetchEngineType.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:305](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L305)
+Defined in: [packages/web-fetcher/src/core/types.ts:320](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L320)
 
 ***
 
 ### proxy?
 
-> `optional` **proxy**: `string`
+> `optional` **proxy?**: `string`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:316](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L316)
+Defined in: [packages/web-fetcher/src/core/types.ts:331](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L331)
 
 ***
 
 ### timings?
 
-> `optional` **timings**: `object`
+> `optional` **timings?**: `object`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:307](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/core/types.ts#L307)
+Defined in: [packages/web-fetcher/src/core/types.ts:322](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L322)
 
 #### dns?
 
-> `optional` **dns**: `number`
+> `optional` **dns?**: `number`
 
 #### download?
 
-> `optional` **download**: `number`
+> `optional` **download?**: `number`
 
 #### firstByte?
 
-> `optional` **firstByte**: `number`
+> `optional` **firstByte?**: `number`
 
 #### start
 
@@ -62,7 +62,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:307](https://github.com/isdk
 
 #### tcp?
 
-> `optional` **tcp**: `number`
+> `optional` **tcp?**: `number`
 
 #### total
 
@@ -70,4 +70,4 @@ Defined in: [packages/web-fetcher/src/core/types.ts:307](https://github.com/isdk
 
 #### ttfb?
 
-> `optional` **ttfb**: `number`
+> `optional` **ttfb?**: `number`
