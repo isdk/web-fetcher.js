@@ -2,6 +2,28 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.2](https://github.com///compare/v0.4.1...v0.4.2) (2026-09-24)
+
+### Features
+
+* 增加工具函数 checkProxy ([3164b64](https://github.com///commit/3164b6400ac7efb90cead4f28ce8d00ff8d25a3f))
+* add additionalMimeTypes option for non-HTML body downloads ([7aecb26](https://github.com///commit/7aecb266c4c2b6ccf1e6a11be47ce9bf526963e9))
+* capture downloads in the browser engine ([c29adf5](https://github.com///commit/c29adf58a75c143987f113d0e1a0b222ee0ddac2))
+
+### Bug Fixes
+
+* context.session.setCookies must be array ([5faeb57](https://github.com///commit/5faeb57651830838b305b70d2a42cfb5e45acf23))
+* eliminate Crawlee context.error deprecation warning & fix gotoPromise hang ([0404a08](https://github.com///commit/0404a0841e2ca49691e6eefc96ce22303fcd7076))
+* make ts happy ([14c83d2](https://github.com///commit/14c83d252d1daee100006299bdd7280f84b25395))
+* preserve original error messages in catch blocks ([5ce8dcd](https://github.com///commit/5ce8dcda4cf28323e83165e456d5a715ec3e83cb))
+* stop mutating the caller's actions array in WebFetcher.fetch ([541d8f1](https://github.com///commit/541d8f12da8647508566c85f3cfb9e2c43bd1185))
+* strip Playwright "Call log" from error.message, store full message in error.data.originalMessage ([1c10bda](https://github.com///commit/1c10bda31ff2f06f6b46c98e867bb5c8569cda57))
+* timeout can not recognize ([d22c3ac](https://github.com///commit/d22c3ac70b34e6af3045829c81a80a081276ed4e))
+
+### Refactor
+
+* export checkProxy ([145b5ff](https://github.com///commit/145b5ff32dd79b8ee40c787828ff113ffd55e753))
+
 ## [0.4.1](https://github.com/isdk/web-fetcher.js/compare/v0.4.0...v0.4.1) (2026-05-19)
 
 
