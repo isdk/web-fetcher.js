@@ -68,7 +68,12 @@ export class WebFetcher {
     }
     const session = await this.createSession(options)
     try {
-      const actions = options?.actions || []
+      // Copy the array before mutating: callers may pass a shared,
+      // module-level array (e.g. a reusable action schema). In-place
+      // `unshift` would leak the auto-inserted `goto` into every
+      // subsequent fetch made with that same array, causing a later
+      // session to re-navigate to a stale URL.
+      const actions = options?.actions ? [...options.actions] : []
       // Auto-insert 'goto' if url is provided and not already the first action
       if (
         url &&
