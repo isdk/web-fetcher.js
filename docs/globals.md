@@ -61,6 +61,8 @@
 - [MouseMoveParams](interfaces/MouseMoveParams.md)
 - [MouseWheelParams](interfaces/MouseWheelParams.md)
 - [PendingEngineRequest](interfaces/PendingEngineRequest.md)
+- [ProxyCheckResult](interfaces/ProxyCheckResult.md)
+- [ProxyConfig](interfaces/ProxyConfig.md)
 - [ScrollIntoViewParams](interfaces/ScrollIntoViewParams.md)
 - [StorageOptions](interfaces/StorageOptions.md)
 - [SubmitActionOptions](interfaces/SubmitActionOptions.md)
@@ -81,6 +83,7 @@
 - [FetchReturnType](type-aliases/FetchReturnType.md)
 - [FetchReturnTypeFor](type-aliases/FetchReturnTypeFor.md)
 - [OnFetchPauseCallback](type-aliases/OnFetchPauseCallback.md)
+- [ProxyType](type-aliases/ProxyType.md)
 - [ResourceType](type-aliases/ResourceType.md)
 - [TrimPreset](type-aliases/TrimPreset.md)
 
@@ -92,5 +95,14 @@
 
 ## Functions
 
+- [checkHttpProxy](functions/checkHttpProxy.md)
+- [checkPort](functions/checkPort.md)
+- [checkProxies](functions/checkProxies.md)
+- [checkProxy](functions/checkProxy.md)
+- [checkProxyRequest](functions/checkProxyRequest.md)
+- [createErrorResponse](functions/createErrorResponse.md)
+- [createNavigationError](functions/createNavigationError.md)
 - [fetchWeb](functions/fetchWeb.md)
+- [getCleanErrorMessage](functions/getCleanErrorMessage.md)
 - [getRandomDelay](functions/getRandomDelay.md)
+- [parseProxyUrl](functions/parseProxyUrl.md)

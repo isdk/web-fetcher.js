@@ -6,9 +6,9 @@
 
 # Function: getRandomDelay()
 
-> **getRandomDelay**(`base`, `variance`): `number`
+> **getRandomDelay**(`base`, `variance?`): `number`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1832](https://github.com/isdk/web-fetcher.js/blob/bf9c111d3175cbd43514341884a53a14f7b3a93b/src/engine/base.ts#L1832)
+Defined in: [packages/web-fetcher/src/engine/base.ts:1875](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/engine/base.ts#L1875)
 
 ## Parameters
 
@@ -16,7 +16,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:1832](https://github.com/is
 
 `number`
 
-### variance
+### variance?
 
 `number` = `0.3`
 
