@@ -584,6 +584,57 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return this._downloadContentTypes.get(download.url()) || ''
   }
 
+  /**
+   * 判断当前自定义请求头是否需要网络层覆盖。
+   *
+   * @remarks
+   * 只有 `user-agent` 需要特殊处理：Playwright 中 context 级 `userAgent` 选项
+   * 优先于 page 级 `setExtraHTTPHeaders`，故必须通过 `route.continue` 覆盖。
+   * 其余请求头由 Crawlee 的 `setExtraHTTPHeaders` 正常应用，无需额外处理。
+   */
+  private _needsHeaderOverride(): boolean {
+    return !!this.hdrs['user-agent']
+  }
+
+  /** 记录已挂载请求拦截器的页面，避免重复注册路由。 */
+  private _interceptedPages = new WeakSet<any>()
+
+  /**
+   * 在页面网络层统一处理资源拦截与自定义请求头覆盖。
+   *
+   * @remarks
+   * 合并到单个 page.route 处理器中，避免多个通配路由相互争抢
+   * （`route.continue()` 会终止路由链，后注册的处理器将不再执行）。
+   * 自定义头在请求时实时读取 `this.hdrs`，因此支持 `headers()` 动态修改。
+   */
+  private _installRequestInterceptor(page: Page) {
+    if (this._interceptedPages.has(page)) return
+    this._interceptedPages.add(page)
+
+    page.route('**/*', async (route) => {
+      const request = route.request()
+      try {
+        const blockedTypes = this.blockedTypes
+        if (blockedTypes.size > 0 && blockedTypes.has(request.resourceType())) {
+          await route.abort()
+          return
+        }
+
+        const customHeaders = this.hdrs
+        if (customHeaders['user-agent']) {
+          await route.continue({
+            headers: { ...request.headers(), ...customHeaders },
+          })
+          return
+        }
+
+        await route.continue()
+      } catch {
+        // 页面可能已关闭或导航被中止
+      }
+    })
+  }
+
   protected async _initializeMousePos(page: Page) {
     if (
       this.mouseInitialized ||
@@ -1109,15 +1160,16 @@ export class PlaywrightFetchEngine extends FetchEngine<
           // 跟踪响应头以便下载捕获时确定文件类型（必须在导航前挂载）。
           this._instrumentPage(page)
 
+          // Crawlee 3.18 的 gotoExtended 对 GET 请求改用 page.setExtraHTTPHeaders() 应用请求头，
+          // 但浏览器上下文若以显式 userAgent 选项创建（指纹注入默认开启时会如此），
+          // Playwright 中 context 级 UA 会优先于 page 级 setExtraHTTPHeaders，导致自定义 user-agent 被忽略。
+          // 这里在网络层用 route.continue({headers}) 覆盖，与 blockResources 合并到同一个路由以避免路由链冲突。
           const blockedTypes = this.blockedTypes
-          if (blockedTypes.size > 0) {
-            await page.route('**/*', (route) => {
-              if (blockedTypes.has(route.request().resourceType())) {
-                route.abort()
-              } else {
-                route.continue()
-              }
-            })
+          if (
+            blockedTypes.size > 0 ||
+            this._needsHeaderOverride()
+          ) {
+            this._installRequestInterceptor(page)
           }
         },
       ],

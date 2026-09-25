@@ -290,7 +290,7 @@ const engineTestSuite = (
   engineName: 'cheerio' | 'playwright' | string,
 ) => {
   const timeout = fixture.timeout || TEST_TIMEOUT;
-  describe.sequential(engineName, () => {
+  describe(engineName, { concurrent: false }, () => {
     let server: FastifyInstance;
     let baseUrl: string;
 
