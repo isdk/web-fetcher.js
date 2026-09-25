@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.3](https://github.com///compare/v0.4.2...v0.4.3) (2026-09-25)
+
+### Bug Fixes
+
+* restore custom user-agent override in playwright engine after deps upgrade ([d4b516e](https://github.com///commit/d4b516e501f8aa920a339f670f84df50c0dd037c))
+
 ## [0.4.2](https://github.com///compare/v0.4.1...v0.4.2) (2026-09-24)
 
 ### Features
