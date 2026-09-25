@@ -787,6 +787,17 @@ export class CheerioFetchEngine extends FetchEngine<
           gotOptions.throwHttpErrors = ctx.throwHttpErrors
           if (this.opts?.timeoutMs)
             gotOptions.timeout = { request: this.opts.timeoutMs }
+          // 透传 got-scraping 的浏览器头生成器配置：gotOptions 就是最终传给
+          // got-scraping 的选项对象。默认其 header 生成器会随机注入整套浏览器
+          // 指纹头（sec-ch-ua 等），与显式指定的 User-Agent（如 Firefox）矛盾时
+          // 会被部分 WAF 识别并拒绝，调用方可用 useHeaderGenerator/headerGeneratorOptions 控制。
+          const wantsNoGeneratedHeaders =
+            ctx.useHeaderGenerator === false || ctx.headerGeneratorOptions === false
+          if (wantsNoGeneratedHeaders) {
+            gotOptions.useHeaderGenerator = false
+          } else if (ctx.headerGeneratorOptions) {
+            gotOptions.headerGeneratorOptions = ctx.headerGeneratorOptions
+          }
         },
       ],
     }
