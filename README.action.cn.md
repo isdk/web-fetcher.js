@@ -179,7 +179,7 @@ export class FillAction extends FetchAction {
 > 请勿将 **`ms`** 参数与“超时时间”混淆。
 >
 > * **`ms` (持续时长)**: 这是一个强制的“睡眠”或“延迟”时间。如果与 `selector` 一起使用，它表示在找到元素**之后**，还要额外等待的时间。
-> * **超时 (Deadline)**: 等待条件（如 `selector` 或 `networkIdle`）满足的最长等待时间是由会话级别的 **`timeoutMs`** 选项控制的（默认通常是 30秒），而不是这个 `ms` 参数。
+> * **超时 (Deadline)**: 等待条件（如 `selector` 或 `networkIdle`）满足的最长等待时间是由会话级别的 **`timeoutMs`** 选项控制的（默认：`60000`），而不是这个 `ms` 参数。
 
 #### `pause`
 

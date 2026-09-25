@@ -1,10 +1,10 @@
-import { PlaywrightCrawler, Configuration } from 'crawlee'
+import { PlaywrightCrawler, Configuration, playwrightUtils } from 'crawlee'
 import type {
   PlaywrightCrawlingContext,
   PlaywrightCrawlerOptions,
 } from 'crawlee'
 import { firefox } from 'playwright'
-import { FetchEngine, type GotoActionOptions, FetchEngineAction, getRandomDelay } from './base'
+import { FetchEngine, type GotoActionOptions, FetchEngineAction, getRandomDelay, normalizeGotoMethodPayload } from './base'
 import { FetchResponse } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { CommonError, ErrorCode, NotFoundError } from '@isdk/common-error'
@@ -818,12 +818,44 @@ export class PlaywrightFetchEngine extends FetchEngine<
           context.page = await context.page.context().newPage()
         }
 
+        // 页面活跃时的导航：method/payload 优先级与 goto 一致（action 参数 > http 全局配置）。
+        // 复用 crawlee 的 gotoExtended：非 GET 请求通过 route 拦截改写方法/请求体。
+        const { method, payload, contentType } = normalizeGotoMethodPayload({
+          method:
+            (action.opts as GotoActionOptions | undefined)?.method ||
+            this.opts?.http?.method,
+          payload:
+            (action.opts as GotoActionOptions | undefined)?.payload ??
+            this.opts?.http?.body,
+        })
+        const isPlainGet =
+          (!method || method === 'GET') && !payload
         let response: Awaited<ReturnType<Page['goto']>> | null = null
         try {
-          response = await context.page.goto(action.url, {
-            waitUntil: action.opts?.waitUntil || 'domcontentloaded',
-            timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
-          })
+          if (isPlainGet) {
+            response = await context.page.goto(action.url, {
+              waitUntil: this._resolveWaitUntil(action.opts),
+              timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
+            })
+          } else {
+            response = await playwrightUtils.gotoExtended(
+              context.page,
+              {
+                url: action.url,
+                method: method || 'GET',
+                headers: {
+                  ...(contentType ? { 'content-type': contentType } : {}),
+                  ...this.hdrs,
+                  ...action.opts?.headers,
+                },
+                payload,
+              } as any,
+              {
+                waitUntil: this._resolveWaitUntil(action.opts),
+                timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
+              } as any
+            )
+          }
         } catch (err) {
           // 导航触发下载（ERR_ABORTED）→ 返回下载内容而非导航错误
           const downloadResponse = await this._tryBuildDownloadResponse(context)
@@ -1137,13 +1169,36 @@ export class PlaywrightFetchEngine extends FetchEngine<
     return new PlaywrightCrawler(options, config)
   }
 
+  /**
+   * 解析导航 waitUntil：action 参数 > browser.waitUntil 全局配置 > 'domcontentloaded'。
+   */
+  protected _resolveWaitUntil(opts?: GotoActionOptions): NonNullable<
+    GotoActionOptions['waitUntil']
+  > {
+    return (
+      opts?.waitUntil || this.opts?.browser?.waitUntil || 'domcontentloaded'
+    )
+  }
+
   protected async _getSpecificCrawlerOptions(
     ctx: FetchEngineContext
   ): Promise<Partial<PlaywrightCrawlerOptions>> {
+    // 显式拦截未实现的浏览器引擎，避免静默回退到 playwright 让用户误以为配置生效。
+    if (ctx.browser?.engine && ctx.browser.engine !== 'playwright') {
+      throw new CommonError(
+        `Browser engine "${ctx.browser.engine}" is not supported yet; only "playwright" is available.`,
+        'browser.engine',
+        ErrorCode.NotSupported
+      )
+    }
     const headless = ctx.browser?.headless ?? true
 
     const crawlerOptions: Partial<PlaywrightCrawlerOptions> = {
       maxRequestRetries: ctx.retries ?? 3,
+      // 并发/限速：默认（maxConcurrency: 1, maxRequestsPerMinute: 1000）由 DefaultFetcherProperties 提供，
+      // 用户显式配置时覆盖 base.ts 中的硬编码默认值。
+      maxConcurrency: ctx.maxConcurrency,
+      maxRequestsPerMinute: ctx.maxRequestsPerMinute,
       headless,
       proxyConfiguration: this.proxyConfiguration,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
@@ -1176,6 +1231,11 @@ export class PlaywrightFetchEngine extends FetchEngine<
     }
 
     const userLaunchOptions = ctx.browser?.launchOptions || {}
+    // Playwright 的 ignoreHTTPSErrors 是 context 级选项；本引擎不使用 incognito pages，
+    // crawlee 会以 launchPersistentContext(userDataDir, launchOptions) 启动，context 选项可直接
+    // 放在 launchOptions 中（与 crawlee 对 MITM 代理的内置处理方式一致）。用户显式配置优先。
+    const sslLaunchOptions =
+      ctx.ignoreSslErrors == null ? {} : { ignoreHTTPSErrors: ctx.ignoreSslErrors }
 
     if (this.opts?.antibot) {
       crawlerOptions.browserPoolOptions = {
@@ -1191,6 +1251,7 @@ export class PlaywrightFetchEngine extends FetchEngine<
       crawlerOptions.launchContext = {
         launcher: firefox,
         launchOptions: {
+          ...sslLaunchOptions,
           ...lo,
           viewport: null,
         },
@@ -1204,7 +1265,11 @@ export class PlaywrightFetchEngine extends FetchEngine<
     } else {
       if (Object.keys(userLaunchOptions).length > 0) {
         crawlerOptions.launchContext = {
-          launchOptions: userLaunchOptions,
+          launchOptions: { ...sslLaunchOptions, ...userLaunchOptions },
+        }
+      } else if (Object.keys(sslLaunchOptions).length > 0) {
+        crawlerOptions.launchContext = {
+          launchOptions: { ...sslLaunchOptions },
         }
       }
     }
@@ -1226,12 +1291,25 @@ export class PlaywrightFetchEngine extends FetchEngine<
       this.pendingRequests.set(requestId, { resolve, reject })
     })
 
+    // 方法优先级：goto 参数 > http.method 全局配置（DefaultFetcherProperties 默认 GET）；
+    // GET/HEAD 自动剔除 payload，对象 payload 序列化为 JSON 并自动补全 content-type
+    // （Crawlee Request 要求 string/Uint8Array，且无 content-type 时服务端可能拒绝解析请求体）。
+    const { method, payload, contentType } = normalizeGotoMethodPayload({
+      method: opts?.method || this.opts?.http?.method,
+      payload: opts?.payload ?? this.opts?.http?.body,
+    })
     await this.requestQueue.addRequest({
       url,
-      headers: this.hdrs,
+      method,
+      payload,
+      headers: {
+        ...(contentType ? { 'content-type': contentType } : {}),
+        ...this.hdrs,
+        ...opts?.headers,
+      },
       userData: {
         requestId,
-        waitUntil: opts?.waitUntil || 'domcontentloaded',
+        waitUntil: this._resolveWaitUntil(opts),
       },
       uniqueKey: `${url}-${requestId}`,
     })

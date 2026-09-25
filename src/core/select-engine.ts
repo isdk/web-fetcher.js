@@ -17,6 +17,13 @@ export async function maybeCreateEngine(
 
   // 2. If a specific engine is requested (not 'auto')
   if (enginePref && enginePref !== 'auto') {
+    // puppeteer 引擎尚未实现：与其在注册表中查不到后报笼统的初始化失败，
+    // 不如直接给出明确的“未支持”错误，避免误导用户以为是环境问题。
+    if (enginePref === 'puppeteer') {
+      throw new Error(
+        'Engine "puppeteer" is not supported yet; use "browser" (playwright) or "http" instead.'
+      )
+    }
     result = await FetchEngine.create(ctx, { engine: enginePref })
     if (!result) {
       throw new Error(
@@ -28,7 +35,8 @@ export async function maybeCreateEngine(
 
   // 3. Handle 'auto' or unspecified engine
   const url = args?.url || ctx.url
-  const matched = pickSiteMatched(url, ctx.sites)
+  // 站点注册表开关：useSiteRegistry 为 false 时跳过匹配（默认 true）
+  const matched = ctx.useSiteRegistry === false ? null : pickSiteMatched(url, ctx.sites)
 
   // 3a. Try to match engine from site registry
   if (matched?.engine && matched.engine !== 'auto') {

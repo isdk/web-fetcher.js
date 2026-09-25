@@ -127,6 +127,38 @@ export interface GotoActionOptions {
 }
 
 /**
+ * 规范化 goto 参数中的 method/payload，以便安全地传给 Crawlee 的 `Request`。
+ *
+ * @remarks
+ * Crawlee 的 `Request` 构造器要求：`payload` 必须是 string/Uint8Array（对象会被 ow 校验拒绝），
+ * 且 GET/HEAD 请求不允许携带 payload（直接抛错）。本函数将对象 payload 序列化为 JSON 字符串，
+ * 并在 GET/HEAD 请求上剔除 payload；对象 payload 序列化时同时返回建议的 JSON Content-Type，
+ * 供调用方在用户未显式指定 content-type 时自动补全。
+ */
+export function normalizeGotoMethodPayload(
+  params?: Pick<GotoActionOptions, 'method' | 'payload'>
+): {
+  method?: GotoActionOptions['method']
+  payload?: string
+  contentType?: string
+} {
+  const method = params?.method
+  const isGetLike = !method || method === 'GET' || method === 'HEAD'
+  const raw = params?.payload
+  if (isGetLike || raw == null) {
+    return { method, payload: undefined }
+  }
+  if (typeof raw === 'string') {
+    return { method, payload: raw }
+  }
+  return {
+    method,
+    payload: JSON.stringify(raw),
+    contentType: 'application/json',
+  }
+}
+
+/**
  * Options for the {@link FetchEngine.waitFor} action, specifying conditions to wait for before continuing.
  *
  * @remarks
