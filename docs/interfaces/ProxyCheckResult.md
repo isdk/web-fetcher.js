@@ -6,7 +6,7 @@
 
 # Interface: ProxyCheckResult
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:70](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L70)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:70](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L70)
 
 代理检测结果
 
@@ -16,7 +16,7 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:70](https://github.co
 
 > `optional` **error?**: `string`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:75](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L75)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:75](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L75)
 
 ***
 
@@ -24,7 +24,7 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:75](https://github.co
 
 > `optional` **latency?**: `number`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:74](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L74)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:74](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L74)
 
 ***
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:74](https://github.co
 
 > **online**: `boolean`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:71](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L71)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:71](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L71)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:71](https://github.co
 
 > **portOpen**: `boolean`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:72](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L72)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:72](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L72)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:72](https://github.co
 
 > **proxyWorking**: `boolean`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:73](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L73)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:73](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L73)

@@ -8,7 +8,7 @@
 
 > **createErrorResponse**(`url`, `loadedUrl`, `statusCode`, `statusText`): [`FetchResponse`](../interfaces/FetchResponse.md)
 
-Defined in: [packages/web-fetcher/src/engine/error-helpers.ts:27](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/engine/error-helpers.ts#L27)
+Defined in: [packages/web-fetcher/src/engine/error-helpers.ts:27](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/engine/error-helpers.ts#L27)
 
 Creates a minimal error response object for when navigation fails.
 Used as the `.response` property on rejected CommonError instances.

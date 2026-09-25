@@ -6,7 +6,7 @@
 
 # Class: EngineUpgradeError
 
-Defined in: [packages/web-fetcher/src/core/types.ts:95](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L95)
+Defined in: [packages/web-fetcher/src/core/types.ts:95](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L95)
 
 ## Extends
 
@@ -18,7 +18,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:95](https://github.com/isdk/
 
 > **new EngineUpgradeError**(`res`): `EngineUpgradeError`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:97](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L97)
+Defined in: [packages/web-fetcher/src/core/types.ts:97](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L97)
 
 #### Parameters
 
@@ -52,7 +52,7 @@ Defined in: node\_modules/.pnpm/typescript@5.7.3/node\_modules/typescript/lib/li
 
 > **code**: `string` = `'ENGINE_UPGRADE_REQUIRED'`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:96](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L96)
+Defined in: [packages/web-fetcher/src/core/types.ts:96](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L96)
 
 ***
 
@@ -84,7 +84,7 @@ Defined in: node\_modules/.pnpm/typescript@5.7.3/node\_modules/typescript/lib/li
 
 > **res**: [`FetchResponse`](../interfaces/FetchResponse.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:97](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L97)
+Defined in: [packages/web-fetcher/src/core/types.ts:97](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L97)
 
 ***
 
