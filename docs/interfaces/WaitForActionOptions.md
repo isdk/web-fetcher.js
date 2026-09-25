@@ -6,7 +6,7 @@
 
 # Interface: WaitForActionOptions
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:135](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/engine/base.ts#L135)
+Defined in: [packages/web-fetcher/src/engine/base.ts:135](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/engine/base.ts#L135)
 
 Options for the [FetchEngine.waitFor](../classes/FetchEngine.md#waitfor) action, specifying conditions to wait for before continuing.
 
@@ -20,7 +20,7 @@ Controls timing behavior for interactions, allowing waiting for elements, time i
 
 > `optional` **failOnTimeout?**: `boolean`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:139](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/engine/base.ts#L139)
+Defined in: [packages/web-fetcher/src/engine/base.ts:139](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/engine/base.ts#L139)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:139](https://github.com/isd
 
 > `optional` **ms?**: `number`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:136](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/engine/base.ts#L136)
+Defined in: [packages/web-fetcher/src/engine/base.ts:136](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/engine/base.ts#L136)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:136](https://github.com/isd
 
 > `optional` **networkIdle?**: `boolean`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:138](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/engine/base.ts#L138)
+Defined in: [packages/web-fetcher/src/engine/base.ts:138](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/engine/base.ts#L138)
 
 ***
 
@@ -44,4 +44,4 @@ Defined in: [packages/web-fetcher/src/engine/base.ts:138](https://github.com/isd
 
 > `optional` **selector?**: `string`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:137](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/engine/base.ts#L137)
+Defined in: [packages/web-fetcher/src/engine/base.ts:137](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/engine/base.ts#L137)

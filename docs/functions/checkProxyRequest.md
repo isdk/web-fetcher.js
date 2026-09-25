@@ -8,7 +8,7 @@
 
 > **checkProxyRequest**(`config`, `testUrl?`, `timeout?`): `Promise`\<\{ `error?`: `string`; `latency?`: `number`; `working`: `boolean`; \}\>
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:153](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L153)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:153](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L153)
 
 通过代理发送 HTTP 请求检测
 

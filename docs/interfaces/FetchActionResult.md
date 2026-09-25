@@ -6,7 +6,7 @@
 
 # Interface: FetchActionResult\<R\>
 
-Defined in: [packages/web-fetcher/src/core/types.ts:36](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L36)
+Defined in: [packages/web-fetcher/src/core/types.ts:36](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L36)
 
 ## Type Parameters
 
@@ -20,7 +20,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:36](https://github.com/isdk/
 
 > `optional` **error?**: `Error`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:42](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L42)
+Defined in: [packages/web-fetcher/src/core/types.ts:42](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L42)
 
 ***
 
@@ -28,7 +28,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:42](https://github.com/isdk/
 
 > `optional` **meta?**: [`FetchActionMeta`](FetchActionMeta.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:43](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L43)
+Defined in: [packages/web-fetcher/src/core/types.ts:43](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L43)
 
 ***
 
@@ -36,7 +36,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:43](https://github.com/isdk/
 
 > `optional` **result?**: [`FetchReturnTypeFor`](../type-aliases/FetchReturnTypeFor.md)\<`R`\>
 
-Defined in: [packages/web-fetcher/src/core/types.ts:41](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L41)
+Defined in: [packages/web-fetcher/src/core/types.ts:41](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L41)
 
 ***
 
@@ -44,7 +44,7 @@ Defined in: [packages/web-fetcher/src/core/types.ts:41](https://github.com/isdk/
 
 > `optional` **returnType?**: `R`
 
-Defined in: [packages/web-fetcher/src/core/types.ts:40](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L40)
+Defined in: [packages/web-fetcher/src/core/types.ts:40](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L40)
 
 ***
 
@@ -52,4 +52,4 @@ Defined in: [packages/web-fetcher/src/core/types.ts:40](https://github.com/isdk/
 
 > **status**: [`FetchActionResultStatus`](../enumerations/FetchActionResultStatus.md)
 
-Defined in: [packages/web-fetcher/src/core/types.ts:39](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/core/types.ts#L39)
+Defined in: [packages/web-fetcher/src/core/types.ts:39](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/types.ts#L39)

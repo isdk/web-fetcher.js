@@ -6,7 +6,7 @@
 
 # Interface: ProxyConfig
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:12](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L12)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:12](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L12)
 
 代理配置
 
@@ -16,7 +16,7 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:12](https://github.co
 
 > `optional` **auth?**: `object`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:16](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L16)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:16](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L16)
 
 #### password
 
@@ -32,7 +32,7 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:16](https://github.co
 
 > **host**: `string`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:13](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L13)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:13](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L13)
 
 ***
 
@@ -40,7 +40,7 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:13](https://github.co
 
 > **port**: `number`
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:14](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L14)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:14](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L14)
 
 ***
 
@@ -48,4 +48,4 @@ Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:14](https://github.co
 
 > `optional` **type?**: [`ProxyType`](../type-aliases/ProxyType.md)
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:15](https://github.com/isdk/web-fetcher.js/blob/0bc2320e338a4948a0a7406bd326e792d033f11e/src/utils/check-proxy.ts#L15)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:15](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L15)
