@@ -252,6 +252,16 @@ export interface BaseFetcherProperties {
   // browser 模式下，没有对应的配置，需要根据浏览器类型去设置浏览器内部配置，也可能无法配置。
   ignoreSslErrors?: boolean
 
+  /**
+   * 请求超时（毫秒）。默认 30000（30 秒）。
+   *
+   * @remarks
+   * - `http`（cheerio）引擎：作为 got 的 `timeout.request` 与 goto 导航超时。
+   * - `browser`（playwright）引擎：作为导航与页面默认超时。
+   * - 公共 API / 搜索引擎类站点的响应通常在数秒内返回；慢站点可按需调大。
+   */
+  timeoutMs?: number
+
   browser?: {
     /**
      * 浏览器引擎，默认为 playwright
@@ -269,6 +279,34 @@ export interface BaseFetcherProperties {
     method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'
     body?: any
   }
+
+  /**
+   * `got-scraping`（http 引擎）的浏览器头生成器配置。
+   *
+   * @remarks
+   * got-scraping 默认会随机生成一整套浏览器指纹头（含 `sec-ch-ua` client hints、
+   * `sec-fetch-*` 等）注入请求。当调用方显式指定 `User-Agent` 时，生成的头可能与
+   * 自定义 UA 不匹配（如生成 Chromium 的 client hints 但 UA 是 Firefox），这种
+   * 自相矛盾的指纹会被部分 WAF/反bot（如 4get.nadeko.net）直接拒绝（401）。
+   * 通过 `headerGeneratorOptions` 把生成器固定为与 UA 一致的浏览器即可避免。
+   *
+   * - 设为 `false`（`useHeaderGenerator`）可完全禁用自动头生成，只用 `headers`。
+   * - 设为 `{ browsers: [{ name: 'firefox' }] }` 可强制生成 Firefox 一致的头。
+   */
+  headerGeneratorOptions?:
+    | {
+        browsers?: { name: 'chrome' | 'firefox' | 'safari' | 'edge'; minVersion?: number; maxVersion?: number }[]
+        operatingSystems?: ('windows' | 'macos' | 'android' | 'ios' | 'linux')[]
+        devices?: ('desktop' | 'mobile')[]
+        locales?: string[]
+        httpVersion?: 1 | 2
+        http1Headers?: Record<string, string>
+        http2Headers?: Record<string, string>
+      }
+    | false
+
+  /** 完全禁用 got-scraping 的自动浏览器头生成（仅发送 `headers` 中显式声明的头）。 */
+  useHeaderGenerator?: boolean
 
   /**
    * 额外的 MIME 类型，允许引擎下载并返回非 HTML 响应体，例如 `['application/pdf', 'text/csv']`。
@@ -378,7 +416,7 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
   http: {
     method: 'GET',
   },
-  timeoutMs: 60000,
+  timeoutMs: 30000,
   requestHandlerTimeoutSecs: undefined,
   maxConcurrency: 1,
   maxRequestsPerMinute: 1000,

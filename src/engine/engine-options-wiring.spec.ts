@@ -90,6 +90,45 @@ describe('CheerioFetchEngine crawler options wiring', () => {
     expect(options.ignoreSslErrors).toBeUndefined()
   })
 
+  it('should forward headerGeneratorOptions into preNavigationHooks gotOptions', () => {
+    const ctx = {
+      ...baseCtx,
+      headerGeneratorOptions: { browsers: [{ name: 'firefox' }] },
+    } as FetchEngineContext
+
+    const options = new TestCheerioEngine().testGetCrawlerOptions(ctx)
+    const gotOptions: any = {}
+    options.preNavigationHooks![0]({} as any, gotOptions)
+
+    expect(gotOptions.headerGeneratorOptions).toEqual({
+      browsers: [{ name: 'firefox' }],
+    })
+    expect(gotOptions.useHeaderGenerator).toBeUndefined()
+  })
+
+  it('should disable the got-scraping header generator on useHeaderGenerator:false', () => {
+    const options = new TestCheerioEngine().testGetCrawlerOptions({
+      ...baseCtx,
+      useHeaderGenerator: false,
+    } as FetchEngineContext)
+    const gotOptions: any = {}
+    options.preNavigationHooks![0]({} as any, gotOptions)
+
+    expect(gotOptions.useHeaderGenerator).toBe(false)
+  })
+
+  it('headerGeneratorOptions:false should also disable the header generator', () => {
+    const options = new TestCheerioEngine().testGetCrawlerOptions({
+      ...baseCtx,
+      headerGeneratorOptions: false,
+    } as unknown as FetchEngineContext)
+    const gotOptions: any = {}
+    options.preNavigationHooks![0]({} as any, gotOptions)
+
+    expect(gotOptions.useHeaderGenerator).toBe(false)
+    expect(gotOptions.headerGeneratorOptions).toBeUndefined()
+  })
+
   it('defaults resolve wired values from DefaultFetcherProperties', () => {
     // defaultsDeep(specific, base) 顺序下，specific 值覆盖 base 硬编码的 maxConcurrency: 1
     expect(DefaultFetcherProperties.maxConcurrency).toBe(1)
