@@ -132,7 +132,7 @@ const actionTestSuite = (
   engineName: string,
   EngineClass: typeof CheerioFetchEngine | typeof PlaywrightFetchEngine
 ) => {
-  describe.sequential(`FetchAction Suite: ${engineName}`, () => {
+  describe(`FetchAction Suite: ${engineName}`, { concurrent: false }, () => {
     let server: FastifyInstance & { clearRateLimit: () => void }
     let baseUrl: string
     let context: FetchContext

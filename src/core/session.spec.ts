@@ -69,7 +69,7 @@ const createTestServer = async (): Promise<FastifyInstance> => {
 
 // 2. 可复用的测试套件
 const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
-  describe.sequential(`FetchSession: ${engineName}`, () => {
+  describe(`FetchSession: ${engineName}`, { concurrent: false }, () => {
     let server: FastifyInstance
     let baseUrl: string
 

@@ -195,7 +195,7 @@ const engineTestSuite = (
   engineName: string,
   EngineClass: typeof CheerioFetchEngine | typeof PlaywrightFetchEngine
 ) => {
-  describe.sequential(`FetchEngine Suite: ${engineName}`, () => {
+  describe(`FetchEngine Suite: ${engineName}`, { concurrent: false }, () => {
     let server: FastifyInstance & { clearRateLimit: () => void }
     let baseUrl: string
     let engine: FetchEngine
@@ -688,7 +688,7 @@ const engineTestSuite = (
         } finally {
           await antibotEngine.dispose()
         }
-      }, 20000) // Generous timeout for two separate engine launches
+      }) // Generous timeout for two separate engine launches
     }
   })
 }
