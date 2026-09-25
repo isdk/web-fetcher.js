@@ -179,7 +179,7 @@ In `browser` mode, if multiple conditions are provided, they are awaited sequent
 > Do not confuse the **`ms`** parameter with a timeout setting.
 >
 > * **`ms` (Duration)**: This forces the script to sleep/pause for a fixed amount of time. If used with `selector`, it adds an **extra delay** after the element is found.
-> * **Timeout (Deadline)**: The maximum time the script will wait for a condition (like `selector` or `networkIdle`) to be met before failing is controlled by the session-level **`timeoutMs`** option (default is usually 30s), not this `ms` parameter.
+> * **Timeout (Deadline)**: The maximum time the script will wait for a condition (like `selector` or `networkIdle`) to be met before failing is controlled by the session-level **`timeoutMs`** option (default: `60000`), not this `ms` parameter.
 
 #### `pause`
 

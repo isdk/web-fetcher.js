@@ -2,7 +2,7 @@ import { CheerioCrawler, Configuration } from 'crawlee'
 import type { CheerioCrawlingContext, CheerioCrawlerOptions } from 'crawlee'
 import * as cheerio from 'cheerio'
 import { newFunction } from 'util-ex'
-import { FetchEngine, type GotoActionOptions, FetchEngineAction } from './base'
+import { FetchEngine, type GotoActionOptions, FetchEngineAction, normalizeGotoMethodPayload } from './base'
 import { FetchResponse } from '../core/types'
 import { FetchEngineContext } from '../core/context'
 import { createPromiseLock } from './promise-lock'
@@ -334,10 +334,27 @@ export class CheerioFetchEngine extends FetchEngine<
       case 'navigate': {
         const { url, opts } = action as any
         this._logDebug('navigate', `Navigating to: ${url}`)
+        // 方法优先级：action 参数 > http.method 全局配置 > 'GET'；
+        // body 优先级同理（http.body 为全局默认 POST 体），GET/HEAD 请求自动剔除 body；
+        // 对象 body 序列化为 JSON 并自动补全 content-type（用户显式指定时优先）。
+        const { method, payload, contentType } = normalizeGotoMethodPayload({
+          method:
+            (opts as GotoActionOptions | undefined)?.method ||
+            this.opts?.http?.method ||
+            'GET',
+          payload:
+            (opts as GotoActionOptions | undefined)?.payload ??
+            this.opts?.http?.body,
+        })
         const loadedRequest = await this._requestWithRedirects(context, {
           url,
-          method: 'GET',
-          headers: { ...this.hdrs, ...opts?.headers },
+          method: method || 'GET',
+          body: payload,
+          headers: {
+            ...(contentType ? { 'content-type': contentType } : {}),
+            ...this.hdrs,
+            ...opts?.headers,
+          },
         })
         await this._updateStateAfterNavigation(context, loadedRequest)
         return this.lastResponse
@@ -758,6 +775,12 @@ export class CheerioFetchEngine extends FetchEngine<
       maxRequestRetries: ctx.retries ?? 1,
       requestHandlerTimeoutSecs: ctx.requestHandlerTimeoutSecs,
       proxyConfiguration: this.proxyConfiguration,
+      // 并发/限速：默认（maxConcurrency: 1, maxRequestsPerMinute: 1000）由 DefaultFetcherProperties 提供，
+      // 用户显式配置时覆盖 base.ts 中的硬编码默认值。
+      maxConcurrency: ctx.maxConcurrency,
+      maxRequestsPerMinute: ctx.maxRequestsPerMinute,
+      // 直接传递给 CheerioCrawler（Crawlee 3.18 一等选项），控制 TLS 证书校验。
+      ignoreSslErrors: ctx.ignoreSslErrors,
       preNavigationHooks: [
         ({ session, request }, gotOptions) => {
           // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
@@ -777,6 +800,14 @@ export class CheerioFetchEngine extends FetchEngine<
     if (this.isPageActive) {
       return this.dispatchAction({ type: 'navigate', url, opts: params })
     }
+
+    // 方法优先级：goto 参数 > http.method 全局配置；
+    // GET/HEAD 自动剔除 payload，对象 payload 序列化为 JSON 并自动补全 content-type
+    // （Crawlee Request 要求 string/Uint8Array，且无 content-type 时服务端可能拒绝解析请求体）。
+    const { method, payload, contentType } = normalizeGotoMethodPayload({
+      method: params?.method || this.opts?.http?.method,
+      payload: params?.payload ?? this.opts?.http?.body,
+    })
 
     const requestId = `req-${++this.requestCounter}`
     const promise = new Promise<FetchResponse>((resolve, reject) => {
@@ -815,7 +846,13 @@ export class CheerioFetchEngine extends FetchEngine<
     this.requestQueue!.addRequest({
       ...params,
       url,
-      headers: { ...this.hdrs, ...params?.headers },
+      method,
+      payload,
+      headers: {
+        ...(contentType ? { 'content-type': contentType } : {}),
+        ...this.hdrs,
+        ...params?.headers,
+      },
       userData: { requestId },
       uniqueKey: `${url}-${requestId}`,
     }).catch((error) => {

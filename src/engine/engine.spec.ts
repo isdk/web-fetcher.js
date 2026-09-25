@@ -346,6 +346,49 @@ const engineTestSuite = (
     )
 
     it(
+      'should send POST via goto params (method + payload)',
+      async () => {
+        const res = await engine.goto(`${baseUrl}/submit`, {
+          method: 'POST',
+          payload: { test_input: 'from-goto-params' },
+          headers: { 'content-type': 'application/json' },
+        })
+        expect(res?.statusCode).toBe(200)
+        expect(res?.text).toContain('Submitted: from-goto-params')
+      },
+      TEST_TIMEOUT
+    )
+
+    it(
+      'should send POST via http.method/http.body global options',
+      async () => {
+        // 每个测试前共享的 engine 未配置 http.method，这里创建专用引擎
+        const postEngine = (await FetchEngine.create(context, {
+          engine: engineName as any,
+          http: {
+            method: 'POST',
+            body: { test_input: 'from-global-options' },
+          },
+        })) as FetchEngine
+
+        const res = await postEngine.goto(`${baseUrl}/submit`)
+        expect(res?.statusCode).toBe(200)
+        expect(res?.text).toContain('Submitted: from-global-options')
+
+        // goto 参数优先级高于全局配置
+        const res2 = await postEngine.goto(`${baseUrl}/submit`, {
+          method: 'POST',
+          payload: { test_input: 'params-win' },
+        })
+        expect(res2?.statusCode).toBe(200)
+        expect(res2?.text).toContain('Submitted: params-win')
+
+        await postEngine.dispose()
+      },
+      TEST_TIMEOUT
+    )
+
+    it(
       'should handle rate limiting',
       async () => {
         for (let i = 0; i < 3; i++) {
