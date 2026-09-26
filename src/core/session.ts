@@ -3,6 +3,7 @@ import {
   FetchAction,
 } from '../action/fetch-action'
 import { Cookie, DefaultFetcherProperties, FetchActionOptions, FetcherOptions, FetchActionResult, EngineUpgradeError } from './types'
+import { AbortError } from '@isdk/common-error'
 import { FetchReturnType } from './fetch-return-type'
 import { createEvent } from '../event/create-event'
 import { defaultsDeep } from 'lodash-es'
@@ -36,6 +37,9 @@ export class FetchSession {
   // private options!: FetchSessionOptions
   protected closed = false
 
+  /** 中止信息：一旦被设置，会话不可再执行任何动作。 */
+  protected abortedError?: Error
+
   /**
    * Creates a new FetchSession.
    *
@@ -44,6 +48,53 @@ export class FetchSession {
   constructor(protected options: FetcherOptions = {}) {
     this.id = generateId()
     this.context = this.createContext(options)
+    // 支持通过 FetcherOptions.signal 从外部中断会话。
+    const signal = this.context.signal ?? options.signal
+    if (signal) {
+      // 已中止的 signal：立即中止会话
+      if (signal.aborted) {
+        this.abort((signal as any).reason)
+      } else {
+        signal.addEventListener(
+          'abort',
+          () => this.abort((signal as any).reason),
+          { once: true }
+        )
+      }
+    }
+  }
+
+  /**
+   * 会话是否已被中止。
+   */
+  get aborted(): boolean {
+    return !!this.abortedError
+  }
+
+  /**
+   * 中止当前会话。
+   *
+   * @remarks
+   * 中止后：
+   * - 后续所有动作立即以 `AbortError` 失败；
+   * - 进行中的动作会因 `dispose()` 清理（reject 所有 pending 请求与排队动作）而被取消；
+   * - 会话不可恢复。
+   *
+   * 幂等：重复调用无副作用。
+   *
+   * @param reason - 可选的中止原因（错误或描述信息）。
+   */
+  async abort(reason?: any): Promise<void> {
+    if (this.abortedError) return
+    const err =
+      reason instanceof Error
+        ? reason
+        : new AbortError(reason ? String(reason) : undefined)
+    this.abortedError = err
+    this._logDebug('abort', 'Session aborted:', err.message)
+    // 立即回收引擎资源：清理过程会 reject 所有 pending 请求与排队中的动作，
+    // 使进行中的 executeAll 快速失败，而不是等到超时。
+    await this.dispose().catch(() => {})
   }
 
   protected _logDebug(category: string, ...args: any[]) {
@@ -71,6 +122,11 @@ export class FetchSession {
     actionOptions: FetchActionOptions,
     context: FetchContext = this.context
   ): Promise<FetchActionResult<R>> {
+    // Abort check MUST come before ensureEngine(): a disposed engine would
+    // otherwise be silently re-created and the aborted run would continue.
+    if (this.abortedError) {
+      throw this.abortedError
+    }
     const actionId =
       actionOptions.id || actionOptions.name || actionOptions.action
     this._logDebug(
@@ -260,6 +316,10 @@ export class FetchSession {
     }
 
     eventBus.emit('session:closed', { sessionId: this.id })
+    // 会话已关闭：标记为不可用，避免后续 executeAll 在 ensureEngine 中静默重建引擎。
+    if (!this.abortedError) {
+      this.abortedError = new AbortError('Session is closed')
+    }
   }
 
   private async ensureEngine(

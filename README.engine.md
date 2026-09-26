@@ -57,6 +57,29 @@ The `FetchSession` class manages the lifecycle of a fetch operation. You can spe
 const session = new FetchSession({ engine: 'browser' });
 ```
 
+#### Aborting a Session
+
+A session can be cancelled explicitly or through an external signal:
+
+```typescript
+const session = new FetchSession({ engine: 'browser' });
+
+// Option A: explicit abort
+await session.abort('no longer needed');
+
+// Option B: external signal
+const controller = new AbortController();
+const session2 = new FetchSession({ engine: 'browser', signal: controller.signal });
+controller.abort();
+```
+
+Once aborted:
+
+* Actions that have not started yet fail immediately with an `AbortError` (even before an engine is (re-)created).
+* In-flight navigation/requests are cancelled: engine cleanup rejects all pending requests and queued actions with an `AbortError`, so `executeAll` fails fast instead of waiting for timeouts.
+* The session cannot be reused afterwards; `dispose()` marks a session as closed the same way.
+* `abort()` is idempotent: calling it again has no effect.
+
 #### Engine Selection Priority
 
 The engine is initialized lazily upon the first action execution and remains fixed for the duration of the session. The selection follows these rules:
@@ -170,6 +193,7 @@ Our engine solves this by creating a bridge between the external API calls and t
     * An `isEngineDisposed` flag is set to prevent new actions.
     * A `dispose` signal is emitted to wake up and terminate the action loop.
     * All active locks (`navigationLock`) are released.
+    * All pending requests and queued actions are rejected with an `AbortError` (in-flight navigation is interrupted instead of waiting for timeouts).
     * The crawler is torn down (`teardown`), and the private `RequestQueue` and `KeyValueStore` are dropped to ensure a clean state.
 
 ---

@@ -153,11 +153,12 @@ This is the main entry point for the library.
 * `url` (string): The initial URL to navigate to.
 * `engine` ('http' | 'browser' | 'auto'): The engine to use. Defaults to `auto`.
 * `proxy` (string | string[]): Proxy URL(s) to use for requests.
-* `timeoutMs` (number): Request/navigation timeout in milliseconds. Applies to the `http` engine's request timeout and the `browser` engine's navigation and default page timeouts (default: `60000`).
+* `timeoutMs` (number): Request/navigation timeout in milliseconds. Applies to the `http` engine's request timeout and the `browser` engine's navigation and default page timeouts (default: `30000`).
 * `requestHandlerTimeoutSecs` (number): Timeout in seconds for the underlying Crawlee request handler. Increase it if long-running actions (e.g. `pause`) need more than the default (~60s).
 * `retries` (number): Maximum network-level retry attempts per request (mapped to Crawlee's `maxRequestRetries`; engine fallbacks: `browser` `3`, `http` `1` when unset).
 * `throwHttpErrors` (boolean): Whether HTTP error statuses (4xx/5xx) throw an error. In `browser` mode it is forced to `false`.
 * `antibot` (boolean): In `browser` mode, run a stealthed Firefox (camoufox) with automatic Cloudflare challenge handling to bypass anti-bot measures (default: `false`).
+* `signal` (AbortSignal): External abort signal for the session. When the signal aborts, the session is cancelled: pending actions fail immediately with an `AbortError`, in-flight navigation/requests are interrupted, and the session cannot be reused. Alternatively, call `session.abort(reason)` directly without a signal. See [Aborting a Session](./README.engine.md#aborting-a-session).
 * `blockResources` (ResourceType[]): Resource types to block from loading in `browser` mode, e.g. `['image', 'stylesheet', 'font']` (default: `[]`).
 * `sites` (FetchSite[]): Site registry used in `auto` mode. Each entry has a `domain`, optional `pathScope` and engine options; the first matching entry decides the engine (see `useSiteRegistry`).
 * `useSiteRegistry` (boolean): Whether to match the target URL against the `sites` registry when `engine` is `auto` (default: `true`).

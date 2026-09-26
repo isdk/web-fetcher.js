@@ -64,6 +64,15 @@ const createTestServer = async (): Promise<FastifyInstance> => {
       .send(`<html><body>Submitted: ${body.test_input}</body></html>`)
   })
 
+  // 慢速响应：用于测试中止/取消
+  server.get('/slow', (req, reply) => {
+    setTimeout(() => {
+      reply
+        .type('text/html')
+        .send('<html><body><h1>Slow Page</h1></body></html>')
+    }, 3000)
+  })
+
   return server
 }
 
@@ -83,6 +92,8 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
     }, TEST_TIMEOUT)
 
     afterAll(async () => {
+      // 中止测试可能残留 keep-alive 连接，先强制关闭所有连接，避免 close 挂起超时
+      ;(server.server as any).closeAllConnections?.()
       await server.close()
     })
 
@@ -129,6 +140,54 @@ const sessionTestSuite = (engineName: 'cheerio' | 'playwright') => {
       expect(session.context).toBeDefined()
       expect(session.context.id).toBe(session.id)
     })
+
+    it('should abort in-flight fetch via session.abort(): pending request fails fast with AbortError',
+      { timeout: 8000 }, async () => {
+        createSession({ engine: engineName })
+        const pending = session.executeAll([
+          { id: 'goto', params: { url: `${baseUrl}/slow` } },
+        ])
+        // 先挂上拒绝断言，再触发中止，避免 unhandled rejection 窗口
+        const assertion = expect(pending).rejects.toMatchObject({
+          name: 'AbortError',
+        })
+        // 等待导航真正开始
+        await new Promise((r) => setTimeout(r, 500))
+        await session.abort('test-abort')
+        await assertion
+        // abort 后会话不可再用
+        await expect(
+          session.executeAll([{ id: 'goto', params: { url: baseUrl } }])
+        ).rejects.toMatchObject({ name: 'AbortError' })
+      })
+
+    it('should reject all actions after an explicit abort',
+      async () => {
+        createSession({ engine: engineName })
+        // 手动中止：后续动作立即失败
+        await session.abort('pre-aborted')
+        await expect(
+          session.executeAll([
+            { id: 'goto', params: { url: `${baseUrl}/` } },
+          ])
+        ).rejects.toMatchObject({ name: 'AbortError' })
+      })
+
+    it('should support external AbortSignal via options.signal',
+      { timeout: 8000 }, async () => {
+        const controller = new AbortController()
+        createSession({ engine: engineName, signal: controller.signal })
+        const pending = session.executeAll([
+          { id: 'goto', params: { url: `${baseUrl}/slow` } },
+        ])
+        // 先挂上拒绝断言，再触发中止，避免 unhandled rejection 窗口
+        const assertion = expect(pending).rejects.toMatchObject({
+          name: 'AbortError',
+        })
+        await new Promise((r) => setTimeout(r, 500))
+        controller.abort()
+        await assertion
+      })
 
     it(
       'should execute a single "goto" action and initialize engine',
