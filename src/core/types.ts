@@ -221,6 +221,20 @@ export interface BaseFetcherProperties {
   upgradeThresholdMs?: number // 触发升级的等待时间阈值（毫秒），默认 5000ms。超过此时间或无信息则升级。
   useSiteRegistry?: boolean // 使用站点配置
   antibot?: boolean
+
+  /**
+   * 外部中断信号（AbortSignal）。
+   *
+   * @remarks
+   * 传入后可通过 `signal.abort(reason)` 中断当前会话：
+   * - 尚未开始的动作会立即以 `AbortError` 失败；
+   * - 进行中的导航/请求会被取消（`dispose()` 内部会先中止会话再清理资源）；
+   * - 会话中止后不可恢复，再次使用会抛 `AbortError`。
+   *
+   * 也可不传 signal，直接调用 `session.abort(reason)` 手动中止。
+   */
+  signal?: AbortSignal
+
   debug?: boolean | string | string[]
 
   headers?: Record<string, string>
@@ -323,7 +337,6 @@ export interface BaseFetcherProperties {
    */
   additionalMimeTypes?: string[]
 
-  timeoutMs?: number
   requestHandlerTimeoutSecs?: number
   maxConcurrency?: number
   maxRequestsPerMinute?: number

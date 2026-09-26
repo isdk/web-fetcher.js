@@ -1290,6 +1290,9 @@ export class PlaywrightFetchEngine extends FetchEngine<
     const promise = new Promise<FetchResponse>((resolve, reject) => {
       this.pendingRequests.set(requestId, { resolve, reject })
     })
+    // 清理/中止时会在消费者尚未挂上（goto 还在 await addRequest）前 reject 该 promise，
+    // 预挂空 catch 防止 unhandled rejection；真正的消费者仍会收到拒绝。
+    promise.catch(() => { })
 
     // 方法优先级：goto 参数 > http.method 全局配置（DefaultFetcherProperties 默认 GET）；
     // GET/HEAD 自动剔除 payload，对象 payload 序列化为 JSON 并自动补全 content-type

@@ -850,6 +850,9 @@ export class CheerioFetchEngine extends FetchEngine<
         reject: cleanupAndReject,
       })
     })
+    // 清理/中止时会在消费者尚未挂上（goto 还在 await 锁/队列）前 reject 该 promise，
+    // 预挂空 catch 防止 unhandled rejection；真正的消费者仍会收到拒绝。
+    promise.catch(() => { })
 
     // Add the request to the queue BEFORE awaiting the lock.
     // This prevents a race condition where the crawler might shut down

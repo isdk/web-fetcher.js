@@ -1,7 +1,7 @@
 import path from 'node:path'
 import { defaultsDeep, merge } from 'lodash-es'
 import { EventEmitter } from 'events-ex'
-import { ErrorCode } from '@isdk/common-error'
+import { AbortError, ErrorCode } from '@isdk/common-error'
 import {
   Configuration,
   KeyValueStore,
@@ -1419,6 +1419,12 @@ export abstract class FetchEngine<
         this.actionEmitter.removeListener('dispose', onStop)
         this.actionEmitter.removeListener('action-loop:stop', onStop)
         this.activeContext = undefined
+        // 引擎被清理/中止时，拒绝仍在排队的动作，避免 dispatchAction 永久挂起。
+        // 正在执行中的动作则由其底层操作（导航/请求被取消）而失败。
+        const queued = this.actionQueue.splice(0, this.actionQueue.length)
+        for (const item of queued) {
+          item.reject(new AbortError('Action cancelled: engine disposed'))
+        }
         resolveLoop()
       }
 
@@ -1627,7 +1633,7 @@ export abstract class FetchEngine<
         message += `. Retry after ${retryAfter}ms`
       }
 
-      const finalError = createNavigationError(message, statusCode, fullMsg)
+      const finalError = this._toAbortError(createNavigationError(message, statusCode, fullMsg))
       // Ensure response is attached for upgrade/retry logic
       finalError.response = response
       gotoPromise.reject(finalError)
@@ -1666,6 +1672,37 @@ export abstract class FetchEngine<
     await this._sharedFailedRequestHandler(context, error)
   }
 
+  /**
+   * 将底层清理/取消错误规范化为 AbortError。
+   *
+   * @remarks
+   * 引擎清理（`_commonCleanup`）会取消 pending 请求（"Cleanup:Request cancelled"），
+   * 浏览器引擎导航被中断时会抛 Playwright 的中断类错误。这些错误对调用方而言都应
+   * 表现为可识别的中断错误（`name === 'AbortError'` / `code === ErrorCode.Aborted`），
+   * 以便上层（如搜索引擎并发竞争）与真实失败区分开来。
+   *
+   * @internal
+   */
+  protected _toAbortError(error: any): any {
+    if (!error || error instanceof AbortError) return error
+    if (error.name === 'AbortError' || error.code === ErrorCode.Aborted) {
+      return error
+    }
+    const msg: string = error.message || String(error)
+    // Playwright: "Navigation interrupted by ..." / browser closed;
+    // Crawlee: cleanup rejects pending requests with 'Cleanup:Request cancelled'
+    if (
+      /Cleanup:Request cancelled/i.test(msg) ||
+      /Navigation interrupted/i.test(msg) ||
+      /Target closed|Target page, context or browser has been closed/i.test(msg) ||
+      /Browser has been closed|browser has been closed|Browser closed/i.test(msg) ||
+      /Session closed|is closed/i.test(msg)
+    ) {
+      return new AbortError(msg)
+    }
+    return error
+  }
+
   protected async _commonCleanup() {
     this.isEngineDisposed = true
     this._initializedSessions.clear()
@@ -1674,7 +1711,7 @@ export abstract class FetchEngine<
 
     if (this.pendingRequests.size > 0) {
       for (const [, pendingRequest] of this.pendingRequests) {
-        pendingRequest.reject(new Error('Cleanup:Request cancelled'))
+        pendingRequest.reject(new AbortError('Cleanup:Request cancelled'))
       }
       this.pendingRequests.clear()
     }

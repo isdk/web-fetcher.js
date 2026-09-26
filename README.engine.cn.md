@@ -57,6 +57,29 @@
 const session = new FetchSession({ engine: 'browser' });
 ```
 
+#### 中止会话 (Aborting a Session)
+
+可以显式中止会话，也可以通过外部信号中止：
+
+```typescript
+const session = new FetchSession({ engine: 'browser' });
+
+// 方式一：显式中止
+await session.abort('no longer needed');
+
+// 方式二：外部信号
+const controller = new AbortController();
+const session2 = new FetchSession({ engine: 'browser', signal: controller.signal });
+controller.abort();
+```
+
+会话被中止后：
+
+* 尚未开始的动作会立即以 `AbortError` 失败（即使在引擎被（重新）创建之前）。
+* 进行中的导航/请求会被取消：引擎清理会以 `AbortError` 拒绝所有 pending 请求与排队中的动作，使 `executeAll` 快速失败而不是等待超时。
+* 会话不可再使用；`dispose()` 关闭会话时同样如此。
+* `abort()` 是幂等的：重复调用无副作用。
+
 #### 引擎选择优先级 (Engine Selection Priority)
 
 引擎在执行第一个动作时延迟初始化，并在会话持续期间保持固定。选择遵循以下规则：
@@ -172,6 +195,7 @@ await session.executeAll([
     * 设置 `isEngineDisposed` 标志以阻止新动作。
     * 发出 `dispose` 信号以唤醒并终止动作循环。
     * 释放所有活动的锁（如 `navigationLock`）。
+    * 以 `AbortError` 拒绝所有 pending 请求与排队中的动作（进行中的导航被中断，而不是等待超时）。
     * 关闭爬虫 (`teardown`)，并删除私有的 `RequestQueue` 和 `KeyValueStore` 以确保清理干净。
 
 ---

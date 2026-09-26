@@ -153,11 +153,12 @@ searchGoogle('gemini');
 * `url` (string): 要导航的初始 URL。
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
 * `proxy` (string | string[]): 用于请求的代理 URL。
-* `timeoutMs` (number): 请求/导航超时时间（毫秒）。同时作用于 `http` 引擎的请求超时和 `browser` 引擎的导航超时及页面默认超时（默认：`60000`）。
+* `timeoutMs` (number): 请求/导航超时时间（毫秒）。同时作用于 `http` 引擎的请求超时和 `browser` 引擎的导航超时及页面默认超时（默认：`30000`）。
 * `requestHandlerTimeoutSecs` (number): 底层 Crawlee request handler 的超时时间（秒）。当长时间运行的动作（如 `pause`）需要超过默认时长（约 60 秒）时应调大该值。
 * `retries` (number): 每个请求的最大网络层重试次数（映射为 Crawlee 的 `maxRequestRetries`；未设置时引擎兜底：`browser` 为 `3`，`http` 为 `1`）。
 * `throwHttpErrors` (boolean): HTTP 错误状态码（4xx/5xx）是否抛出异常。在 `browser` 模式下会被强制置为 `false`。
 * `antibot` (boolean): 在 `browser` 模式下使用隐形 Firefox（camoufox）并自动处理 Cloudflare 挑战，以绕过反爬检测（默认：`false`）。
+* `signal` (AbortSignal): 会话的外部中止信号。信号中止时会话被取消：未执行的动作立即以 `AbortError` 失败，进行中的导航/请求被中断，会话不可再使用。也可以不传 signal，直接调用 `session.abort(reason)` 手动中止。参见[中止会话](./README.engine.md#中止会话-aborting-a-session)。
 * `blockResources` (ResourceType[]): `browser` 模式下阻止加载的资源类型，例如 `['image', 'stylesheet', 'font']`（默认：`[]`）。
 * `sites` (FetchSite[]): `auto` 模式下使用的站点注册表。每项包含 `domain`、可选 `pathScope` 及引擎配置；第一个匹配项决定使用的引擎（见 `useSiteRegistry`）。
 * `useSiteRegistry` (boolean): 当 `engine` 为 `auto` 时，是否将目标 URL 与 `sites` 注册表进行匹配（默认：`true`）。
