@@ -157,15 +157,30 @@ This is the main entry point for the library.
 * `url` (string): The initial URL to navigate to.
 * `engine` ('http' | 'browser' | 'auto'): The engine to use. Defaults to `auto`.
 * `proxy` (string | string[]): Proxy URL(s) to use for requests.
+* `timeoutMs` (number): Request/navigation timeout in milliseconds. Applies to the `http` engine's request timeout and the `browser` engine's navigation and default page timeouts (default: `30000`).
+* `requestHandlerTimeoutSecs` (number): Timeout in seconds for the underlying Crawlee request handler. Increase it if long-running actions (e.g. `pause`) need more than the default (~60s).
+* `retries` (number): Maximum network-level retry attempts per request (mapped to Crawlee's `maxRequestRetries`; engine fallbacks: `browser` `3`, `http` `1` when unset).
+* `throwHttpErrors` (boolean): Whether HTTP error statuses (4xx/5xx) throw an error. In `browser` mode it is forced to `false`.
+* `antibot` (boolean): In `browser` mode, run a stealthed Firefox (camoufox) with automatic Cloudflare challenge handling to bypass anti-bot measures (default: `false`).
+* `signal` (AbortSignal): External abort signal for the session. When the signal aborts, the session is cancelled: pending actions fail immediately with an `AbortError`, in-flight navigation/requests are interrupted, and the session cannot be reused. Alternatively, call `session.abort(reason)` directly without a signal. See [Aborting a Session](_media/README.engine.md#aborting-a-session).
+* `blockResources` (ResourceType[]): Resource types to block from loading in `browser` mode, e.g. `['image', 'stylesheet', 'font']` (default: `[]`).
+* `sites` (FetchSite[]): Site registry used in `auto` mode. Each entry has a `domain`, optional `pathScope` and engine options; the first matching entry decides the engine (see `useSiteRegistry`).
+* `useSiteRegistry` (boolean): Whether to match the target URL against the `sites` registry when `engine` is `auto` (default: `true`).
 * `debug` (boolean | string | string[]): Enable detailed execution metadata (timings, engine used, etc.) in response, or enable debug logs for specific categories (e.g., 'extract', 'submit', 'request').
 * `actions` (FetchActionOptions[]): An array of action objects to execute. (Supports `action`/`name` as alias for `id`, and `args` as alias for `params`)
+* `onPause` (OnFetchPauseCallback): Async callback required by the `pause` action for manual intervention (e.g. solving a captcha).
 * `headers` (Record<string, string>): Headers to use for all requests.
+* `useHeaderGenerator` (boolean): Set to `false` to fully disable `got-scraping`'s automatic browser header generation in the `http` (cheerio) engine and send only the explicitly declared `headers` (default: `true`).
+* `headerGeneratorOptions` (object | false): Options for `got-scraping`'s browser header generator in the `http` (cheerio) engine. By default the generator randomly injects a full set of browser fingerprint headers (`sec-ch-ua` client hints, `sec-fetch-*`, etc.). If you set a custom `User-Agent`, the generated headers may contradict it (e.g. Chromium client hints with a Firefox UA) — a self-contradictory fingerprint that some WAFs / anti-bot services reject outright. Pin the generator to match your UA (e.g. `{ browsers: [{ name: 'firefox' }] }`) or set it to `false` to disable generation entirely. Supports `browsers`, `operatingSystems`, `devices`, `locales`, `httpVersion`, `http1Headers` and `http2Headers`.
 * `cookies` (Cookie[]): Array of cookies to use.
 * `sessionState` (any): Crawlee session state to restore.
+* `overrideSessionState` (boolean): Force the engine to overwrite any persisted session state with the provided `sessionState` (default: `false`). See the [engine docs](_media/README.engine.md).
 * `storage` (StorageOptions): Controls session isolation, persistence, and cleanup.
   * `id` (string): Shared storage ID for cross-session data reuse.
   * `persist` (boolean): Whether to save data to disk.
   * `purge` (boolean): Whether to delete data on cleanup (defaults to `true`).
+  * `poolStartTimeoutMs` (number): Maximum time (ms) to wait for the crawler's autoscaled pool to start before tearing it down during disposal. Defaults to `10000`. Raise it for slow-starting browser crawlers.
+  * `taskSettleTimeoutMs` (number): Maximum time (ms) to wait for in-flight crawler tasks to settle before the request queue and key-value store are dropped during disposal. Defaults to `120000`.
   * `config` (object): Raw Crawlee configuration (e.g., `{ localDataDirectory: './data' }`).
 * `cache` (FetchCacheOptions): Controls persistent HTTP caching with smart self-healing mechanisms.
   * `enabled` (boolean): Whether to enable caching.
@@ -180,8 +195,17 @@ This is the main entry point for the library.
 * `output` (object): Controls the output fields in `FetchResponse`.
   * `cookies` (boolean): Whether to include cookies in the response (default: `true`).
   * `sessionState` (boolean): Whether to include session state in the response (default: `true`).
+* `maxConcurrency` (number): Maximum concurrent requests handled by the underlying Crawlee crawler (default: `1`).
+* `maxRequestsPerMinute` (number): Rate limit for the underlying Crawlee crawler (default: `1000`).
+* `delayBetweenRequestsMs` (number): Reserved for future use — not yet implemented by the underlying Crawlee version; setting it currently has no effect.
+* `ignoreSslErrors` (boolean): Whether to ignore TLS certificate errors. In the `http` (cheerio) engine it maps to Crawlee's `ignoreSslErrors`; in the `browser` (playwright) engine it maps to Playwright's `ignoreHTTPSErrors` context option (default: `true`). A custom `browser.launchOptions.ignoreHTTPSErrors` takes precedence in browser mode.
+* `http` (object): Global HTTP request defaults applied to `goto`/navigate when the action itself does not override them.
+  * `method` ('GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'): HTTP method used for navigation (default: `'GET'`).
+  * `body` (any): Default request body for non-GET navigation. Objects are serialized as JSON with an automatic `content-type: application/json` header (unless overridden via `headers`).
 * `browser` (object): Browser engine configuration.
+  * `engine` ('playwright' | 'puppeteer'): Browser engine to use. Only `playwright` is implemented; explicitly setting `puppeteer` throws a clear "not supported" error instead of silently falling back (default: `'playwright'`).
   * `headless` (boolean): Run in headless mode (default: `true`).
+  * `waitUntil` ('load' | 'domcontentloaded' | 'networkidle' | 'commit'): Default browser navigation lifecycle event. Per-action `waitUntil` takes precedence (default: `'domcontentloaded'`).
   * `launchOptions` (object): Playwright launch options (e.g., `{ slowMo: 50, args: [...] }`).
 * `sessionPoolOptions` (SessionPoolOptions): Advanced configuration for the underlying Crawlee SessionPool.
 * `enableSmart` (boolean): Enable smart detection and automatic engine upgrade (default: `true`).

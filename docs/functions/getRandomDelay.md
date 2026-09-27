@@ -8,7 +8,7 @@
 
 > **getRandomDelay**(`base`, `variance?`): `number`
 
-Defined in: [packages/web-fetcher/src/engine/base.ts:1875](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/engine/base.ts#L1875)
+Defined in: [packages/web-fetcher/src/engine/base.ts:2100](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/engine/base.ts#L2100)
 
 ## Parameters
 

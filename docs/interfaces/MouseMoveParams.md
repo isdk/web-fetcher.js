@@ -6,7 +6,7 @@
 
 # Interface: MouseMoveParams
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:4](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/definitions/mouse.ts#L4)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:4](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/definitions/mouse.ts#L4)
 
 ## Properties
 
@@ -14,7 +14,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:4](https://git
 
 > `optional` **selector?**: `string`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:7](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/definitions/mouse.ts#L7)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:7](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/definitions/mouse.ts#L7)
 
 ***
 
@@ -22,7 +22,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:7](https://git
 
 > `optional` **steps?**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:8](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/definitions/mouse.ts#L8)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:8](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/definitions/mouse.ts#L8)
 
 ***
 
@@ -30,7 +30,7 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:8](https://git
 
 > `optional` **x?**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:5](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/definitions/mouse.ts#L5)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:5](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/definitions/mouse.ts#L5)
 
 ***
 
@@ -38,4 +38,4 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:5](https://git
 
 > `optional` **y?**: `number`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:6](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/definitions/mouse.ts#L6)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:6](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/definitions/mouse.ts#L6)

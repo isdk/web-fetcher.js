@@ -8,4 +8,4 @@
 
 > **FetchReturnType** = `"response"` \| `"context"` \| `"outputs"` \| `"any"` \| `"none"`
 
-Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:4](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/fetch-return-type.ts#L4)
+Defined in: [packages/web-fetcher/src/core/fetch-return-type.ts:4](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/fetch-return-type.ts#L4)

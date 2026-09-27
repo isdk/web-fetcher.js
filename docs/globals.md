@@ -105,4 +105,5 @@
 - [fetchWeb](functions/fetchWeb.md)
 - [getCleanErrorMessage](functions/getCleanErrorMessage.md)
 - [getRandomDelay](functions/getRandomDelay.md)
+- [normalizeGotoMethodPayload](functions/normalizeGotoMethodPayload.md)
 - [parseProxyUrl](functions/parseProxyUrl.md)

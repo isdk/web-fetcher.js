@@ -57,6 +57,29 @@ The `FetchSession` class manages the lifecycle of a fetch operation. You can spe
 const session = new FetchSession({ engine: 'browser' });
 ```
 
+#### Aborting a Session
+
+A session can be cancelled explicitly or through an external signal:
+
+```typescript
+const session = new FetchSession({ engine: 'browser' });
+
+// Option A: explicit abort
+await session.abort('no longer needed');
+
+// Option B: external signal
+const controller = new AbortController();
+const session2 = new FetchSession({ engine: 'browser', signal: controller.signal });
+controller.abort();
+```
+
+Once aborted:
+
+* Actions that have not started yet fail immediately with an `AbortError` (even before an engine is (re-)created).
+* In-flight navigation/requests are cancelled: engine cleanup rejects all pending requests and queued actions with an `AbortError`, so `executeAll` fails fast instead of waiting for timeouts.
+* The session cannot be reused afterwards; `dispose()` marks a session as closed the same way.
+* `abort()` is idempotent: calling it again has no effect.
+
 #### Engine Selection Priority
 
 The engine is initialized lazily upon the first action execution and remains fixed for the duration of the session. The selection follows these rules:
@@ -66,7 +89,7 @@ The engine is initialized lazily upon the first action execution and remains fix
 2. **Site Registry**: If set to `'auto'` (default), the system attempts to match the target URL against the `sites` registry.
 3. **Smart Upgrade**: If `enableSmart: true`, the system will automatically upgrade from `http` to `browser` under the following conditions:
    - Returns `401 / 403 / 500 / 429`
-   - HTML content is identified as "highly dynamic" (heavy JS)
+   - HTML content is identified as "highly dynamic" (heavy JS), controlled by `upgradeOnJsContent` (default: `false` — set it to `true` to upgrade when JS framework signatures such as `window.__NEXT_DATA__` or `window.__NUXT__` are detected in the HTML)
    - `Retry-After` exceeds `upgradeThresholdMs`
    - You can optionally sync Cookies/Session during upgrade (`syncStateOnUpgrade`)
    - If upgrade fails or still doesn't meet requirements, the original error is thrown
@@ -111,6 +134,8 @@ The engine supports persisting and restoring session state (primarily cookies) b
   * **`persist`**: (boolean) Whether to enable disk persistence (Crawlee's `persistStorage`). Defaults to `false` (in-memory).
   * **`purge`**: (boolean) Whether to delete the storage (drop `RequestQueue` and `KeyValueStore`) when the session is closed. Defaults to `true`.
     * Set `purge: false` and provide a fixed `id` to create a truly persistent session that survives across application restarts.
+  * **`poolStartTimeoutMs`**: (number) Maximum time (ms) to wait for the crawler's autoscaled pool to start before tearing it down during disposal. Defaults to `10000`. Raise it for slow-starting browser crawlers.
+  * **`taskSettleTimeoutMs`**: (number) Maximum time (ms) to wait for in-flight crawler tasks to settle before the request queue and key-value store are dropped during disposal. Defaults to `120000`.
   * **`config`**: Allows passing raw configuration to the underlying Crawlee instance.
     * **Note**: When `persist` is true, use `localDataDirectory` in the config to specify the storage path (e.g., `storage: { persist: true, config: { localDataDirectory: './my-data' } }`).
 * **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This state is **automatically included in every `FetchResponse`**, making it easy to persist and later provide back to the engine during initialization.
@@ -170,6 +195,7 @@ Our engine solves this by creating a bridge between the external API calls and t
     * An `isEngineDisposed` flag is set to prevent new actions.
     * A `dispose` signal is emitted to wake up and terminate the action loop.
     * All active locks (`navigationLock`) are released.
+    * All pending requests and queued actions are rejected with an `AbortError` (in-flight navigation is interrupted instead of waiting for timeouts).
     * The crawler is torn down (`teardown`), and the private `RequestQueue` and `KeyValueStore` are dropped to ensure a clean state.
 
 ---

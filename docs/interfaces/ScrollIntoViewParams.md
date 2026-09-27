@@ -6,7 +6,7 @@
 
 # Interface: ScrollIntoViewParams
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:53](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/definitions/mouse.ts#L53)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:53](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/definitions/mouse.ts#L53)
 
 ## Properties
 
@@ -14,4 +14,4 @@ Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:53](https://gi
 
 > **selector**: `string`
 
-Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:54](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/definitions/mouse.ts#L54)
+Defined in: [packages/web-fetcher/src/action/definitions/mouse.ts:54](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/definitions/mouse.ts#L54)

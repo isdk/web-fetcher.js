@@ -6,7 +6,7 @@
 
 # Class: FetchSession
 
-Defined in: [packages/web-fetcher/src/core/session.ts:26](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L26)
+Defined in: [packages/web-fetcher/src/core/session.ts:27](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L27)
 
 Represents a stateful web fetching session.
 
@@ -24,7 +24,7 @@ Sessions are isolated; each has its own unique ID and (by default) its own stora
 
 > **new FetchSession**(`options?`): `FetchSession`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:44](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L44)
+Defined in: [packages/web-fetcher/src/core/session.ts:48](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L48)
 
 Creates a new FetchSession.
 
@@ -42,11 +42,21 @@ Configuration options for the fetcher.
 
 ## Properties
 
+### abortedError?
+
+> `protected` `optional` **abortedError?**: `Error`
+
+Defined in: [packages/web-fetcher/src/core/session.ts:41](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L41)
+
+中止信息：一旦被设置，会话不可再执行任何动作。
+
+***
+
 ### closed
 
 > `protected` **closed**: `boolean` = `false`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:37](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L37)
+Defined in: [packages/web-fetcher/src/core/session.ts:38](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L38)
 
 ***
 
@@ -54,7 +64,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:37](https://github.com/isd
 
 > `readonly` **context**: [`FetchContext`](../interfaces/FetchContext.md)
 
-Defined in: [packages/web-fetcher/src/core/session.ts:34](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L34)
+Defined in: [packages/web-fetcher/src/core/session.ts:35](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L35)
 
 The execution context for this session, containing configurations, event bus, and shared state.
 
@@ -64,7 +74,7 @@ The execution context for this session, containing configurations, event bus, an
 
 > `readonly` **id**: `string`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:30](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L30)
+Defined in: [packages/web-fetcher/src/core/session.ts:31](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L31)
 
 Unique identifier for the session.
 
@@ -74,9 +84,25 @@ Unique identifier for the session.
 
 > `protected` **options**: [`FetcherOptions`](../interfaces/FetcherOptions.md) = `{}`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:44](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L44)
+Defined in: [packages/web-fetcher/src/core/session.ts:48](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L48)
 
 Configuration options for the fetcher.
+
+## Accessors
+
+### aborted
+
+#### Get Signature
+
+> **get** **aborted**(): `boolean`
+
+Defined in: [packages/web-fetcher/src/core/session.ts:70](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L70)
+
+会话是否已被中止。
+
+##### Returns
+
+`boolean`
 
 ## Methods
 
@@ -84,7 +110,7 @@ Configuration options for the fetcher.
 
 > `protected` **\_execute**\<`R`\>(`actionOptions`, `context?`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:70](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L70)
+Defined in: [packages/web-fetcher/src/core/session.ts:121](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L121)
 
 Executes a single action within the session.
 
@@ -128,7 +154,7 @@ await session.execute({ name: 'goto', params: { url: 'https://example.com' } });
 
 > `protected` **\_logDebug**(`category`, ...`args`): `void`
 
-Defined in: [packages/web-fetcher/src/core/session.ts:49](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L49)
+Defined in: [packages/web-fetcher/src/core/session.ts:100](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L100)
 
 #### Parameters
 
@@ -146,11 +172,42 @@ Defined in: [packages/web-fetcher/src/core/session.ts:49](https://github.com/isd
 
 ***
 
+### abort()
+
+> **abort**(`reason?`): `Promise`\<`void`\>
+
+Defined in: [packages/web-fetcher/src/core/session.ts:87](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L87)
+
+中止当前会话。
+
+#### Parameters
+
+##### reason?
+
+`any`
+
+可选的中止原因（错误或描述信息）。
+
+#### Returns
+
+`Promise`\<`void`\>
+
+#### Remarks
+
+中止后：
+- 后续所有动作立即以 `AbortError` 失败；
+- 进行中的动作会因 `dispose()` 清理（reject 所有 pending 请求与排队动作）而被取消；
+- 会话不可恢复。
+
+幂等：重复调用无副作用。
+
+***
+
 ### createContext()
 
 > `protected` **createContext**(`options?`): [`FetchContext`](../interfaces/FetchContext.md)
 
-Defined in: [packages/web-fetcher/src/core/session.ts:302](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L302)
+Defined in: [packages/web-fetcher/src/core/session.ts:362](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L362)
 
 #### Parameters
 
@@ -168,7 +225,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:302](https://github.com/is
 
 > **dispose**(): `Promise`\<`void`\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:251](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L251)
+Defined in: [packages/web-fetcher/src/core/session.ts:307](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L307)
 
 Disposes of the session and its associated engine.
 
@@ -187,7 +244,7 @@ This method should be called when the session is no longer needed to free up res
 
 > **execute**\<`R`\>(`actionOptions`, `context?`): `Promise`\<[`FetchActionResult`](../interfaces/FetchActionResult.md)\<`R`\>\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:121](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L121)
+Defined in: [packages/web-fetcher/src/core/session.ts:177](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L177)
 
 #### Type Parameters
 
@@ -215,7 +272,7 @@ Defined in: [packages/web-fetcher/src/core/session.ts:121](https://github.com/is
 
 > **executeAll**(`actions`, `options?`): `Promise`\<\{ `outputs`: `Record`\<`string`, `any`\>; `result`: [`FetchResponse`](../interfaces/FetchResponse.md) \| `undefined`; \}\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:149](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L149)
+Defined in: [packages/web-fetcher/src/core/session.ts:205](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L205)
 
 Executes a sequence of actions.
 
@@ -255,7 +312,7 @@ const { result, outputs } = await session.executeAll([
 
 > **getOutputs**(): `Record`\<`string`, `any`\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:229](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L229)
+Defined in: [packages/web-fetcher/src/core/session.ts:285](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L285)
 
 Retrieves all outputs accumulated during the session.
 
@@ -271,7 +328,7 @@ A record of stored output data.
 
 > **getState**(): `Promise`\<\{ `cookies`: [`Cookie`](../interfaces/Cookie.md)[]; `sessionState?`: `any`; \} \| `undefined`\>
 
-Defined in: [packages/web-fetcher/src/core/session.ts:238](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/core/session.ts#L238)
+Defined in: [packages/web-fetcher/src/core/session.ts:294](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/core/session.ts#L294)
 
 Gets the current state of the session, including cookies and engine-specific state.
 
