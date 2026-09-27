@@ -8,7 +8,7 @@
 
 > **checkHttpProxy**(`config`, `targetHost?`, `targetPort?`, `timeout?`): `Promise`\<\{ `error?`: `string`; `latency?`: `number`; `working`: `boolean`; \}\>
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:107](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L107)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:107](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/utils/check-proxy.ts#L107)
 
 通过 HTTP CONNECT 方法检测代理
 

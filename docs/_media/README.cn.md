@@ -153,15 +153,30 @@ searchGoogle('gemini');
 * `url` (string): 要导航的初始 URL。
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
 * `proxy` (string | string[]): 用于请求的代理 URL。
+* `timeoutMs` (number): 请求/导航超时时间（毫秒）。同时作用于 `http` 引擎的请求超时和 `browser` 引擎的导航超时及页面默认超时（默认：`30000`）。
+* `requestHandlerTimeoutSecs` (number): 底层 Crawlee request handler 的超时时间（秒）。当长时间运行的动作（如 `pause`）需要超过默认时长（约 60 秒）时应调大该值。
+* `retries` (number): 每个请求的最大网络层重试次数（映射为 Crawlee 的 `maxRequestRetries`；未设置时引擎兜底：`browser` 为 `3`，`http` 为 `1`）。
+* `throwHttpErrors` (boolean): HTTP 错误状态码（4xx/5xx）是否抛出异常。在 `browser` 模式下会被强制置为 `false`。
+* `antibot` (boolean): 在 `browser` 模式下使用隐形 Firefox（camoufox）并自动处理 Cloudflare 挑战，以绕过反爬检测（默认：`false`）。
+* `signal` (AbortSignal): 会话的外部中止信号。信号中止时会话被取消：未执行的动作立即以 `AbortError` 失败，进行中的导航/请求被中断，会话不可再使用。也可以不传 signal，直接调用 `session.abort(reason)` 手动中止。参见[中止会话](./README.engine.md#中止会话-aborting-a-session)。
+* `blockResources` (ResourceType[]): `browser` 模式下阻止加载的资源类型，例如 `['image', 'stylesheet', 'font']`（默认：`[]`）。
+* `sites` (FetchSite[]): `auto` 模式下使用的站点注册表。每项包含 `domain`、可选 `pathScope` 及引擎配置；第一个匹配项决定使用的引擎（见 `useSiteRegistry`）。
+* `useSiteRegistry` (boolean): 当 `engine` 为 `auto` 时，是否将目标 URL 与 `sites` 注册表进行匹配（默认：`true`）。
 * `debug` (boolean | string | string[]): 在响应中启用详细的执行元数据（耗时、使用的引擎等），或启用特定类别（如 'extract', 'submit', 'request'）的调试日志。
 * `actions` (FetchActionOptions[]): 要执行的动作对象数组。（支持 `action`/`name` 作为 `id` 的别名，`args` 作为 `params` 的别名）
+* `onPause` (OnFetchPauseCallback): `pause` 动作所需的异步回调，用于人工介入（例如解决验证码）。
 * `headers` (Record<string, string>): 用于所有请求的头信息。
+* `useHeaderGenerator` (boolean): 设为 `false` 可完全禁用 `http`（cheerio）引擎中 `got-scraping` 的自动浏览器头生成，仅发送 `headers` 中显式声明的头（默认：`true`）。
+* `headerGeneratorOptions` (object | false): `http`（cheerio）引擎中 `got-scraping` 浏览器头生成器的配置。默认生成器会随机注入一整套浏览器指纹头（含 `sec-ch-ua` client hints、`sec-fetch-*` 等）。当显式指定 `User-Agent` 时，生成的头可能与自定义 UA 不匹配（如生成 Chromium 的 client hints 但 UA 是 Firefox）——这种自相矛盾的指纹会被部分 WAF/反 bot 直接拒绝。可将生成器固定为与 UA 一致（如 `{ browsers: [{ name: 'firefox' }] }`），或设为 `false` 完全禁用生成。支持 `browsers`、`operatingSystems`、`devices`、`locales`、`httpVersion`、`http1Headers`、`http2Headers`。
 * `cookies` (Cookie[]): 要使用的 Cookie 数组。
 * `sessionState` (any): 要恢复的 Crawlee 会话状态。
+* `overrideSessionState` (boolean): 强制引擎使用提供的 `sessionState` 覆盖存储中已持久化的会话状态（默认：`false`）。详见[引擎文档](./README.engine.cn.md)。
 * `storage` (StorageOptions): 控制会话隔离、持久化和清理。
   * `id` (string): 共享存储 ID，用于跨会话重用数据。
   * `persist` (boolean): 是否将数据保存到磁盘。
   * `purge` (boolean): 是否在清理时删除数据（默认为 `true`）。
+  * `poolStartTimeoutMs` (number): 释放（dispose）引擎时，等待爬虫自动扩缩容池启动的最长时间（毫秒），超时后执行清理。默认为 `10000`。浏览器爬虫启动较慢时可调大该值。
+  * `taskSettleTimeoutMs` (number): 释放引擎时，丢弃请求队列和键值存储之前，等待在途爬虫任务完成的最长时间（毫秒）。默认为 `120000`。
   * `config` (object): 原生 Crawlee 配置（例如 `{ localDataDirectory: './data' }`）。
 * `cache` (FetchCacheOptions): 控制 HTTP 持久化缓存。集成智能容灾与愈合机制。
   * `enabled` (boolean): 是否开启缓存。
@@ -176,8 +191,17 @@ searchGoogle('gemini');
 * `output` (object): 控制 `FetchResponse` 中的输出字段。
   * `cookies` (boolean): 是否在响应中包含 Cookie（默认：`true`）。
   * `sessionState` (boolean): 是否在响应中包含会话状态（默认：`true`）。
+* `maxConcurrency` (number): 底层 Crawlee 爬虫的最大并发请求数（默认：`1`）。
+* `maxRequestsPerMinute` (number): 底层 Crawlee 爬虫的每分钟请求速率上限（默认：`1000`）。
+* `delayBetweenRequestsMs` (number): 预留选项 —— 当前依赖的 Crawlee 版本尚未实现，设置后暂不生效。
+* `ignoreSslErrors` (boolean): 是否忽略 TLS 证书错误。`http`（cheerio）引擎映射为 Crawlee 的 `ignoreSslErrors`；`browser`（playwright）引擎映射为 Playwright 的 `ignoreHTTPSErrors` 上下文选项（默认：`true`）。浏览器模式下自定义 `browser.launchOptions.ignoreHTTPSErrors` 优先。
+* `http` (object): 全局 HTTP 请求默认值，在 `goto`/导航动作未显式覆盖时生效。
+  * `method` ('GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE'): 导航使用的 HTTP 方法（默认：`'GET'`）。
+  * `body` (any): 非 GET 导航的默认请求体。对象会序列化为 JSON 并自动补全 `content-type: application/json` 请求头（可通过 `headers` 覆盖）。
 * `browser` (object): 浏览器引擎配置。
+  * `engine` ('playwright' | 'puppeteer'): 浏览器引擎。目前仅实现 `playwright`；显式设置 `puppeteer` 会抛出明确的“未支持”错误而不是静默回退（默认：`'playwright'`）。
   * `headless` (boolean): 是否以无头模式运行（默认：`true`）。
+  * `waitUntil` ('load' | 'domcontentloaded' | 'networkidle' | 'commit'): 浏览器导航的默认生命周期事件。动作级的 `waitUntil` 优先（默认：`'domcontentloaded'`）。
   * `launchOptions` (object): Playwright 启动选项（例如 `{ slowMo: 50, args: [...] }`）。
 * `sessionPoolOptions` (SessionPoolOptions): 底层 Crawlee SessionPool 的高级配置。
 * `enableSmart` (boolean): 是否启用智能探测与自动引擎升级（默认：`true`）。

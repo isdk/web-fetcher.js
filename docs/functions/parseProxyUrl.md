@@ -8,7 +8,7 @@
 
 > **parseProxyUrl**(`url`): [`ProxyConfig`](../interfaces/ProxyConfig.md)
 
-Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:30](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/utils/check-proxy.ts#L30)
+Defined in: [packages/web-fetcher/src/utils/check-proxy.ts:30](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/utils/check-proxy.ts#L30)
 
 解析代理 URL 为配置
 支持格式:

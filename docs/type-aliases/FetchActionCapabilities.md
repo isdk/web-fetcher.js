@@ -8,4 +8,4 @@
 
 > **FetchActionCapabilities** = `{ [mode in FetchEngineType]?: FetchActionCapabilityMode }`
 
-Defined in: [packages/web-fetcher/src/action/fetch-action.ts:21](https://github.com/isdk/web-fetcher.js/blob/0924820473b072934504dffda99bb10cd207ce06/src/action/fetch-action.ts#L21)
+Defined in: [packages/web-fetcher/src/action/fetch-action.ts:21](https://github.com/isdk/web-fetcher.js/blob/c1517484868ef8b225a00e5e38d64af2889681fb/src/action/fetch-action.ts#L21)
