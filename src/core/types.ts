@@ -141,6 +141,26 @@ export interface StorageOptions {
    * Allows fine-grained control over the underlying Crawlee instance.
    */
   config?: Record<string, any>
+  /**
+   * Maximum time (ms) to wait for the crawler's autoscaled pool to start before
+   * tearing it down during disposal.
+   *
+   * `AutoscaledPool.abort()` is a no-op unless the pool's own `run()` has
+   * started, so the engine waits for it first; otherwise the crawler would turn
+   * into a zombie that never settles and keeps the process alive. Defaults to
+   * 10s. Raise it for slow-starting browser crawlers.
+   */
+  poolStartTimeoutMs?: number
+  /**
+   * Maximum time (ms) to wait for in-flight crawler tasks to settle before the
+   * request queue and key-value store are dropped during disposal.
+   *
+   * `abort()` does not wait for running tasks, yet those tasks still touch the
+   * storages after the request handler returns. Defaults to 120s. When the
+   * timeout elapses the storages are kept instead of crashing the settling
+   * tasks ("Request queue ... does not exist").
+   */
+  taskSettleTimeoutMs?: number
 }
 
 export interface FetchCacheOptions {
@@ -419,6 +439,8 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
   blockResources: [],
   storage: {
     purge: true,
+    poolStartTimeoutMs: 10_000,
+    taskSettleTimeoutMs: 120_000,
   },
   ignoreSslErrors: true,
   browser: {

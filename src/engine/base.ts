@@ -1842,6 +1842,7 @@ export abstract class FetchEngine<
     // crawler's `run()` to start first.
     const crawler = this.crawler
     const crawlerRunPromise = this.crawlerRunPromise
+    const storage = this.opts?.storage || {}
     if (crawler) {
       this.crawler = undefined
       try {
@@ -1853,7 +1854,11 @@ export abstract class FetchEngine<
         // Wait for `crawler.run()` to reach the autoscaled pool before tearing
         // it down, otherwise `abort()` is a no-op that leaves a zombie crawler
         // behind (see `waitForCrawlerPoolRunning`).
-        await waitForCrawlerPoolRunning(crawler, crawlerRunPromise)
+        await waitForCrawlerPoolRunning(
+          crawler,
+          crawlerRunPromise,
+          storage.poolStartTimeoutMs
+        )
         // BasicCrawler's teardown might throw if already stopping or uninitialized
         if (typeof crawler.teardown === 'function') {
           await crawler.teardown().catch(() => { })
@@ -1865,7 +1870,6 @@ export abstract class FetchEngine<
     this.crawlerRunPromise = undefined
     this.isCrawlerReady = undefined
 
-    const storage = this.opts?.storage || {}
     const shouldPurge = storage.purge ?? true
 
     const lazyStorages: { drop: () => Promise<void> }[] = []
@@ -1901,7 +1905,8 @@ export abstract class FetchEngine<
           crawler,
           crawlerRunPromise,
           () => this._inFlightCrawlerTasks,
-          lazyStorages
+          lazyStorages,
+          storage.taskSettleTimeoutMs
         )
       } catch (error) {
         console.error('Error dropping engine storages:', error)
