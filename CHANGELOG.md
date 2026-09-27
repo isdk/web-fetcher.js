@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
 
+## [0.4.4](https://github.com///compare/v0.4.3...v0.4.4) (2026-09-27)
+
+### Features
+
+* make crawler teardown timeouts configurable via storage.poolStartTimeoutMs / storage.taskSettleTimeoutMs ([00387ba](https://github.com///commit/00387ba27313db657ed7830eea0b5beecf220d92))
+* support aborting a session via session.abort() or an external signal ([68556c1](https://github.com///commit/68556c14e1268a50c9e0f1c3336643d831dbb2a8))
+* wire previously dead FetcherOptions into both engines ([6931a6a](https://github.com///commit/6931a6a86ae45002e08c3400479ef63e6cd49f53))
+
+### Bug Fixes
+
+* prevent zombie crawlers and "storage does not exist" on teardown ([0904271](https://github.com///commit/0904271a392ed0b0f2cd7d88df16426ec96f93a0))
+
+### Refactor
+
+* timeoutMs from 60000 to 30000 etc ([331901f](https://github.com///commit/331901fc1ac0a47f9e87b7e0ff03a482a9df8339))
+
 ## [0.4.3](https://github.com///compare/v0.4.2...v0.4.3) (2026-09-25)
 
 ### Bug Fixes
