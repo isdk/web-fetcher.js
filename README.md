@@ -166,6 +166,8 @@ This is the main entry point for the library.
 * `actions` (FetchActionOptions[]): An array of action objects to execute. (Supports `action`/`name` as alias for `id`, and `args` as alias for `params`)
 * `onPause` (OnFetchPauseCallback): Async callback required by the `pause` action for manual intervention (e.g. solving a captcha).
 * `headers` (Record<string, string>): Headers to use for all requests.
+* `useHeaderGenerator` (boolean): Set to `false` to fully disable `got-scraping`'s automatic browser header generation in the `http` (cheerio) engine and send only the explicitly declared `headers` (default: `true`).
+* `headerGeneratorOptions` (object | false): Options for `got-scraping`'s browser header generator in the `http` (cheerio) engine. By default the generator randomly injects a full set of browser fingerprint headers (`sec-ch-ua` client hints, `sec-fetch-*`, etc.). If you set a custom `User-Agent`, the generated headers may contradict it (e.g. Chromium client hints with a Firefox UA) — a self-contradictory fingerprint that some WAFs / anti-bot services reject outright. Pin the generator to match your UA (e.g. `{ browsers: [{ name: 'firefox' }] }`) or set it to `false` to disable generation entirely. Supports `browsers`, `operatingSystems`, `devices`, `locales`, `httpVersion`, `http1Headers` and `http2Headers`.
 * `cookies` (Cookie[]): Array of cookies to use.
 * `sessionState` (any): Crawlee session state to restore.
 * `overrideSessionState` (boolean): Force the engine to overwrite any persisted session state with the provided `sessionState` (default: `false`). See the [engine docs](./README.engine.md).
@@ -173,6 +175,8 @@ This is the main entry point for the library.
   * `id` (string): Shared storage ID for cross-session data reuse.
   * `persist` (boolean): Whether to save data to disk.
   * `purge` (boolean): Whether to delete data on cleanup (defaults to `true`).
+  * `poolStartTimeoutMs` (number): Maximum time (ms) to wait for the crawler's autoscaled pool to start before tearing it down during disposal. Defaults to `10000`. Raise it for slow-starting browser crawlers.
+  * `taskSettleTimeoutMs` (number): Maximum time (ms) to wait for in-flight crawler tasks to settle before the request queue and key-value store are dropped during disposal. Defaults to `120000`.
   * `config` (object): Raw Crawlee configuration (e.g., `{ localDataDirectory: './data' }`).
 * `cache` (FetchCacheOptions): Controls persistent HTTP caching with smart self-healing mechanisms.
   * `enabled` (boolean): Whether to enable caching.

@@ -90,7 +90,7 @@ controller.abort();
 3. **智能升级 (Smart Upgrade)**:
    - 当 `enableSmart: true` 时，系统会在以下情况自动从 `http` 升级到 `browser`：
      - 返回 `401 / 403 / 500 / 429`
-     - HTML 内容被识别为“高度动态”（大量 JS）
+     - HTML 内容被识别为“高度动态”（大量 JS），由 `upgradeOnJsContent` 控制（默认：`false` —— 设为 `true` 后，当 HTML 中检测到 JS 框架特征（如 `window.__NEXT_DATA__`、`window.__NUXT__`）时即触发升级）
      - `Retry-After` 超过 `upgradeThresholdMs`
    - 升级时可选择是否同步 Cookies / Session（`syncStateOnUpgrade`）
    - 升级失败或仍不满足需求时，可继续抛出原始错误
@@ -136,6 +136,8 @@ await session.executeAll([
   * **`persist`**：(boolean) 是否启用磁盘持久化（对应 Crawlee 的 `persistStorage`）。默认为 `false`（仅在内存中）。
   * **`purge`**：(boolean) 会话关闭时是否删除存储（清理 `RequestQueue` 和 `KeyValueStore`）。默认为 `true`。
     * 设置 `purge: false` 并配合固定的 `id`，可以创建跨应用重启依然存在的持久会话。
+  * **`poolStartTimeoutMs`**：(number) 释放（dispose）引擎时，等待爬虫自动扩缩容池启动的最长时间（毫秒），超时后执行清理。默认为 `10000`。浏览器爬虫启动较慢时可调大该值。
+  * **`taskSettleTimeoutMs`**：(number) 释放引擎时，丢弃请求队列和键值存储之前，等待在途爬虫任务完成的最长时间（毫秒）。默认为 `120000`。
   * **`config`**：允许向底层 Crawlee 实例传递原生配置。
     * **注意**：当 `persist` 为 true 时，在 config 中使用 `localDataDirectory` 指定存储路径（例如：`storage: { persist: true, config: { localDataDirectory: './my-data' } }`）。
 * **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。该状态会**自动包含在每个 `FetchResponse` 中**，方便进行持久化，并在以后初始化引擎时通过选项传回。

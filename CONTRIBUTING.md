@@ -461,7 +461,10 @@ The `cleanup()` (aliased as `dispose()`) method manages the lifecycle of storage
     - `storage.purge`: (boolean, defaults to `true`).
     - If `true`, it calls `.drop()` on the `RequestQueue` and `KeyValueStore`, physically deleting the data from memory/disk.
     - If `false`, the data is preserved, allowing future sessions with the same `storage.id` to reuse it.
-4. **Event Cleanup**: Removes all listeners to prevent memory leaks.
+4. **Graceful Teardown Timings** (see `storage.poolStartTimeoutMs` / `storage.taskSettleTimeoutMs`):
+    - Before dropping storages, the engine first waits for the crawler's autoscaled pool `run()` to start (`AutoscaledPool.abort()` is a no-op otherwise), bounded by `storage.poolStartTimeoutMs` (defaults to `10000`).
+    - `abort()` does not wait for tasks that are already running, yet those tasks still touch the storages. The engine therefore waits for in-flight tasks to settle (bounded by `storage.taskSettleTimeoutMs`, defaults to `120000`) before dropping the `RequestQueue`/`KeyValueStore`, preventing "Request queue ... does not exist" errors from half-dead crawlers.
+5. **Event Cleanup**: Removes all listeners to prevent memory leaks.
 
 ### Antibot Mode & Camoufox
 

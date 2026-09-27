@@ -166,6 +166,8 @@ searchGoogle('gemini');
 * `actions` (FetchActionOptions[]): 要执行的动作对象数组。（支持 `action`/`name` 作为 `id` 的别名，`args` 作为 `params` 的别名）
 * `onPause` (OnFetchPauseCallback): `pause` 动作所需的异步回调，用于人工介入（例如解决验证码）。
 * `headers` (Record<string, string>): 用于所有请求的头信息。
+* `useHeaderGenerator` (boolean): 设为 `false` 可完全禁用 `http`（cheerio）引擎中 `got-scraping` 的自动浏览器头生成，仅发送 `headers` 中显式声明的头（默认：`true`）。
+* `headerGeneratorOptions` (object | false): `http`（cheerio）引擎中 `got-scraping` 浏览器头生成器的配置。默认生成器会随机注入一整套浏览器指纹头（含 `sec-ch-ua` client hints、`sec-fetch-*` 等）。当显式指定 `User-Agent` 时，生成的头可能与自定义 UA 不匹配（如生成 Chromium 的 client hints 但 UA 是 Firefox）——这种自相矛盾的指纹会被部分 WAF/反 bot 直接拒绝。可将生成器固定为与 UA 一致（如 `{ browsers: [{ name: 'firefox' }] }`），或设为 `false` 完全禁用生成。支持 `browsers`、`operatingSystems`、`devices`、`locales`、`httpVersion`、`http1Headers`、`http2Headers`。
 * `cookies` (Cookie[]): 要使用的 Cookie 数组。
 * `sessionState` (any): 要恢复的 Crawlee 会话状态。
 * `overrideSessionState` (boolean): 强制引擎使用提供的 `sessionState` 覆盖存储中已持久化的会话状态（默认：`false`）。详见[引擎文档](./README.engine.cn.md)。
@@ -173,6 +175,8 @@ searchGoogle('gemini');
   * `id` (string): 共享存储 ID，用于跨会话重用数据。
   * `persist` (boolean): 是否将数据保存到磁盘。
   * `purge` (boolean): 是否在清理时删除数据（默认为 `true`）。
+  * `poolStartTimeoutMs` (number): 释放（dispose）引擎时，等待爬虫自动扩缩容池启动的最长时间（毫秒），超时后执行清理。默认为 `10000`。浏览器爬虫启动较慢时可调大该值。
+  * `taskSettleTimeoutMs` (number): 释放引擎时，丢弃请求队列和键值存储之前，等待在途爬虫任务完成的最长时间（毫秒）。默认为 `120000`。
   * `config` (object): 原生 Crawlee 配置（例如 `{ localDataDirectory: './data' }`）。
 * `cache` (FetchCacheOptions): 控制 HTTP 持久化缓存。集成智能容灾与愈合机制。
   * `enabled` (boolean): 是否开启缓存。
