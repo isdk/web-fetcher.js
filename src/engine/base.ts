@@ -62,6 +62,102 @@ crawleeGlobalConfig.set('storageClientOptions', {
   persistStorage: false,
 });
 
+/**
+ * Waits until `crawler.run()` has reached the autoscaled pool.
+ *
+ * `AutoscaledPool.abort()` only resolves the pool's promise when the pool's own
+ * `run()` has already started — it needs `this.resolve`, which is assigned at
+ * the very beginning of `run()`. `BasicCrawler.run()` reaches that point only
+ * after its `_init()` finishes, and `_init()` awaits `SessionPool.open()`, so a
+ * teardown that happens in that window (very common when a race aborts a freshly
+ * created engine, or when a session is disposed right after creation) calls
+ * `abort()` before `run()` got there. The abort is then a no-op that still flips
+ * `isStopped`, so the pool, once it finally starts, has `isStopped === true`:
+ * `_maybeRunTask` returns early and never calls `_maybeFinish()`, the pool's
+ * promise never resolves, and `crawler.run()` never settles — a zombie crawler
+ * that keeps the event loop alive and touches the storages we are about to
+ * drop. Waiting for the pool to be running first makes the abort effective.
+ */
+async function waitForCrawlerPoolRunning(
+  crawler: any,
+  crawlerRunPromise: Promise<any> | undefined,
+  timeoutMs = 10_000
+): Promise<void> {
+  let runSettled = false
+  crawlerRunPromise
+    ?.then(() => {
+      runSettled = true
+    })
+    .catch(() => {
+      runSettled = true
+    })
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline && !runSettled) {
+    const pool = crawler?.autoscaledPool
+    if (pool && (pool.resolve || pool.reject)) return
+    await new Promise((resolve) => setTimeout(resolve, 10))
+  }
+}
+
+/**
+ * Drops a Crawlee engine's storages only once nothing can touch them anymore.
+ *
+ * `BasicCrawler.teardown()` -> `AutoscaledPool.abort()` resolves immediately and
+ * deliberately does *not* wait for the tasks that are currently running (the
+ * AutoscaledPool source spells it out: "no abortion is attempted and some of the
+ * tasks may finish, while others may not ... auto-scaled pool doesn't care about
+ * their state after the invocation of `.abort()`"). Every task touches the
+ * request queue after the user handler returns — `_runTaskFunction` calls
+ * `source.markRequestHandled(request)` on success or `reclaimRequest` via the
+ * error handler — and the session pool persists its state to the key-value store
+ * on teardown. Dropping those storages while a task is still in flight therefore
+ * makes the settling task fail with `Request queue ... does not exist` (retried
+ * 3x by `_timeoutAndRetry`, then "crawling will be terminated"), or logs
+ * `Key-value store ... does not exist` when the session stats are persisted.
+ * That leaves a half-dead crawler that keeps retrying for minutes and poisons
+ * every subsequent search — exactly what happens when a race aborts a loser
+ * engine while its request is still in flight.
+ *
+ * Polling the queue/pool state is not a reliable signal: `_fetchNextRequest`
+ * removes the request from the queue at the *start* of a task, so an in-flight
+ * queue reports `isEmpty() === true`, and `abort()` invalidates the pool's
+ * concurrency counter. The only reliable signal is the task function itself, so
+ * the engine wraps `autoscaledPoolOptions.runTaskFunction` (before `run()`,
+ * while the options object is still the source of truth for the pool) and counts
+ * how many task invocations are unsettled; `crawler.crawlingContexts` is checked
+ * as well since it covers the exact window in which the queue is touched.
+ *
+ * Every session uses a unique storage id, so nothing else can touch these
+ * storages: it is safe to drop them once the crawler has settled. The
+ * (in-memory) storages stay reachable through the captured crawler until then,
+ * so the last task settles cleanly. If the crawler never settles within
+ * `timeoutMs` (e.g. a request that never times out), we keep the storages
+ * instead of crashing the crawler.
+ */
+async function dropStoragesWhenSettled(
+  crawler: any,
+  crawlerRunPromise: Promise<any> | undefined,
+  inFlightTasks: () => number,
+  storages: { drop: () => Promise<void> }[],
+  timeoutMs = 120_000
+): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    const settled =
+      inFlightTasks() <= 0 && (crawler?.crawlingContexts?.size ?? 0) <= 0
+    if (settled) break
+    await new Promise((resolve) => setTimeout(resolve, 100))
+  }
+  // `run()`'s finally block performs a second `teardown()` (persisting session
+  // stats) and the storage client's own teardown, so let it finish first.
+  await crawlerRunPromise?.catch(() => {})
+  for (const storage of storages) {
+    await storage.drop().catch((error) =>
+      console.error('Error dropping engine storage:', error)
+    )
+  }
+}
+
 const cachePool = new Map<string, { instance: SmartCache; refCount: number }>()
 
 function acquireCache(storagePath: string, options: any) {
@@ -472,6 +568,11 @@ export abstract class FetchEngine<
   declare protected crawler?: TCrawler
   declare protected isCrawlerReady?: boolean
   protected crawlerRunPromise?: Promise<FinalStatistics>
+  /**
+   * Number of crawler task invocations (`_runTaskFunction`) that have not
+   * settled yet. See {@link dropStoragesWhenSettled} for why this is needed.
+   */
+  protected _inFlightCrawlerTasks = 0
   protected config?: Configuration
   declare protected requestQueue?: RequestQueue
   protected kvStore?: KeyValueStore
@@ -1245,6 +1346,26 @@ export abstract class FetchEngine<
       finalCrawlerOptions as TOptions,
       config
     ))
+    // `AutoscaledPool.abort()` (from `crawler.teardown()`) does not wait for the
+    // tasks that are currently running, so the engine must not drop its
+    // storages until every task chain has settled. The pool reads
+    // `runTaskFunction` from `autoscaledPoolOptions` when it is created in
+    // `run()` -> `_init()`, so wrapping it here (before `run()`) is the single
+    // place where the whole `_runTaskFunction` critical section —
+    // `fetchNextRequest`, the request handler, `markRequestHandled` and the
+    // error handler — can be tracked. See `dropStoragesWhenSettled`.
+    const autoscaledPoolOptions = (crawler as any).autoscaledPoolOptions
+    if (autoscaledPoolOptions?.runTaskFunction) {
+      const runTaskFunction = autoscaledPoolOptions.runTaskFunction
+      autoscaledPoolOptions.runTaskFunction = async (...args: any[]) => {
+        this._inFlightCrawlerTasks++
+        try {
+          return await runTaskFunction(...args)
+        } finally {
+          this._inFlightCrawlerTasks--
+        }
+      }
+    }
     const kvStore = (this.kvStore = await KeyValueStore.open(storeId, {
       config,
     }))
@@ -1716,8 +1837,12 @@ export abstract class FetchEngine<
       this.pendingRequests.clear()
     }
 
-    if (this.crawler) {
-      const crawler = this.crawler
+    // Hoisted so the storage drop below can keep the crawler alive until its
+    // in-flight tasks are done, and so the teardown below can wait for the
+    // crawler's `run()` to start first.
+    const crawler = this.crawler
+    const crawlerRunPromise = this.crawlerRunPromise
+    if (crawler) {
       this.crawler = undefined
       try {
         // @ts-ignore
@@ -1725,6 +1850,10 @@ export abstract class FetchEngine<
           // @ts-ignore
           crawler.stop()
         }
+        // Wait for `crawler.run()` to reach the autoscaled pool before tearing
+        // it down, otherwise `abort()` is a no-op that leaves a zombie crawler
+        // behind (see `waitForCrawlerPoolRunning`).
+        await waitForCrawlerPoolRunning(crawler, crawlerRunPromise)
         // BasicCrawler's teardown might throw if already stopping or uninitialized
         if (typeof crawler.teardown === 'function') {
           await crawler.teardown().catch(() => { })
@@ -1739,22 +1868,44 @@ export abstract class FetchEngine<
     const storage = this.opts?.storage || {}
     const shouldPurge = storage.purge ?? true
 
+    const lazyStorages: { drop: () => Promise<void> }[] = []
     if (this.requestQueue) {
-      if (shouldPurge) {
-        await this.requestQueue
-          .drop()
-          .catch((err) => console.error('Error dropping requestQueue:', err))
-      }
+      lazyStorages.push(this.requestQueue)
       this.requestQueue = undefined
     }
-
     if (this.kvStore) {
-      if (shouldPurge) {
-        await this.kvStore
-          .drop()
-          .catch((err) => console.error('Error dropping kvStore:', err))
-      }
+      lazyStorages.push(this.kvStore)
       this.kvStore = undefined
+    }
+
+    if (shouldPurge && lazyStorages.length > 0) {
+      // NOTE: `crawler.teardown()` -> `AutoscaledPool.abort()` deliberately does
+      // NOT wait for the tasks that are currently running (see the Crawlee docs:
+      // "no abortion is attempted and some of the tasks may finish, while others
+      // may not"). Those tasks keep touching the request queue
+      // (`fetchNextRequest` / `markRequestHandled` / `reclaimRequest`), and the
+      // session pool keeps persisting to the key-value store, so dropping the
+      // storages right here makes them fail with "Request queue ... does not
+      // exist" / "Key-value store ... does not exist" (retried 3x, then
+      // "crawling will be terminated"), leaking a half-dead crawler that keeps
+      // retrying for minutes. This is exactly what happens when a race aborts a
+      // loser engine while its request is still in flight.
+      //
+      // Every session uses a unique storage id, so nothing else can touch these
+      // storages: it is safe to drop them once the crawler has settled. The
+      // (in-memory) storages stay reachable through the captured crawler until
+      // then, so the last task completes cleanly. Awaiting this here also keeps
+      // the shared SmartCache (released below) alive for the same tasks.
+      try {
+        await dropStoragesWhenSettled(
+          crawler,
+          crawlerRunPromise,
+          () => this._inFlightCrawlerTasks,
+          lazyStorages
+        )
+      } catch (error) {
+        console.error('Error dropping engine storages:', error)
+      }
     }
 
     if (this.cacheStoragePath) {
