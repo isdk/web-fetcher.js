@@ -89,7 +89,7 @@ The engine is initialized lazily upon the first action execution and remains fix
 2. **Site Registry**: If set to `'auto'` (default), the system attempts to match the target URL against the `sites` registry.
 3. **Smart Upgrade**: If `enableSmart: true`, the system will automatically upgrade from `http` to `browser` under the following conditions:
    - Returns `401 / 403 / 500 / 429`
-   - HTML content is identified as "highly dynamic" (heavy JS)
+   - HTML content is identified as "highly dynamic" (heavy JS), controlled by `upgradeOnJsContent` (default: `false` — set it to `true` to upgrade when JS framework signatures such as `window.__NEXT_DATA__` or `window.__NUXT__` are detected in the HTML)
    - `Retry-After` exceeds `upgradeThresholdMs`
    - You can optionally sync Cookies/Session during upgrade (`syncStateOnUpgrade`)
    - If upgrade fails or still doesn't meet requirements, the original error is thrown
@@ -134,6 +134,8 @@ The engine supports persisting and restoring session state (primarily cookies) b
   * **`persist`**: (boolean) Whether to enable disk persistence (Crawlee's `persistStorage`). Defaults to `false` (in-memory).
   * **`purge`**: (boolean) Whether to delete the storage (drop `RequestQueue` and `KeyValueStore`) when the session is closed. Defaults to `true`.
     * Set `purge: false` and provide a fixed `id` to create a truly persistent session that survives across application restarts.
+  * **`poolStartTimeoutMs`**: (number) Maximum time (ms) to wait for the crawler's autoscaled pool to start before tearing it down during disposal. Defaults to `10000`. Raise it for slow-starting browser crawlers.
+  * **`taskSettleTimeoutMs`**: (number) Maximum time (ms) to wait for in-flight crawler tasks to settle before the request queue and key-value store are dropped during disposal. Defaults to `120000`.
   * **`config`**: Allows passing raw configuration to the underlying Crawlee instance.
     * **Note**: When `persist` is true, use `localDataDirectory` in the config to specify the storage path (e.g., `storage: { persist: true, config: { localDataDirectory: './my-data' } }`).
 * **`sessionState`**: A comprehensive state object (derived from Crawlee's SessionPool) that can be used to fully restore a previous session. This state is **automatically included in every `FetchResponse`**, making it easy to persist and later provide back to the engine during initialization.
