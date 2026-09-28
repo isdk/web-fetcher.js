@@ -25,6 +25,12 @@ export class PlaywrightFetchEngine extends FetchEngine<
   static readonly id = 'playwright'
   static readonly mode = 'browser'
 
+  /**
+   * playwright 引擎在页面收到响应头时上报活动（见 `_instrumentPage`），
+   * 上层可据此判断「卡在建连」的页面。
+   */
+  override activityTracked = true
+
   protected async _buildResponse(
     context: PlaywrightCrawlingContext
   ): Promise<FetchResponse> {
@@ -568,6 +574,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
     if (this._instrumentedPages.has(page)) return
     this._instrumentedPages.add(page)
     page.on('response', (response: any) => {
+      // 页面收到任何响应头 = 一次传输活动（供上游 race 判活）。
+      this._markActivity()
       try {
         const contentType = response.headers()['content-type']
         if (contentType) {

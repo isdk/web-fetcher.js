@@ -290,11 +290,34 @@ export interface BaseFetcherProperties {
    * 请求超时（毫秒）。默认 30000（30 秒）。
    *
    * @remarks
-   * - `http`（cheerio）引擎：作为 got 的 `timeout.request` 与 goto 导航超时。
+   * - `http`（cheerio）引擎：作为 got 的 `timeout.request`（整个请求的硬性上限）与 goto 导航超时。
    * - `browser`（playwright）引擎：作为导航与页面默认超时。
    * - 公共 API / 搜索引擎类站点的响应通常在数秒内返回；慢站点可按需调大。
+   * - 与 {@link firstByteMs} 配合可区分「卡在建连」与「已开始下载数据」的慢请求：
+   *   `firstByteMs` 先到点说明对端迟迟不响应，`timeoutMs` 到点则是整体超时。
    */
   timeoutMs?: number
+
+  /**
+   * 首字节超时（time-to-first-byte，毫秒）。默认 10000（10 秒）。
+   *
+   * @remarks
+   * 这是在传输层区分「连接卡死」（对端接受连接后迟迟不发数据，或根本连不上）
+   * 与「慢但在正常工作」（已开始接收响应体）的拆分点：
+   *
+   * - `http`（cheerio）引擎：作为 got 的 `timeout.response` —— 自请求发出起，
+   *   若在 `firstByteMs` 内未收到首字节数据，got 立即以 `TimeoutError` 失败该请求，
+   *   不会一直等到 `timeoutMs`（或 Crawlee 的 `requestHandlerTimeoutSecs`，默认 300 秒）。
+   *   响应体开始流式传输后，剩余时间只受 `timeoutMs` 约束。
+   * - `browser`（playwright）引擎：**不适用**（浏览器导航 API 没有首字节概念，
+   *   导航/页面超时由 `timeoutMs` 控制）。设置该值对 browser 引擎无效。
+   *
+   * 上游（如 `@isdk/web-searcher` 的 race 策略）可读取引擎的 `lastActivityAt` /
+   * `fetch:progress` 事件来判断「是否已在接收数据」，从而对卡死引擎提前放手。
+   *
+   * `0` 或 `Infinity` 表示禁用首字节检查（回退为整请求只有 `timeoutMs` 一档超时）。
+   */
+  firstByteMs?: number
 
   browser?: {
     /**
@@ -452,6 +475,7 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
     method: 'GET',
   },
   timeoutMs: 30000,
+  firstByteMs: 10000,
   requestHandlerTimeoutSecs: undefined,
   maxConcurrency: 1,
   maxRequestsPerMinute: 1000,
