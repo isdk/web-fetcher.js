@@ -154,6 +154,7 @@ searchGoogle('gemini');
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
 * `proxy` (string | string[]): 用于请求的代理 URL。
 * `timeoutMs` (number): 请求/导航超时时间（毫秒）。同时作用于 `http` 引擎的请求超时和 `browser` 引擎的导航超时及页面默认超时（默认：`30000`）。
+* `firstByteMs` (number): 首字节超时时间（毫秒，默认 `10000`）。在 `http` 引擎下即 got 的 `timeout.response`：服务端已接受连接但在该窗口内未发送任何数据的请求会立即失败，而不必等到 `timeoutMs`（或 Crawlee 更长的处理器超时）——这正是「卡在连接上」的搜索引擎能被快速暴露的原因。已开始流式传输的响应体只受 `timeoutMs` 约束。`browser` 引擎不适用。`0` / `Infinity` 表示禁用。
 * `requestHandlerTimeoutSecs` (number): 底层 Crawlee request handler 的超时时间（秒）。当长时间运行的动作（如 `pause`）需要超过默认时长（约 60 秒）时应调大该值。
 * `retries` (number): 每个请求的最大网络层重试次数（映射为 Crawlee 的 `maxRequestRetries`；未设置时引擎兜底：`browser` 为 `3`，`http` 为 `1`）。
 * `throwHttpErrors` (boolean): HTTP 错误状态码（4xx/5xx）是否抛出异常。在 `browser` 模式下会被强制置为 `false`。

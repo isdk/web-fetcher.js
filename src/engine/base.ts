@@ -588,6 +588,42 @@ export abstract class FetchEngine<
   protected actionEmitter = new EventEmitter()
   protected isPageActive = false
   protected isEngineDisposed = false
+
+  /**
+   * 是否上报传输活动信号（opt-in）。由具体引擎置为 `true`：
+   *
+   * - `http`（cheerio）引擎：每收到一个完整响应即记录一次活动；
+   * - `browser`（playwright）引擎：页面收到任何响应头即记录一次活动。
+   *
+   * 未置 `true` 的引擎不维护 {@link lastActivityAt}，上游（如 race 调度器）
+   * 只能用固定超时约束它，不会提前判其「卡死」。
+   */
+  declare activityTracked?: boolean
+
+  /**
+   * 最近一次「已收到数据」的时间戳（epoch ms）。
+   *
+   * @remarks
+   * 引擎在收到响应数据时更新（cheerio 为响应构建完成，playwright 为页面响应头到达），
+   * 并在会话事件总线上 emit `fetch:progress`（`{ ts?: number }`）。
+   *
+   * 上层可据此区分「卡在建连/无数据」与「慢但在接收数据」的引擎：
+   * 启动后一段时间内该时间戳仍为空（或早于本次启动），说明对端迟迟未响应，
+   * 可以提前放弃该引擎，而不是干等到它自身（可能很长）的超时。
+   */
+  lastActivityAt?: number
+
+  /**
+   * 记录一次传输活动并广播 `fetch:progress` 事件。
+   * @internal
+   */
+  protected _markActivity(): void {
+    this.lastActivityAt = Date.now()
+    // `eventBus` lives on the full FetchContext; the engine-level context type
+    // does not declare it, but it is always present at runtime.
+    const eventBus = (this.ctx as any)?.eventBus
+    eventBus?.emit?.('fetch:progress', { ts: this.lastActivityAt })
+  }
   protected navigationLock: PromiseLock = createResolvedPromiseLock()
   protected activeContext?: TContext
   protected isExecutingAction = false
@@ -850,6 +886,8 @@ export abstract class FetchEngine<
   protected abstract _buildResponse(context: TContext): Promise<FetchResponse>
   protected async buildResponse(context: TContext): Promise<FetchResponse> {
     const result = await this._buildResponse(context)
+    // 收到完整响应 = 一次明确的传输活动（供上游 race 判活）。
+    this._markActivity()
     return this._enrichResponse(context, result)
   }
 

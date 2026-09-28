@@ -29,6 +29,12 @@ export class CheerioFetchEngine extends FetchEngine<
   static readonly id = 'cheerio'
   static readonly mode = 'http'
 
+  /**
+   * cheerio 引擎在响应构建完成时上报活动（见 `_markActivity`），
+   * 上层可据此判断「卡在建连」的请求。
+   */
+  override activityTracked = true
+
   private _ensureCheerioContext(context: CheerioCrawlingContext) {
     if (!context.$ && context.body) {
       // 二进制内容（PDF、图片、压缩包等）不做 cheerio 包装，避免把二进制解码文本包成 <pre> 垃圾 HTML。
@@ -785,8 +791,17 @@ export class CheerioFetchEngine extends FetchEngine<
         ({ session, request }, gotOptions) => {
           // gotOptions.headers = { ...this.hdrs }; // 已经移到 goto 处理
           gotOptions.throwHttpErrors = ctx.throwHttpErrors
-          if (this.opts?.timeoutMs)
-            gotOptions.timeout = { request: this.opts.timeoutMs }
+          // 两档超时：firstByteMs = got 的 timeout.response（首字节），
+          // timeoutMs = got 的 timeout.request（整请求）。只有显式配置的档位才写入，
+          // 避免覆盖 got-scraping 自身的默认行为。
+          const firstByteMs = this.opts?.firstByteMs
+          const timeoutMs = this.opts?.timeoutMs
+          if (firstByteMs || timeoutMs) {
+            gotOptions.timeout = {
+              ...(firstByteMs ? { response: firstByteMs } : {}),
+              ...(timeoutMs ? { request: timeoutMs } : {}),
+            }
+          }
           // 透传 got-scraping 的浏览器头生成器配置：gotOptions 就是最终传给
           // got-scraping 的选项对象。默认其 header 生成器会随机注入整套浏览器
           // 指纹头（sec-ch-ua 等），与显式指定的 User-Agent（如 Firefox）矛盾时

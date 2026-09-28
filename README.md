@@ -154,6 +154,7 @@ This is the main entry point for the library.
 * `engine` ('http' | 'browser' | 'auto'): The engine to use. Defaults to `auto`.
 * `proxy` (string | string[]): Proxy URL(s) to use for requests.
 * `timeoutMs` (number): Request/navigation timeout in milliseconds. Applies to the `http` engine's request timeout and the `browser` engine's navigation and default page timeouts (default: `30000`).
+* `firstByteMs` (number): Time-to-first-byte timeout in milliseconds (default: `10000`). Under the `http` engine this is got's `timeout.response`: a request whose server accepts the connection but sends no data within this window fails immediately, instead of waiting until `timeoutMs` (or Crawlee's much longer handler timeout). This is what makes a stuck-connecting search engine surface quickly. Response bodies already streaming are bounded only by `timeoutMs`. Not applicable to the `browser` engine. `0` / `Infinity` disables it.
 * `requestHandlerTimeoutSecs` (number): Timeout in seconds for the underlying Crawlee request handler. Increase it if long-running actions (e.g. `pause`) need more than the default (~60s).
 * `retries` (number): Maximum network-level retry attempts per request (mapped to Crawlee's `maxRequestRetries`; engine fallbacks: `browser` `3`, `http` `1` when unset).
 * `throwHttpErrors` (boolean): Whether HTTP error statuses (4xx/5xx) throw an error. In `browser` mode it is forced to `false`.

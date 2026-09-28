@@ -129,6 +129,43 @@ describe('CheerioFetchEngine crawler options wiring', () => {
     expect(gotOptions.headerGeneratorOptions).toBeUndefined()
   })
 
+  it('should wire firstByteMs/timeoutMs into a two-tier got timeout (response + request)', () => {
+    const ctx = {
+      ...baseCtx,
+      firstByteMs: 8000,
+      timeoutMs: 45000,
+    } as FetchEngineContext
+
+    const options = new TestCheerioEngine().testGetCrawlerOptions(ctx)
+    const gotOptions: any = {}
+    options.preNavigationHooks![0]({} as any, gotOptions)
+
+    expect(gotOptions.timeout).toEqual({ response: 8000, request: 45000 })
+  })
+
+  it('should omit the response tier when firstByteMs is not configured', () => {
+    const ctx = {
+      ...baseCtx,
+      timeoutMs: 20000,
+    } as FetchEngineContext
+
+    const options = new TestCheerioEngine().testGetCrawlerOptions(ctx)
+    const gotOptions: any = {}
+    options.preNavigationHooks![0]({} as any, gotOptions)
+
+    expect(gotOptions.timeout).toEqual({ request: 20000 })
+  })
+
+  it('should not touch gotOptions.timeout when neither firstByteMs nor timeoutMs is set', () => {
+    const options = new TestCheerioEngine().testGetCrawlerOptions({
+      ...baseCtx,
+    } as FetchEngineContext)
+    const gotOptions: any = {}
+    options.preNavigationHooks![0]({} as any, gotOptions)
+
+    expect(gotOptions.timeout).toBeUndefined()
+  })
+
   it('defaults resolve wired values from DefaultFetcherProperties', () => {
     // defaultsDeep(specific, base) 顺序下，specific 值覆盖 base 硬编码的 maxConcurrency: 1
     expect(DefaultFetcherProperties.maxConcurrency).toBe(1)
