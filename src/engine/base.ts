@@ -139,13 +139,18 @@ async function dropStoragesWhenSettled(
   crawlerRunPromise: Promise<any> | undefined,
   inFlightTasks: () => number,
   storages: { drop: () => Promise<void> }[],
-  timeoutMs = 120_000
+  timeoutMs = 120_000,
+  shouldGiveUp?: () => boolean
 ): Promise<void> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
     const settled =
       inFlightTasks() <= 0 && (crawler?.crawlingContexts?.size ?? 0) <= 0
-    if (settled) break
+    // `shouldGiveUp`：快速失败选项（`storage.fastFailOnAbort`）。race 中止输家
+    // 引擎时不再等待其 in-flight 任务收敛，立即可降 storage，缩短主进程退出延迟。
+    // 代价见 `StorageOptions.fastFailOnAbort` 的文档：仍在收尾的任务可能记录
+    // "Request queue ... does not exist" 类日志（无功能影响）。
+    if (settled || shouldGiveUp?.()) break
     await new Promise((resolve) => setTimeout(resolve, 100))
   }
   // `run()`'s finally block performs a second `teardown()` (persisting session
@@ -588,6 +593,23 @@ export abstract class FetchEngine<
   protected actionEmitter = new EventEmitter()
   protected isPageActive = false
   protected isEngineDisposed = false
+
+  /**
+   * 按 requestId 注册的 in-flight I/O 取消器（操作侧取消）。
+   *
+   * @remarks
+   * 每个发起底层 I/O 的导航（如 cheerio 的 got 请求）在这里登记一个
+   * `abort(reason)` 函数；清理时由 {@link _cancelInFlightIO} 统一触发，
+   * 使底层请求立即失败，而不是完整跑完（慢站点可达 `timeoutMs`），
+   * 从而把清理的 settle 等待缩到毫秒级。
+   */
+  protected inFlightIOCancels = new Map<string, (reason?: any) => void>()
+
+  /**
+   * 中止原因（`storage.fastFailOnAbort` 下由 `abortFastFail()` 设置）。
+   * 非空表示清理不再等待 in-flight 任务收敛（快速失败模式）。
+   */
+  protected abortReason?: Error
 
   /**
    * 是否上报传输活动信号（opt-in）。由具体引擎置为 `true`：
@@ -1835,7 +1857,8 @@ export abstract class FetchEngine<
    * 将底层清理/取消错误规范化为 AbortError。
    *
    * @remarks
-   * 引擎清理（`_commonCleanup`）会取消 pending 请求（"Cleanup:Request cancelled"），
+   * 引擎清理（`_commonCleanup`）会取消 pending 请求（"Cleanup:Request cancelled"）
+   * 并 abort in-flight I/O（got 的取消错误 `name='AbortError'` / `code='ERR_ABORTED'`），
    * 浏览器引擎导航被中断时会抛 Playwright 的中断类错误。这些错误对调用方而言都应
    * 表现为可识别的中断错误（`name === 'AbortError'` / `code === ErrorCode.Aborted`），
    * 以便上层（如搜索引擎并发竞争）与真实失败区分开来。
@@ -1844,7 +1867,13 @@ export abstract class FetchEngine<
    */
   protected _toAbortError(error: any): any {
     if (!error || error instanceof AbortError) return error
-    if (error.name === 'AbortError' || error.code === ErrorCode.Aborted) {
+    // got 的操作侧取消（`gotOptions.signal` 被 abort）以
+    // `AbortError`（name，code='ERR_ABORTED'）结束，与本会话的中断错误归一。
+    if (
+      error.name === 'AbortError' ||
+      error.code === ErrorCode.Aborted ||
+      error.code === 'ERR_ABORTED'
+    ) {
       return error
     }
     const msg: string = error.message || String(error)
@@ -1874,6 +1903,11 @@ export abstract class FetchEngine<
       }
       this.pendingRequests.clear()
     }
+
+    // 操作侧取消：先取消 in-flight I/O（got 请求/浏览器导航），再进入
+    // crawler teardown 与 settle 等待。I/O 立即失败后，收尾任务只需毫秒级
+    // 即可返回，settle 等待大幅缩短（存储侧 `fastFailOnAbort` 仅作兕底）。
+    this._cancelInFlightIO(new AbortError('Cleanup:Request cancelled'))
 
     // Hoisted so the storage drop below can keep the crawler alive until its
     // in-flight tasks are done, and so the teardown below can wait for the
@@ -1944,7 +1978,10 @@ export abstract class FetchEngine<
           crawlerRunPromise,
           () => this._inFlightCrawlerTasks,
           lazyStorages,
-          storage.taskSettleTimeoutMs
+          storage.taskSettleTimeoutMs,
+          // 快速失败选项（`storage.fastFailOnAbort`）：`abortFastFail()` 已记录
+          // 中止原因时不再等待任务收敛，立即可降 storage，缩短主进程退出延迟。
+          storage.fastFailOnAbort ? () => !!this.abortReason : undefined
         )
       } catch (error) {
         console.error('Error dropping engine storages:', error)
@@ -2129,6 +2166,63 @@ export abstract class FetchEngine<
    */
   async dispose(): Promise<void> {
     await this.cleanup()
+  }
+
+  /**
+   * 立即中止引擎的快速失败路径（`storage.fastFailOnAbort`）。
+   *
+   * @remarks
+   * 与 {@link dispose} 的区别：`dispose()` 仍会等待 in-flight crawler 任务收敛
+   * （最多 `taskSettleTimeoutMs`，默认 120s）才释放资源；本方法先记录中止原因，
+   * 再触发清理，使清理直接跳过等待。供 race 调度器在放堆输家引擎时调用，
+   * 避免已拿到结果的进程还要等输家收尾才能退出。
+   *
+   * @param reason - 中止原因，附加在 AbortError 消息中。
+   */
+  async abortFastFail(reason?: any): Promise<void> {
+    this.abortReason =
+      reason instanceof Error
+        ? reason
+        : new AbortError(reason ? String(reason) : 'engine fast-failed')
+    await this.cleanup()
+  }
+
+  /**
+   * 注册一个 in-flight I/O 取消器（引擎在发起底层 I/O 时调用）。
+   * @internal
+   */
+  protected _registerIOCancel(requestId: string, cancel: (reason?: any) => void): void {
+    this.inFlightIOCancels.set(requestId, cancel)
+  }
+
+  /**
+   * 注销 in-flight I/O 取消器（I/O 正常/异常结束后调用，防止 Map 泄漏）。
+   * @internal
+   */
+  protected _unregisterIOCancel(requestId: string): void {
+    this.inFlightIOCancels.delete(requestId)
+  }
+
+  /**
+   * 取消所有 in-flight I/O（操作侧取消）。
+   *
+   * @remarks
+   * 清理时统一触发：底层请求/导航立即失败，收尾任务毫秒级返回，
+   * settle 等待随之缩短。子类在 I/O 结束处负责注销（finally），
+   * 取消后的错误应经 {@link _toAbortError} 归一为 AbortError。
+   * @internal
+   */
+  protected _cancelInFlightIO(reason?: any): void {
+    if (this.inFlightIOCancels.size === 0) return
+    this._logDebug('cleanup', `Cancelling ${this.inFlightIOCancels.size} in-flight I/O operation(s)`)
+    for (const [, cancel] of this.inFlightIOCancels) {
+      try {
+        cancel(reason)
+      } catch {
+        // 取消器自身的错误不影响其余取消与清理流程
+      }
+    }
+    this.inFlightIOCancels.clear()
   }
 
   // 能力协商（动作层可打标：native/simulate/noop）

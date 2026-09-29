@@ -137,7 +137,8 @@ await session.executeAll([
   * **`purge`**：(boolean) 会话关闭时是否删除存储（清理 `RequestQueue` 和 `KeyValueStore`）。默认为 `true`。
     * 设置 `purge: false` 并配合固定的 `id`，可以创建跨应用重启依然存在的持久会话。
   * **`poolStartTimeoutMs`**：(number) 释放（dispose）引擎时，等待爬虫自动扩缩容池启动的最长时间（毫秒），超时后执行清理。默认为 `10000`。浏览器爬虫启动较慢时可调大该值。
-  * **`taskSettleTimeoutMs`**：(number) 释放引擎时，丢弃请求队列和键值存储之前，等待在途爬虫任务完成的最长时间（毫秒）。默认为 `120000`。
+  * **`taskSettleTimeoutMs`**：(number) 释放引擎时，丢弃请求队列和键值存储之前，等待在途爬虫任务完成的最长时间（毫秒）。默认为 `120000`。中止时会先取消在途 I/O（见下），settle 等待通常缩短到毫秒级。
+  * **`fastFailOnAbort`**：(boolean) race 场景的兕底快速失败选项。中止会话时引擎本就会立即取消在途 I/O（`http` 引擎通过 `AbortSignal` 直接中止底层 got 请求；`browser` 引擎关闭活动页面），因此即使不启用本选项，settle 等待通常也已缩短到毫秒级。启用后，`session.abort()` 额外跳过（残余的）settle 等待，立即丢弃请求队列 / 键值存储——适合作为取消机制不可用时的保险。默认为 `false`。代价：仍在收尾的任务可能在日志中留下 `"Request queue ... does not exist"` 类记录（Crawlee 重试后放弃，无功能性影响）。存储按会话隔离，不会被其他会话使用。
   * **`config`**：允许向底层 Crawlee 实例传递原生配置。
     * **注意**：当 `persist` 为 true 时，在 config 中使用 `localDataDirectory` 指定存储路径（例如：`storage: { persist: true, config: { localDataDirectory: './my-data' } }`）。
 * **`sessionState`**: 一个完整的状态对象（源自 Crawlee 的 SessionPool），可用于完全恢复之前的会话。该状态会**自动包含在每个 `FetchResponse` 中**，方便进行持久化，并在以后初始化引擎时通过选项传回。

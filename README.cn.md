@@ -154,7 +154,7 @@ searchGoogle('gemini');
 * `engine` ('http' | 'browser' | 'auto'): 要使用的引擎。默认为 `auto`。
 * `proxy` (string | string[]): 用于请求的代理 URL。
 * `timeoutMs` (number): 请求/导航超时时间（毫秒）。同时作用于 `http` 引擎的请求超时和 `browser` 引擎的导航超时及页面默认超时（默认：`30000`）。
-* `firstByteMs` (number): 首字节超时时间（毫秒，默认 `10000`）。在 `http` 引擎下即 got 的 `timeout.response`：服务端已接受连接但在该窗口内未发送任何数据的请求会立即失败，而不必等到 `timeoutMs`（或 Crawlee 更长的处理器超时）——这正是「卡在连接上」的搜索引擎能被快速暴露的原因。已开始流式传输的响应体只受 `timeoutMs` 约束。`browser` 引擎不适用。`0` / `Infinity` 表示禁用。
+* `firstByteMs` (number): 首字节超时时间（毫秒，默认 `10000`）。在 `http` 引擎下即 got 的 `timeout.response`：服务端已接受连接但在该窗口内未发送任何数据的请求会立即失败，而不必等到 `timeoutMs`（或 Crawlee 更长的处理器超时）——这正是「卡在连接上」的搜索引擎能被快速暴露的原因。已开始流式传输的响应体只受 `timeoutMs` 约束。在 `browser`（playwright）引擎下通过包装导航实现同样语义：导航开始后若在 `firstByteMs` 内未收到主 frame 导航链（含重定向）的任何响应头，立即取消导航（Crawlee 会用 `window.stop()` 停掉卡死的页面）；首字节到达后剩余加载只受 `timeoutMs` 约束。`0` / `Infinity` 表示禁用。
 * `requestHandlerTimeoutSecs` (number): 底层 Crawlee request handler 的超时时间（秒）。当长时间运行的动作（如 `pause`）需要超过默认时长（约 60 秒）时应调大该值。
 * `retries` (number): 每个请求的最大网络层重试次数（映射为 Crawlee 的 `maxRequestRetries`；未设置时引擎兜底：`browser` 为 `3`，`http` 为 `1`）。
 * `throwHttpErrors` (boolean): HTTP 错误状态码（4xx/5xx）是否抛出异常。在 `browser` 模式下会被强制置为 `false`。
@@ -177,7 +177,8 @@ searchGoogle('gemini');
   * `persist` (boolean): 是否将数据保存到磁盘。
   * `purge` (boolean): 是否在清理时删除数据（默认为 `true`）。
   * `poolStartTimeoutMs` (number): 释放（dispose）引擎时，等待爬虫自动扩缩容池启动的最长时间（毫秒），超时后执行清理。默认为 `10000`。浏览器爬虫启动较慢时可调大该值。
-  * `taskSettleTimeoutMs` (number): 释放引擎时，丢弃请求队列和键值存储之前，等待在途爬虫任务完成的最长时间（毫秒）。默认为 `120000`。
+  * `taskSettleTimeoutMs` (number): 释放引擎时，丢弃请求队列和键值存储之前，等待在途爬虫任务完成的最长时间（毫秒）。默认为 `120000`。中止时会先取消在途 I/O（见下），settle 等待通常缩短到毫秒级。
+  * `fastFailOnAbort` (boolean): race 场景的兕底快速失败选项。中止会话时引擎本就会立即取消在途 I/O（`http` 引擎通过 `AbortSignal` 直接中止底层 got 请求；`browser` 引擎关闭活动页面），因此即使不启用本选项，settle 等待通常也已缩短到毫秒级。启用后，`session.abort()` 额外跳过（残余的）settle 等待，立即丢弃请求队列 / 键值存储——适合作为取消机制不可用时的保险。默认为 `false`。代价：仍在收尾的任务可能在日志中留下 `"Request queue ... does not exist"` 类记录（Crawlee 重试后放弃，无功能性影响）。存储按会话隔离，不会被其他会话使用。
   * `config` (object): 原生 Crawlee 配置（例如 `{ localDataDirectory: './data' }`）。
 * `cache` (FetchCacheOptions): 控制 HTTP 持久化缓存。集成智能容灾与愈合机制。
   * `enabled` (boolean): 是否开启缓存。

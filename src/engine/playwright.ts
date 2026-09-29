@@ -3,6 +3,7 @@ import type {
   PlaywrightCrawlingContext,
   PlaywrightCrawlerOptions,
 } from 'crawlee'
+import type { PlaywrightDirectNavigationOptions } from 'crawlee'
 import { firefox } from 'playwright'
 import { FetchEngine, type GotoActionOptions, FetchEngineAction, getRandomDelay, normalizeGotoMethodPayload } from './base'
 import { FetchResponse } from '../core/types'
@@ -17,6 +18,64 @@ const DefaultTimeoutMs = 3_000
 type Page = NonNullable<PlaywrightCrawlingContext['page']>
 type Locator = ReturnType<Page['locator']>
 
+/**
+ * Playwright 导航的首字节超时错误（`firstByteMs` 内未收到主 frame 的任何响应头）。
+ *
+ * @remarks
+ * 消息刻意包含 "timed out"：引擎的错误链路（`mapErrorCodeToStatus`）按消息关键词
+ * 将其映射为 408 RequestTimeout，与 http（cheerio）引擎 got 的首字节超时语义对齐。
+ * 刻意**不**让 `constructor.name` 等于 `TimeoutError`：Crawlee 的
+ * `_handleNavigationTimeout` 会把 `TimeoutError` 判定为导航超时而标记 session bad，
+ * 而首字节超时可能是对端合法的慢响应（慢代理/慢站点），不应烧掉 session。
+ */
+export class FirstByteTimeoutError extends Error {
+  constructor(url: string, firstByteMs: number) {
+    super(
+      `Navigation to ${url} timed out: no response within firstByteMs=${firstByteMs}ms (server accepted the connection but sent no data).`
+    )
+    this.name = 'FirstByteTimeoutError'
+  }
+}
+
+/**
+ * 引擎内部使用的 PlaywrightCrawler 子类：为导航接入 `firstByteMs` 首字节超时。
+ *
+ * @remarks
+ * 浏览器导航 API（`page.goto`）没有「首字节」概念，`firstByteMs` 在此引擎下通过
+ * 包装导航实现：导航开始后，若在 `firstByteMs` 内页面未收到主 frame 导航链的任何
+ * 响应头（即对端接受连接后迟迟不发数据），立即以 {@link FirstByteTimeoutError}
+ * 取消导航。Crawlee 随后走 `_handleNavigationTimeout`（`window.stop()` 停掉卡死的
+ * 加载）→ `_failedRequestHandler` → 引擎现有的 gotoPromise reject 链路，重试与
+ * session 逻辑全部保留。
+ *
+ * 收到首字节后，剩余的加载（响应体、子资源、waitUntil 条件）只受 `timeoutMs`
+ * 约束，与 http（cheerio）引擎 got 的 `timeout.response` / `timeout.request`
+ * 两档超时语义一致。
+ */
+export class PlaywrightFetchCrawler extends PlaywrightCrawler {
+  private engine: PlaywrightFetchEngine
+
+  constructor(
+    options: PlaywrightCrawlerOptions,
+    engine: PlaywrightFetchEngine,
+    config?: Configuration
+  ) {
+    super(options, config)
+    this.engine = engine
+  }
+
+  protected override async _navigationHandler(
+    context: PlaywrightCrawlingContext,
+    gotoOptions: PlaywrightDirectNavigationOptions
+  ): Promise<any> {
+    return this.engine.gotoWithFirstByteTimeout(
+      context.page,
+      context.request.url,
+      () => super._navigationHandler(context, gotoOptions)
+    )
+  }
+}
+
 export class PlaywrightFetchEngine extends FetchEngine<
   PlaywrightCrawlingContext,
   PlaywrightCrawler,
@@ -30,6 +89,95 @@ export class PlaywrightFetchEngine extends FetchEngine<
    * 上层可据此判断「卡在建连」的页面。
    */
   override activityTracked = true
+
+  /**
+   * 操作侧取消（browser 引擎）：关闭活动页面使 in-flight 导航立即失败。
+   *
+   * @remarks
+   * `page.close()` 会让所有 in-flight 的 `page.goto` / 动作以
+   * "Target closed" 类错误立即拒绝，随后被 {@link FetchEngine._toAbortError}
+   * 归一为 AbortError；浏览器进程随后由 `crawler.teardown()`（`browserPool.destroy()`）
+   * 兜底关闭。未活动页面时无需额外处理（导航本身由 teardown 关闭浏览器取消）。
+   */
+  protected override _cancelInFlightIO(reason?: any): void {
+    const page = this.activeContext?.page as Page | undefined
+    if (page && !page.isClosed()) {
+      void page.close().catch(() => {})
+    }
+    super._cancelInFlightIO(reason)
+  }
+
+  /**
+   * 包装一次导航，为其接入 `firstByteMs` 首字节超时（真取消）。
+   *
+   * @remarks
+   * - `firstByteMs` 未配置、为 `0` / `Infinity`、或目标不是 http(s)（如 `data:`、
+   *   `blob:`、`file:`，这类导航不会产生 response 事件）时，直接透传导航，行为不变。
+   * - 超时判定：导航开始后 `firstByteMs` 内未收到主 frame 导航链的任何响应头。
+   *   竞争失败方（先到的导航 promise / 计时器）不产生 unhandled rejection。
+   * - 首字节已到则正常等待导航完成；剩余时间只受 `timeoutMs` 约束。
+   * @internal 供 {@link PlaywrightFetchCrawler} 调用（跨类故为 public）。
+   */
+  async gotoWithFirstByteTimeout<T>(
+    page: Page | null | undefined,
+    targetUrl: string,
+    navigate: () => Promise<T>
+  ): Promise<T> {
+    const firstByteMs = this.opts?.firstByteMs
+    // `0` / Infinity 显式禁用；非 http(s) 导航没有 response 事件，跳过以免误杀。
+    if (
+      !page ||
+      !firstByteMs ||
+      firstByteMs === Infinity ||
+      !/^https?:/i.test(targetUrl)
+    ) {
+      return navigate()
+    }
+
+    let resolveFirstByte!: () => void
+    const firstByte = new Promise<void>((resolve) => {
+      resolveFirstByte = resolve
+    })
+    const onFirstByte = (response: any) => {
+      try {
+        const request = response.request()
+        // 主 frame 的导航请求（含重定向链）收到响应头 = 「已开始传输数据」。
+        // 旧页面残留的 XHR/fetch 响应不算（页面复用时可能掩盖主文档卡死）。
+        if (
+          request.isNavigationRequest() &&
+          request.frame() === page.mainFrame()
+        ) {
+          resolveFirstByte()
+        }
+      } catch {
+        // 响应对象可能已被销毁（页面跳转中），无法判定时按宽松处理避免误杀。
+        resolveFirstByte()
+      }
+    }
+    page.on('response', onFirstByte)
+
+    let timerId: ReturnType<typeof setTimeout> | undefined
+    try {
+      const nav = navigate()
+      // 首字节超时获胜时导航仍在后台运行（随后被 `_handleNavigationTimeout`
+      // 的 `window.stop()` 停掉），预挂空 catch 防止 unhandled rejection。
+      nav.catch(() => {})
+      await Promise.race([
+        nav, // 导航自身先失败（如 ERR_CONNECTION_REFUSED）→ 走原有错误路径
+        firstByte, // 首字节已到 → 剩余加载只受 timeoutMs 约束
+        new Promise<never>((_, reject) => {
+          timerId = setTimeout(
+            () => reject(new FirstByteTimeoutError(targetUrl, firstByteMs)),
+            firstByteMs
+          )
+        }),
+      ])
+      return await nav
+    } finally {
+      clearTimeout(timerId)
+      page.off('response', onFirstByte)
+    }
+  }
 
   protected async _buildResponse(
     context: PlaywrightCrawlingContext
@@ -841,27 +989,37 @@ export class PlaywrightFetchEngine extends FetchEngine<
         let response: Awaited<ReturnType<Page['goto']>> | null = null
         try {
           if (isPlainGet) {
-            response = await context.page.goto(action.url, {
-              waitUntil: this._resolveWaitUntil(action.opts),
-              timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
-            })
-          } else {
-            response = await playwrightUtils.gotoExtended(
+            response = await this.gotoWithFirstByteTimeout(
               context.page,
-              {
-                url: action.url,
-                method: method || 'GET',
-                headers: {
-                  ...(contentType ? { 'content-type': contentType } : {}),
-                  ...this.hdrs,
-                  ...action.opts?.headers,
-                },
-                payload,
-              } as any,
-              {
-                waitUntil: this._resolveWaitUntil(action.opts),
-                timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
-              } as any
+              action.url,
+              () =>
+                context.page.goto(action.url, {
+                  waitUntil: this._resolveWaitUntil(action.opts),
+                  timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
+                })
+            )
+          } else {
+            response = await this.gotoWithFirstByteTimeout(
+              context.page,
+              action.url,
+              () =>
+                playwrightUtils.gotoExtended(
+                  context.page,
+                  {
+                    url: action.url,
+                    method: method || 'GET',
+                    headers: {
+                      ...(contentType ? { 'content-type': contentType } : {}),
+                      ...this.hdrs,
+                      ...action.opts?.headers,
+                    },
+                    payload,
+                  } as any,
+                  {
+                    waitUntil: this._resolveWaitUntil(action.opts),
+                    timeout: this.opts?.timeoutMs || DefaultTimeoutMs,
+                  } as any
+                )
             )
           }
         } catch (err) {
@@ -1174,7 +1332,8 @@ export class PlaywrightFetchEngine extends FetchEngine<
     options: PlaywrightCrawlerOptions,
     config?: Configuration
   ): PlaywrightCrawler {
-    return new PlaywrightCrawler(options, config)
+    // 用子类实例以接入 firstByteMs 首字节超时（_navigationHandler 包装）。
+    return new PlaywrightFetchCrawler(options, this, config)
   }
 
   /**
