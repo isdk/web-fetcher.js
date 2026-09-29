@@ -161,6 +161,24 @@ export interface StorageOptions {
    * tasks ("Request queue ... does not exist").
    */
   taskSettleTimeoutMs?: number
+
+  /**
+   * 快速失败选项：引擎被 `abortFastFail()`（race 输家引擎）中止时，清理不再等待
+   * in-flight crawler 任务收敛，立即丢弃 request queue / key-value store。
+   * 默认 false（保持等待，保证收尾任务不会碰到已丢弃的 storage）。
+   *
+   * @remarks
+   * 背景：race 调度（如 `@isdk/web-searcher`）在赢家返回后 abort 输家引擎时，
+   * `dispose()` 会同步等待输家的 in-flight 任务收敛（慢站点可达 `taskSettleTimeoutMs`
+   * = 120s）。任务不持锁主进程事件循环，但 await `dispose()` 的调用方会一直挂起，
+   * 表现为「主进程已看到结果，却还要等一段时间才退出」。
+   *
+   * 启用后 `abortFastFail()` 跳过该等待，显著缩短退出延迟。代价：仍在收尾的任务
+   * 可能触碰已丢弃的 storage，在日志中留下 "Request queue ... does not exist"
+   * 类记录（Crawlee 会重试后放弃，无功能性影响）；存储本身按会话隔离，不会被
+   * 其他会话使用。
+   */
+  fastFailOnAbort?: boolean
 }
 
 export interface FetchCacheOptions {
@@ -309,8 +327,13 @@ export interface BaseFetcherProperties {
    *   若在 `firstByteMs` 内未收到首字节数据，got 立即以 `TimeoutError` 失败该请求，
    *   不会一直等到 `timeoutMs`（或 Crawlee 的 `requestHandlerTimeoutSecs`，默认 300 秒）。
    *   响应体开始流式传输后，剩余时间只受 `timeoutMs` 约束。
-   * - `browser`（playwright）引擎：**不适用**（浏览器导航 API 没有首字节概念，
-   *   导航/页面超时由 `timeoutMs` 控制）。设置该值对 browser 引擎无效。
+   * - `browser`（playwright）引擎：包装导航实现同语义 —— 导航开始后，若在
+ *   `firstByteMs` 内页面未收到主 frame 导航链（含重定向）的任何响应头，
+   *   立即以 {@link FirstByteTimeoutError} 取消导航（Crawlee 会 `window.stop()`
+   *   停掉卡死的加载）。收到首字节后，剩余加载（响应体、子资源、waitUntil）
+   *   只受 `timeoutMs` 约束。判定信号是「主 frame 导航请求的响应头到达」，
+   *   旧页面残留的 XHR/fetch 不算；`data:` / `blob:` / `file:` 等非 http(s)
+   *   导航不适用该检查。
    *
    * 上游（如 `@isdk/web-searcher` 的 race 策略）可读取引擎的 `lastActivityAt` /
    * `fetch:progress` 事件来判断「是否已在接收数据」，从而对卡死引擎提前放手。
@@ -464,6 +487,7 @@ export const DefaultFetcherProperties: BaseFetcherProperties = {
     purge: true,
     poolStartTimeoutMs: 10_000,
     taskSettleTimeoutMs: 120_000,
+    fastFailOnAbort: false,
   },
   ignoreSslErrors: true,
   browser: {

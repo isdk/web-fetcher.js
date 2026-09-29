@@ -685,7 +685,23 @@ export class CheerioFetchEngine extends FetchEngine<
         followRedirect: false,
       }
       // await this._applyPreNavigationHooks(context, gotOptions)
-      lastResponse = await context.sendRequest(gotOptions)
+      // 操作侧取消：action 路径（navigate/submit）不走 preNavigationHooks，
+      // 这里直接按上下文请求 id 注册 AbortController，清理时可立即取消。
+      const requestId = (context.request.userData as any)?.requestId as
+        | string
+        | undefined
+      if (requestId) {
+        const controller = new AbortController()
+        this._registerIOCancel(requestId, (reason) => controller.abort(reason))
+        gotOptions.signal = controller.signal
+        try {
+          lastResponse = await context.sendRequest(gotOptions)
+        } finally {
+          this._unregisterIOCancel(requestId)
+        }
+      } else {
+        lastResponse = await context.sendRequest(gotOptions)
+      }
 
       if (!lastResponse) break
 
@@ -802,6 +818,22 @@ export class CheerioFetchEngine extends FetchEngine<
               ...(timeoutMs ? { request: timeoutMs } : {}),
             }
           }
+          // 操作侧取消：按 requestId 注册 AbortController 的 signal，清理
+          // （_cancelInFlightIO）时 abort 使 in-flight 请求立即失败，而不是
+          // 完整跑完（慢站点可达 timeoutMs），从而缩短清理的 settle 等待。
+          // got 收到 abort 后以 `AbortError`（name='AbortError'，
+          // code='ERR_ABORTED'，"This operation was aborted."）结束，
+          // 由 _toAbortError 归一为会话 AbortError。
+          const requestId = (request?.userData as any)?.requestId as
+            | string
+            | undefined
+          if (requestId) {
+            const controller = new AbortController()
+            this._registerIOCancel(requestId, (reason) =>
+              controller.abort(reason)
+            )
+            gotOptions.signal = controller.signal
+          }
           // 透传 got-scraping 的浏览器头生成器配置：gotOptions 就是最终传给
           // got-scraping 的选项对象。默认其 header 生成器会随机注入整套浏览器
           // 指纹头（sec-ch-ua 等），与显式指定的 User-Agent（如 Firefox）矛盾时
@@ -813,6 +845,16 @@ export class CheerioFetchEngine extends FetchEngine<
           } else if (ctx.headerGeneratorOptions) {
             gotOptions.headerGeneratorOptions = ctx.headerGeneratorOptions
           }
+        },
+      ],
+      // 操作侧取消：请求结束后注销取消器（无论成功/失败/取消），防止 Map 泄漏。
+      // 放在 postNavigationHooks：导航完成（含失败）后必经之路。
+      postNavigationHooks: [
+        ({ request }) => {
+          const requestId = (request?.userData as any)?.requestId as
+            | string
+            | undefined
+          if (requestId) this._unregisterIOCancel(requestId)
         },
       ],
     }

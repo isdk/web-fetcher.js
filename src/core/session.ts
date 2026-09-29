@@ -77,8 +77,10 @@ export class FetchSession {
    * @remarks
    * 中止后：
    * - 后续所有动作立即以 `AbortError` 失败；
-   * - 进行中的动作会因 `dispose()` 清理（reject 所有 pending 请求与排队动作）而被取消；
+   * - 进行中的动作会因清理（reject 所有 pending 请求与排队动作）而被取消；
    * - 会话不可恢复。
+   * - `storage.fastFailOnAbort` 启用时走 `engine.abortFastFail()` 快速失败路径，
+   *   不等待输家引擎的 in-flight 任务收敛（其余情况等同 `dispose()`）。
    *
    * 幂等：重复调用无副作用。
    *
@@ -94,7 +96,15 @@ export class FetchSession {
     this._logDebug('abort', 'Session aborted:', err.message)
     // 立即回收引擎资源：清理过程会 reject 所有 pending 请求与排队中的动作，
     // 使进行中的 executeAll 快速失败，而不是等到超时。
-    await this.dispose().catch(() => {})
+    // `storage.fastFailOnAbort`（race 场景）：不再等待输家引擎的 in-flight 任务
+    // 收敛（慢站点最多 taskSettleTimeoutMs = 120s），避免主进程拿着结果还要等
+    // 输家收尾才能退出。
+    const engine = this.context.internal.engine as any
+    if (this.options.storage?.fastFailOnAbort && engine?.abortFastFail) {
+      await engine.abortFastFail(err).catch(() => {})
+    } else {
+      await this.dispose().catch(() => {})
+    }
   }
 
   protected _logDebug(category: string, ...args: any[]) {

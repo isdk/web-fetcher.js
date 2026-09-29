@@ -272,4 +272,70 @@ describe('crawler lifecycle', () => {
     },
     TEST_TIMEOUT
   )
+
+  // 操作侧取消：abort() 立即取消 in-flight I/O（got signal abort），
+  // 清理的 settle 等待缩短到毫秒级——即使不用 fastFailOnAbort。
+  it(
+    'abort() cancels the in-flight request immediately (operational cancellation)',
+    async () => {
+      const output = captureOutput()
+      const session = new FetchSession({
+        engine: 'http',
+        storage: { config: { localDataDirectory: storageDir } },
+      })
+
+      const pending = session
+        .executeAll([{ id: 'goto', params: { url: `${baseUrl}/slow` } }])
+        .catch(() => {
+          /* AbortError is expected */
+        })
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
+      const start = Date.now()
+      await session.abort('race: superseded')
+      await pending
+      const elapsed = Date.now() - start
+      // The in-flight got request is aborted immediately; the settle wait
+      // collapses to milliseconds (was ~1.7s waiting for the 2s endpoint).
+      expect(elapsed).toBeLessThan(1000)
+
+      // Give the (deferred) storage drop time to run before asserting.
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      output.restore()
+    },
+    TEST_TIMEOUT
+  )
+
+  // 存储侧兕底：race 中止输家引擎且 I/O 取消不可用时，abort() 不再等待
+  // in-flight 任务收敛（默认最多 taskSettleTimeoutMs = 120s）。
+  it(
+    'abortFastFail skips the settle wait even if I/O cancellation is unavailable',
+    async () => {
+      const output = captureOutput()
+      const session = new FetchSession({
+        engine: 'http',
+        storage: {
+          config: { localDataDirectory: storageDir },
+          fastFailOnAbort: true,
+        },
+      })
+
+      const pending = session
+        .executeAll([{ id: 'goto', params: { url: `${baseUrl}/slow` } }])
+        .catch(() => {
+          /* AbortError is expected */
+        })
+      await new Promise((resolve) => setTimeout(resolve, 300))
+
+      const start = Date.now()
+      await session.abort('race: superseded (fast-fail)')
+      await pending
+      const elapsed = Date.now() - start
+      expect(elapsed).toBeLessThan(1000)
+
+      await new Promise((resolve) => setTimeout(resolve, 3000))
+      output.restore()
+    },
+    TEST_TIMEOUT
+  )
 })
