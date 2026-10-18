@@ -5,6 +5,7 @@ import fastify, { FastifyInstance } from 'fastify'
 import { AddressInfo } from 'node:net'
 import { FetchEngine } from './base'
 import './cheerio' // Register cheerio engine
+import './playwright' // Register playwright (browser) engine
 import { OfflineCacheMissErrorCode } from '@isdk/proxy'
 
 const TEST_TIMEOUT = 10000
@@ -286,4 +287,59 @@ describe('FetchEngine Cache Suite', () => {
 
     await engine2.dispose()
   }, TEST_TIMEOUT)
+
+  // The cache hook is installed in the shared engine base, so the browser
+  // engine replays from the very same on-disk cache (and an entry warmed by one
+  // engine is readable by the other: the key is method + URL, not the engine).
+  // Measured here because the path that consumes it — a WAF-challenged 4get
+  // instance — only ever fetches through the browser.
+  const BROWSER_TEST_TIMEOUT = 120_000
+
+  it('should replay a disk entry through the browser engine when staleOnly is set', async (ctx) => {
+    requestCounts['/no-cache'] = 0
+
+    const storageId = `test-browser-stale-only-${Date.now()}`
+    const storagePath = path.join(tmpDir, storageId)
+    const browserContext = (id: string, cache: any) => ({
+      id,
+      engine: 'playwright',
+      browser: { headless: true },
+      storage: { persist: true },
+      cache,
+    }) as any
+
+    let engine: FetchEngine
+    try {
+      engine = (await FetchEngine.create(
+        browserContext(storageId, { enabled: true, storagePath, forceCache: true })
+      )) as FetchEngine
+    } catch (err: any) {
+      // no Playwright browser downloaded in this environment
+      console.warn('[cache.spec] skipping browser-engine case:', err?.message)
+      ctx.skip()
+      return
+    }
+
+    const res1 = await engine.goto(`${baseUrl}/no-cache`)
+    expect(res1!.metadata?.cache).toBe('MISS')
+    const content1 = res1!.text
+    await engine.dispose()
+
+    const engine2 = (await FetchEngine.create(
+      browserContext(`${storageId}-second`, {
+        enabled: true,
+        storagePath,
+        forceCache: true,
+        staleOnly: true,
+      })
+    )) as FetchEngine
+    const res2 = await engine2.goto(`${baseUrl}/no-cache`)
+    expect(res2!.metadata?.cache).toBe('STALE')
+    expect(res2!.text).toBe(content1)
+
+    await new Promise((resolve) => setTimeout(resolve, 1_000))
+    expect(requestCounts['/no-cache']).toBe(1)
+
+    await engine2.dispose()
+  }, BROWSER_TEST_TIMEOUT)
 })
