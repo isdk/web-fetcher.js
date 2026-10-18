@@ -171,4 +171,119 @@ describe('FetchEngine Cache Suite', () => {
 
     await engine.dispose()
   }, TEST_TIMEOUT)
+
+  // A fresh engine over the same storagePath stands in for a fresh process:
+  // the entry only comes back if it really reached the disk cache.
+  const reopenOnDisk = (storageId: string, cacheOptions: any) =>
+    FetchEngine.create({
+      id: `${storageId}-second`,
+      engine: 'http',
+      storage: { persist: true },
+      cache: cacheOptions,
+    } as any) as Promise<FetchEngine>
+
+  it('should revalidate a STALE disk entry in the background (SWR) by default', async () => {
+    requestCounts['/no-cache'] = 0
+
+    const storageId = `test-swr-${Date.now()}`
+    const storagePath = path.join(tmpDir, storageId)
+    const cacheOptions = {
+      enabled: true,
+      storagePath,
+      forceCache: true,
+    }
+
+    const engine = (await FetchEngine.create({
+      id: storageId,
+      engine: 'http',
+      storage: { persist: true },
+      cache: cacheOptions,
+    } as any)) as FetchEngine
+
+    // First fetch: MISS (origin hit #1)
+    const res1 = await engine.goto(`${baseUrl}/no-cache`)
+    expect(res1!.metadata?.cache).toBe('MISS')
+    const content1 = res1!.text
+    await engine.dispose()
+
+    // Second process: forceCache replays the entry, but the origin's
+    // no-cache policy makes it STALE, so SWR still re-validates in the
+    // background — the caller gets the stored body, the origin still pays.
+    const engine2 = await reopenOnDisk(storageId, cacheOptions)
+    const res2 = await engine2.goto(`${baseUrl}/no-cache`)
+    expect(res2!.metadata?.cache).toBe('STALE')
+    expect(res2!.text).toBe(content1)
+
+    await new Promise((resolve) => setTimeout(resolve, 1_000))
+    expect(requestCounts['/no-cache']).toBe(2)
+
+    await engine2.dispose()
+  }, TEST_TIMEOUT)
+
+  it('should skip the background revalidation entirely when staleOnly is set', async () => {
+    requestCounts['/no-cache'] = 0
+
+    const storageId = `test-stale-only-${Date.now()}`
+    const storagePath = path.join(tmpDir, storageId)
+
+    const engine = (await FetchEngine.create({
+      id: storageId,
+      engine: 'http',
+      storage: { persist: true },
+      cache: { enabled: true, storagePath, forceCache: true },
+    } as any)) as FetchEngine
+
+    const res1 = await engine.goto(`${baseUrl}/no-cache`)
+    expect(res1!.metadata?.cache).toBe('MISS')
+    const content1 = res1!.text
+    await engine.dispose()
+
+    // Same entry, but staleOnly: replay without any origin traffic.
+    const engine2 = await reopenOnDisk(storageId, {
+      enabled: true,
+      storagePath,
+      forceCache: true,
+      staleOnly: true,
+    })
+    const res2 = await engine2.goto(`${baseUrl}/no-cache`)
+    expect(res2!.metadata?.cache).toBe('STALE')
+    expect(res2!.text).toBe(content1)
+
+    await new Promise((resolve) => setTimeout(resolve, 1_000))
+    expect(requestCounts['/no-cache']).toBe(1)
+
+    await engine2.dispose()
+  }, TEST_TIMEOUT)
+
+  it('should replay a disk entry without network in offline mode', async () => {
+    requestCounts['/no-cache'] = 0
+
+    const storageId = `test-offline-replay-${Date.now()}`
+    const storagePath = path.join(tmpDir, storageId)
+
+    const engine = (await FetchEngine.create({
+      id: storageId,
+      engine: 'http',
+      storage: { persist: true },
+      cache: { enabled: true, storagePath, forceCache: true },
+    } as any)) as FetchEngine
+
+    const res1 = await engine.goto(`${baseUrl}/no-cache`)
+    expect(res1!.metadata?.cache).toBe('MISS')
+    const content1 = res1!.text
+    await engine.dispose()
+
+    const engine2 = await reopenOnDisk(storageId, {
+      enabled: true,
+      storagePath,
+      forceCache: true,
+      offline: true,
+    })
+    const res2 = await engine2.goto(`${baseUrl}/no-cache`)
+    expect(res2!.metadata?.cache).toBe('OFFLINE_HIT')
+    expect(res2!.text).toBe(content1)
+    expect(requestCounts['/no-cache']).toBe(1)
+
+    await engine2.dispose()
+  }, TEST_TIMEOUT)
 })

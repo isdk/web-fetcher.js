@@ -186,7 +186,8 @@ searchGoogle('gemini');
   * `storagePath` (string): 缓存存储路径。多实例自动共享缓存池，避免冲突。
   * `backgroundUpdate` (boolean): 是否启用 SWR (Stale-While-Revalidate) 后台异步更新。默认：`true`。
   * `staleIfError` (boolean): 网络请求失败时是否强制返回本地过期缓存。
-  * `forceCache` (boolean): 是否无视源站指令强制执行缓存。
+  * `forceCache` (boolean): 是否无视源站指令强制执行缓存。注意它只保证条目能**入库并重放**：若源站返回 `cache-control: no-cache`/`no-store`，重放到的条目状态为 `STALE`，且 `backgroundUpdate` 默认开启，因此每次重放仍会在后台向源站重新校验。要消除这部分流量请用 `staleOnly`。
+  * `staleOnly` (boolean): 直接重放已过期（`STALE`）缓存且不刷新——完全跳过 SWR 后台更新，热缓存重放对源站零流量。与 `offline` 不同，缓存 MISS 仍会发起网络请求。
   * `refresh` (boolean): **强制刷新**：忽略现有缓存并重新验证以“愈合”缓存条目。常用于配合真人验证进行“穿透”。
   * `methods`, `cacheRules`, `query`, `headers`, `cookies`, `body`: 精细化缓存策略配置。支持 `STALE_RESCUE` 容灾与 `WAF_CHALLENGE` 智能识别，当识别到人机挑战时可自动配合 `enableSmart` 升级引擎并强制刷新（愈合）缓存。
 * `additionalMimeTypes` (string[]): 允许引擎下载并返回非 HTML 响应体的额外 MIME 类型，例如 `['application/pdf', 'text/csv']`。在 `http`（cheerio）引擎中透传给 Crawlee 的 `CheerioCrawler.additionalMimeTypes`：Crawlee 默认只保留 HTML/XML/JSON 类型的响应体，白名单之外的类型会被直接中止；在 `browser`（playwright）引擎中则通过 Playwright 的 `download` 事件捕获导航、点击或表单提交触发的下载。配置后原始响应体会以 `Buffer` 形式保留在 `FetchResponse.body` 中，并正确设置 `contentType`。值会统一规范化为小写并去重，且与引擎内置类型（`text/plain`）合并；支持 `*/*` 通配符。默认不启用（需显式配置）。设计细节见 `TODO.additional-mime-types.md`。

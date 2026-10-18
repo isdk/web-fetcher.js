@@ -235,6 +235,18 @@ export interface FetchCacheOptions {
    */
   forceCache?: boolean
   /**
+   * Serve an expired (STALE) entry without refreshing it: skips the
+   * Stale-While-Revalidate background update entirely, so a cached response
+   * is replayed with zero origin traffic. Unlike `offline`, a MISS still
+   * goes to the network.
+   *
+   * Needed when the origin answers with `cache-control: no-cache`/`no-store`:
+   * `forceCache` then stores the entry, but every replay is STALE and (with
+   * `backgroundUpdate` left on, the default) still re-validates against the
+   * origin in the background.
+   */
+  staleOnly?: boolean
+  /**
    * Max memory size for a single file content in bytes.
    */
   maxMemorySize?: number
