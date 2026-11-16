@@ -425,6 +425,15 @@ export interface BaseFetcherProperties {
   url?: string
 }
 
+/**
+ * Per-site entry of the `sites` registry (see `useSiteRegistry`).
+ *
+ * @remarks
+ * A rule applies to `domain` itself and its real subdomains (label-boundary
+ * match, so `bing.com` never matches `evilbing.com`), optionally narrowed by
+ * `pathScope` (path-segment prefixes). When several rules match, the most
+ * specific one wins: longest domain, then longest path prefix.
+ */
 export interface FetchSite extends BaseFetcherProperties {
   domain: string
   pathScope?: string[]

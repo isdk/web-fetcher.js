@@ -101,5 +101,61 @@ describe('select-engine unit tests', () => {
       expect(pickSiteMatched(undefined, sites)).toBeNull()
       expect(pickSiteMatched('https://example.com/', [])).toBeNull()
     })
+
+    // Site entries decide the engine (and, with antibot/proxy fields, the whole
+    // request posture), so a rule must never be reachable from a host that only
+    // *looks* like the configured domain.
+    describe('host must match on a label boundary', () => {
+      const bing: FetchSite[] = [{ domain: 'bing.com', engine: 'browser' }]
+
+      it('should not match a look-alike host that merely ends with the domain text', () => {
+        expect(pickSiteMatched('https://evilbing.com/search', bing)).toBeNull()
+        expect(pickSiteMatched('https://not-bing.com/', bing)).toBeNull()
+        expect(pickSiteMatched('https://bing.com.my-vps.net/', bing)).toBeNull()
+      })
+
+      it('should match the apex host and any real subdomain', () => {
+        expect(pickSiteMatched('https://bing.com/', bing)).toEqual(bing[0])
+        expect(pickSiteMatched('https://www.bing.com/', bing)).toEqual(bing[0])
+        expect(pickSiteMatched('https://cn.bing.com/search?q=x', bing)).toEqual(bing[0])
+      })
+
+      it('should tolerate a leading dot and mixed case in a configured domain', () => {
+        const dotted: FetchSite[] = [{ domain: '.Bing.com', engine: 'browser' }]
+        expect(pickSiteMatched('https://WWW.BING.COM/', dotted)).toEqual(dotted[0])
+        expect(pickSiteMatched('https://evilbing.com/', dotted)).toBeNull()
+      })
+    })
+
+    it('should return null for an unparseable URL instead of throwing', () => {
+      expect(() => pickSiteMatched('not-a-url', sites)).not.toThrow()
+      expect(pickSiteMatched('not-a-url', sites)).toBeNull()
+      expect(pickSiteMatched('', sites)).toBeNull()
+    })
+
+    it('should prefer the most specific entry (longest host match, then longest pathScope)', () => {
+      const specific: FetchSite[] = [
+        { domain: 'example.com', engine: 'http' },
+        { domain: 'example.com', pathScope: ['/docs/advanced'], engine: 'browser' },
+        { domain: 'docs.example.com', engine: 'browser' },
+      ]
+      // Subdomain rule wins over the apex rule.
+      expect(pickSiteMatched('https://docs.example.com/x', specific)?.engine).toBe('browser')
+      // Longer pathScope wins over the shorter/apex one.
+      expect(
+        pickSiteMatched('https://example.com/docs/advanced/intro', specific)?.pathScope
+      ).toEqual(['/docs/advanced'])
+      expect(pickSiteMatched('https://example.com/other', specific)?.engine).toBe('http')
+    })
+
+    it('should scope pathScope on a path-segment boundary', () => {
+      const scoped: FetchSite[] = [
+        { domain: 'example.org', pathScope: ['/docs'], engine: 'browser' },
+      ]
+      expect(pickSiteMatched('https://example.org/docs', scoped)).toEqual(scoped[0])
+      expect(pickSiteMatched('https://example.org/docs/intro', scoped)).toEqual(scoped[0])
+      // `/documents` is a different page, not something under `/docs`.
+      expect(pickSiteMatched('https://example.org/documents', scoped)).toBeNull()
+    })
   })
 })

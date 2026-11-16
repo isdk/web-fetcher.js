@@ -161,7 +161,7 @@ This is the main entry point for the library.
 * `antibot` (boolean): In `browser` mode, run a stealthed Firefox (camoufox) with automatic Cloudflare challenge handling to bypass anti-bot measures (default: `false`).
 * `signal` (AbortSignal): External abort signal for the session. When the signal aborts, the session is cancelled: pending actions fail immediately with an `AbortError`, in-flight navigation/requests are interrupted, and the session cannot be reused. Alternatively, call `session.abort(reason)` directly without a signal. See [Aborting a Session](./README.engine.md#aborting-a-session).
 * `blockResources` (ResourceType[]): Resource types to block from loading in `browser` mode, e.g. `['image', 'stylesheet', 'font']` (default: `[]`).
-* `sites` (FetchSite[]): Site registry used in `auto` mode. Each entry has a `domain`, optional `pathScope` and engine options; the first matching entry decides the engine (see `useSiteRegistry`).
+* `sites` (FetchSite[]): Site registry used in `auto` mode. Each entry has a `domain`, optional `pathScope` and engine options; the most specific matching entry decides the engine (see `useSiteRegistry`).
 * `useSiteRegistry` (boolean): Whether to match the target URL against the `sites` registry when `engine` is `auto` (default: `true`).
 * `debug` (boolean | string | string[]): Enable detailed execution metadata (timings, engine used, etc.) in response, or enable debug logs for specific categories (e.g., 'extract', 'submit', 'request').
 * `actions` (FetchActionOptions[]): An array of action objects to execute. (Supports `action`/`name` as alias for `id`, and `args` as alias for `params`)

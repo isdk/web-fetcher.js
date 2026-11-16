@@ -87,6 +87,7 @@ The engine is initialized lazily upon the first action execution and remains fix
 1. **Explicit Option**: If `options.engine` (or temporary context override in `executeAll`) is provided and NOT set to `'auto'`.
     * ⚠️ **Fail-Fast**: If the requested engine is unavailable (e.g., missing dependencies), an error is thrown immediately.
 2. **Site Registry**: If set to `'auto'` (default), the system attempts to match the target URL against the `sites` registry.
+   * Domain matching is label-boundary aware: an entry for `bing.com` covers `bing.com` and `*.bing.com`, and never a look-alike such as `evilbing.com` or `bing.com.evil.net`. `pathScope` matches a path segment (`/docs` covers `/docs/intro`, not `/documents`). When several entries match, the most specific one wins (longest domain, then longest path prefix); unparseable URLs simply match nothing.
 3. **Smart Upgrade**: If `enableSmart: true`, the system will automatically upgrade from `http` to `browser` under the following conditions:
    - Returns `401 / 403 / 500 / 429`
    - HTML content is identified as "highly dynamic" (heavy JS), controlled by `upgradeOnJsContent` (default: `false` — set it to `true` to upgrade when JS framework signatures such as `window.__NEXT_DATA__` or `window.__NUXT__` are detected in the HTML)

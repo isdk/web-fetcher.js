@@ -87,6 +87,7 @@ controller.abort();
 1. **显式选项**: 如果在 `FetchSession` 的 `options.engine`（或 `executeAll` 的临时上下文覆盖）中提供了引擎且不为 `'auto'`。
     * ⚠️ **快速失败 (Fail-Fast)**: 如果请求的引擎不可用（例如缺少依赖），将立即抛出错误。
 2. **站点注册表 (Site Registry)**: 如果设置为 `'auto'`（默认），系统会尝试根据目标 URL 匹配 `sites` 注册表。
+    * 域名匹配按标签边界判定：`bing.com` 的规则只覆盖 `bing.com` 与 `*.bing.com`，不会命中 `evilbing.com`、`bing.com.evil.net` 这类伪域名；`pathScope` 按路径段匹配（`/docs` 覆盖 `/docs/intro`，不覆盖 `/documents`）。多条规则同时命中时取最具体的一条（domain 最长优先，其次路径前缀最长）；不可解析的 URL 直接视为不匹配。
 3. **智能升级 (Smart Upgrade)**:
    - 当 `enableSmart: true` 时，系统会在以下情况自动从 `http` 升级到 `browser`：
      - 返回 `401 / 403 / 500 / 429`

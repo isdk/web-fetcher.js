@@ -161,7 +161,7 @@ searchGoogle('gemini');
 * `antibot` (boolean): 在 `browser` 模式下使用隐形 Firefox（camoufox）并自动处理 Cloudflare 挑战，以绕过反爬检测（默认：`false`）。
 * `signal` (AbortSignal): 会话的外部中止信号。信号中止时会话被取消：未执行的动作立即以 `AbortError` 失败，进行中的导航/请求被中断，会话不可再使用。也可以不传 signal，直接调用 `session.abort(reason)` 手动中止。参见[中止会话](./README.engine.md#中止会话-aborting-a-session)。
 * `blockResources` (ResourceType[]): `browser` 模式下阻止加载的资源类型，例如 `['image', 'stylesheet', 'font']`（默认：`[]`）。
-* `sites` (FetchSite[]): `auto` 模式下使用的站点注册表。每项包含 `domain`、可选 `pathScope` 及引擎配置；第一个匹配项决定使用的引擎（见 `useSiteRegistry`）。
+* `sites` (FetchSite[]): `auto` 模式下使用的站点注册表。每项包含 `domain`、可选 `pathScope` 及引擎配置；最具体的匹配项决定使用的引擎（见 `useSiteRegistry`）。
 * `useSiteRegistry` (boolean): 当 `engine` 为 `auto` 时，是否将目标 URL 与 `sites` 注册表进行匹配（默认：`true`）。
 * `debug` (boolean | string | string[]): 在响应中启用详细的执行元数据（耗时、使用的引擎等），或启用特定类别（如 'extract', 'submit', 'request'）的调试日志。
 * `actions` (FetchActionOptions[]): 要执行的动作对象数组。（支持 `action`/`name` 作为 `id` 的别名，`args` 作为 `params` 的别名）

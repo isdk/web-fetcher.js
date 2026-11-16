@@ -143,16 +143,63 @@ export function smartShouldUseBrowser(
   return false
 }
 
-export function pickSiteMatched(url?: string, sites?: FetchSite[]) {
+/** Normalizes a configured domain: trims, lowercases, drops a leading dot. */
+function normalizeDomain(domain?: string): string {
+  return (domain ?? '').trim().toLowerCase().replace(/^\.+/, '')
+}
+
+/**
+ * True when `host` is the domain itself or a real subdomain of it.
+ *
+ * @remarks
+ * The comparison is label-boundary aware on purpose: a bare
+ * `host.endsWith(domain)` would let `evilbing.com` or `bing.com.my-vps.net`
+ * inherit a rule written for `bing.com`, and a site rule decides the engine
+ * (and with it `antibot`, `proxy`, headers, session state).
+ */
+function hostMatchesDomain(host: string, domain: string): boolean {
+  return !!domain && (host === domain || host.endsWith(`.${domain}`))
+}
+
+/** True when `pathname` is at or below one of the configured path prefixes. */
+function pathInScope(pathname: string, scope: string[]): boolean {
+  return scope.some((p) => {
+    const prefix = p.endsWith('/') ? p : `${p}/`
+    return pathname === p || pathname.startsWith(prefix)
+  })
+}
+
+/** Longest configured path prefix, used to rank candidate specificity. */
+function longestPathScope(scope?: string[]): number {
+  return (scope ?? []).reduce((max, p) => Math.max(max, p.length), 0)
+}
+
+export function pickSiteMatched(url?: string, sites?: FetchSite[]): FetchSite | null {
   if (!url || !sites?.length) return null
-  const u = new URL(url)
-  // 简易匹配：domain 完整匹配或后缀匹配
-  let matched = sites.find((s) => s.domain === u.hostname)
-  if (!matched) matched = sites.find((s) => u.hostname.endsWith(s.domain))
-  if (!matched) return null
-  if (matched.pathScope?.length) {
-    const ok = matched.pathScope.some((p) => u.pathname.startsWith(p))
-    if (!ok) return null
+  let u: URL
+  try {
+    u = new URL(url)
+  } catch {
+    // 不可解析的 URL：没有站点规则可匹配，不应抛出到调用方
+    return null
   }
-  return matched
+  const host = u.hostname.toLowerCase()
+  if (!host) return null
+
+  const candidates = sites
+    .map((site) => ({ site, domain: normalizeDomain(site.domain) }))
+    .filter(({ site, domain }) =>
+      hostMatchesDomain(host, domain) &&
+      (!site.pathScope?.length || pathInScope(u.pathname, site.pathScope))
+    )
+  if (candidates.length === 0) return null
+
+  // 最具体的规则优先：domain 越长越具体，其次 pathScope 前缀越长越具体。
+  // 同分时保持声明顺序（Array#sort 稳定）。
+  candidates.sort(
+    (a, b) =>
+      b.domain.length - a.domain.length ||
+      longestPathScope(b.site.pathScope) - longestPathScope(a.site.pathScope)
+  )
+  return candidates[0].site
 }
