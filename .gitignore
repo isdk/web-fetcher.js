@@ -20,6 +20,12 @@ dev.md
 *.db
 .npmrc
 temp
+# Browser session state dumps: real Google/YouTube cookies were committed once (v0.4.2-v0.4.4).
+# Never track exported cookie jars or Crawlee session state.
+cookies.json
+cookies*.json
+sessionState*.json
+SDK_SESSION_POOL_STATE.json
 
 # Editor directories and files
 .vscode/*
